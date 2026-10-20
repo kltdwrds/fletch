@@ -5,7 +5,8 @@
 //
 // It never touches a name outside `fletch-ci-` (test/live/lib.ts, checked again before each DELETE). A bucket that
 // still holds objects cannot be deleted through the API and is reported by name; exit 1 then, so the run shows it,
-// unless --report-only (the workflow's last step, after the test already failed on the same bucket): print, exit 0.
+// unless --report-only (the workflow's last step, after the test already warned about its own bucket or failed on
+// any other leak): print, exit 0.
 // The package is run with --conditions=development because @qyvr/host-cloudflare's dist is built only for publishing.
 import { CloudflareApi } from "@qyvr/host-cloudflare";
 import { sweep } from "../test/live/sweep.ts";

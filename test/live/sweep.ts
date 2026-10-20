@@ -2,8 +2,9 @@
 // takes the API as a parameter, so a hermetic test answers every call. A bucket the API refuses to delete is
 // reported by name as a leak: R2's REST API cannot list or empty a bucket's objects (that needs S3 credentials),
 // and the agent does write R2 objects (MEMORY.md and the other home files), so the bucket of a run is usually not
-// empty. The manual delete: Dashboard, R2, the bucket, delete its objects, then delete the bucket.
-import { type CleanupStep, type Listing, planSweep, stepAllowed } from "./lib.ts";
+// empty. The manual delete: Dashboard, R2, the bucket, delete its objects, then delete the bucket. `triageLeaks`
+// (lib.ts) tells the live test which leak is its own expected bucket and which fails the run.
+import { type CleanupStep, type Leak, type Listing, planSweep, stepAllowed } from "./lib.ts";
 
 export interface Api {
   call<T = unknown>(method: string, path: string): Promise<T>;
@@ -24,16 +25,23 @@ export async function listAccount(api: Api, accountId: string): Promise<Listing>
 export interface Outcome {
   deleted: string[];
   gone: string[];
+  /** Each leak's line, as printed. */
   leaked: string[];
+  /** The same leaks with what refused them, for `triageLeaks`. */
+  leaks: Leak[];
 }
 
 /** Runs the steps in order. The guard is checked again right before each DELETE; a step that fails it is never sent. */
 export async function runSteps(api: Api, steps: CleanupStep[], log: (line: string) => void, scrub: (text: string) => string = (t) => t): Promise<Outcome> {
-  const out: Outcome = { deleted: [], gone: [], leaked: [] };
+  const out: Outcome = { deleted: [], gone: [], leaked: [], leaks: [] };
+  const leak = (l: Leak) => {
+    out.leaks.push(l);
+    out.leaked.push(l.line);
+  };
   for (const step of steps) {
     const label = `${step.kind} ${step.name}`;
     if (!stepAllowed(step)) {
-      out.leaked.push(`${label}: refused by the fletch-ci- guard, not deleted`);
+      leak({ kind: step.kind, name: step.name, line: `${label}: refused by the fletch-ci- guard, not deleted` });
       continue;
     }
     try {
@@ -46,7 +54,8 @@ export async function runSteps(api: Api, steps: CleanupStep[], log: (line: strin
         log(`cleanup: ${label} was not there`);
       } else {
         const hint = step.kind === "bucket" ? " (a bucket with objects cannot be deleted through the API: Dashboard, R2, the bucket, delete its objects, then delete the bucket)" : "";
-        out.leaked.push(`${label}: ${scrub((error as Error).message)}${hint}`);
+        const status = statusOf(error);
+        leak({ kind: step.kind, name: step.name, ...(status !== undefined ? { status } : {}), line: `${label}: ${scrub((error as Error).message)}${hint}` });
       }
     }
   }

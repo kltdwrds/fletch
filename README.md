@@ -34,8 +34,9 @@ QYVR_LIVE=1 CF_LIVE_ACCOUNT_ID=... CF_LIVE_TOKEN=... pnpm vitest run test/live/f
 The tag `v0.1.0` follows a passing run. See `docs/DECISIONS.md`.
 
 The run leaves objects in the bucket `<name>-agent` (the agent keeps MEMORY.md there), and R2's API cannot empty a bucket,
-so the cleanup reports the bucket by name. Delete it by hand: Dashboard, R2, the bucket, delete its objects, then delete the
-bucket. `pnpm live-sweep` (same two variables) removes every other `fletch-ci-` leftover.
+so the cleanup prints a warning naming that bucket; the run still passes. Any other leftover fails it. Delete the bucket
+by hand before the next run, or that run's sweep fails on it: Dashboard, R2, the bucket, delete its objects, then delete
+the bucket. `pnpm live-sweep` (same two variables) removes every other `fletch-ci-` leftover.
 
 ## Set up your own fletch (about ten minutes)
 

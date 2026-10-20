@@ -133,6 +133,36 @@ describe("[F1] live test: the sweep", () => {
   });
 });
 
+describe("[F1] live test: which cleanup leak fails the run", () => {
+  const NAME = "fletch-ci-42";
+  const bucket = (name: string, status: number | undefined, words: string) => ({ kind: "bucket" as const, name, ...(status !== undefined ? { status } : {}), line: `bucket ${name}: ${words}` });
+
+  it("the run's own non-empty bucket is an expected manual cleanup, warned by name, counted once though the sweep sees it again", async () => {
+    const { manualCleanupWarning, triageLeaks } = await import("./lib.ts");
+    const own = bucket(`${NAME}-agent`, 409, "DELETE -> 409 10008: The bucket you tried to delete is not empty");
+    expect(triageLeaks([own, { ...own }], NAME)).toEqual({ expected: [own], failures: [] });
+    // The words alone are enough when the API gave no status.
+    expect(triageLeaks([bucket(`${NAME}-agent`, undefined, "bucket is not empty")], NAME).failures).toEqual([]);
+    expect(manualCleanupWarning(`${NAME}-agent`)).toMatch(/^::warning::the bucket fletch-ci-42-agent .*delete it by hand/);
+  });
+
+  it("any other leak fails: another run's bucket, this bucket refused for another reason, a Worker, an index", async () => {
+    const { triageLeaks } = await import("./lib.ts");
+    const other = bucket("fletch-ci-41-agent", 409, "not empty");
+    const forbidden = bucket(`${NAME}-agent`, 403, "Authentication error");
+    const worker = { kind: "worker" as const, name: NAME, status: 500, line: "worker fletch-ci-42: 500" };
+    const index = { kind: "index" as const, name: `${NAME}-memory`, status: 409, line: "index fletch-ci-42-memory: not empty" };
+    expect(triageLeaks([other, forbidden, worker, index], NAME)).toEqual({ expected: [], failures: [other, forbidden, worker, index] });
+  });
+
+  it("the sweep's leaks carry the API's status, so the triage can read it", async () => {
+    const { runSteps } = await import("./sweep.ts");
+    const api = { call: async () => { throw Object.assign(new Error("not empty"), { status: 409 }); } } as never;
+    const out = await runSteps(api, [{ kind: "bucket", name: `${NAME}-agent`, method: "DELETE", path: `/accounts/${ACCOUNT}/r2/buckets/${NAME}-agent` }], () => {});
+    expect(out.leaks).toEqual([expect.objectContaining({ kind: "bucket", name: `${NAME}-agent`, status: 409 })]);
+  });
+});
+
 describe("[F1] live test: the sweep script starts", () => {
   it("with no environment it prints its usage and exits 2, with no network call and no module error", () => {
     const res = spawnSync(process.execPath, ["--conditions=development", join(repoRoot, "scripts/live-sweep.ts")], { cwd: repoRoot, env: { PATH: process.env.PATH }, encoding: "utf8" });

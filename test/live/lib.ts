@@ -115,3 +115,38 @@ export function planSweep(accountId: string, listing: Listing): CleanupStep[] {
   ];
   return steps.filter(stepAllowed);
 }
+
+/** One resource a cleanup could not delete: its kind and name, the API's status when it gave one, the printed line. */
+export interface Leak {
+  kind: ResourceKind;
+  name: string;
+  status?: number;
+  line: string;
+}
+
+/** R2 refuses to delete a bucket that holds objects: 409, or the "not empty" words. */
+const notEmpty = (l: Leak) => l.kind === "bucket" && (l.status === 409 || /not empty/i.test(l.line));
+
+/**
+ * Splits a live run's cleanup leaks. The run's own bucket `<name>-agent`, refused because it holds objects, is
+ * expected: the teal step makes the agent write MEMORY.md there, and R2's API cannot empty a bucket. It is a manual
+ * cleanup the run warns about by name. Any other leak (another run's bucket, a Worker, an index, this bucket refused
+ * for another reason) fails the run. A leak seen twice (the run's own steps and then the sweep) is counted once.
+ */
+export function triageLeaks(leaks: Leak[], name: string): { expected: Leak[]; failures: Leak[] } {
+  const own = `${name}-agent`;
+  const expected: Leak[] = [];
+  const failures: Leak[] = [];
+  const seen = new Set<string>();
+  for (const l of leaks) {
+    const key = `${l.kind} ${l.name}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    (l.name === own && notEmpty(l) ? expected : failures).push(l);
+  }
+  return { expected, failures };
+}
+
+/** The GitHub Actions warning (plain text elsewhere) for this run's own non-empty bucket: a cleanup left to do by hand. */
+export const manualCleanupWarning = (bucket: string) =>
+  `::warning::the bucket ${bucket} holds this run's objects (MEMORY.md from the teal step) and R2's API cannot empty it; delete it by hand before the next run (Dashboard, R2, ${bucket}, delete its objects, then delete the bucket), or that run's sweep fails on it`;

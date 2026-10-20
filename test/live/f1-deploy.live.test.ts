@@ -7,7 +7,8 @@
 // then drives it over HTTPS: health, the refused and open pages, a software passkey, the setup token, the recovery
 // code, a memory round trip through the chat socket, the last-passkey rule and the single-use recovery code.
 // `afterAll` deletes the Worker, the bucket `<name>-agent` and the index `<name>-memory`, whatever happened, and only
-// names that start with `fletch-ci-` (lib.ts). The wall-clock time of the whole path is printed, not asserted.
+// names that start with `fletch-ci-` (lib.ts). The bucket holds the teal step's objects, which R2's API cannot delete,
+// so that one refusal is a warning naming the bucket for a manual delete; any other leak fails the run. The wall-clock time of the whole path is printed, not asserted.
 //
 // The vitest config collects this file only when QYVR_LIVE=1; the hermetic lane never sees it, and
 // the hermetic setup (which refuses any credential variable) is not loaded for it.
@@ -19,7 +20,7 @@ import { CloudflareApi } from "@qyvr/host-cloudflare";
 import { afterAll, afterEach, describe, expect, it, type TestContext } from "vitest";
 import { init } from "../../packages/create-fletch/src/init.ts";
 import { softAuthenticator } from "../support/soft-authenticator.ts";
-import { isRecoveryShape, isSetupTokenShape, maskCommand, pageState, parseSetupLink, planCleanup, runIdFrom, workerNameFor } from "./lib.ts";
+import { isRecoveryShape, isSetupTokenShape, manualCleanupWarning, maskCommand, pageState, parseSetupLink, planCleanup, runIdFrom, triageLeaks, workerNameFor } from "./lib.ts";
 import { runSteps, sweep } from "./sweep.ts";
 
 const ACCOUNT_ID = process.env.CF_LIVE_ACCOUNT_ID ?? "";
@@ -253,7 +254,9 @@ afterAll(async () => {
   const scrub = (text: string) => text.replaceAll(TOKEN, "[token]");
   // This run's own resources first, then the sweep of every fletch-ci- leftover (an earlier run that was cancelled or timed out).
   const mine = await runSteps(cf, plan.steps, console.log, scrub);
-  const swept = await sweep(cf, ACCOUNT_ID, console.log, scrub).catch((error: Error) => ({ deleted: [], gone: [], leaked: [`sweep failed: ${scrub(error.message)}`] }));
-  const leaked = [...mine.leaked, ...swept.leaked];
-  if (leaked.length) throw new Error(`cleanup left resources behind, delete them by hand:\n${[...new Set(leaked)].join("\n")}`);
+  const swept = await sweep(cf, ACCOUNT_ID, console.log, scrub).catch((error: Error) => ({ leaks: [{ kind: "worker" as const, name: "(sweep)", line: `sweep failed: ${scrub(error.message)}` }] }));
+  // This run's own bucket, left holding the teal step's objects, is expected: a warning naming it, not a failure.
+  const { expected, failures } = triageLeaks([...mine.leaks, ...swept.leaks], NAME);
+  for (const l of expected) console.warn(manualCleanupWarning(l.name));
+  if (failures.length) throw new Error(`cleanup left resources behind, delete them by hand:\n${failures.map((l) => l.line).join("\n")}`);
 }, 10 * MINUTE);
