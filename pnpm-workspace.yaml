@@ -1,2 +1,16 @@
 packages:
   - packages/*
+
+allowBuilds:
+  esbuild: true
+  # Pulled in by pi-ai's provider SDKs; nothing here needs their install scripts.
+  '@google/genai': false
+  protobufjs: false
+  # Pulled in by agents; nothing here needs its install script.
+  core-js-pure: false
+  # Hooks are installed by the root `prepare` script from package.json, not by its postinstall.
+  simple-git-hooks: false
+  # Native compressors pulled in by just-bash (via @cloudflare/computer); Workers never load them.
+  '@mongodb-js/zstd': false
+  node-liblzma: false
+  workerd: true

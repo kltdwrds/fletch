@@ -1,0 +1,7 @@
+// The primitives, @qyvr/host and @qyvr/host-cloudflare, with their tests, over the Workers types.
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "types": ["@cloudflare/workers-types"] },
+  "include": ["packages/host/src/**/*.ts", "packages/host/test/**/*.ts", "packages/host-cloudflare/src/**/*.ts", "packages/host-cloudflare/test/**/*.ts"],
+  "exclude": ["node_modules"]
+}

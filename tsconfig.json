@@ -1,6 +1,10 @@
+// Node-side code: scripts/ and the tests that import only pure modules. The primitives (packages/host,
+// packages/host-cloudflare) are type-checked by tsconfig.hosts.json over the Workers types; the agent by
+// packages/agent/tsconfig.json over its `wrangler types` output, together with the tests that load Worker
+// code (test/workers/, test/scenarios/ and test/support/object-harness.ts).
 {
   "extends": "./tsconfig.base.json",
-  "compilerOptions": { "types": ["@cloudflare/workers-types"] },
-  "include": ["packages/*/src/**/*.ts", "packages/*/test/**/*.ts"],
-  "exclude": ["node_modules"]
+  "compilerOptions": { "types": ["node"] },
+  "include": ["scripts/**/*.ts", "test/**/*.ts", "vitest.config.ts"],
+  "exclude": ["test/workers/**", "test/scenarios/**", "test/support/object-harness.ts", "node_modules"]
 }

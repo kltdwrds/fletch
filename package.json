@@ -1,5 +1,5 @@
 {
-  "name": "qyvr-js",
+  "name": "fletch",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.28.5",
@@ -7,18 +7,35 @@
     "node": ">=24.19.0"
   },
   "scripts": {
+    "prepare": "simple-git-hooks",
+    "accept": "node scripts/accept.ts",
+    "ds": "node scripts/ds-tokens.ts",
     "lint": "biome lint .",
-    "typecheck": "tsc -p tsconfig.json",
+    "typecheck": "pnpm --dir packages/agent exec wrangler types --strict-vars=false && tsc -p tsconfig.json && tsc -p tsconfig.hosts.json && tsc -p packages/agent/tsconfig.json",
     "boundaries": "node scripts/check-boundaries.mjs",
-    "test": "node --test scripts/check-boundaries.test.mjs && vitest run",
+    "test": "node --test scripts/*.test.mjs && QYVR_HERMETIC=1 vitest run",
     "check": "pnpm typecheck && pnpm lint && pnpm boundaries && pnpm test",
     "release": "echo 'release is wired in Task 12' && exit 1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
     "@changesets/cli": "3.0.3",
+    "@cloudflare/computer": "0.5.1",
     "@cloudflare/workers-types": "5.20261019.1",
+    "@earendil-works/pi-agent-core": "1.1.0",
+    "@earendil-works/pi-ai": "1.1.0",
+    "@qyvr/host": "workspace:*",
+    "@qyvr/host-cloudflare": "workspace:*",
+    "@types/node": "26.1.0",
+    "agents": "0.28.0",
+    "fflate": "0.8.3",
+    "simple-git-hooks": "2.14.0",
     "typescript": "7.0.2",
-    "vitest": "4.1.11"
+    "unpdf": "1.8.1",
+    "vitest": "4.1.11",
+    "wrangler": "4.149.0"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "node scripts/pre-commit.ts"
   }
 }

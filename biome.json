@@ -9,7 +9,8 @@
     "includes": [
       "**",
       "!**/pnpm-lock.yaml",
-      "!**/worker-configuration.d.ts"
+      "!**/worker-configuration.d.ts",
+      "!packages/agent/src/design/fletch"
     ]
   },
   "formatter": {
@@ -37,6 +38,18 @@
           },
           "suspicious": {
             "noExplicitAny": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "test/support/network-interceptor.ts"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noAssignInExpressions": "off"
           }
         }
       }

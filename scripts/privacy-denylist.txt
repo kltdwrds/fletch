@@ -1,0 +1,2 @@
+# sha256 (hex) of trimmed lines from private sources that must never appear under docs/ or
+# packages/. One hash per line; the maintainer extends this list. Lines starting with # are ignored.

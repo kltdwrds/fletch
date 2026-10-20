@@ -1,6 +1,27 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
+
+// The hermetic lane by default: no credential, deny-all network, no live test. `envDir: false` loads no env
+// file of any kind; nothing here reads .dev.vars, and test/support/env-guard.test.ts holds both. The same
+// setup runs before the agent's tests under test/ and the primitives' tests under packages/host*/test/.
+const live = process.env.QYVR_LIVE === "1";
 
 export default defineConfig({
   envDir: false,
-  test: { include: ["packages/*/test/**/*.test.ts"], passWithNoTests: true, environment: "node" },
+  resolve: {
+    // Worker modules import `cloudflare:workers`; under Node the shim stands in for the base
+    // classes so the production fetch handlers run unchanged.
+    alias: {
+      "cloudflare:workers": fileURLToPath(new URL("./test/support/cloudflare-workers.ts", import.meta.url)),
+      "cloudflare:email": fileURLToPath(new URL("./test/support/cloudflare-email.ts", import.meta.url)),
+    },
+  },
+  test: {
+    include: live ? ["test/**/*.live.test.ts"] : ["test/**/*.test.ts", "packages/host*/test/**/*.test.ts"],
+    exclude: live ? ["**/node_modules/**"] : ["**/node_modules/**", "test/**/*.live.test.ts"],
+    setupFiles: live ? [] : ["test/support/hermetic.setup.ts"],
+    environment: "node",
+    // The Agents SDK imports `cloudflare:*` modules; inlining it lets the aliases above apply.
+    server: { deps: { inline: ["agents", "@cloudflare/computer"] } },
+  },
 });
