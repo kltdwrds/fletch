@@ -1,0 +1,9 @@
+{
+  "name": "@qyvr/host",
+  "version": "0.0.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "repository": { "type": "git", "url": "git+https://github.com/qyvr-ai/qyvr-js.git", "directory": "packages/host" },
+  "exports": { ".": "./src/index.ts" },
+  "publishConfig": { "access": "public" }
+}
