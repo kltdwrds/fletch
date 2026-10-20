@@ -15,7 +15,8 @@ import { type LifecycleDirectory, lifecycleRoutes } from "./lifecycle-routes.ts"
 import { isAdminRole } from "../company/members.ts";
 import { type IngressStub, type MailDirectory, pushRoutes } from "./ingress-routes.ts";
 import { PERSON_HEADER } from "./identity.ts";
-import { hostOf } from "../host.ts";
+import { available, hostOf } from "../host.ts";
+import { unavailable } from "@qyvr/host";
 import { APP_PAGE, MANIFEST, SERVICE_WORKER } from "./page.ts";
 import { type VaultDirectory, vaultRoutes } from "./vault-routes.ts";
 import { type DeliveryDirectory, deliveryRoutes } from "./delivery-routes.ts";
@@ -105,6 +106,12 @@ export async function route(request: Request, env: Env, props: AgentProps | null
     return json({ members: await dir.company().list() });
   }
   if (url.pathname === "/admin/invites" && request.method === "POST") {
+    // Members and invites are a company's (spec section 4): a standalone deploy has one owner, so it refuses with the
+    // host's members code and reason, which the Settings dialog shows.
+    if (hostOf(env).tenant.shape !== "company") {
+      const members = hostOf(env).members;
+      return json(available(members) ? unavailable("members", "this deploy has one owner; inviting members is not part of a standalone deploy") : members, 501);
+    }
     const body = ((await request.json().catch(() => null)) ?? {}) as { email?: unknown; role?: unknown };
     const invited = await dir.company().invite(person, typeof body.email === "string" ? body.email : "", body.role);
     if (!invited.ok) return json({ code: invited.code }, invited.code === "NOT_AN_ADMIN" ? 403 : invited.code === "ALREADY_A_MEMBER" || invited.code === "SEATS_FULL" ? 409 : 400);

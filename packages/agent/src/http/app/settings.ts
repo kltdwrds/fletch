@@ -156,7 +156,8 @@ async function settings() {
   const me = await res.json();
   if (!res.ok) { couldNot($("me"), "your settings", me); return; }
   $("me").textContent = SETTINGS.signedIn.replace("{person}", me.person).replace("{role}", me.role).replace("{tenant}", me.tenant);
-  const admin = me.role === "admin" || me.role === "owner";
+  // The Company group (members, invites) is a company's: a standalone deploy has one owner and no members (spec section 4).
+  const admin = me.shape === "company" && (me.role === "admin" || me.role === "owner");
   $("admin").hidden = !admin;
   if (admin) members();
 }

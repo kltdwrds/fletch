@@ -348,7 +348,7 @@ function paint() {
   $("view-title").textContent = TITLE[shown]; $("view-title").hidden = chat;
   for (const id of ["open-chats", "chats-pill"]) $(id).hidden = !chat;
   $("open-agent").hidden = !chat || pinned;
-  $("head-invite").hidden = !chat || !isAdmin;
+  $("head-invite").hidden = !chat || !canInvite;
   const body = document.body;
   if (body) body.className = "qf-" + d;
 }
@@ -448,7 +448,7 @@ $("chats-search").onclick = () => srchOpen();
 // node as a BottomSheet. Copy puts the company's address, where a member the admin has added signs in, on the
 // clipboard; a refused clipboard shows the link in a read-only field, selected, so the person copies it themself.
 // The button's words are its own again each time Invite opens; the pill always reads Invite.
-let isAdmin = false, inviteOpen = false;
+let canInvite = false, inviteOpen = false;
 const inviteLink = () => location.protocol + "//" + location.host + "/";
 function resetInvite() { $("invite-pop-copy").textContent = INVITE.copy; $("invite-pop-link").hidden = true; $("invite-pop-note").hidden = true; }
 function inviteClosed() { inviteOpen = false; $("head-invite").setAttribute("aria-expanded", "false"); resetInvite(); }
@@ -486,7 +486,8 @@ $("invite-pop-copy").onclick = async () => {
   if (f.select) f.select();
 };
 if (document.addEventListener) document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeInvite(); });
-getJson("/me").then((me) => { isAdmin = me.role === "admin" || me.role === "owner"; paint(); }, () => {});
+// Invite is a company's (spec section 4 cuts members from a standalone deploy, which has one owner).
+getJson("/me").then((me) => { canInvite = me.shape === "company" && (me.role === "admin" || me.role === "owner"); paint(); }, () => {});
 // A device change closes what was open (a sheet does not become a dialog mid-way) and draws the frame again.
 const darkScheme = media("(prefers-color-scheme: dark)");
 function theme() { if (document.body) document.body.setAttribute("data-theme", modeTheme(!!(darkScheme && darkScheme.matches))); }

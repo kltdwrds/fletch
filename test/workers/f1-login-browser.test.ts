@@ -127,6 +127,8 @@ describe("[F1] the login page in a browser", () => {
       await pg.click("#go");
       await pg.waitForURL(`${ORIGIN}/`);
       expect(await pg.evaluate("fetch('/me').then((r) => r.json())")).toMatchObject({ person: ada.email, shape: "standalone" });
+      // A standalone deploy's owner is offered no Invite (spec section 4).
+      expect(await shown(pg, "head-invite")).toBe(false);
 
       // The session ends under the open app (revoked elsewhere): the app's next API call sends it to sign-in.
       const cookie = (await pg.context().cookies()).find((c) => c.name === SESSION_COOKIE);
