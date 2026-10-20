@@ -193,26 +193,38 @@ export interface HermeticPlan {
   files: string[];
   tags: string[];
   untagged: string[];
+  /** Files carrying a tag of the target's own part: `[F1]` or `[F1.<p>]` for F1, `[F1.2]` for F1.2. */
+  own: string[];
 }
 
-/** Which hermetic test files and tags run for a target part: `[F..]` tags up to the target, and every inherited `[M..]` tag. */
+/** Whether `tag` names the target's own part, never an inherited `[M..]` tag. */
+export function ownTag(tag: string, target: PartId): boolean {
+  const p = inherited(tag) ? null : parsePartId(tag);
+  return p !== null && p[0] === target[0] && (target[1] === 0 || p[1] === target[1]);
+}
+
+/** Which hermetic test files and tags run for a target part: `[F..]` tags up to the target, and every inherited `[M..]` tag; and which files carry the part's own tag. */
 export function planHermetic(target: PartId, dirs = testDirs()): HermeticPlan {
   const files: string[] = [];
   const tags = new Set<string>();
   const untagged: string[] = [];
+  const ownFiles: string[] = [];
   for (const file of testFiles(dirs)) {
     const { tags: own, untagged: bare } = fileTags(readFileSync(join(root, file), "utf8"));
     if (bare > 0 || own.length === 0) untagged.push(file);
     const inScope = own.filter((t) => inherited(t) || comparePartIds(parsePartId(t) as PartId, target) <= 0);
     if (inScope.length) files.push(file);
+    if (own.some((t) => ownTag(t, target))) ownFiles.push(file);
     for (const t of inScope) tags.add(t);
   }
-  return { files, tags: [...tags].toSorted(), untagged };
+  return { files, tags: [...tags].toSorted(), untagged, own: ownFiles };
 }
 
 function hermeticTests(target: PartId): StepOutcome {
   const plan = planHermetic(target);
   if (plan.untagged.length) return { ok: false, count: "untagged tests", detail: plan.untagged.map((f) => `untagged top-level test in ${f}`) };
+  // The inherited [M..] suite is in scope for every target, so it alone must never pass a part with no tests of its own.
+  if (!plan.own.length) return { ok: false, count: "0 tests of this part", detail: ["no hermetic test file carries a tag of this part's own"] };
   if (!plan.files.length) return { ok: false, count: "0 tests", detail: ["no hermetic test is tagged for this part or earlier"] };
   const all = vitest(plan.files, tagPattern(plan.tags), hermeticEnv(), "hermetic");
   let passed = all.passed;
@@ -224,7 +236,7 @@ function hermeticTests(target: PartId): StepOutcome {
     passed += again.passed;
     failed += again.failed;
   }
-  return { ok: failed === 0 && passed > 0, count: `${passed} tests passed, ${failed} failed (${plan.files.length} files${scenarios.length ? `, ${scenarios.length} scenario files twice` : ""})` };
+  return { ok: failed === 0 && passed > 0, count: `${passed} tests passed, ${failed} failed (${plan.files.length} files, ${plan.own.length} of this part${scenarios.length ? `, ${scenarios.length} scenario files twice` : ""})` };
 }
 
 /** The agent script through `wrangler deploy --dry-run`: it bundles, and nothing is uploaded. */

@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
-import { comparePartIds, fileTags, hermeticEnv, parsePartId, planHermetic, root, tagPattern } from "../../scripts/accept.ts";
+import { comparePartIds, fileTags, hermeticEnv, ownTag, parsePartId, planHermetic, root, tagPattern } from "../../scripts/accept.ts";
 import { hermeticNetwork } from "../support/hermetic-network.ts";
 
 describe("[F0] accept: part ids and tags", () => {
@@ -31,6 +31,11 @@ describe("[F0] accept: part ids and tags", () => {
     expect(fileTags(`${tagged}it("loose", () => {});\n`).untagged).toBe(1);
   });
 
+  it("names a part's own tags: F1 owns [F1] and [F1.x], F1.2 owns [F1.2], an [M..] tag is never a part's own", () => {
+    expect(["F1", "F1.2", "F1.3", "F0", "F10", "M1"].filter((t) => ownTag(t, parsePartId("F1")!))).toEqual(["F1", "F1.2", "F1.3"]);
+    expect(["F1", "F1.2", "F1.3"].filter((t) => ownTag(t, parsePartId("F1.2")!))).toEqual(["F1.2"]);
+  });
+
   it("reads F tags and the inherited M tags alike", () => {
     expect(fileTags('describe("[F1] host", () => {});\ndescribe("[M3.1] tools", () => {});\n')).toEqual({ tags: ["F1", "M3.1"], untagged: 0 });
   });
@@ -52,7 +57,14 @@ describe("[F0] accept: part ids and tags", () => {
       expect(plan.files).toEqual([rel("test/a.test.ts"), rel("test/c.test.ts")]);
       expect(plan.tags).toEqual(["F0", "M24.3"]);
       expect(plan.untagged).toEqual([rel("test/d.test.ts")]);
-      expect(planHermetic(parsePartId("F1")!, [join(dir, "test")]).tags).toEqual(["F0", "F1", "M24.3"]);
+      expect(plan.own).toEqual([rel("test/a.test.ts")]);
+      const f1 = planHermetic(parsePartId("F1")!, [join(dir, "test")]);
+      expect(f1.tags).toEqual(["F0", "F1", "M24.3"]);
+      expect(f1.own).toEqual([rel("test/b.test.ts")]);
+      // A part with no test of its own plans nothing of its own, however much of the inherited suite is in scope.
+      const f2 = planHermetic(parsePartId("F2")!, [join(dir, "test")]);
+      expect(f2.files).toEqual([rel("test/a.test.ts"), rel("test/b.test.ts"), rel("test/c.test.ts")]);
+      expect(f2.own).toEqual([]);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
