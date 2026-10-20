@@ -1,5 +1,8 @@
-// Base config of the tenant agent script. Never deployed as is: scripts/platform/generate.ts
-// re-targets it per tenant (name, bucket, props, limits) and `wrangler types` reads it for Env.
+// Base config of the self-host agent script; `wrangler types` reads it for Env. `fletch init` writes a
+// deploy's own copy (name, account, bucket, index, OWNER_EMAIL, TENANT_ID) and sets the MASTER_KEY
+// secret, which never appears here. No service bindings: every platform service comes from the host
+// (`src/host.ts`). The Worker Loader (Code Mode) and Images (HEIC) are paid-plan bindings a deploy adds;
+// without them Env types them optional (src/env.d.ts) and the agent refuses those features in words.
 {
   "name": "agent",
   "main": "src/index.ts",
@@ -26,33 +29,15 @@
     "Vault": { "type": "durable-object", "storage": "sqlite" }
   },
   "ai": { "binding": "AI" },
-  // Code Mode (M25.5, AD-8 amended): Dynamic Workers loaded from the Chat object, `Egress` their outbound.
-  "worker_loaders": [{ "binding": "LOADER" }],
-  // Cloudflare Images (M24.4): converts an uploaded HEIC to JPEG in-process from its bytes; AD-20 lets only this script bind it.
-  "images": { "binding": "IMAGES" },
   "r2_buckets": [{ "binding": "AGENT_BUCKET", "bucket_name": "qyvr-base-agent" }],
   // Semantic memory search (M12.2): the tenant's own index, one namespace per memory store.
   "vectorize": [{ "binding": "MEMORY_INDEX", "index_name": "qyvr-base-memory" }],
-  "services": [
-    { "binding": "ERROR_REPORTER", "service": "qyvr-error-reporter", "entrypoint": "ErrorReporter" },
-    { "binding": "KEYS", "service": "qyvr-dispatcher", "entrypoint": "Keys" },
-    { "binding": "WORKSPACE", "service": "qyvr-dispatcher", "entrypoint": "Workspace" },
-    { "binding": "BUDGET", "service": "qyvr-dispatcher", "entrypoint": "Budget" },
-    { "binding": "MAIL_SEAL", "service": "qyvr-dispatcher", "entrypoint": "MailSeal" },
-    { "binding": "PROVISIONING", "service": "qyvr-dispatcher", "entrypoint": "Provisioning" },
-    { "binding": "ACCESS_MEMBERS", "service": "qyvr-dispatcher", "entrypoint": "Members" },
-    { "binding": "MAIL_OUT", "service": "qyvr-mail-out", "entrypoint": "MailOut" }
-  ],
-  // MEMBERS is the tenant file's member list as JSON (email, role and, where the file has one, name); ACCESS_* name the tenant's Access application
-  // (M4.1); ACCESS_LIVE_CLIENT_ID is staging's live-lane service token, empty elsewhere.
+  // TENANT_ID names the deploy's one tenant; OWNER_EMAIL is the owner `fletch init` asks for.
   "vars": {
     "TENANT_ID": "base",
     "TENANT_SHAPE": "standalone",
-    "QYVR_ENV": "staging",
-    "MEMBERS": "[]",
-    "ACCESS_ISSUER": "https://team.cloudflareaccess.com",
-    "ACCESS_AUD": "",
-    "ACCESS_LIVE_CLIENT_ID": ""
+    "QYVR_ENV": "self-host",
+    "OWNER_EMAIL": ""
   },
   "observability": { "enabled": true, "head_sampling_rate": 1, "redact_query_string": true, "logs": { "invocation_logs": true }, "traces": { "enabled": true, "head_sampling_rate": 1 } }
 }

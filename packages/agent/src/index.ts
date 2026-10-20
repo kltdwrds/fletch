@@ -1,17 +1,18 @@
-// The tenant agent script: one per tenant in the qyvr-tenants dispatch namespace (AD-1, AD-16).
-// The dispatcher sets the tenant in props; the person comes from the tenant's Access token, verified
-// here against the team's keys and mapped to a member by the `Company` (M4.1, `http/serve.ts`).
+// The agent script: one deploy serves one tenant (AD-1). Every service it takes from where it is
+// deployed comes from the host (`host.ts`), installed here once; the person comes from the host's
+// identity and is mapped to a member by the `Company` (M4.1, F1, `http/serve.ts`). With nothing in
+// front of the script there are no props, and it serves its own tenant.
 import { getAgentByName } from "agents";
-import { teamKeys } from "./http/access.ts";
+import { type Host, unavailable } from "@qyvr/host";
+import { secretKeyService } from "@qyvr/host-cloudflare";
+import { normalizeEmail } from "./company/members.ts";
+import { available, hostOf, setHost } from "./host.ts";
 import { propsOf } from "./http/identity.ts";
 import type { IngressStub } from "./http/ingress-routes.ts";
 import type { Directory } from "./http/routes.ts";
 import type { AppDirectory, AppJob } from "./http/app-routes.ts";
 import type { VaultDirectory } from "./http/vault-routes.ts";
-import type { MailSealService } from "./mail/inbound.ts";
-import { accessKeysFetch } from "./egress/outbound.ts";
 import { serve } from "./http/serve.ts";
-import { recordModelSample } from "./model/sample.ts";
 import { jobName } from "./objects/job.ts";
 import { dayRollup } from "./obs/dashboard.ts";
 import { appAttachments } from "./attachments/wiring.ts";
@@ -23,6 +24,34 @@ export { Chat, Company, Ingress, Job, Ledger, Person, Vault } from "./objects/in
 export { SubAgent } from "./objects/subagent.ts";
 /** Code Mode's outbound (M25.5): every Dynamic Worker's `globalOutbound`, loaded with the tenant and person in props. */
 export { Egress } from "./code/egress.ts";
+
+const NOT_IN_BUILD = (feature: string) => `${feature} is not part of the self-host build; see README`;
+
+/**
+ * The self-host deploy's host until the passkey login lands (Task 6 replaces this with `singleAccountHost`):
+ * keys from the `MASTER_KEY` secret, the owner from `OWNER_EMAIL`, no cross-tenant budget, and every
+ * platform service refused with its code. No session verifies yet: identity refuses IDENTITY_UNAVAILABLE.
+ */
+function selfHost(env: Env): Host {
+  return {
+    tenant: { id: env.TENANT_ID, shape: "standalone", env: "self-host" },
+    keys: secretKeyService(env.MASTER_KEY, env.TENANT_ID),
+    budget: null,
+    identity: {
+      verify: async () => ({ ok: false, code: "IDENTITY_UNAVAILABLE", reason: "sign-in is not set up on this deploy yet", status: 503 }),
+      routes: async () => null,
+    },
+    mail: unavailable("mail", NOT_IN_BUILD("mail")),
+    workspace: unavailable("workspace", NOT_IN_BUILD("workspace")),
+    provisioning: unavailable("provisioning", NOT_IN_BUILD("provisioning")),
+    members: unavailable("members", NOT_IN_BUILD("members")),
+    reporter: { report: (event, fields, level = "info") => console.log(JSON.stringify({ event, level, ...fields })) },
+    render: unavailable("render", NOT_IN_BUILD("render")),
+    memberSeed: JSON.stringify(env.OWNER_EMAIL ? [{ email: normalizeEmail(env.OWNER_EMAIL), role: "owner" }] : []),
+  };
+}
+
+setHost(selfHost);
 
 function directory(env: Env): Directory {
   const ledger = () => env.LEDGER.get(env.LEDGER.idFromName(env.TENANT_ID));
@@ -46,7 +75,6 @@ function directory(env: Env): Directory {
     ledger: () => ({ modelCalls: (filter) => ledger().modelCalls(filter) }),
     ingress: (id) => env.INGRESS.get(env.INGRESS.idFromName(id)) as unknown as IngressStub,
     mail: {
-      seal: env.MAIL_SEAL as unknown as MailSealService,
       deliver: async (person, m) => (await getAgentByName(env.PERSON, person)).receiveMail(m),
       send: async (person, m) => (await getAgentByName(env.PERSON, person)).sendMail(person, m),
     },
@@ -153,7 +181,6 @@ function directory(env: Env): Directory {
       conversionBundle: async (person, request) => (await getAgentByName(env.PERSON, person)).conversionBundle(request),
       conversionComplete: async (person, input) => (await getAgentByName(env.PERSON, person)).conversionComplete(input),
       conversionRestore: async (person, markdown) => (await getAgentByName(env.PERSON, person)).conversionRestore(markdown),
-      ...(env.QYVR_ENV === "staging" ? { memorySearch: async (person: string, queries: string[]) => (await getAgentByName(env.PERSON, person)).memorySearch({ queries }, person) } : {}),
     },
     dashboard: {
       admin: { isAdmin: (by) => company().isAdmin(by), members: memberEmails, counts: personCounts, ledger: { dashboard: (range, d) => ledger().dashboard(range, d) } },
@@ -166,7 +193,10 @@ function directory(env: Env): Directory {
       }),
       now: () => Date.now(),
     },
-    render: (input) => env.RENDERER.getByName("render").render(input),
+    render: async (input) => {
+      const render = hostOf(env).render;
+      return available(render) ? render.render(input) : render;
+    },
     share: (token) => routeShare(token, env.AGENT_BUCKET, async (person, t) => (await getAgentByName(env.PERSON, person)).sharedFile(t)),
     migrations: () => sweepTenant({
       members: memberEmails,
@@ -178,16 +208,12 @@ function directory(env: Env): Directory {
       job: (name) => env.JOB.get(env.JOB.idFromName(name)).migrationProbe(),
     }),
     rollup: (day) => dayRollup({ members: memberEmails, counts: personCounts, ledger: { rollup: (d, c) => ledger().rollup(d, c) } }, day),
-    modelSample: (person) => recordModelSample({ ai: env.AI, ledger: ledger(), tenant: env.TENANT_ID, person, now: () => Date.now() }),
   };
 }
 
-/** Per isolate: the team's keys are fetched once and refetched on rotation (`access.ts`). */
-let keys: { issuer: string; source: ReturnType<typeof teamKeys> } | undefined;
-
 export default {
   async fetch(request, env, ctx): Promise<Response> {
-    if (!keys || keys.issuer !== env.ACCESS_ISSUER) keys = { issuer: env.ACCESS_ISSUER, source: teamKeys(env.ACCESS_ISSUER, accessKeysFetch, () => Date.now()) };
-    return serve(request, env, propsOf(ctx), { dir: directory(env), keys: keys.source, now: () => Date.now() });
+    // No platform in front of the script means no props: it serves its own tenant.
+    return serve(request, env, propsOf(ctx) ?? { tenant: env.TENANT_ID }, { dir: directory(env), now: () => Date.now() });
   },
 } satisfies ExportedHandler<Env>;
