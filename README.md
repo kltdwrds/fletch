@@ -38,9 +38,10 @@ so the cleanup prints a warning naming that bucket; the run still passes. Any ot
 by hand before the next run, or that run's sweep fails on it: Dashboard, R2, the bucket, delete its objects, then delete
 the bucket. `pnpm live-sweep` (same two variables) removes every other `fletch-ci-` leftover.
 
-## Set up your own fletch (about ten minutes)
+## Set up your own fletch (aimed at ten minutes)
 
-You need a Cloudflare account (the free plan works), Node 24.19 or newer, and pnpm.
+You need a Cloudflare account (the free plan is the target; not yet verified (see docs/DECISIONS.md)), Node 24.19
+or newer, and pnpm. Nobody has timed this path on a real account yet: the F1 exit test above measures it.
 
 1. **Make an API token.** Cloudflare dashboard, My Profile, API Tokens, Create Token. Give it these permissions on
    your account: Workers Scripts (Edit), Workers R2 Storage (Edit), Vectorize (Edit) and Workers AI (Read). Note
@@ -64,8 +65,10 @@ You need a Cloudflare account (the free plan works), Node 24.19 or newer, and pn
 
    Give `--dir`. Without it the config is written to the directory pnpm was run from (`INIT_CWD`), which with
    `pnpm --dir` is where you stand, but if you run `pnpm create-fletch` inside the checkout it lands in the
-   checkout: gitignored there as `/wrangler.jsonc`, and it holds your account id and email. Without the flags it asks for the name, your email, the account id and the token (input
-   hidden). The token is read from the environment only, never from an argument.
+   checkout: gitignored there as `/wrangler.jsonc`, and it holds your account id and email.
+
+   Without the flags it asks for the name, your email, the account id and the token (input hidden). The token is
+   read from the environment only, never from an argument.
 
 `npm create fletch` will do the same without a checkout once `create-fletch` is published; today it runs from a
 checkout, because the `wrangler.jsonc` it writes sets `main` to this checkout's `packages/agent/src/index.ts` and
@@ -103,6 +106,19 @@ Run the same command again whenever you like. A second run creates nothing, rota
 same URL (it redeploys the Worker from the checkout, so it is also how you update). It refuses with
 `INIT_CONFIG_EXISTS` rather than overwrite a `wrangler.jsonc` it did not write, and with `INIT_FAILED` for a
 local failure such as an unwritable directory.
+
+The owner cannot be changed by running it again. If the `wrangler.jsonc` in `--dir` names another `OWNER_EMAIL`,
+it refuses with `INIT_OWNER_CHANGE` before calling Cloudflare: the deploy's passkeys, sessions and recovery code
+belong to that address, so a new owner would be locked out. Run it with the same `--owner-email`, or set up a new
+deploy (another `--name` and `--dir`) for the other address.
+
+### Models
+
+Every model call goes to Workers AI over the Worker's `AI` binding: no provider key, and the usage counts against
+your account's Workers AI allowance. Nothing is routed through an AI Gateway unless you set the `AI_GATEWAY_ID` var to a gateway
+you created; then every call goes through it. With a gateway, `CHAT_PROVIDER = "openrouter"` sends the chat route
+to the same model on OpenRouter with the key stored in that gateway (bring your own key), Workers AI as its fallback.
+Add both under `vars` in the written `wrangler.jsonc` and deploy that file as in the custom hostname step below.
 
 ### A custom hostname is a second step
 
@@ -153,7 +169,8 @@ wrangler bundles (`WRANGLER_BUILD_CONDITIONS`, in `pnpm accept` and in create-fl
 `--conditions=development` or run `pnpm -r --filter "./packages/host*" build`.
 
 Releases: add a changeset (`pnpm changeset`); every merge to `main` runs `pnpm check`, then the release workflow
-builds the two primitives and publishes the versions the changesets name (`pnpm release`).
+builds the two primitives and publishes the versions the changesets name (`pnpm release`). Until the repository
+has an `NPM_TOKEN` secret the workflow warns and skips publishing; nothing has been published yet.
 
 ## Origin
 

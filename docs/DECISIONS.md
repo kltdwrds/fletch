@@ -35,6 +35,8 @@ Whatever the result, the agent already behaves correctly: `LOADER?` and `IMAGES?
 
 Status: OPEN. The test is written and its pure helpers are tested hermetically; nobody has run it against Cloudflare, and the tag `v0.1.0` waits for a passing run.
 
+The free plan is the target for the base deploy (the test deploys with `paid: false`), but it is not verified until this test passes on a free-plan account; the README says so. The ten minutes are a target too: the test prints the wall-clock time and asserts nothing about it.
+
 `test/live/f1-deploy.live.test.ts` calls `init()` against a throwaway account (Worker `fletch-ci-<run id>`, `paid: false`, owner `sam@solo-sam.example`, a temp `--dir`), then walks the ten-minute path: `/health` lists seven objects, `/app/chats` is `401 SESSION_MISSING`, `/login?setup=` is the register page, a software ES256 passkey registers with the setup token and yields a recovery code, a chat remembers "my favourite colour is teal" and answers it in a new chat, deleting the only passkey is refused with `LOGIN_LAST_PASSKEY`, a second passkey is added and one deleted, and the recovery code signs in once and then fails with `RECOVERY_CODE_SPENT`. It prints the wall-clock time (measured, not asserted). `afterAll` always deletes the Worker, the bucket `<name>-agent` and the index `<name>-memory`, and only names that start with `fletch-ci-`.
 
 Run it (the command Kyle runs):
