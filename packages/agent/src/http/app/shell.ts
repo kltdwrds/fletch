@@ -285,9 +285,13 @@ const el = (tag, text) => { const e = document.createElement(tag); if (text !== 
 // A copy of one of the shell's glyphs (the hidden #glyphs set in the markup, each in its default weight) for a node
 // the script draws, at the canvas's tier for its place.
 const icon = (name, tier) => { const s = $("glyph-" + name).cloneNode(true); s.removeAttribute("id"); s.setAttribute("class", "ico ico-" + tier); return s; };
-const post = (path, body, method = "POST") => fetch(path, { method, headers: { "content-type": "application/json" }, body: JSON.stringify(body || {}) });
+// Every route the page asks goes through api(): a 401 means the session is gone (it expired, or this browser signed
+// out in another tab), so the page goes to sign-in instead of drawing an empty or failed answer.
+const toLogin = () => location.assign("/login");
+const api = async (path, init) => { const r = await fetch(path, init); if (r.status === 401) toLogin(); return r; };
+const post = (path, body, method = "POST") => api(path, { method, headers: { "content-type": "application/json" }, body: JSON.stringify(body || {}) });
 // A read that failed throws its code on \`code\`; what the person reads is said where it is caught, in words.
-const getJson = async (path) => { const r = await fetch(path); const b = await r.json().catch(() => ({ code: "BAD_ANSWER" })); if (!r.ok || b.ok === false) throw Object.assign(new Error("not read"), { code: b.code || "HTTP_" + r.status }); return b; };
+const getJson = async (path) => { const r = await api(path); const b = await r.json().catch(() => ({ code: "BAD_ANSWER" })); if (!r.ok || b.ok === false) throw Object.assign(new Error("not read"), { code: b.code || "HTTP_" + r.status }); return b; };
 const coded = (node, text, code) => { node.textContent = text; node.dataset.code = code || ""; return node; };
 const couldNot = (node, what, e) => coded(node, "Could not read " + what + " just now. Reload the page to try again.", e && e.code);
 const failedTo = async (node, what, r) => coded(node, what + ": that did not go through. Try again; if it keeps happening, tell an admin.", (await r.json().catch(() => ({}))).code);

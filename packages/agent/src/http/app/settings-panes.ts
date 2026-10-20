@@ -61,6 +61,7 @@ export const SETTINGS_TEXT = {
   accountRow: "Account",
   signedIn: "{person} · {role} at {tenant}",
   logout: "Log out",
+  logoutFailed: "Not logged out: that did not go through. Try again.",
   reading: "Reading…",
   appearance: "Appearance",
   mode: "Mode",

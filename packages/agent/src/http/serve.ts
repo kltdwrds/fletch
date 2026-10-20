@@ -1,7 +1,8 @@
 // The agent script's request path (M4.1, F1): props must name this script's tenant; a platform's own
 // calls (props.platform) reach the platform routes; the host's own routes (login, logout, recovery)
 // answer with no session; everything else is identified by the host's identity (`identity.ts`) before
-// any route runs. `/health`, share links and webhooks answer without a session.
+// any route runs. `/health`, share links and webhooks answer without a session. A browser with no session that asks for
+// a page (a GET accepting text/html) is sent to `/login`; an API caller keeps the JSON refusal.
 import { OBJECT_CLASSES } from "../objects/names.ts";
 import { type DispatchProps, identify } from "./identity.ts";
 import { HOOK_PATH, webhook } from "./ingress-routes.ts";
@@ -17,6 +18,8 @@ export interface ServeDeps {
 }
 
 const json = (body: unknown, status = 200) => Response.json(body, { status });
+/** A browser navigating to a page, as opposed to a script or API caller reading JSON. */
+const wantsPage = (request: Request) => request.method === "GET" && (request.headers.get("accept") ?? "").includes("text/html");
 
 export async function serve(request: Request, env: Env, props: DispatchProps | null, deps: ServeDeps): Promise<Response> {
   const url = new URL(request.url);
@@ -60,6 +63,7 @@ export async function serve(request: Request, env: Env, props: DispatchProps | n
   const who = await identify(request, env, (email) => deps.dir.company().lookup(email));
   if (!who.ok) {
     if (who.status === 503) log("identity.unavailable", { tenant: env.TENANT_ID, code: who.code }, "error");
+    if (who.status === 401 && wantsPage(request)) return new Response(null, { status: 302, headers: { location: "/login", "cache-control": "no-store" } });
     return json({ code: who.code, reason: who.reason }, who.status);
   }
   return route(request, env, { tenant: who.session.tenant, person: who.session.person, role: who.session.role }, deps.dir);

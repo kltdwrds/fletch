@@ -40,7 +40,7 @@ export function settingsMarkup(p: { connectors: string; connector: string; permi
   <div id="set-frame" class="qf-set">
     <div class="qf-set-nav"><h2>${SETTINGS_TEXT.title}</h2>
       <nav id="set-nav" aria-label="${SETTINGS_TEXT.title}">${SETTINGS_PANES.map(navBtn).join("")}</nav>
-      <div class="bot"><a id="logout" class="set-logout" href="/cdn-cgi/access/logout">${ic("logout", "xs")}${SETTINGS_TEXT.logout}</a></div>
+      <div class="bot"><button id="logout" class="set-logout" type="button">${ic("logout", "xs")}${SETTINGS_TEXT.logout}</button><p id="logout-result" class="set-logout-note" role="status"></p></div>
     </div>
     <div class="qf-set-pane">
       <button id="set-back" class="qf-ibtn qf-ibtn--glass qf-ibtn--28 qf-set-back qf-only-phone" aria-label="${SETTINGS_TEXT.back}">${ic("back", "xs")}</button>
@@ -60,7 +60,9 @@ ${Object.entries(panes).map(([k, html]) => `<section id="set-pane-${k}"${k === "
 export const SETTINGS_CSS = `
 .qf-set-nav button[aria-current] { background: var(--fill-secondary-elevated); font-weight: 500; }
 .set-chev { margin-left: auto; display: flex; color: var(--text-tertiary); }
-.set-logout { display: flex; align-items: center; gap: 10px; height: 32px; padding: 6px 8px; border-radius: var(--radius-12); color: var(--text-primary); font: 400 14px/20px var(--font-sans); text-decoration: none; }
+.set-logout { display: flex; align-items: center; gap: 10px; height: 32px; padding: 6px 8px; border-radius: var(--radius-12); color: var(--text-primary); font: 400 14px/20px var(--font-sans); text-decoration: none; width: 100%; }
+.set-logout-note { margin: 4px 8px 0; color: var(--text-secondary); font: 400 12px/16px var(--font-sans); }
+.set-logout-note:empty { display: none; }
 .qf-set-body > section, .qf-set-body > section > div:not(.qf-grp) { display: flex; flex-direction: column; gap: 16px; }
 .qf-srow .set-ico { width: 28px; display: flex; justify-content: center; color: var(--text-secondary); }
 .qf-srow .tx > .sub { display: block; }
@@ -99,7 +101,7 @@ const SET_TITLE = Object.assign(${JSON.stringify(PANE_TITLE)}, ${JSON.stringify(
 const setPlural = (n, w) => n + " " + (n === 1 ? w[0] : w[1]);
 const setGrouped = (n) => String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ",");
 // A form post (the capture route reads a form, not JSON); the browser sends the page's own Origin with it.
-const postForm = (path, form) => fetch(path, { method: "POST", body: form });
+const postForm = (path, form) => api(path, { method: "POST", body: form });
 const setDollars = (micros) => micros === 0 ? SETTINGS.free : micros < 10000 ? SETTINGS.cheap : "$" + (micros / 1000000).toFixed(2);
 // The dialog: which pane is shown, and on a phone whether the nav (the first page) or a pane is. A nested pane's
 // Back goes to the pane it sits under; elsewhere Back is the phone's way back to the nav.
@@ -125,6 +127,15 @@ function openSettings(pane) {
 for (const k of SET_PANES) $("set-nav-" + k).onclick = () => setPane(k);
 $("set-back").onclick = () => { if (setNow in SET_NESTED) setPane(SET_NESTED[setNow]); else $("set-frame").className = "qf-set"; };
 $("set-close").onclick = () => closeDialog($("set-dialog"));
+// Log out: the host's own /logout (a same-origin POST, so the browser sends this page's Origin) ends the session and
+// clears its cookie; then the page goes to sign-in. A logout that did not go through says so and stays.
+$("logout").onclick = async () => {
+  let r = null;
+  try { r = await fetch("/logout", { method: "POST" }); } catch (e) {}
+  if (r && r.ok) { location.assign("/login"); return; }
+  const b = r ? await r.json().catch(() => ({})) : {};
+  coded($("logout-result"), SETTINGS.logoutFailed, b.code || (r ? "HTTP_" + r.status : "OFFLINE"));
+};
 // Appearance: the mode this browser keeps (Light, Dark or System), applied to the body's data-theme by the shell's
 // theme(). A browser that will not store it keeps the pick for this page and says nothing is wrong: it is a view choice.
 const MODES = ${JSON.stringify(MODES)};
@@ -141,7 +152,7 @@ const RUN_PHASE = { executing: "running", awaiting_approval: "waiting for you", 
 async function settings() {
   // Each part reads on its own, so one that could not be read does not blank the others.
   modeDraw(); usage(); loopsRow(); devicesRow(); connectorsRow();
-  const res = await fetch("/me");
+  const res = await api("/me");
   const me = await res.json();
   if (!res.ok) { couldNot($("me"), "your settings", me); return; }
   $("me").textContent = SETTINGS.signedIn.replace("{person}", me.person).replace("{role}", me.role).replace("{tenant}", me.tenant);
@@ -271,7 +282,7 @@ async function setLoop(body) {
 }
 // Company, for an admin: the members (FilesTable), the invite form, and how many were invited.
 async function members() {
-  const list = await fetch("/admin/members");
+  const list = await api("/admin/members");
   const body = await list.json().catch(() => ({ code: "BAD_ANSWER" }));
   const rowsOf = $("members"); rowsOf.replaceChildren();
   if (!list.ok) { couldNot($("invite-result"), "the members", body); return; }
@@ -307,7 +318,7 @@ $("push-on").onchange = async () => {
     return;
   }
   try {
-    const key = await fetch("/push/key").then((r) => r.json());
+    const key = await api("/push/key").then((r) => r.json());
     if (!key.key) throw Object.assign(new Error("no key"), { code: key.code });
     const reg = await navigator.serviceWorker.ready;
     let sub;

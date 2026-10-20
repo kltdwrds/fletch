@@ -417,7 +417,7 @@ async function upload(file, pasted) {
   s.chip = el("span", s.name + " · " + ATTACH.uploading); s.chip.className = "qf-chip chip"; $("attached").append(s.chip); staged.push(s); drawStaged();
   const fd = new FormData(); fd.append("file", file, file.name || "pasted.png"); if (pasted) fd.append("pasted", "1");
   let r = null, b = {};
-  try { r = await fetch("/app/attachments", { method: "POST", body: fd }); b = await r.json().catch(() => ({})); } catch (e) {}
+  try { r = await api("/app/attachments", { method: "POST", body: fd }); b = await r.json().catch(() => ({})); } catch (e) {}
   const x = el("button", "×"); x.setAttribute("aria-label", ATTACH.remove);
   x.onclick = () => { staged = staged.filter((o) => o !== s); s.chip.remove(); drawStaged(); };
   if (r && r.ok && b.attachment) { s.id = b.attachment.id; s.name = b.attachment.name; s.ready = true; s.chip.textContent = s.name; s.chip.append(x); return; }
