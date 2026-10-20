@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["node"]
+  },
+  "include": ["worker-configuration.d.ts", "src/**/*.ts", "../../test/workers/**/*.ts", "../../test/scenarios/**/*.ts"]
+}

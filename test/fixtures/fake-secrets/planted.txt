@@ -1,0 +1,6 @@
+Fake credentials for tests that plant a secret and expect the scan to refuse it. None is real.
+github: ghp_FAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKE
+aws: AKIAFAKEFAKEFAKEFAKE
+anthropic: sk-ant-fake-0000000000000000000000
+pem: -----BEGIN PRIVATE KEY-----
+dev-vars-value: qyvr-fake-dev-vars-value-0001

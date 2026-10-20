@@ -1,0 +1,58 @@
+// Base config of the tenant agent script. Never deployed as is: scripts/platform/generate.ts
+// re-targets it per tenant (name, bucket, props, limits) and `wrangler types` reads it for Env.
+{
+  "name": "agent",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "durable_objects": {
+    "bindings": [
+      { "name": "PERSON", "class_name": "Person" },
+      { "name": "COMPANY", "class_name": "Company" },
+      { "name": "CHAT", "class_name": "Chat" },
+      { "name": "JOB", "class_name": "Job" },
+      { "name": "INGRESS", "class_name": "Ingress" },
+      { "name": "LEDGER", "class_name": "Ledger" },
+      { "name": "VAULT", "class_name": "Vault" }
+    ]
+  },
+  "exports": {
+    "Person": { "type": "durable-object", "storage": "sqlite" },
+    "Company": { "type": "durable-object", "storage": "sqlite" },
+    "Chat": { "type": "durable-object", "storage": "sqlite" },
+    "Job": { "type": "durable-object", "storage": "sqlite" },
+    "Ingress": { "type": "durable-object", "storage": "sqlite" },
+    "Ledger": { "type": "durable-object", "storage": "sqlite" },
+    "Vault": { "type": "durable-object", "storage": "sqlite" }
+  },
+  "ai": { "binding": "AI" },
+  // Code Mode (M25.5, AD-8 amended): Dynamic Workers loaded from the Chat object, `Egress` their outbound.
+  "worker_loaders": [{ "binding": "LOADER" }],
+  // Cloudflare Images (M24.4): converts an uploaded HEIC to JPEG in-process from its bytes; AD-20 lets only this script bind it.
+  "images": { "binding": "IMAGES" },
+  "r2_buckets": [{ "binding": "AGENT_BUCKET", "bucket_name": "qyvr-base-agent" }],
+  // Semantic memory search (M12.2): the tenant's own index, one namespace per memory store.
+  "vectorize": [{ "binding": "MEMORY_INDEX", "index_name": "qyvr-base-memory" }],
+  "services": [
+    { "binding": "ERROR_REPORTER", "service": "qyvr-error-reporter", "entrypoint": "ErrorReporter" },
+    { "binding": "KEYS", "service": "qyvr-dispatcher", "entrypoint": "Keys" },
+    { "binding": "WORKSPACE", "service": "qyvr-dispatcher", "entrypoint": "Workspace" },
+    { "binding": "BUDGET", "service": "qyvr-dispatcher", "entrypoint": "Budget" },
+    { "binding": "MAIL_SEAL", "service": "qyvr-dispatcher", "entrypoint": "MailSeal" },
+    { "binding": "PROVISIONING", "service": "qyvr-dispatcher", "entrypoint": "Provisioning" },
+    { "binding": "ACCESS_MEMBERS", "service": "qyvr-dispatcher", "entrypoint": "Members" },
+    { "binding": "MAIL_OUT", "service": "qyvr-mail-out", "entrypoint": "MailOut" }
+  ],
+  // MEMBERS is the tenant file's member list as JSON (email, role and, where the file has one, name); ACCESS_* name the tenant's Access application
+  // (M4.1); ACCESS_LIVE_CLIENT_ID is staging's live-lane service token, empty elsewhere.
+  "vars": {
+    "TENANT_ID": "base",
+    "TENANT_SHAPE": "standalone",
+    "QYVR_ENV": "staging",
+    "MEMBERS": "[]",
+    "ACCESS_ISSUER": "https://team.cloudflareaccess.com",
+    "ACCESS_AUD": "",
+    "ACCESS_LIVE_CLIENT_ID": ""
+  },
+  "observability": { "enabled": true, "head_sampling_rate": 1, "redact_query_string": true, "logs": { "invocation_logs": true }, "traces": { "enabled": true, "head_sampling_rate": 1 } }
+}

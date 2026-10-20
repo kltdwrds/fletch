@@ -1,0 +1,112 @@
+// M25.3: named migrations, the dormant sweep, release-owned prefixes, the release channel. Fixtures are the schemas the lazy
+// code of release m25.2 left (test/fixtures/db/release-m25.2/); a later release adds its own folder and keeps this one.
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { Ledger } from "../../packages/agent/src/objects/ledger.ts";
+import { OBJECT_MIGRATIONS, type ObjectKind } from "../../packages/agent/src/migrations/catalog.ts";
+import { migrate, migrationStatus, type Migration } from "../../packages/agent/src/migrations/engine.ts";
+import { ObjectHarness } from "../support/object-harness.ts";
+import { ada } from "./support/authority-world.ts";
+
+const FIXTURES = join(import.meta.dirname, "../fixtures/db/release-m25.2");
+const fixture = (kind: string) => readFileSync(join(FIXTURES, `${kind}.sql`), "utf8");
+
+/** A harness over a dormant object: the fixture's schema and rows, no migrations table, nothing constructed yet. */
+function dormant<T extends object>(name: string, kind: ObjectKind, make: (ctx: unknown, env: unknown) => T, env: Record<string, unknown> = {}, seed?: (h: ObjectHarness<T>) => void) {
+  const h = new ObjectHarness<T>(name, make, env);
+  h.autoMigrate = false;
+  h.db.exec(fixture(kind));
+  seed?.(h);
+  return h;
+}
+const columnsOf = <T extends object>(h: ObjectHarness<T>) => Object.fromEntries(h.rows("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE '%_fts%' AND name != 'sqlite_sequence' ORDER BY name").map((t) => [t.name, h.rows(`SELECT name FROM pragma_table_info('${t.name}') ORDER BY name`).map((c) => c.name)]));
+
+describe("[M25.3] named migrations", () => {
+  it("a migration applied twice is a no-op: the second run applies nothing and the record keeps its first time", () => {
+    const h = new ObjectHarness("ledger-once", (ctx, e) => new Ledger(ctx as DurableObjectState, e as Env), {});
+    const list = OBJECT_MIGRATIONS.ledger;
+    void h.instance;
+    const first = h.rows("SELECT name, applied_at, release FROM migrations WHERE name LIKE 'ledger.%' ORDER BY name");
+    expect(first.map((r) => r.name)).toEqual(list.map((m) => m.name).toSorted());
+    expect(first.every((r) => typeof r.release === "string" && r.release.length > 0)).toBe(true);
+    const again = h.instance as unknown as { ctx: { storage: never } };
+    expect(again.ctx.storage).toBeDefined();
+    expect(migrate(again.ctx.storage, list, () => 1)).toEqual({ applied: [] });
+    expect(h.rows("SELECT name, applied_at, release FROM migrations WHERE name LIKE 'ledger.%' ORDER BY name")).toEqual(first);
+  });
+
+  it("a migration that fails leaves no record and none of its changes, and the next wake retries it", () => {
+    const h = new ObjectHarness("flaky", (ctx) => ctx as { storage: never }, {});
+    const storage = h.instance.storage;
+    let broken = true;
+    const list: Migration[] = [
+      { name: "t.one", release: "m25.3", up: (sql) => void sql.exec("CREATE TABLE IF NOT EXISTS t_one (a INTEGER)") },
+      { name: "t.two", release: "m25.3", up: (sql) => { sql.exec("CREATE TABLE IF NOT EXISTS t_two (a INTEGER)"); if (broken) throw new Error("boom"); } },
+    ];
+    expect(() => migrate(storage, list)).toThrow("boom");
+    expect(h.rows("SELECT name FROM migrations WHERE name LIKE 't.%'").map((r) => r.name)).toEqual(["t.one"]);
+    expect(h.rows("SELECT name FROM sqlite_master WHERE name = 't_two'")).toEqual([]);
+    broken = false;
+    expect(migrate(storage, list).applied).toEqual(["t.two"]);
+  });
+
+  it("a fixture from the older release migrates to the schema a fresh object has, keeping its rows", () => {
+    for (const file of readdirSync(FIXTURES)) {
+      const kind = file.replace(/\.sql$/, "") as ObjectKind;
+      const old = dormant(`old-${kind}`, kind, (ctx) => ctx as { storage: never });
+      const fresh = new ObjectHarness(`fresh-${kind}`, (ctx) => ctx as { storage: never }, {});
+      fresh.autoMigrate = false;
+      const before = columnsOf(old);
+      migrate(old.instance.storage, OBJECT_MIGRATIONS[kind]);
+      migrate(fresh.instance.storage, OBJECT_MIGRATIONS[kind]);
+      const after = columnsOf(old);
+      expect(after, kind).toEqual(columnsOf(fresh));
+      for (const [table, cols] of Object.entries(before)) expect(after[table], `${kind}.${table}`).toEqual(cols);
+      expect(migrationStatus(old.instance.storage, OBJECT_MIGRATIONS[kind]).behind).toEqual([]);
+    }
+  });
+
+  it("an older store than the fixture gains its columns: a Ledger without cost_micros prices its rows, a memory without valid_until gains it", () => {
+    const h = new ObjectHarness("ledger-pre-m5", (ctx) => ctx as { storage: never }, {});
+    h.db.exec("CREATE TABLE model_calls (id INTEGER PRIMARY KEY AUTOINCREMENT, tenant TEXT NOT NULL, person TEXT NOT NULL, run_id TEXT NOT NULL, route TEXT NOT NULL, model TEXT NOT NULL, attempt INTEGER NOT NULL, status TEXT NOT NULL, code TEXT, http_status INTEGER, input_tokens INTEGER NOT NULL, output_tokens INTEGER NOT NULL, reasoning_tokens INTEGER NOT NULL, cached_tokens INTEGER NOT NULL, at INTEGER NOT NULL)");
+    h.db.prepare("INSERT INTO model_calls (tenant, person, run_id, route, model, attempt, status, input_tokens, output_tokens, reasoning_tokens, cached_tokens, at) VALUES ('solo-sam', ?, 'r1', 'chat', 'unpriced-model', 1, 'ok', 10, 5, 0, 0, 1)").run(ada.email);
+    migrate(h.instance.storage, OBJECT_MIGRATIONS.ledger);
+    const cols = h.rows("SELECT name FROM pragma_table_info('model_calls')").map((c) => c.name);
+    expect(cols).toEqual(expect.arrayContaining(["cost_micros", "started_at", "first_token_at", "finished_at", "provider"]));
+    expect(h.rows("SELECT person, started_at, provider FROM model_calls")).toEqual([{ person: ada.email, started_at: null, provider: null }]);
+  });
+
+  it("the stores create no tables of their own: no source file but the migrations' schema owners runs CREATE or ALTER TABLE", () => {
+    const lazy = lazySchemaSites();
+    expect(lazy).toEqual([]);
+    expect(lazySchemaSites({ "planted.ts": 'storage.sql.exec("CREATE TABLE IF NOT EXISTS t (a INTEGER)");' })).toEqual(["planted.ts"]);
+    expect(lazySchemaSites({ "planted.ts": "sql.exec(`ALTER TABLE t ADD COLUMN b TEXT`);" })).toEqual(["planted.ts"]);
+  });
+
+  it("every exported store schema is in the catalog: a new SCHEMA a list forgets fails here", () => {
+    expect(unlistedSchemas()).toEqual([]);
+    expect(unlistedSchemas({ "x/store.ts": "export const SCHEMA = `CREATE TABLE IF NOT EXISTS x (a INTEGER)`;" }, "")).toEqual(["x/store.ts"]);
+  });
+});
+
+function sourceFiles(dir: string, out: Record<string, string> = {}): Record<string, string> {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, e.name);
+    if (e.isDirectory()) sourceFiles(p, out);
+    else if (e.name.endsWith(".ts")) out[p.slice(SRC.length + 1)] = readFileSync(p, "utf8");
+  }
+  return out;
+}
+const SRC = join(import.meta.dirname, "../../packages/agent/src");
+const OWNERS = /^(migrations\/(catalog|engine)\.ts)$/;
+
+/** Files that run CREATE or ALTER TABLE from an `exec(` call outside the migrations' own modules. */
+function lazySchemaSites(files: Record<string, string> = sourceFiles(SRC)): string[] {
+  return Object.entries(files).filter(([f, text]) => !OWNERS.test(f) && /\.exec\(\s*["'`][^"'`]*\b(CREATE|ALTER)\s+(VIRTUAL\s+)?TABLE/i.test(text)).map(([f]) => f);
+}
+
+/** Files that export a schema constant the catalog does not import. */
+function unlistedSchemas(files: Record<string, string> = sourceFiles(SRC), catalog = readFileSync(join(SRC, "migrations/catalog.ts"), "utf8")): string[] {
+  return Object.entries(files).filter(([f, text]) => /export const (SCHEMA|MEMORY_SCHEMA)\s*=/.test(text) && !catalog.includes(`/${f.replace(/\.ts$/, "")}.ts"`) && !catalog.includes(`"../${f}"`)).map(([f]) => f);
+}

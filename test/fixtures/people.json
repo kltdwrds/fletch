@@ -1,0 +1,5 @@
+{
+  "$comment": "The only identities tests may use: one fictional standalone tenant and its one person. Addresses use the reserved .example TLD (RFC 2606). No real identity appears anywhere in this tree.",
+  "companies": [{ "id": "solo-sam", "name": "Solo Sam", "domain": "solo-sam.example", "shape": "standalone" }],
+  "people": [{ "id": "sam-solo", "name": "Sam Solo", "email": "sam@solo-sam.example", "company": "solo-sam", "role": "admin" }]
+}
