@@ -1,0 +1,8 @@
+// create-fletch runs under Node, and imports @qyvr/host-cloudflare, whose sources are written over the Workers
+// types; both sets are loaded.
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "types": ["node", "@cloudflare/workers-types"] },
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["node_modules"]
+}

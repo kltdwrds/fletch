@@ -9,9 +9,10 @@
   "scripts": {
     "prepare": "simple-git-hooks",
     "accept": "node scripts/accept.ts",
+    "create-fletch": "node packages/create-fletch/src/index.ts",
     "ds": "node scripts/ds-tokens.ts",
     "lint": "biome lint .",
-    "typecheck": "pnpm --dir packages/agent exec wrangler types --strict-vars=false && tsc -p tsconfig.json && tsc -p tsconfig.hosts.json && tsc -p packages/agent/tsconfig.json",
+    "typecheck": "pnpm --dir packages/agent exec wrangler types --strict-vars=false && tsc -p tsconfig.json && tsc -p tsconfig.hosts.json && tsc -p packages/agent/tsconfig.json && tsc -p packages/create-fletch/tsconfig.json",
     "boundaries": "node scripts/check-boundaries.mjs",
     "test": "node --test scripts/*.test.mjs && QYVR_HERMETIC=1 vitest run",
     "check": "pnpm typecheck && pnpm lint && pnpm boundaries && pnpm test",

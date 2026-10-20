@@ -84,6 +84,15 @@ importers:
         specifier: 1.8.1
         version: 1.8.1
 
+  packages/create-fletch:
+    dependencies:
+      '@qyvr/host-cloudflare':
+        specifier: workspace:*
+        version: link:../host-cloudflare
+      wrangler:
+        specifier: 4.149.0
+        version: 4.149.0(@cloudflare/workers-types@5.20261019.1)(@types/node@26.1.0)
+
   packages/host: {}
 
   packages/host-cloudflare:

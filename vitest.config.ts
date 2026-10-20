@@ -17,7 +17,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: live ? ["test/**/*.live.test.ts"] : ["test/**/*.test.ts", "packages/host*/test/**/*.test.ts"],
+    include: live ? ["test/**/*.live.test.ts"] : ["test/**/*.test.ts", "packages/host*/test/**/*.test.ts", "packages/create-fletch/test/**/*.test.ts"],
     exclude: live ? ["**/node_modules/**"] : ["**/node_modules/**", "test/**/*.live.test.ts"],
     setupFiles: live ? [] : ["test/support/hermetic.setup.ts", "test/support/host.setup.ts"],
     environment: "node",

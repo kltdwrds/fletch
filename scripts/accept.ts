@@ -116,10 +116,10 @@ function testFiles(dirs: string[]): string[] {
   return out.toSorted();
 }
 
-/** Where hermetic tests live: the agent's under test/, the primitives' beside their packages. */
+/** Where hermetic tests live: the agent's under test/, the primitives' and create-fletch's beside their packages. */
 export function testDirs(base = root): string[] {
   const packages = join(base, "packages");
-  const hosts = existsSync(packages) ? readdirSync(packages).filter((p) => p.startsWith("host")).map((p) => join(packages, p, "test")) : [];
+  const hosts = existsSync(packages) ? readdirSync(packages).filter((p) => p.startsWith("host") || p === "create-fletch").map((p) => join(packages, p, "test")) : [];
   return [join(base, "test"), ...hosts];
 }
 
@@ -161,8 +161,8 @@ function vitest(files: string[], pattern: string, env: NodeJS.ProcessEnv, label:
 
 /** The agent: the one Worker package, its config read by `wrangler types` and the dry-run bundle. */
 export const AGENT_PACKAGE = "packages/agent";
-/** Every TypeScript project: the Node side, the primitives over the Workers types, and the agent. */
-export const TS_PROJECTS: readonly string[] = ["tsconfig.json", "tsconfig.hosts.json", AGENT_PACKAGE];
+/** Every TypeScript project: the Node side, the primitives over the Workers types, the agent, and create-fletch. */
+export const TS_PROJECTS: readonly string[] = ["tsconfig.json", "tsconfig.hosts.json", AGENT_PACKAGE, "packages/create-fletch"];
 const HARNESS_CHECKS = [
   "scripts/check-boundaries.mjs",
   "scripts/check-file-sizes.mjs",
