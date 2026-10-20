@@ -5,7 +5,8 @@
 import { writeFileSync } from "node:fs";
 import { zipSync } from "fflate";
 
-const MTIME = new Date("2026-10-16T00:00:00Z");
+// fflate writes the DOS date from local-time getters, so build the date from local fields: same bytes in every TZ.
+const MTIME = new Date(2026, 9, 16, 0, 0, 0);
 const enc = new TextEncoder();
 const zip = (files: Record<string, string | Uint8Array>, stored: string[] = []): Uint8Array =>
   zipSync(Object.fromEntries(Object.entries(files).map(([k, v]) => [k, [typeof v === "string" ? enc.encode(v) : v, { mtime: MTIME, level: stored.includes(k) ? 0 : 6 }]])));
