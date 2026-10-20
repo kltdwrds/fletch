@@ -80,8 +80,10 @@ export type ImageConverter = (input: { bytes: Uint8Array; mime: string }) => Pro
 
 /** HEIC and AVIF become JPEG through the converter; without one, or when it fails, the file is refused in words. */
 export async function toJpeg(convert: ImageConverter | null, a: Accepted, bytes: Uint8Array): Promise<{ ok: true; name: string; bytes: Uint8Array } | Refusal> {
-  const kind = a.mime === "image/avif" ? "an AVIF" : "a HEIC";
-  const unavailable: Refusal = { ok: false, code: "HOST_IMAGES_UNAVAILABLE", words: `${a.name} is ${kind} image, and converting it to JPEG needs the Images binding, which this deploy does not have, so it was not attached. Save it as JPEG and attach it again.` };
+  const avif = a.mime === "image/avif";
+  const unavailable: Refusal = avif
+    ? { ok: false, code: "HOST_IMAGES_UNAVAILABLE", words: `${a.name} is an AVIF image, and converting AVIF to JPEG needs a Cloudflare Enterprise plan, so it was not attached. Save it as JPEG and attach it again.` }
+    : { ok: false, code: "HOST_IMAGES_UNAVAILABLE", words: `${a.name} is a HEIC image, and converting it to JPEG needs the Images binding, which this deploy does not have, so it was not attached. Save it as JPEG and attach it again.` };
   if (!convert) return unavailable;
   let r: Converted;
   try {

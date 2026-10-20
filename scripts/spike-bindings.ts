@@ -9,7 +9,7 @@
 // only and are never printed or written to the generated files. Record the table in docs/DECISIONS.md.
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -53,6 +53,9 @@ export default {
 };
 `;
 }
+
+/** The only names this script may delete: exactly what `trial` generates. */
+export const isSpikeWorkerName = (name: string): boolean => /^fletch-spike-[0-9a-f]{8}$/.test(name);
 
 export interface Probe {
   ok: boolean;
@@ -117,7 +120,6 @@ async function trial(bindings: readonly Binding[], created: string[], dir: strin
   const name = `fletch-spike-${randomBytes(4).toString("hex")}`;
   created.push(name);
   const work = mkdtempSync(join(dir, `${name}-`));
-  mkdirSync(work, { recursive: true });
   writeFileSync(join(work, "worker.js"), spikeWorkerSource());
   writeFileSync(join(work, "wrangler.jsonc"), JSON.stringify(spikeConfig(name, bindings), null, 2));
   const deployed = wrangler(["deploy", "--config", "wrangler.jsonc"], work);
@@ -162,6 +164,10 @@ async function main(): Promise<number> {
     return 0;
   } finally {
     for (const name of created) {
+      if (!isSpikeWorkerName(name)) {
+        console.error(`refusing to delete ${JSON.stringify(name)}: not a fletch-spike-<8 hex> name`);
+        continue;
+      }
       const del = wrangler(["delete", "--name", name, "--force"], dir);
       console.error(del.code === 0 ? `deleted ${name}` : `DELETE FAILED for ${name}; remove it in the dashboard: ${del.output.trim().slice(0, 200)}`);
     }

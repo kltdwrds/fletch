@@ -1,6 +1,6 @@
 // [F1] The spike script's pure parts. Nothing here touches the network or wrangler.
 import { describe, expect, it } from "vitest";
-import { deployedUrl, deployOutcome, parseProbe, renderTable, spikeConfig, spikeWorkerSource } from "../scripts/spike-bindings.ts";
+import { deployedUrl, isSpikeWorkerName, deployOutcome, parseProbe, renderTable, spikeConfig, spikeWorkerSource } from "../scripts/spike-bindings.ts";
 
 describe("[F1] scripts/spike-bindings pure parts", () => {
   it("spikeConfig declares worker_loaders and images as asked, with no account id or secret", () => {
@@ -40,5 +40,10 @@ describe("[F1] scripts/spike-bindings pure parts", () => {
     expect(lines[0]).toMatch(/^binding\s+deploy accepted\s+call ok\s+detail$/);
     expect(lines[2]).toMatch(/^LOADER\s+y\s+y\s+loaded-ok$/);
     expect(lines[3]).toMatch(/^IMAGES\s+n\s+-\s+not on this plan$/);
+  });
+
+  it("isSpikeWorkerName accepts only the generated names, so a delete can never reach another Worker", () => {
+    expect(isSpikeWorkerName("fletch-spike-0a1b2c3d")).toBe(true);
+    for (const bad of ["fletch-spike-", "fletch-spike-0a1b2c3", "fletch-spike-0a1b2c3d4", "fletch-spike-0A1B2C3D", "agent", "xfletch-spike-0a1b2c3d", "fletch-spike-0a1b2c3d\n--x", "fletch-spike-0a1b2c3d-prod"]) expect(isSpikeWorkerName(bad)).toBe(false);
   });
 });
