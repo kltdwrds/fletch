@@ -6,12 +6,11 @@ on:
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 permissions:
-  contents: write
-  pull-requests: write
-  id-token: write
+  contents: read
 
 jobs:
-  release:
+  # The same environment as ci.yml: no registry auth and no OIDC token, which the hermetic test lane refuses to run beside.
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,7 +21,6 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-          registry-url: https://registry.npmjs.org
       - run: pnpm install --frozen-lockfile
       - name: Playwright version
         id: pw
@@ -35,6 +33,25 @@ jobs:
         run: pnpm exec playwright-core install --with-deps chromium
       - name: Check before publishing
         run: pnpm check
+
+  release:
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - run: pnpm install --frozen-lockfile
       # Without NPM_TOKEN nothing can be published: say so as a warning and skip publishing, so the run stays green
       # until the secret is added.
       - name: Check for NPM_TOKEN
