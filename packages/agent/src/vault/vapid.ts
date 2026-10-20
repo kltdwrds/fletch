@@ -12,6 +12,8 @@ export interface VapidDeps {
   dataKey: () => Promise<DataKey>;
   tenant: string;
   now: () => number;
+  /** The JWT's `sub` (`vapidSubject(OWNER_EMAIL)`): the deploy owner's `mailto:`; absent, the claim is left out. */
+  subject?: string;
 }
 
 const enc = new TextEncoder();
@@ -77,7 +79,7 @@ export class VapidKeys {
     if (!e.ok) return e;
     const s = await this.load();
     if (!s.ok) return s;
-    const { header, claims } = vapidClaims(e.url, this.deps.now());
+    const { header, claims } = vapidClaims(e.url, this.deps.now(), this.deps.subject);
     const sig = new Uint8Array(await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, s.key, enc.encode(`${header}.${claims}`)));
     return { ok: true, header: `vapid t=${header}.${claims}.${b64u(sig)}, k=${s.publicKey}` };
   }

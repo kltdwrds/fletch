@@ -85,7 +85,7 @@ export class VaultCore extends SealedVault {
   private vapidInstance?: VapidKeys;
   /** The tenant's VAPID key pair (M14.1), sealed under the same data key; it signs and never reveals. */
   get vapid(): VapidKeys {
-    this.vapidInstance ??= new VapidKeys({ sql: (q, ...b) => this.sql(q, ...b), dataKey: async () => this.dataKey().then((k) => (k.ok ? { ok: true as const, key: k.keys.key } : k)), tenant: this.deps.tenant, now: this.deps.now });
+    this.vapidInstance ??= new VapidKeys({ sql: (q, ...b) => this.sql(q, ...b), dataKey: async () => this.dataKey().then((k) => (k.ok ? { ok: true as const, key: k.keys.key } : k)), tenant: this.deps.tenant, now: this.deps.now, ...(this.deps.vapidSubject ? { subject: this.deps.vapidSubject } : {}) });
     return this.vapidInstance;
   }
 

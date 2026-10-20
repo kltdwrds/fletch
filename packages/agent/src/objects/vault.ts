@@ -11,6 +11,7 @@ import { BrowserStateVault } from "../vault/browser-state.ts";
 import type { CardWriter, Writer } from "../vault/hosts.ts";
 import { migrateObject, probeObject } from "../migrations/catalog.ts";
 import { hostOf } from "../host.ts";
+import { vapidSubject } from "../delivery/webpush.ts";
 
 export class Vault extends DurableObject<Env> {
   private readonly schema = migrateObject(this.ctx, "vault");
@@ -24,6 +25,8 @@ export class Vault extends DurableObject<Env> {
     this.coreInstance ??= new BrowserStateVault(this.ctx, {
       tenant: this.env.TENANT_ID,
       keys: hostOf(this.env).keys,
+      // Push services reach the deploy's owner, never a contact of someone else's (RFC 8292 `sub`).
+      ...(vapidSubject(this.env.OWNER_EMAIL) ? { vapidSubject: vapidSubject(this.env.OWNER_EMAIL) } : {}),
       fetch: egressNetwork,
       now: () => Date.now(),
       entitled: (person, connector, purpose) => this.env.COMPANY.get(this.env.COMPANY.idFromName(this.env.TENANT_ID)).connectorEntitled(person, connector, purpose),

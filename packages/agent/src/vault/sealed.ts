@@ -13,6 +13,8 @@ export interface VaultCtx {
 export interface VaultDeps {
   tenant: string;
   keys: KeyService;
+  /** The VAPID contact for push services (`vapidSubject(env.OWNER_EMAIL)`, `vault/vapid.ts`). */
+  vapidSubject?: string;
   fetch: (url: string, init: RequestInit) => Promise<Response>;
   now: () => number;
   /** Types a value into the page of a browser session (M9); only `fill` calls it. */

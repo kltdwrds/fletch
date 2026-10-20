@@ -111,10 +111,19 @@ export async function encryptPayload(sub: PushSubscription, payload: Uint8Array)
   return { ok: true, body: concat(header, record) };
 }
 
+/**
+ * The VAPID `sub` (RFC 8292 section 2.1): a contact for the push service, here the deploy's owner as a `mailto:`
+ * URI. With no owner address the claim is left out (the RFC's SHOULD), never filled with someone else's contact.
+ */
+export function vapidSubject(ownerEmail: string | undefined): string | undefined {
+  const email = ownerEmail?.trim();
+  return email && /^[^\s@]+@[^\s@]+$/.test(email) ? `mailto:${email}` : undefined;
+}
+
 /** The VAPID JWT's signing input for an endpoint's origin; the `Vault` signs it with ES256. */
-export function vapidClaims(endpoint: URL, now: number): { header: string; claims: string } {
+export function vapidClaims(endpoint: URL, now: number, subject?: string): { header: string; claims: string } {
   const header = b64u(enc.encode(JSON.stringify({ typ: "JWT", alg: "ES256" })));
   // At most 24 hours (RFC 8292 section 2); 12 hours leaves room for clock skew at the push service.
-  const claims = b64u(enc.encode(JSON.stringify({ aud: endpoint.origin, exp: Math.floor(now / 1000) + 12 * 3600, sub: "https://qyvr.ai" })));
+  const claims = b64u(enc.encode(JSON.stringify({ aud: endpoint.origin, exp: Math.floor(now / 1000) + 12 * 3600, ...(subject ? { sub: subject } : {}) })));
   return { header, claims };
 }
