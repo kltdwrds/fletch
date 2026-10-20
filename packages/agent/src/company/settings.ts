@@ -35,7 +35,7 @@ export class CompanySettings {
   private readonly now: () => number;
   private readonly defaults: Budgets;
 
-  /** `defaults` are the environment's daily caps (`defaultBudgets`), shown for what an admin did not set and never pushed. */
+  /** `defaults` are the daily caps (`DEFAULT_BUDGETS`), shown for what an admin did not set and never pushed. */
   constructor(storage: Pick<DurableObjectStorage, "sql">, members: CompanyMembers, now: () => number, defaults: Budgets) {
     this.storage = storage;
     this.members = members;

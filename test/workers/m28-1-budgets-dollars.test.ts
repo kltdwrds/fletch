@@ -4,7 +4,7 @@
 // solo-sam throughout.
 import { describe, expect, it } from "vitest";
 import { failureText } from "../../packages/agent/src/chat/failure-words.ts";
-import { chargeMicros, DEFAULT_BUDGETS, defaultBudgets, dollars, STAGING_BUDGETS } from "../../packages/agent/src/ledger/budget.ts";
+import { chargeMicros, DEFAULT_BUDGETS, dollars } from "../../packages/agent/src/ledger/budget.ts";
 import type { ModelCallRow } from "../../packages/agent/src/ledger/types.ts";
 import { COMPANY_MIGRATIONS, LEDGER_MIGRATIONS } from "../../packages/agent/src/migrations/catalog.ts";
 import { migrate } from "../../packages/agent/src/migrations/engine.ts";
@@ -25,28 +25,26 @@ type Storage = Parameters<typeof migrate>[0];
 const storageOf = (o: object) => (o as unknown as { ctx: { storage: Storage } }).ctx.storage;
 
 describe("[M28.1] the defaults", () => {
-  it("staging is $2 a person and $4 a tenant a day, the product $2 and $20, and the amounts read as dollars", () => {
-    expect(defaultBudgets("staging")).toEqual({ personDailyMicros: 2_000_000, tenantDailyMicros: 4_000_000 });
-    expect(STAGING_BUDGETS).toEqual(defaultBudgets("staging"));
-    for (const env of ["production", "test", undefined]) expect(defaultBudgets(env)).toEqual({ personDailyMicros: 2_000_000, tenantDailyMicros: 20_000_000 });
-    expect(DEFAULT_BUDGETS).toEqual(defaultBudgets(undefined));
+  it("the default is $2 a person and $20 a tenant a day, and the amounts read as dollars", () => {
+    expect(DEFAULT_BUDGETS).toEqual({ personDailyMicros: 2_000_000, tenantDailyMicros: 20_000_000 });
     expect([dollars(2_000_000), dollars(2_000_400), dollars(150), dollars(0), dollars(4_010_000)]).toEqual(["$2.00", "$2.0004", "$0.00015", "$0.00", "$4.01"]);
   });
 });
 
 describe("[M28.1] the Company stops overriding the environment", () => {
-  it("a staging company whose admin changed the tier and disabled then re-enabled an agent still enforces staging's $2 and $4", async () => {
-    const w = authorityWorld({ qyvrEnv: "staging" });
+  it("a company whose admin changed the tier and disabled then re-enabled an agent still enforces the default $2 and $20", async () => {
+    const w = authorityWorld();
     expect((await w.http(ada.email, "PUT", "/admin/settings", { modelTier: "economy" })).status).toBe(200);
-    // The regression: each of those pushes carried the product's caps, and the Ledger stored them over staging's.
+    // The regression: each of those pushes carried the product's caps, and the Ledger stored them over the default.
     expect(w.ledger().budgetsSet()).toEqual({});
-    expect(w.ledger().budgets()).toEqual(STAGING_BUDGETS);
-    expect((await w.http(ada.email, "GET", "/admin/overview")).body).toMatchObject({ settings: { budgets: STAGING_BUDGETS, budgetsSet: {}, modelTier: "economy" } });
+    expect(w.ledger().budgets()).toEqual(DEFAULT_BUDGETS);
+    expect((await w.http(ada.email, "GET", "/admin/overview")).body).toMatchObject({ settings: { budgets: DEFAULT_BUDGETS, budgetsSet: {}, modelTier: "economy" } });
   });
 
   it("the person's day and the tenant's day refuse by dollars with the amounts in the reason, and the tokens stay recorded", async () => {
-    const w = authorityWorld({ qyvrEnv: "staging" });
+    const w = authorityWorld();
     const ledger = w.ledger();
+    await ledger.setBudgets({ tenantDailyMicros: 4_000_000 });
     const admit = (person: string) => ledger.admit({ person, runId: `next-${person}`, model: ROUTES.chat });
     await ledger.record(call(ada.email, 1_999_999));
     expect(await admit(ada.email)).toEqual({ ok: true });
@@ -71,22 +69,22 @@ describe("[M28.1] the Company stops overriding the environment", () => {
   });
 
   it("an admin's cap reaches the Ledger exactly, survives an unrelated change, and null clears it back to the default", async () => {
-    const w = authorityWorld({ qyvrEnv: "staging" });
+    const w = authorityWorld();
     expect(await w.http(other.email, "PUT", "/admin/settings", { budgets: { personDailyMicros: 1 } })).toMatchObject({ status: 403, body: { code: "NOT_AN_ADMIN" } });
     expect(await w.http(ada.email, "PUT", "/admin/settings", { budgets: { personDailyTokens: 1_000_000 } })).toMatchObject({ status: 400, body: { code: "SETTINGS_INVALID", reason: expect.stringContaining("personDailyMicros") } });
     expect(await w.http(ada.email, "PUT", "/admin/settings", { budgets: { personDailyMicros: 1.5 } })).toMatchObject({ status: 400, body: { code: "SETTINGS_INVALID" } });
     expect(w.ledger().budgetsSet()).toEqual({});
 
     const set = await w.http(ada.email, "PUT", "/admin/settings", { budgets: { personDailyMicros: 500_000 } });
-    expect(set.body).toMatchObject({ settings: { budgets: { personDailyMicros: 500_000, tenantDailyMicros: 4_000_000 }, budgetsSet: { personDailyMicros: 500_000 } } });
+    expect(set.body).toMatchObject({ settings: { budgets: { personDailyMicros: 500_000, tenantDailyMicros: DEFAULT_BUDGETS.tenantDailyMicros }, budgetsSet: { personDailyMicros: 500_000 } } });
     expect(w.ledger().budgetsSet()).toEqual({ personDailyMicros: 500_000 });
     await w.http(ada.email, "PUT", "/admin/settings", { modelTier: "economy" });
-    expect(w.ledger().budgets()).toEqual({ personDailyMicros: 500_000, tenantDailyMicros: 4_000_000 });
+    expect(w.ledger().budgets()).toEqual({ personDailyMicros: 500_000, tenantDailyMicros: DEFAULT_BUDGETS.tenantDailyMicros });
     await w.ledger().record(call(other.email, 500_000));
     expect(await w.ledger().admit({ person: other.email, runId: "x" })).toMatchObject({ ok: false, code: "BUDGET_PERSON_EXHAUSTED", reason: expect.stringContaining("of $0.50 today") });
 
     const cleared = await w.http(ada.email, "PUT", "/admin/settings", { budgets: { personDailyMicros: null } });
-    expect(cleared.body).toMatchObject({ settings: { budgets: STAGING_BUDGETS, budgetsSet: {} } });
+    expect(cleared.body).toMatchObject({ settings: { budgets: DEFAULT_BUDGETS, budgetsSet: {} } });
     expect(w.ledger().budgetsSet()).toEqual({});
     expect(await w.ledger().admit({ person: other.email, runId: "x" })).toEqual({ ok: true });
   });
@@ -127,20 +125,20 @@ describe("[M28.1] an unpriced model is never free", () => {
 
 describe("[M28.1] the token budgets are migrated away", () => {
   it("ledger.budgets-dollars deletes stored token caps, keeps a dollar cap, and a second run applies nothing", () => {
-    const h = new ObjectHarness("ledger-m28", (ctx, e) => new Ledger(ctx as DurableObjectState, e as Env), { QYVR_ENV: "staging" });
+    const h = new ObjectHarness("ledger-m28", (ctx, e) => new Ledger(ctx as DurableObjectState, e as Env), {});
     void h.instance;
     h.db.exec("INSERT INTO budgets (key, value) VALUES ('tenantDailyTokens', 1000000), ('personDailyTokens', 250000), ('personDailyMicros', 3000000)");
     h.db.exec("DELETE FROM migrations WHERE name = 'ledger.budgets-dollars'");
     const storage = storageOf(h.instance);
     expect(migrate(storage, LEDGER_MIGRATIONS)).toEqual({ applied: ["ledger.budgets-dollars"] });
     expect(h.rows("SELECT key, value FROM budgets ORDER BY key")).toEqual([{ key: "personDailyMicros", value: 3_000_000 }]);
-    expect(h.instance.budgets()).toEqual({ personDailyMicros: 3_000_000, tenantDailyMicros: STAGING_BUDGETS.tenantDailyMicros });
+    expect(h.instance.budgets()).toEqual({ personDailyMicros: 3_000_000, tenantDailyMicros: DEFAULT_BUDGETS.tenantDailyMicros });
     expect(migrate(storage, LEDGER_MIGRATIONS)).toEqual({ applied: [] });
     expect(h.rows("SELECT release FROM migrations WHERE name = 'ledger.budgets-dollars'")).toEqual([{ release: "m28.1" }]);
   });
 
   it("company.settings-budgets-dollars deletes the stored token budgets, so the overview shows the defaults, and a second run applies nothing", async () => {
-    const w = authorityWorld({ qyvrEnv: "staging" });
+    const w = authorityWorld();
     void w.company();
     const h = w.companyHarness();
     const storage = storageOf(w.company());
@@ -151,7 +149,7 @@ describe("[M28.1] the token budgets are migrated away", () => {
     reset({ tenantDailyTokens: 5_000_000, personDailyTokens: 1_000_000 });
     expect(migrate(storage, COMPANY_MIGRATIONS)).toEqual({ applied: ["company.settings-budgets-dollars"] });
     expect(h.rows("SELECT key FROM settings WHERE key = 'budgets'")).toEqual([]);
-    expect((await w.http(ada.email, "GET", "/admin/overview")).body).toMatchObject({ settings: { budgets: STAGING_BUDGETS, budgetsSet: {} } });
+    expect((await w.http(ada.email, "GET", "/admin/overview")).body).toMatchObject({ settings: { budgets: DEFAULT_BUDGETS, budgetsSet: {} } });
     expect(migrate(storage, COMPANY_MIGRATIONS)).toEqual({ applied: [] });
     reset({ personDailyTokens: 1_000_000, tenantDailyMicros: 3_000_000 });
     migrate(storage, COMPANY_MIGRATIONS);

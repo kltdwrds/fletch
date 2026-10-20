@@ -20,7 +20,7 @@ import { CompanyMirror, type MirrorOutcome } from "../company/mirror.ts";
 import { CompanyOnboarding } from "../company/onboarding.ts";
 import { CompanySettings, type CompanySettingsView } from "../company/settings.ts";
 import { CompanySkills } from "../company/skills.ts";
-import { type CompanyPolicy, defaultBudgets } from "../ledger/budget.ts";
+import { DEFAULT_BUDGETS, type CompanyPolicy } from "../ledger/budget.ts";
 import { type SettingsResult, workspaceSettings } from "../company/workspace-settings.ts";
 import type { CompanyMirrorAdapter, WorkspaceSettingsAdapter } from "../workspace/adapters.ts";
 import { CompanyTeams, type Team } from "../company/teams.ts";
@@ -190,7 +190,7 @@ export class Company extends DurableObject<Env> {
   }
 
   private get settings(): CompanySettings {
-    this.settingsInstance ??= new CompanySettings(this.ctx.storage, this.members, () => Date.now(), defaultBudgets(this.env.QYVR_ENV));
+    this.settingsInstance ??= new CompanySettings(this.ctx.storage, this.members, () => Date.now(), DEFAULT_BUDGETS);
     return this.settingsInstance;
   }
 

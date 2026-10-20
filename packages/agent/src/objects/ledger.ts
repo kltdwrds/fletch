@@ -4,7 +4,7 @@
 // (`hostOf(env).budget`), the cap across tenants, to which every recorded call reports the day's total.
 import { DurableObject } from "cloudflare:workers";
 import { checkJournalRow, type JournalRow } from "../grants/journal.ts";
-import { admitPolicy, BUDGET_KEYS, type Budgets, chargeMicros, type CompanyPolicy, dayStart, decide, defaultBudgets, isBudgetKey, utcDay } from "../ledger/budget.ts";
+import { admitPolicy, BUDGET_KEYS, type Budgets, chargeMicros, type CompanyPolicy, dayStart, decide, DEFAULT_BUDGETS, isBudgetKey, utcDay } from "../ledger/budget.ts";
 import { computeRollup, type DeliveryCounts, dayBounds, type PlatformRollup, platformRollup, type Rollup } from "../ledger/rollup.ts";
 import type { Admission, AdmitResult, BrowserRow, LedgerSink, ModelCallRow, RunRow, TurnEndRow } from "../ledger/types.ts";
 import { DEFAULT_TIER, isModelTier } from "../model/routes.ts";
@@ -102,7 +102,7 @@ export class Ledger extends DurableObject<Env> implements LedgerSink {
 
   /** The daily caps in force: what the Company set, else this environment's defaults (M28.1). */
   budgets(): Budgets {
-    return { ...defaultBudgets(this.env.QYVR_ENV), ...this.budgetsSet() };
+    return { ...DEFAULT_BUDGETS, ...this.budgetsSet() };
   }
 
   /** Only the caps the Company set; a stored key that is not a cap is ignored. */

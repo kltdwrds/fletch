@@ -3,9 +3,7 @@
 // identity and is mapped to a member by the `Company` (M4.1, F1, `http/serve.ts`). With nothing in
 // front of the script there are no props, and it serves its own tenant.
 import { getAgentByName } from "agents";
-import { type Host, unavailable } from "@qyvr/host";
-import { secretKeyService } from "@qyvr/host-cloudflare";
-import { normalizeEmail } from "./company/members.ts";
+import { singleAccountHost } from "@qyvr/host-cloudflare";
 import { available, hostOf, setHost } from "./host.ts";
 import { propsOf } from "./http/identity.ts";
 import type { IngressStub } from "./http/ingress-routes.ts";
@@ -25,33 +23,7 @@ export { SubAgent } from "./objects/subagent.ts";
 /** Code Mode's outbound (M25.5): every Dynamic Worker's `globalOutbound`, loaded with the tenant and person in props. */
 export { Egress } from "./code/egress.ts";
 
-const NOT_IN_BUILD = (feature: string) => `${feature} is not part of the self-host build; see README`;
-
-/**
- * The self-host deploy's host until the passkey login lands (Task 6 replaces this with `singleAccountHost`):
- * keys from the `MASTER_KEY` secret, the owner from `OWNER_EMAIL`, no cross-tenant budget, and every
- * platform service refused with its code. No session verifies yet: identity refuses IDENTITY_UNAVAILABLE.
- */
-function selfHost(env: Env): Host {
-  return {
-    tenant: { id: env.TENANT_ID, shape: "standalone", env: "self-host" },
-    keys: secretKeyService(env.MASTER_KEY, env.TENANT_ID),
-    budget: null,
-    identity: {
-      verify: async () => ({ ok: false, code: "IDENTITY_UNAVAILABLE", reason: "sign-in is not set up on this deploy yet", status: 503 }),
-      routes: async () => null,
-    },
-    mail: unavailable("mail", NOT_IN_BUILD("mail")),
-    workspace: unavailable("workspace", NOT_IN_BUILD("workspace")),
-    provisioning: unavailable("provisioning", NOT_IN_BUILD("provisioning")),
-    members: unavailable("members", NOT_IN_BUILD("members")),
-    reporter: { report: (event, fields, level = "info") => console.log(JSON.stringify({ event, level, ...fields })) },
-    render: unavailable("render", NOT_IN_BUILD("render")),
-    memberSeed: JSON.stringify(env.OWNER_EMAIL ? [{ email: normalizeEmail(env.OWNER_EMAIL), role: "owner" }] : []),
-  };
-}
-
-setHost(selfHost);
+setHost(singleAccountHost);
 
 function directory(env: Env): Directory {
   const ledger = () => env.LEDGER.get(env.LEDGER.idFromName(env.TENANT_ID));

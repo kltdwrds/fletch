@@ -14,14 +14,6 @@ export const isBudgetKey = (k: string): k is keyof Budgets => (BUDGET_KEYS as re
 /** The product's defaults: $2 a person and $20 a company a day (DECISIONS-LOG, M28.1). */
 export const DEFAULT_BUDGETS: Budgets = { tenantDailyMicros: 20_000_000, personDailyMicros: 2_000_000 };
 
-/** Staging's: $2 a person and $4 a tenant, below the gateway's $5 staging spend rule. */
-export const STAGING_BUDGETS: Budgets = { tenantDailyMicros: 4_000_000, personDailyMicros: 2_000_000 };
-
-/** The defaults for an environment; what an admin did not set falls back to these, in the Ledger and the Company's view alike. */
-export function defaultBudgets(environment: string | undefined): Budgets {
-  return environment === "staging" ? STAGING_BUDGETS : DEFAULT_BUDGETS;
-}
-
 /** Dollars from micros for a reason or a page: whole cents as cents, anything finer to the micro-dollar. */
 export function dollars(micros: number): string {
   const d = micros / 1_000_000;

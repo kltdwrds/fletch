@@ -11,7 +11,6 @@ import { jobToolSpecs } from "../jobs/job-tools.ts";
 import { completeForJob } from "../jobs/model.ts";
 import { personMemory } from "../memory/rpc.ts";
 import { deliveredNotices } from "../jobs/notices.ts";
-import { type EvictMarker, stagingSteps } from "../jobs/staging.ts";
 import type { LedgerSink, RunRow } from "../ledger/types.ts";
 import { migrateObject, probeObject } from "../migrations/catalog.ts";
 
@@ -58,13 +57,6 @@ export class Job extends DurableObject<Env> {
         }),
       index: async (owner, id) => (await getAgentByName(env.PERSON, owner)).noteJob(id),
       forget: async (owner, id) => (await getAgentByName(env.PERSON, owner)).forgetJob(id),
-      // Staging only: the fixture step that resets this object mid-step (M5.2's live lane).
-      steps: stagingSteps(env.QYVR_ENV, () => ({
-        marker: { get: (k) => this.ctx.storage.kv.get(k), put: (k, v) => this.ctx.storage.kv.put(k, v) },
-        sync: () => this.ctx.storage.sync(),
-        abort: (reason) => this.ctx.abort(reason),
-        instance: this.instance,
-      })),
     };
   }
 
@@ -113,12 +105,10 @@ export class Job extends DurableObject<Env> {
     return this.engine.status();
   }
 
-  /** The owner's view of the job, with this instance's id and any resets the evict step made. */
+  /** The owner's view of the job, with this instance's id. */
   async inspect(by: string) {
     const s = this.engine.inspect(by);
     if (!s.ok) return s;
-    const evictions: Record<string, EvictMarker> = {};
-    for (const [k, v] of this.ctx.storage.kv.list<EvictMarker>({ prefix: "evicted:" })) evictions[k.slice("evicted:".length)] = v;
-    return { ...s, instance: this.instance, evictions };
+    return { ...s, instance: this.instance };
   }
 }
