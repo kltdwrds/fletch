@@ -1,6 +1,6 @@
-// The agent core's only view of the company workspace (AD-17). The core imports no upstream type:
-// these three interfaces are ours, implemented by the fake (tests) and by the upstream adapter in
-// ./upstream/, the one directory allowed to import from upstream/cloudflare-os.
+// The agent core's only view of a company workspace (AD-17). These three interfaces are ours,
+// implemented by the fake (tests); fletch ships no workspace adapter yet, so the Company runs
+// without one (a host may provide it later).
 //
 // There is no `decide` on any of them (A8, B23): approving, rejecting, sharing and connecting are
 // people's, so the agent core has no way to ask for them, and the workshop refuses an agent session
