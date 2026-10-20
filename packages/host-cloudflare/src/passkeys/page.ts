@@ -3,7 +3,7 @@
 // inline script and the one inline style are allowed by their hashes, so the CSP needs no 'unsafe-*'.
 import { sha256 } from "@noble/hashes/sha2.js";
 
-export type PageState = "register" | "add" | "authenticate";
+export type PageState = "setup" | "register" | "add" | "authenticate";
 
 const STYLE = `
 :root{color-scheme:light dark;--ink:#1d1d1f;--muted:#5f6368;--bg:#fff;--line:#d7d7db;--accent:#1a56db;--bad:#b42318}
@@ -26,6 +26,7 @@ code{display:block;font-size:1.25rem;letter-spacing:.05em;padding:1rem;border:1p
 const SCRIPT = `(() => {
   const state = document.body.dataset.state;
   const $ = (id) => document.getElementById(id);
+  const setup = new URLSearchParams(location.search).get("setup");
   const enc = (buf) => {
     let s = "";
     for (const b of new Uint8Array(buf)) s += String.fromCharCode(b);
@@ -44,7 +45,7 @@ const SCRIPT = `(() => {
     return json;
   }
   async function register() {
-    const o = await post("/login/register/options");
+    const o = await post("/login/register/options", setup ? { setup } : {});
     const p = o.options;
     const cred = await navigator.credentials.create({ publicKey: { ...p, challenge: dec(p.challenge), user: { ...p.user, id: dec(p.user.id) }, excludeCredentials: ids(p.excludeCredentials) } });
     const r = cred.response;
@@ -52,7 +53,7 @@ const SCRIPT = `(() => {
       id: cred.id, rawId: enc(cred.rawId), type: cred.type, clientExtensionResults: cred.getClientExtensionResults(),
       response: { clientDataJSON: enc(r.clientDataJSON), attestationObject: enc(r.attestationObject), transports: r.getTransports ? r.getTransports() : [] },
     };
-    const done = await post("/login/register/verify", { challengeId: o.challengeId, credential });
+    const done = await post("/login/register/verify", { challengeId: o.challengeId, credential, ...(setup ? { setup } : {}) });
     if (!done.recoveryCode) return location.assign("/");
     $("code").textContent = done.recoveryCode;
     $("start").hidden = true;
@@ -81,6 +82,7 @@ const SCRIPT = `(() => {
       button.disabled = false;
     }
   }
+  if (state === "setup") return;
   $("go").addEventListener("click", () => attempt($("go"), () => {
     if (!window.PublicKeyCredential) throw new Error("this browser does not support passkeys");
     return state === "authenticate" ? signIn() : register();
@@ -103,7 +105,7 @@ const SCRIPT = `(() => {
   }
 })();`;
 
-const COPY: Record<PageState, { title: string; lead: string; button: string }> = {
+const COPY: Record<Exclude<PageState, "setup">, { title: string; lead: string; button: string }> = {
   register: { title: "Set up fletch", lead: "Create a passkey for this deploy's owner. It is how you sign in from now on.", button: "Create passkey" },
   add: { title: "Add a passkey", lead: "You are signed in. Create a passkey on this device to sign in with it next time.", button: "Create passkey" },
   authenticate: { title: "Sign in to fletch", lead: "Use the passkey you created for this deploy.", button: "Sign in" },
@@ -122,7 +124,11 @@ export const PAGE_CSP = [
   "frame-ancestors 'none'",
 ].join("; ");
 
+const SETUP_BODY = `<h1>Set up fletch</h1>
+<p>This deploy has no passkey yet. The first one is created from the setup link printed when the deploy was set up (by <kbd>npm create fletch</kbd>). Open that setup link to continue.</p>`;
+
 export function loginPage(state: PageState): string {
+  if (state === "setup") return shell("Set up fletch", state, `<section id="start">\n${SETUP_BODY}\n</section>`);
   const c = COPY[state];
   const recover =
     state === "authenticate"
@@ -133,17 +139,10 @@ export function loginPage(state: PageState): string {
 <button id="recover-go" type="submit">Recover access</button>
 </form>`
       : "";
-  return `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${c.title}</title>
-<style>${STYLE}</style>
-</head>
-<body data-state="${state}">
-<main>
-<section id="start">
+  return shell(
+    c.title,
+    state,
+    `<section id="start">
 <h1>${c.title}</h1>
 <p>${c.lead}</p>
 <button id="go" type="button">${c.button}</button>
@@ -154,7 +153,22 @@ ${recover}
 <p>Write this down and keep it somewhere safe. It is shown once, and it is the only way back in if you lose every passkey.</p>
 <code id="code"></code>
 <button id="done" type="button">I have written it down</button>
-</section>
+</section>`,
+  );
+}
+
+function shell(title: string, state: PageState, body: string): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${title}</title>
+<style>${STYLE}</style>
+</head>
+<body data-state="${state}">
+<main>
+${body}
 <p id="error" class="error" role="alert" hidden></p>
 </main>
 <script>${SCRIPT}</script>

@@ -70,6 +70,19 @@ export class PasskeyStore {
     return { id: String(row.id), email: String(row.email), publicKey: bytesOf(row.public_key), counter: Number(row.counter) };
   }
 
+  /**
+   * Inserts in one transaction: with `requireEmpty` only while no passkey exists, so two concurrent
+   * first registrations store one; an id already registered is refused either way.
+   */
+  addPasskey(c: { id: string; email: string; publicKey: Uint8Array; counter: number; transports: string[]; requireEmpty: boolean }): { ok: true } | { ok: false; code: "LOGIN_ALREADY_REGISTERED" | "LOGIN_PASSKEY_EXISTS" } {
+    return this.storage.transactionSync(() => {
+      if (c.requireEmpty && this.count() > 0) return { ok: false, code: "LOGIN_ALREADY_REGISTERED" } as const;
+      if (this.byId(c.id)) return { ok: false, code: "LOGIN_PASSKEY_EXISTS" } as const;
+      this.add(c);
+      return { ok: true } as const;
+    });
+  }
+
   bump(id: string, counter: number): void {
     this.storage.sql.exec("UPDATE passkeys SET counter = ? WHERE id = ?", counter, id);
   }
@@ -86,7 +99,9 @@ export class PasskeyStore {
     this.storage.sql.exec("DELETE FROM passkeys WHERE id = ?", id);
   }
 
+  /** Also sweeps every challenge past its 300 s, so abandoned ceremonies leave no rows behind. */
   putChallenge(id: string, challenge: string, kind: PasskeyKind): void {
+    this.storage.sql.exec("DELETE FROM challenges WHERE at < ?", this.now() - CHALLENGE_TTL_MS);
     this.storage.sql.exec("INSERT OR REPLACE INTO challenges(id, challenge, kind, at) VALUES(?, ?, ?, ?)", id, challenge, kind, this.now());
   }
 

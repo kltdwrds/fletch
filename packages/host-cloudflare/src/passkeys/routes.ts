@@ -1,5 +1,6 @@
 // The login routes (F1), all answered before any session exists. One owner per deploy: the first passkey is
-// registered by whoever opens /login first, after which registering needs the owner's session. A
+// registered only with the SETUP_TOKEN secret (the `?setup=` link init prints; no token configured fails
+// closed), after which registering needs the owner's session and the token grants nothing. A
 // challenge is minted by an options route, kept in the Company under a random id that the options response
 // carries (`challengeId`), and taken (single use, 300 s) by the matching verify route, which the page calls
 // with that id echoed back. State-changing routes accept only a same-origin `Origin`. rpId and origin come
@@ -15,7 +16,7 @@ export const SESSION_COOKIE = "fletch_session";
 const COOKIE_ATTRS = "HttpOnly; Secure; SameSite=Lax; Path=/";
 const COOKIE_MAX_AGE = 2_592_000;
 
-const NO_STORE = { "cache-control": "no-store" };
+const NO_STORE = { "cache-control": "no-store", "x-content-type-options": "nosniff" };
 
 export const sessionCookie = (token: string) => `${SESSION_COOKIE}=${token}; ${COOKIE_ATTRS}; Max-Age=${COOKIE_MAX_AGE}`;
 export const clearedCookie = () => `${SESSION_COOKIE}=; ${COOKIE_ATTRS}; Max-Age=0`;
@@ -58,12 +59,22 @@ async function readBody(request: Request): Promise<Record<string, unknown> | nul
 }
 
 /** `{ challengeId, credential }` as the page sends it to the verify routes, the credential's id a string. */
-async function ceremonyBody(request: Request): Promise<{ challengeId: string; credential: Record<string, unknown> & { id: string } } | null> {
+async function ceremonyBody(request: Request): Promise<{ challengeId: string; credential: Record<string, unknown> & { id: string }; setup: unknown } | null> {
   const body = await readBody(request);
   const credential = body?.credential;
   if (typeof body?.challengeId !== "string" || !credential || typeof credential !== "object") return null;
   if (typeof (credential as { id?: unknown }).id !== "string") return null;
-  return { challengeId: body.challengeId, credential: credential as Record<string, unknown> & { id: string } };
+  return { challengeId: body.challengeId, credential: credential as Record<string, unknown> & { id: string }, setup: body.setup };
+}
+
+/** Constant time over SHA-256 digests, so neither the token's bytes nor its length leak through timing. */
+function sameSecret(given: unknown, expected: string): boolean {
+  if (typeof given !== "string") return false;
+  const a = sha256(new TextEncoder().encode(given));
+  const b = sha256(new TextEncoder().encode(expected));
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= (a[i] as number) ^ (b[i] as number);
+  return diff === 0;
 }
 
 const BODY_INVALID = () => refuse("LOGIN_BODY_INVALID", "the request body is not what the login page sends", 400);
@@ -78,7 +89,9 @@ export async function loginRoutes(deps: PasskeyDeps, request: Request, url: URL)
   if (path === "/login" && method === "GET") {
     const count = await deps.call({ op: "count" });
     const session = count > 0 && tokenOf(request) ? await readSession(deps, request) : null;
-    const state = count === 0 ? "register" : session?.ok && session.email === deps.owner ? "add" : "authenticate";
+    // Before the first passkey, only the setup link opens registration; any other visit gets the same page.
+    const setupOk = !!deps.setupToken && sameSecret(url.searchParams.get("setup"), deps.setupToken);
+    const state = count === 0 ? (setupOk ? "register" : "setup") : session?.ok && session.email === deps.owner ? "add" : "authenticate";
     return new Response(loginPage(state), {
       headers: { "content-type": "text/html; charset=utf-8", "content-security-policy": PAGE_CSP, "referrer-policy": "no-referrer", ...NO_STORE },
     });
@@ -98,15 +111,29 @@ export async function loginRoutes(deps: PasskeyDeps, request: Request, url: URL)
     const s = await readSession(deps, request);
     return s.ok && s.email === deps.owner ? s : null;
   };
-  const registerGate = async () => {
+  /** Before the first passkey: the setup token. After: the owner's session. Nothing about the owner is answered before this passes. */
+  const registerGate = async (setup: unknown) => {
     const count = await deps.call({ op: "count" });
+    const no = (refused: Response) => ({ ok: false as const, refused });
+    if (count === 0) {
+      if (!deps.setupToken) {
+        return no(refuse("LOGIN_SETUP_UNAVAILABLE", "first sign-in is not set up on this deploy: run `npm create fletch`, or set a setup token with `wrangler secret put SETUP_TOKEN`, then open the printed setup link", 503));
+      }
+      if (!sameSecret(setup, deps.setupToken)) return no(refuse("LOGIN_SETUP_REQUIRED", "creating the first passkey needs the setup link printed when this deploy was set up", 403));
+      return { ok: true as const, count, session: await ownerSession() };
+    }
     const session = await ownerSession();
-    if (count > 0 && !session) return { ok: false as const, refused: refuse("LOGIN_ALREADY_REGISTERED", "a passkey is already registered on this deploy; sign in with it, or use your recovery code", 403) };
+    if (!session) return no(refuse("LOGIN_ALREADY_REGISTERED", "a passkey is already registered on this deploy; sign in with it, or use your recovery code", 403));
     return { ok: true as const, count, session };
+  };
+  /** The request's own session, revoked before a new one replaces it. */
+  const revokeCarried = async () => {
+    const token = tokenOf(request);
+    if (token) await deps.call({ op: "revoke", token });
   };
 
   if (path === "/login/register/options") {
-    const gate = await registerGate();
+    const gate = await registerGate((await readBody(request))?.setup);
     if (!gate.ok) return gate.refused;
     const challengeId = random();
     const challenge = random();
@@ -119,14 +146,18 @@ export async function loginRoutes(deps: PasskeyDeps, request: Request, url: URL)
   if (path === "/login/register/verify") {
     const body = await ceremonyBody(request);
     if (!body) return BODY_INVALID();
-    const gate = await registerGate();
+    const gate = await registerGate(body.setup);
     if (!gate.ok) return gate.refused;
     const challenge = await deps.call({ op: "takeChallenge", id: body.challengeId, kind: "register" });
     if (!challenge) return CHALLENGE_EXPIRED();
     const v = await verifier.verifyRegistration({ response: body.credential, challenge, origin, rpId });
     if (!v.ok) return refuse("LOGIN_PASSKEY_INVALID", v.reason, 400);
-    if (await deps.call({ op: "byId", id: v.credential.id })) return refuse("LOGIN_PASSKEY_EXISTS", "this passkey is already registered", 409);
-    await deps.call({ op: "add", ...v.credential, email: deps.owner });
+    const added = await deps.call({ op: "addPasskey", ...v.credential, email: deps.owner, requireEmpty: gate.count === 0 });
+    if (!added.ok) {
+      return added.code === "LOGIN_PASSKEY_EXISTS"
+        ? refuse(added.code, "this passkey is already registered", 409)
+        : refuse(added.code, "a passkey was registered on this deploy a moment ago; sign in with it", 403);
+    }
     // A new recovery code on the first passkey, and after a recovery (the old code is spent).
     const recoveryCode = gate.count === 0 || gate.session?.needsPasskey ? await deps.call({ op: "issueRecovery", email: deps.owner }) : null;
     if (gate.session) await deps.call({ op: "revoke", token: gate.session.token });
@@ -155,6 +186,7 @@ export async function loginRoutes(deps: PasskeyDeps, request: Request, url: URL)
     const v = await verifier.verifyAuthentication({ response: body.credential, challenge, origin, rpId, credential });
     if (!v.ok) return refuse("LOGIN_PASSKEY_INVALID", v.reason, 400);
     await deps.call({ op: "bump", id: credential.id, counter: v.newCounter });
+    await revokeCarried();
     const token = await deps.call({ op: "mint", email: deps.owner, needsPasskey: false });
     return json({ ok: true }, 200, { "set-cookie": sessionCookie(token) });
   }
@@ -167,6 +199,7 @@ export async function loginRoutes(deps: PasskeyDeps, request: Request, url: URL)
     if (normalizeEmail(body.email) !== deps.owner) return mismatch();
     const r = await deps.call({ op: "redeemRecovery", email: deps.owner, code: body.code });
     if (!r.ok) return r.code === "RECOVERY_CODE_SPENT" ? refuse(r.code, "that recovery code was already used; sign in with a passkey", 403) : mismatch();
+    await revokeCarried();
     const token = await deps.call({ op: "mint", email: deps.owner, needsPasskey: true });
     return json({ ok: true, needsPasskey: true }, 200, { "set-cookie": sessionCookie(token) });
   }

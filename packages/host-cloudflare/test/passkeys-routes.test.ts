@@ -7,6 +7,7 @@ import { memorySql } from "./sql-adapter.ts";
 
 const OWNER = "sam@solo-sam.example";
 const ORIGIN = "https://fletch.solo-sam.example";
+const SETUP = "fixture-setup-link-0001";
 const COOKIE_ATTRS = "HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=2592000";
 
 type Json = Record<string, unknown>;
@@ -28,7 +29,7 @@ const fakeVerifier: Verifier = {
   },
 };
 
-function harness(verifier: Verifier = fakeVerifier) {
+function harness(verifier: Verifier = fakeVerifier, setupToken: string | null = SETUP) {
   let t = 5_000_000;
   const clock = {
     now: () => t,
@@ -38,7 +39,7 @@ function harness(verifier: Verifier = fakeVerifier) {
   };
   const sql = memorySql();
   const call = async <C extends LoginCall>(c: C): Promise<LoginResultOf<C>> => runLoginCall(sql, clock.now, c);
-  const identity = passkeyIdentity({ call, owner: OWNER, tenant: "solo-sam", now: clock.now, verifier });
+  const identity = passkeyIdentity({ call, owner: OWNER, tenant: "solo-sam", now: clock.now, verifier, ...(setupToken === null ? {} : { setupToken }) });
   const send = async (method: string, path: string, opts: { body?: unknown; cookie?: string; origin?: string | null } = {}) => {
     const headers: Record<string, string> = { "content-type": "application/json" };
     if (opts.origin !== null) headers.origin = opts.origin ?? ORIGIN;
@@ -59,9 +60,9 @@ function harness(verifier: Verifier = fakeVerifier) {
 
   /** The first registration through the fake verifier: the cookie header and the recovery code. */
   const register = async (cookie?: string, id = "cred-1") => {
-    const opts = await post("/login/register/options", cookie ? { cookie } : {});
+    const opts = await post("/login/register/options", { body: { setup: SETUP }, ...(cookie ? { cookie } : {}) });
     const challenge = (opts.body.options as Json).challenge;
-    const done = await post("/login/register/verify", { body: { challengeId: opts.body.challengeId, credential: { id, challenge } }, ...(cookie ? { cookie } : {}) });
+    const done = await post("/login/register/verify", { body: { setup: SETUP, challengeId: opts.body.challengeId, credential: { id, challenge } }, ...(cookie ? { cookie } : {}) });
     return { ...done, cookie: cookieOf(done.res) };
   };
   return { clock, call, identity, send, post, verify, register };
@@ -150,12 +151,12 @@ describe("[F1] login routes", () => {
 
   it("the options endpoints embed a challenge that takeChallenge later consumes; a used or stale one is LOGIN_CHALLENGE_EXPIRED", async () => {
     const h = harness();
-    const reg = await h.post("/login/register/options");
+    const reg = await h.post("/login/register/options", { body: { setup: SETUP } });
     expect(reg.res.status).toBe(200);
     const challenge = (reg.body.options as Json).challenge;
     expect(challenge).toMatch(/^[A-Za-z0-9_-]{43}$/);
     expect(await h.call({ op: "takeChallenge", id: String(reg.body.challengeId), kind: "register" })).toBe(challenge);
-    const used = await h.post("/login/register/verify", { body: { challengeId: reg.body.challengeId, credential: { id: "c", challenge } } });
+    const used = await h.post("/login/register/verify", { body: { setup: SETUP, challengeId: reg.body.challengeId, credential: { id: "c", challenge } } });
     expect(used.res.status).toBe(400);
     expect(used.body).toMatchObject({ ok: false, code: "LOGIN_CHALLENGE_EXPIRED" });
 
@@ -242,7 +243,8 @@ describe("[F1] login routes", () => {
 
   it("GET /login serves the page: Create passkey before any is registered, Sign in after, under a strict CSP", async () => {
     const h = harness();
-    const first = await h.send("GET", "/login");
+    const first = await h.send("GET", `/login?setup=${SETUP}`);
+    expect(first.headers.get("x-content-type-options")).toBe("nosniff");
     expect(first.headers.get("content-type")).toBe("text/html; charset=utf-8");
     expect(first.headers.get("content-security-policy")).toMatch(/default-src 'none'; script-src 'sha256-[A-Za-z0-9+/]+=*'/);
     const html = await first.text();
@@ -263,12 +265,12 @@ describe("[F1] login routes", () => {
   it("the real ceremony: simplewebauthn verifies a software ES256 passkey's registration and assertion end to end", async () => {
     const h = harness(simpleWebAuthn);
     const key = await softAuthenticator(ORIGIN, "fletch.solo-sam.example");
-    const ro = await h.post("/login/register/options");
+    const ro = await h.post("/login/register/options", { body: { setup: SETUP } });
     const options = ro.body.options as { challenge: string; rp: { id: string; name: string }; authenticatorSelection: Json; attestation: string };
     expect(options.rp).toEqual({ id: "fletch.solo-sam.example", name: "fletch" });
     expect(options.attestation).toBe("none");
     expect(options.authenticatorSelection).toMatchObject({ residentKey: "preferred", userVerification: "preferred" });
-    const reg = await h.post("/login/register/verify", { body: { challengeId: ro.body.challengeId, credential: await key.create(options) } });
+    const reg = await h.post("/login/register/verify", { body: { setup: SETUP, challengeId: ro.body.challengeId, credential: await key.create(options) } });
     expect(reg.body).toMatchObject({ ok: true });
     expect((await h.call({ op: "list" }))[0]?.id).toBe(key.id);
 
@@ -290,5 +292,81 @@ describe("[F1] login routes", () => {
     const ro2 = await h.post("/login/register/options", { cookie: cookieOf(signed.res) });
     const forged = await h.post("/login/register/verify", { cookie: cookieOf(signed.res), body: { challengeId: ro2.body.challengeId, credential: await foreign.create(ro2.body.options as { challenge: string }) } });
     expect(forged.body).toMatchObject({ ok: false, code: "LOGIN_PASSKEY_INVALID" });
+  });
+});
+
+describe("[F1] first-run setup and session hygiene", () => {
+  it("first registration needs the setup token: none or a wrong one is LOGIN_SETUP_REQUIRED and names no owner; the right one succeeds", async () => {
+    const h = harness();
+    for (const body of [{}, { setup: "wrong" }, { setup: `${SETUP}x` }]) {
+      const o = await h.send("POST", "/login/register/options", { body });
+      expect(o.status).toBe(403);
+      const text = await o.text();
+      expect(JSON.parse(text)).toMatchObject({ ok: false, code: "LOGIN_SETUP_REQUIRED" });
+      expect(text.toLowerCase()).not.toContain("sam");
+      const v = await h.post("/login/register/verify", { body: { ...body, challengeId: "x", credential: { id: "x" } } });
+      expect(v.body).toMatchObject({ ok: false, code: "LOGIN_SETUP_REQUIRED" });
+    }
+    expect(await h.call({ op: "count" })).toBe(0);
+    const { res } = await h.register();
+    expect(res.status).toBe(200);
+    // Once a passkey exists the token grants nothing: adding one needs the owner's session.
+    const again = await h.post("/login/register/options", { body: { setup: SETUP } });
+    expect(again.body).toMatchObject({ ok: false, code: "LOGIN_ALREADY_REGISTERED" });
+  });
+
+  it("with no SETUP_TOKEN configured first registration fails closed with LOGIN_SETUP_UNAVAILABLE", async () => {
+    const h = harness(fakeVerifier, null);
+    for (const path of ["/login/register/options", "/login/register/verify"]) {
+      const r = await h.post(path, { body: { setup: SETUP, challengeId: "x", credential: { id: "x" } } });
+      expect(r.res.status, path).toBe(503);
+      expect(r.body, path).toMatchObject({ ok: false, code: "LOGIN_SETUP_UNAVAILABLE" });
+      expect(String(r.body.reason)).toMatch(/npm create fletch|wrangler secret put SETUP_TOKEN/);
+    }
+  });
+
+  it("GET /login before setup without a valid ?setup= explains the setup link, the same page whether or not a token is configured", async () => {
+    const h = harness();
+    const unset = harness(fakeVerifier, null);
+    const missing = await (await h.send("GET", "/login")).text();
+    expect(missing).toContain("setup link");
+    expect(missing).not.toContain("Create passkey");
+    expect(await (await h.send("GET", "/login?setup=wrong")).text()).toBe(missing);
+    expect(await (await unset.send("GET", "/login")).text()).toBe(missing);
+    expect(await (await unset.send("GET", `/login?setup=${SETUP}`)).text()).toBe(missing);
+    expect(await (await h.send("GET", `/login?setup=${SETUP}`)).text()).toContain("Create passkey");
+  });
+
+  it("two concurrent first registrations: one passkey is stored, the other is LOGIN_ALREADY_REGISTERED", async () => {
+    const h = harness();
+    const start = async (id: string) => {
+      const o = await h.post("/login/register/options", { body: { setup: SETUP } });
+      return { setup: SETUP, challengeId: o.body.challengeId, credential: { id, challenge: (o.body.options as Json).challenge } };
+    };
+    const [a, b] = [await start("cred-a"), await start("cred-b")];
+    const results = await Promise.all([h.post("/login/register/verify", { body: a }), h.post("/login/register/verify", { body: b })]);
+    expect(results.map((r) => r.res.status).sort()).toEqual([200, 403]);
+    expect(results.find((r) => r.res.status === 403)?.body).toMatchObject({ ok: false, code: "LOGIN_ALREADY_REGISTERED" });
+    expect(await h.call({ op: "count" })).toBe(1);
+  });
+
+  it("/login/verify and /login/recover revoke the session the request already carries", async () => {
+    const h = harness();
+    const { cookie, body } = await h.register();
+    const o = await h.post("/login/options");
+    const signed = await h.post("/login/verify", { cookie, body: { challengeId: o.body.challengeId, credential: { id: "cred-1", challenge: (o.body.options as Json).challenge } } });
+    expect(signed.res.status).toBe(200);
+    expect(await h.verify("/app/chat", cookie)).toMatchObject({ ok: false, code: "SESSION_UNKNOWN" });
+    const fresh = cookieOf(signed.res);
+    const rec = await h.post("/login/recover", { cookie: fresh, body: { email: OWNER, code: body.recoveryCode } });
+    expect(rec.res.status).toBe(200);
+    expect(await h.verify("/app/chat", fresh)).toMatchObject({ ok: false, code: "SESSION_UNKNOWN" });
+  });
+
+  it("JSON answers carry nosniff", async () => {
+    const h = harness();
+    const r = await h.post("/login/options");
+    expect(r.res.headers.get("x-content-type-options")).toBe("nosniff");
+    expect((await h.send("POST", "/logout")).headers.get("x-content-type-options")).toBe("nosniff");
   });
 });

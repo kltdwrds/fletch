@@ -157,4 +157,23 @@ describe("[F1] passkey stores", () => {
     const { sql, clock } = setup();
     expect(() => runLoginCall(sql, clock.now, { op: "drop" } as unknown as LoginCall)).toThrow(/LOGIN_CALL_UNKNOWN_OP/);
   });
+
+  it("putChallenge sweeps challenges older than 300 s", () => {
+    const { passkeys, clock, sql } = setup();
+    passkeys.putChallenge("old", "a", "register");
+    clock.advance(300_001);
+    passkeys.putChallenge("new", "b", "authenticate");
+    expect(sql.sql.exec("SELECT id FROM challenges").toArray().map((r) => r.id)).toEqual(["new"]);
+  });
+
+  it("addPasskey inserts atomically: requireEmpty refuses once one exists, and a known id is refused", () => {
+    const { sql, clock } = setup();
+    const run = <C extends LoginCall>(c: C) => runLoginCall(sql, clock.now, c);
+    const key = { email: "sam@solo-sam.example", publicKey: new Uint8Array([1]), counter: 0, transports: [] };
+    expect(run({ op: "addPasskey", id: "k1", ...key, requireEmpty: true })).toEqual({ ok: true });
+    expect(run({ op: "addPasskey", id: "k2", ...key, requireEmpty: true })).toEqual({ ok: false, code: "LOGIN_ALREADY_REGISTERED" });
+    expect(run({ op: "addPasskey", id: "k1", ...key, requireEmpty: false })).toEqual({ ok: false, code: "LOGIN_PASSKEY_EXISTS" });
+    expect(run({ op: "addPasskey", id: "k2", ...key, requireEmpty: false })).toEqual({ ok: true });
+    expect(run({ op: "count" })).toBe(2);
+  });
 });

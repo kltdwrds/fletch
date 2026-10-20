@@ -7,6 +7,7 @@ export type LoginCall =
   | { op: "count" }
   | { op: "add"; id: string; email: string; publicKey: Uint8Array; counter: number; transports: string[] }
   | { op: "byId"; id: string }
+  | { op: "addPasskey"; id: string; email: string; publicKey: Uint8Array; counter: number; transports: string[]; requireEmpty: boolean }
   | { op: "bump"; id: string; counter: number }
   | { op: "putChallenge"; id: string; challenge: string; kind: Kind }
   | { op: "takeChallenge"; id: string; kind: Kind }
@@ -22,6 +23,7 @@ export type LoginResults = {
   count: number;
   add: void;
   byId: { id: string; email: string; publicKey: Uint8Array; counter: number } | null;
+  addPasskey: { ok: true } | { ok: false; code: "LOGIN_ALREADY_REGISTERED" | "LOGIN_PASSKEY_EXISTS" };
   bump: void;
   putChallenge: void;
   takeChallenge: string | null;
@@ -48,6 +50,8 @@ export function runLoginCall(storage: Sql, now: () => number, call: LoginCall): 
       return passkeys.add(call);
     case "byId":
       return passkeys.byId(call.id);
+    case "addPasskey":
+      return passkeys.addPasskey(call);
     case "bump":
       return passkeys.bump(call.id, call.counter);
     case "putChallenge":

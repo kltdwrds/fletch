@@ -12,6 +12,8 @@ export interface SingleAccountEnv {
   QYVR_ENV?: string;
   OWNER_EMAIL: string;
   MASTER_KEY?: string;
+  /** A Worker secret, never config: the token in the `/login?setup=` link that creates the first passkey. */
+  SETUP_TOKEN?: string;
   /** Where sessions and passkeys live: the sign-in calls the Company named by TENANT_ID (`loginCall`, R3). */
   COMPANY: DurableObjectNamespace;
 }
@@ -30,7 +32,7 @@ export function singleAccountHost(env: SingleAccountEnv): Host {
     tenant: { id: env.TENANT_ID, shape: env.TENANT_SHAPE === "company" ? "company" : "standalone", env: "self-host" },
     keys: secretKeyService(env.MASTER_KEY, env.TENANT_ID),
     budget: null,
-    identity: passkeyIdentity({ call, owner: normalizeEmail(env.OWNER_EMAIL), tenant: env.TENANT_ID, now: Date.now }),
+    identity: passkeyIdentity({ call, owner: normalizeEmail(env.OWNER_EMAIL), tenant: env.TENANT_ID, now: Date.now, ...(env.SETUP_TOKEN ? { setupToken: env.SETUP_TOKEN } : {}) }),
     mail: unavailable("mail", notInBuild("mail")),
     workspace: unavailable("workspace", notInBuild("workspace")),
     provisioning: unavailable("provisioning", notInBuild("provisioning")),

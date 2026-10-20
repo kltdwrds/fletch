@@ -17,6 +17,8 @@ export interface PasskeyDeps {
   /** The tenant the verified session names. */
   tenant: string;
   now: () => number;
+  /** The SETUP_TOKEN secret: required to create the first passkey; unset refuses first registration. */
+  setupToken?: string;
   /** The WebAuthn ceremony; `simpleWebAuthn` unless a test injects another. */
   verifier?: Verifier;
 }

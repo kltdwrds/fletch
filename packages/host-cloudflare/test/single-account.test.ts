@@ -44,10 +44,16 @@ describe("[F1] singleAccountHost", () => {
         },
       }),
     } as unknown as DurableObjectNamespace;
-    const page = await singleAccountHost(env({ COMPANY })).identity.routes(new Request("https://x.example/login"), new URL("https://x.example/login"));
-    expect(await page?.text()).toContain("Create passkey");
+    const u = "https://x.example/login?setup=fixture-setup-link-0001";
+    const host = singleAccountHost(env({ COMPANY, SETUP_TOKEN: "fixture-setup-link-0001" }));
+    expect(await (await host.identity.routes(new Request(u), new URL(u)))?.text()).toContain("Create passkey");
     expect(named).toEqual(["solo-sam"]);
     expect(calls).toEqual([["id:solo-sam", "count"]]);
+    // Without SETUP_TOKEN first registration fails closed.
+    const post = new Request("https://x.example/login/register/options", { method: "POST", headers: { origin: "https://x.example" }, body: "{}" });
+    const refused = await singleAccountHost(env({ COMPANY })).identity.routes(post, new URL(post.url));
+    if (!refused) throw new Error("no response");
+    expect([refused.status, ((await refused.json()) as { code: string }).code]).toEqual([503, "LOGIN_SETUP_UNAVAILABLE"]);
   });
 
   it("wraps keys only with a master key", async () => {
