@@ -61,4 +61,26 @@ describe('check-boundaries', () => {
     assert.match(r.out, /a\.ts.*no-fletch/);
     assert.doesNotMatch(r.out, /b\.ts|c\.ts/);
   });
+
+  it('no-cloudflare-workers: a cloudflare: import under packages/host fails, in host-cloudflare it passes', () => {
+    const r = run({
+      'packages/host/src/a.ts': 'import { DurableObject } from "cloudflare:workers";\nexport { DurableObject };\n',
+      'packages/host/src/b.ts': 'const m = await import("cloudflare:email");\nexport { m };\n',
+      'packages/host-cloudflare/src/c.ts': 'import { DurableObject } from "cloudflare:workers";\nexport { DurableObject };\n',
+    });
+    assert.notEqual(r.code, 0);
+    assert.match(r.out, /packages\/host\/src\/a\.ts.*no-cloudflare-workers/);
+    assert.match(r.out, /packages\/host\/src\/b\.ts.*no-cloudflare-workers/);
+    assert.doesNotMatch(r.out, /host-cloudflare\/src/);
+  });
+
+  it('no-fletch catches `export * from "fletch"` and `await import("fletch")`', () => {
+    const r = run({
+      'packages/host/src/d.ts': 'export * from "fletch";\n',
+      'packages/host/src/e.ts': 'const m = await import("fletch");\nexport { m };\n',
+    });
+    assert.notEqual(r.code, 0);
+    assert.match(r.out, /d\.ts.*no-fletch/);
+    assert.match(r.out, /e\.ts.*no-fletch/);
+  });
 });

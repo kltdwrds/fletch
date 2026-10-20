@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// The boundary check, adapted from qyvr-co's scripts/check-boundaries.mjs. Two rules over packages/:
+// The boundary check, adapted from qyvr-co's scripts/check-boundaries.mjs. Three rules over packages/:
 //   no-fletch       no import whose specifier is `fletch` or starts with `fletch/`.
 //   no-deep-import  no import of a @qyvr/* package's internals: a `@qyvr/` specifier with a third path segment.
+//   no-cloudflare-workers  nothing under packages/host/ imports a `cloudflare:` specifier (it stays platform-free).
 // An import is held by its module: named, default, namespace, type-only, side-effect, dynamic, `require`
 // and `export ... from` all count. Each file is read as written and with comments blanked; either reading
 // may report. To add a rule, add a row here and a planted-violation case to the test beside this file.
@@ -23,6 +24,12 @@ export const RULES = [
     why: "import a @qyvr/* package by its name only (@qyvr/<name>), never a path inside it",
     scope: /^packages\//,
     banned: [/^@qyvr\/[^/]+\/./],
+  },
+  {
+    name: 'no-cloudflare-workers',
+    why: '@qyvr/host is platform-free; cloudflare: modules belong in @qyvr/host-cloudflare',
+    scope: /^packages\/host\//,
+    banned: [/^cloudflare:/],
   },
 ];
 

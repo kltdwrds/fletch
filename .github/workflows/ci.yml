@@ -39,7 +39,8 @@ jobs:
           # --min-parents=1 leaves out the root commit (GitHub's "Initial commit", unsigned);
           # merge commits carry no sign-off of their own.
           failed=0
-          for sha in $(git rev-list --min-parents=1 --max-parents=1 "$range"); do
+          shas=$(git rev-list --min-parents=1 --max-parents=1 "$range")
+          for sha in $shas; do
             if ! git show -s --format=%B "$sha" | grep -qE '^Signed-off-by: .+ <.+>$'; then
               echo "::error::commit $sha has no Signed-off-by trailer (use git commit -s)"
               failed=1
