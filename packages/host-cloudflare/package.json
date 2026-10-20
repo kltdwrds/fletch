@@ -3,7 +3,21 @@
   "version": "0.0.0",
   "type": "module",
   "license": "Apache-2.0",
-  "repository": { "type": "git", "url": "git+https://github.com/qyvr-ai/qyvr-js.git", "directory": "packages/host-cloudflare" },
-  "exports": { ".": "./src/index.ts" },
-  "publishConfig": { "access": "public" }
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qyvr-ai/qyvr-js.git",
+    "directory": "packages/host-cloudflare"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@qyvr/host": "workspace:*"
+  },
+  "scripts": {
+    "test": "vitest run --root ../.. packages/host-cloudflare"
+  }
 }

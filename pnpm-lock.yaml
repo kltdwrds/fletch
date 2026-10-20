@@ -26,7 +26,11 @@ importers:
 
   packages/host: {}
 
-  packages/host-cloudflare: {}
+  packages/host-cloudflare:
+    dependencies:
+      '@qyvr/host':
+        specifier: workspace:*
+        version: link:../host
 
 packages:
 
