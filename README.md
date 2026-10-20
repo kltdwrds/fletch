@@ -41,11 +41,12 @@ You need a Cloudflare account (the free plan works), Node 24.19 or newer, and pn
    ```
    mkdir ~/my-fletch && cd ~/my-fletch
    CLOUDFLARE_API_TOKEN=... pnpm --dir ~/path/to/fletch create-fletch \
-     --name sam --owner-email sam@solo-sam.example --account-id <32-hex account id> [--paid] [--dir ~/my-fletch]
+     --name sam --owner-email sam@solo-sam.example --account-id <32-hex account id> --dir ~/my-fletch [--paid]
    ```
 
-   (`pnpm create-fletch` run inside the checkout writes into the directory you ran pnpm from, `INIT_CWD`; give
-   `--dir` when in doubt.) Without the flags it asks for the name, your email, the account id and the token (input
+   Give `--dir`. Without it the config is written to the directory pnpm was run from (`INIT_CWD`), which with
+   `pnpm --dir` is where you stand, but if you run `pnpm create-fletch` inside the checkout it lands in the
+   checkout: gitignored there as `/wrangler.jsonc`, and it holds your account id and email. Without the flags it asks for the name, your email, the account id and the token (input
    hidden). The token is read from the environment only, never from an argument.
 
 `npm create fletch` will do the same without a checkout once `create-fletch` is published; today it runs from a

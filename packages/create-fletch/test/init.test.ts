@@ -177,7 +177,20 @@ describe("[F1] create-fletch init", () => {
     const r = await s.run();
     expect(r).toMatchObject({ ok: false, code: "TOKEN_SCOPE_MISSING" });
     expect(r.ok === false && r.reason).toContain("Workers Scripts");
+    expect(r.ok === false && r.reason).toContain("Authentication error [code: 10000]");
     expect(secretPuts(s)).toHaveLength(0);
+  });
+
+  it("a 403 outside wrangler's error lines is not taken for a scope refusal", async () => {
+    const s = setup(fakeAccount(), {}, "Total Upload: 403.12 KiB / gzip: 90 KiB\n✘ [ERROR] Something else failed.");
+    expect(await s.run()).toMatchObject({ ok: false, code: "DEPLOY_FAILED" });
+  });
+
+  it("the token never appears in a scope refusal's wrangler line", async () => {
+    const s = setup(fakeAccount(), {}, "✘ [ERROR] 403 for token test-token");
+    const r = await s.run();
+    expect(r).toMatchObject({ ok: false, code: "TOKEN_SCOPE_MISSING" });
+    expect(JSON.stringify(r)).not.toContain("test-token");
   });
 
   it("refuses with INIT_CONFIG_EXISTS, before any call, over a wrangler.jsonc create-fletch did not write", async () => {

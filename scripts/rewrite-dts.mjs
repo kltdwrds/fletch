@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export function rewriteSpecifiers(text) {
-  return text.replace(/(\bfrom\s+|\bimport\s*\(\s*|\bimport\s+)(["'])(\.{1,2}\/[^"']*?)\.ts\2/g, "$1$2$3.js$2");
+  return text.replace(/(\bfrom\s+|\bimport\s*\(\s*|\bimport\s+)(["'])(\.{1,2}\/[^"']*?)(?<!\.d)\.ts\2/g, "$1$2$3.js$2");
 }
 
 export function rewriteDirectory(dir) {

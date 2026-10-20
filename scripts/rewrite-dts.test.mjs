@@ -15,3 +15,8 @@ test("[F1] rewrite-dts: relative .ts specifiers become .js, package specifiers s
     ['export { a } from "./keys.js";', 'import { type B } from "../x/y.js";', 'import type { C } from "@qyvr/host";', 'type D = import("./d.js").D;', 'export * from "./index.js";'].join("\n"),
   );
 });
+
+test("[F1] rewrite-dts: a side-effect import and a multi-line from are rewritten; a .d.ts specifier is left alone", () => {
+  const src = ['import "./side.ts";', "export {", "  a,", "  b,", '} from "./multi.ts";', 'export type { T } from "./types.d.ts";'].join("\n");
+  assert.equal(rewriteSpecifiers(src), ['import "./side.js";', "export {", "  a,", "  b,", '} from "./multi.js";', 'export type { T } from "./types.d.ts";'].join("\n"));
+});

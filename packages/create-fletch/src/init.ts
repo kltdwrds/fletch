@@ -92,8 +92,17 @@ export function renderConfig(opts: InitOptions, main: string): Record<string, un
   return config;
 }
 
-/** wrangler's output when Cloudflare refuses the deploy for the token: HTTP 403 or API code 10000 (Authentication error). */
-const DENIED = /\b403\b|\[code: 10000\]|Authentication error/;
+/**
+ * The line of wrangler's error output that says Cloudflare refused the deploy for the token (HTTP 403, or API
+ * code 10000 "Authentication error"), or null. Only the lines from the first `[ERROR]` on count, so a `403` in
+ * the progress output (a size, a hash) is not taken for a refusal.
+ */
+export function deployRefusal(output: string): string | null {
+  const lines = output.split("\n");
+  const first = lines.findIndex((l) => l.includes("[ERROR]"));
+  if (first < 0) return null;
+  return lines.slice(first).findLast((l) => /\[code: 10000\]|Authentication error|\b403\b/.test(l))?.trim() ?? null;
+}
 const scopeReason = (scope: string, accountId: string) => `the API token can read but not change ${scope.replace(" (Edit)", "")}: give it the ${scope} permission for account ${accountId} and run again`;
 
 const refuse = (code: string, reason: string): InitResult => ({ ok: false, code, reason });
@@ -143,7 +152,8 @@ export async function init(input: InitOptions, deps: InitDeps = {}): Promise<Ini
 
     step = { scope: "Workers Scripts" };
     const deployed = await deploy(configPath, { CLOUDFLARE_API_TOKEN: opts.token, CLOUDFLARE_ACCOUNT_ID: accountId });
-    if (!deployed.ok && DENIED.test(deployed.output)) return refuse("TOKEN_SCOPE_MISSING", scopeReason("Workers Scripts (Edit)", accountId));
+    const refusal = deployed.ok ? null : deployRefusal(deployed.output);
+    if (refusal) return refuse("TOKEN_SCOPE_MISSING", `${scopeReason("Workers Scripts (Edit)", accountId)} (wrangler said: ${scrub(refusal)})`);
     if (!deployed.ok) return refuse("DEPLOY_FAILED", `wrangler deploy failed: ${scrub(deployed.output.trim().split("\n").slice(-20).join("\n")) || "no output"}`);
 
     step = { scope: "Workers Scripts" };
