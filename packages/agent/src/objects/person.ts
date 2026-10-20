@@ -29,24 +29,22 @@ import type { PersonCompanyApi } from "../person/company-api.ts";
 import { PERSON_CRONS, PersonLoops, personSlot } from "../loops/personal.ts";
 import { type LoopLedger, LoopSettings, PERSON_LOOPS, type PersonLoop } from "../loops/registry.ts";
 import { restorePersonal } from "../lifecycle/bundle.ts";
-import { completeConversion, conversionBundle, type Converter, ConversionState, finishOffboarding, type OffboardingDeps, purgeWork, startOffboarding } from "../lifecycle/offboarding.ts";
+import { completeConversion, conversionBundle, ConversionState, finishOffboarding, type OffboardingDeps, purgeWork, startOffboarding } from "../lifecycle/offboarding.ts";
 import type { MemoryWriteInput, WriteContext } from "../memory/tools.ts";
-import { probeSearch } from "../memory/probe-search.ts";
 import { PersonJobIndex } from "../person/job-index.ts";
 import { forgetProducers } from "../person/forget-producers.ts";
 import { type ChatsCall, type OpenResult, PersonChats, runChatsCall } from "../person/chats.ts";
 import { asNotify, type DeliveryCall, type DeliveryInput, PersonDelivery, runCall } from "../delivery/service.ts";
 import { personDeliveryDeps, skillDraftOffer } from "../delivery/person-deps.ts";
-import { type InboundMail, type MailOutService, type OutboundMail, PersonMail } from "../person/mail.ts";
+import { type InboundMail, type OutboundMail, PersonMail } from "../person/mail.ts";
 import { memberName, type Profile, PersonProfile } from "../person/profile.ts";
 import { log } from "../obs/log.ts";
 import { migrateObject } from "../migrations/catalog.ts";
+import { available, hostOf } from "../host.ts";
 import { type PersonPlatformCall, personPlatformCall } from "../migrations/person-api.ts";
 
 /** Buffered daily lines reach R2 within this many seconds of the first unrendered write. */
 export const RENDER_DELAY_S = 60;
-/** The longest one memory probe holds its request while it waits on the index (M12.2). */
-export const PROBE_WAIT_MS = 25_000;
 
 export class Person extends Agent<Env> {
   private readonly schema = migrateObject(this.ctx, "person");
@@ -210,12 +208,12 @@ export class Person extends Agent<Env> {
   private get mail(): PersonMail {
     this.mailInstance ??= new PersonMail(this.ctx.storage, {
       person: this.name,
-      ...memberName(this.env.MEMBERS, this.name),
+      ...memberName(hostOf(this.env).memberSeed, this.name),
       now: () => Date.now(),
       openChat: () => this.chats.open(Date.now(), "mail"),
       ownsChat: (chatId) => this.chats.owns(chatId),
       notify: async (chatId, n) => asNotify(await this.delivery.deliver({ ...n, kind: "requested", category: "mail", chat: chatId })),
-      mailOut: this.env.MAIL_OUT as unknown as MailOutService,
+      mailOut: { send: async (input) => { const mail = hostOf(this.env).mail; return available(mail) ? mail.out.send(input) : mail; } },
       holdCode: (code, source) => this.env.VAULT.get(this.env.VAULT.idFromName(this.env.TENANT_ID)).captureOneTimeCode({ person: this.name, code, source }),
       attachments: (m) => this.attachments.fromMail(m),
     });
@@ -263,10 +261,10 @@ export class Person extends Agent<Env> {
       files: { dump: () => this.files.dump(), purgeAll: () => this.files.purgeAll() },
       work: { purge: () => purgeWork(treeOf(this.ctx.storage, this.name), this.attachments, this.links) },
       company: { propose: (p, i) => company.promotionPropose(p, i), offboardingPolicy: (p) => company.offboardingPolicy(p), depart: (p) => company.depart(p) },
-      // The dispatcher's provisioning API (M11.2), bound with this tenant in props.
-      converter: (this.env.PROVISIONING as unknown as Converter | undefined) ?? null,
+      // The host's provisioning (M11.2): a standalone tenant for the departing person, where the host offers one.
+      converter: hostOf(this.env).provisioning,
       pending: new ConversionState(this.ctx.storage),
-      ...memberName(this.env.MEMBERS, this.name),
+      ...memberName(hostOf(this.env).memberSeed, this.name),
       model: this.modelDeps(),
     };
   }
@@ -385,10 +383,12 @@ export class Person extends Agent<Env> {
 
   /** Mail the platform received and sealed for this person (M6.1); it lands fenced in their chat. */
   async receiveMail(m: InboundMail) { return this.mail.receive(m); }
-  /** Staging's mail probe (M6.2): the chat the person's mail lands in, if any yet. */
-  async mailChatId(): Promise<string | null> { return this.mail.mailChatId(); }
   /** Mail the person's agent sends from one of their chats, labelled by the platform (A6, B3). */
-  async sendMail(by: string, m: OutboundMail) { return this.mail.send(by, m); }
+  async sendMail(by: string, m: OutboundMail) {
+    // A host without mail refuses before anything is minted: nothing is shown as sent.
+    const mail = hostOf(this.env).mail;
+    return available(mail) ? this.mail.send(by, m) : mail;
+  }
 
   private attachmentsInstance?: PersonAttachments;
   /** The person's attachments (M24.3, `attachments/store.ts`): uploads, mail's files and colleagues' requests' files, decided here. */
@@ -500,61 +500,6 @@ export class Person extends Agent<Env> {
     const r = await forgetConfirmed(this.memory, () => this.env.VAULT.get(this.env.VAULT.idFromName(this.env.TENANT_ID)), this.name, planId, requester);
     if (r.ok) await this.armRender();
     return r;
-  }
-
-  // Staging probes for M12.2's live lane: the person's own memory and loops, refused elsewhere. -----
-
-  private staging(): { ok: false; code: string; reason: string } | null {
-    return this.env.QYVR_ENV === "staging" ? null : { ok: false, code: "NOT_FOUND", reason: "memory probes exist in staging only" };
-  }
-
-  /** Lines in the person's own daily note, idempotent by `dedupe`, so a re-run seeds nothing twice. */
-  async devMemorySeed(lines: Array<{ text: string; dedupe: string }>) {
-    const off = this.staging();
-    if (off) return off;
-    const citations: string[] = [];
-    for (const l of lines) {
-      const w = await this.memoryWrite({ target: "daily", text: l.text }, { requester: this.name, setting: { scope: "personal" }, source: "dev:seed", dedupe: `seed:${l.dedupe}` });
-      citations.push(w.ok && "citation" in w ? w.citation : `${(w as { code?: string }).code ?? "MEMORY_WRITE_FAILED"}`);
-    }
-    return { ok: true, citations };
-  }
-
-  /** Renders and pushes every queued chunk now rather than at the timer; says what is still queued. */
-  async devMemorySync() {
-    const off = this.staging();
-    if (off) return off;
-    await this.memory.renderPending();
-    let upserted = 0;
-    let deleted = 0;
-    for (let i = 0; i < 20 && this.semantic?.pending(); i++) {
-      const r = await this.memory.syncVectors();
-      if (!r.ok) return { ...r, upserted, deleted, pending: this.semantic.pending() };
-      upserted += r.upserted;
-      deleted += r.deleted;
-    }
-    return { ok: true, upserted, deleted, pending: this.semantic?.pending() ?? null, index: !!this.semantic };
-  }
-
-  /** The person's own search, keyword only or fused, each hit's citation resolved (`memory/probe-search.ts`). */
-  async devMemorySearch(queries: string[], mode: "keyword" | "hybrid", waitFor?: string) {
-    return this.staging() ?? probeSearch(this.personMemory, this.semantic, this.name, { queries, mode, ...(waitFor ? { waitFor } : {}) }, PROBE_WAIT_MS);
-  }
-
-  /** One loop ticked as its cron fires it, in the current slot; then what the loop did. */
-  async devLoopTick(loop: PersonLoop) {
-    const off = this.staging();
-    if (off) return off;
-    await this.loopTick(loop);
-    return this.loops.report(this.name, loop);
-  }
-
-  /** The person's loop schedules as the Agents SDK holds them. */
-  async devLoopSchedules() {
-    const off = this.staging();
-    if (off) return off;
-    const schedules = (await this.listSchedules()).filter((s) => s.callback === "loopTick").map((s) => ({ loop: s.payload, type: s.type, cron: "cron" in s ? s.cron : null, next: s.time }));
-    return { ok: true, schedules };
   }
 
   /**

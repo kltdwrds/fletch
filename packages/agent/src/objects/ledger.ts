@@ -1,7 +1,7 @@
 // The Ledger object, one per tenant (AD-1, AD-11): a row per model call with tenant, person, run
 // id, route, tokens and cost; a row per job run; and the budgets enforced before every call (M5.1):
-// the run's token ceiling, the person's and the tenant's day in dollars (M28.1), and in staging the cap across tenants that
-// the dispatcher's `Budget` entrypoint keeps, to which every recorded call reports the day's total.
+// the run's token ceiling, the person's and the tenant's day in dollars (M28.1), and, where the host keeps one
+// (`hostOf(env).budget`), the cap across tenants, to which every recorded call reports the day's total.
 import { DurableObject } from "cloudflare:workers";
 import { checkJournalRow, type JournalRow } from "../grants/journal.ts";
 import { admitPolicy, BUDGET_KEYS, type Budgets, chargeMicros, type CompanyPolicy, dayStart, decide, defaultBudgets, isBudgetKey, utcDay } from "../ledger/budget.ts";
@@ -10,7 +10,9 @@ import type { Admission, AdmitResult, BrowserRow, LedgerSink, ModelCallRow, RunR
 import { DEFAULT_TIER, isModelTier } from "../model/routes.ts";
 import { queryLedgerView } from "../views/ledger-views.ts";
 import type { ViewInput, ViewResult } from "../views/select.ts";
+import type { BudgetService } from "@qyvr/host";
 import { migrateObject, probeObject } from "../migrations/catalog.ts";
+import { hostOf } from "../host.ts";
 
 
 type Row = {
@@ -35,11 +37,6 @@ type Row = {
   finished_at: number | null;
 };
 
-/** The dispatcher's budget entrypoint as the agent binds it (tenant in props). */
-export interface StagingBudget {
-  report(day: string, total: number): Promise<{ ok: boolean }>;
-  check(day: string): Promise<{ ok: true } | { ok: false; code: string; reason: string }>;
-}
 
 export class Ledger extends DurableObject<Env> implements LedgerSink {
   private readonly schema = migrateObject(this.ctx, "ledger");
@@ -53,9 +50,9 @@ export class Ledger extends DurableObject<Env> implements LedgerSink {
     return this.ctx.storage.sql;
   }
 
-  /** Staging's cap applies in staging only; elsewhere there is no cross-tenant counter. */
-  private get staging(): StagingBudget | null {
-    return this.env.QYVR_ENV === "staging" && this.env.BUDGET ? (this.env.BUDGET as unknown as StagingBudget) : null;
+  /** The host's cross-tenant cap; null (a self-host deploy) means there is none. */
+  private get staging(): BudgetService | null {
+    return hostOf(this.env).budget;
   }
 
   async fetch(): Promise<Response> {

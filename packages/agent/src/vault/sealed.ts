@@ -1,9 +1,9 @@
 // The Vault's sealed store (AD-12): its SQLite schema, the tenant data key (generated here, wrapped by
-// the platform master key through the dispatcher's key entrypoint, and imported as non-extractable
+// the master key through the host's key service, and imported as non-extractable
 // keys whose raw bytes are zeroed), and sealing and opening values under the tenant, owner and
 // reference as additional data. `core.ts` builds the credentials, grants and egress on top; nothing
 // here returns a value except `open`, which only the core calls after its checks.
-import type { KeyService } from "../../../platform/dispatcher/src/keys.ts";
+import type { KeyService } from "@qyvr/host";
 import type { EgressCode } from "../egress/policy.ts";
 
 export interface VaultCtx {

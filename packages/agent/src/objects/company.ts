@@ -21,7 +21,6 @@ import { CompanyOnboarding } from "../company/onboarding.ts";
 import { CompanySettings, type CompanySettingsView } from "../company/settings.ts";
 import { CompanySkills } from "../company/skills.ts";
 import { type CompanyPolicy, defaultBudgets } from "../ledger/budget.ts";
-import type { MembersApi } from "../../../platform/dispatcher/src/members.ts";
 import { type SettingsResult, workspaceSettings } from "../company/workspace-settings.ts";
 import type { CompanyMirrorAdapter, WorkspaceSettingsAdapter } from "../workspace/adapters.ts";
 import { CompanyTeams, type Team } from "../company/teams.ts";
@@ -37,6 +36,7 @@ import { COMPANY_OWNER, CompanyLoops } from "../loops/company.ts";
 import { COMPANY_LOOPS, type CompanyLoop, type LoopModel, LoopRun, LoopSettings } from "../loops/registry.ts";
 import { legFor } from "../memory/semantic.ts";
 import { migrateObject, probeObject } from "../migrations/catalog.ts";
+import { available, hostOf } from "../host.ts";
 
 export class Company extends DurableObject<Env> {
   private readonly schema = migrateObject(this.ctx, "company");
@@ -143,19 +143,18 @@ export class Company extends DurableObject<Env> {
 
   /** Onboarding (M11.2): steps read from the stores that own them; the workspace asked of the platform. */
   private get onboarding(): CompanyOnboarding {
-    const provisioning = this.env.PROVISIONING as unknown as { requestWorkspace(person: string): ReturnType<CompanyOnboarding["requestWorkspace"]> } | undefined;
+    const host = hostOf(this.env);
     this.onboardingInstance ??= new CompanyOnboarding(this.ctx.storage, {
       isAdmin: (e) => isAdminRole(this.members.lookup(e)?.role),
       connectors: () => this.connectors.list().map((c) => ({ id: c.id, hosts: c.hosts })),
       memberCount: () => this.members.list().length,
-      hasWorkspace: this.env.TENANT_SHAPE === "company",
+      hasWorkspace: host.tenant.shape === "company",
       instructions: () => this.instructionsStore.current()?.text ?? "",
       appendCompany: async (text) => {
         const r = await this.memory.appendStudied({ scope: "company", text, writer: "onboarding:study", source: "onboarding:study" });
         return r.ok ? { ok: true, citation: r.citation } : r;
       },
-      requestWorkspace: async (person) =>
-        provisioning ? ((await provisioning.requestWorkspace(person)) as never) : { ok: false, code: "PROVISIONING_UNAVAILABLE", reason: "no provisioning API is bound" },
+      requestWorkspace: async (person) => (available(host.provisioning) ? host.provisioning.requestWorkspace(person) : host.provisioning),
       studyRun: () => LoopRun.start({ loop: "onboarding-study", owner: COMPANY_OWNER, state: this.loopState, model: this.loopModel(), now: () => Date.now(), slot: Date.now() }),
       now: () => Date.now(),
     });
@@ -173,7 +172,7 @@ export class Company extends DurableObject<Env> {
       holding: (member) => {
         const snapshot = this.authority.snapshot();
         const company = this.connectors.list().map((c) => c.id).filter((id) => entitled(snapshot, member, id, "use", Date.now()));
-        return { member, connectors: [...PUBLIC_CONNECTORS, ...(this.env.TENANT_SHAPE === "company" ? ["workspace"] : []), ...company] };
+        return { member, connectors: [...PUBLIC_CONNECTORS, ...(hostOf(this.env).tenant.shape === "company" ? ["workspace"] : []), ...company] };
       },
       referee: (i) =>
         referee(
@@ -201,7 +200,7 @@ export class Company extends DurableObject<Env> {
   }
 
   private get skills(): CompanySkills {
-    this.skillsInstance ??= new CompanySkills(this.members, this.env.AGENT_BUCKET, this.env.TENANT_SHAPE);
+    this.skillsInstance ??= new CompanySkills(this.members, this.env.AGENT_BUCKET, hostOf(this.env).tenant.shape);
     return this.skillsInstance;
   }
 
@@ -228,7 +227,7 @@ export class Company extends DurableObject<Env> {
 
   private get members(): CompanyMembers {
     this.armLoops();
-    this.membersInstance ??= new CompanyMembers(this.ctx.storage, this.env.MEMBERS, () => Date.now());
+    this.membersInstance ??= new CompanyMembers(this.ctx.storage, hostOf(this.env).memberSeed, () => Date.now());
     return this.membersInstance;
   }
 
@@ -267,7 +266,7 @@ export class Company extends DurableObject<Env> {
 
   /** The members with their names and roles; every member may read it. */
   async directory(): Promise<DirectoryEntry[]> {
-    const nameOf = displayNames(this.env.MEMBERS);
+    const nameOf = displayNames(hostOf(this.env).memberSeed);
     return this.members.list().map((m) => ({ email: m.email, role: m.role, ...(nameOf(m.email) !== m.email ? { name: nameOf(m.email) } : {}) }));
   }
 
@@ -358,7 +357,7 @@ export class Company extends DurableObject<Env> {
   async overview(by: string) {
     if (!isAdminRole(this.members.lookup(by)?.role)) return { ok: false as const, code: "NOT_AN_ADMIN", reason: "only an admin sees the company's pages" };
     const settings = this.settings.view();
-    const nameOf = displayNames(this.env.MEMBERS);
+    const nameOf = displayNames(hostOf(this.env).memberSeed);
     const members = this.members.list();
     return {
       ok: true as const,
@@ -478,7 +477,7 @@ export class Company extends DurableObject<Env> {
   /** What a departing member is told before they leave, and the names offboarding matches pages by. */
   async offboardingPolicy(person: string) {
     if (!this.members.lookup(person)) return { ok: false as const, code: "NOT_A_MEMBER", reason: "only a member offboards" };
-    const nameOf = displayNames(this.env.MEMBERS);
+    const nameOf = displayNames(hostOf(this.env).memberSeed);
     const members = this.members.list().filter((m) => m.email !== this.members.lookup(person)?.email).map((m) => ({ email: m.email, name: nameOf(m.email) }));
     return { ok: true as const, memberPagesInExport: this.settings.view().memberPagesInExport, members };
   }
@@ -563,6 +562,6 @@ export class Company extends DurableObject<Env> {
   }
 
   private syncAccess(): Promise<AccessSync> {
-    return syncAccess(this.env.ACCESS_MEMBERS as unknown as MembersApi | undefined, this.members.list());
+    return syncAccess(hostOf(this.env).members, this.members.list());
   }
 }

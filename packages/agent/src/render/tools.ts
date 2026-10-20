@@ -11,11 +11,12 @@ import type { DocumentCall, LinkResult, ShareResult } from "../files/links.ts";
 import { LINK_TTL_MS, lifeWords, SHARE_DEFAULT_MINUTES, SHARE_MAX_MINUTES } from "../files/links.ts";
 import type { EffectBuffer } from "../chat/tools.ts";
 import type { Namespace, ToolSpec } from "../tools/registry.ts";
+import type { HostFailure } from "@qyvr/host";
 import { RENDER_FORMATS, type RenderCode, type RenderFormat, type RenderResult } from "./render.ts";
 
-/** What the chat reaches: the Renderer, and the owner's files on their `Person` object, which decides. */
+/** What the chat reaches: the host's renderer (`hostOf(env).render`, refused where the host has none), and the owner's files on their `Person` object, which decides. */
 export interface DocumentsApi {
-  render(input: { markdown: string; to: RenderFormat }): Promise<RenderResult>;
+  render(input: { markdown: string; to: RenderFormat }): Promise<RenderResult | HostFailure>;
   /** A rendered document saved as one of the owner's files: html as text, docx and odt as bytes. */
   save(input: { path: string; text?: string; base64?: string; mediaType: string }, requester: string): Promise<WriteResult>;
   link(input: { path: string; download?: boolean }, requester: string): Promise<LinkResult>;
@@ -78,7 +79,7 @@ export function documentsNamespace(api: DocumentsApi, requester: string, effects
       const path = documentPath(p.name, (RENDER_FORMATS as readonly string[]).includes(to) ? to : "html");
       if (!path) throw err("RENDER_NAME_INVALID", "a name is letters, digits, dot, dash and underscore, up to 60 characters");
       const r = await api.render({ markdown: p.markdown, to });
-      if (!r.ok) throw err(r.code, `the document was not made and nothing was saved: ${RENDER_WORDS[r.code] ?? "the renderer refused it"}`);
+      if (!r.ok) throw err(r.code, `the document was not made and nothing was saved: ${(RENDER_WORDS as Record<string, string>)[r.code] ?? r.reason}`);
       const bytes = Uint8Array.from(atob(r.base64), (c) => c.charCodeAt(0));
       const saved = await api.save(r.to === "html" ? { path, text: new TextDecoder().decode(bytes), mediaType: r.mediaType } : { path, base64: r.base64, mediaType: r.mediaType }, requester);
       if (!saved.ok) throw err(saved.code, `the document was rendered but not saved: ${saved.reason}`);

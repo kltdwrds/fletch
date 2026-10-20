@@ -114,7 +114,7 @@ export function authorityWorld(o: WorldOptions = {}) {
   const fake = new FakeModel(o.script ?? [], o.mode ?? { kind: "scripted" });
   const aiBinding = o.ai ?? fake.binding;
   const members = (o.seed ?? [ada]).map((p) => ({ email: p.email, role: o.roles?.[p.email] ?? p.role, name: p.name }));
-  const env = { TENANT_ID: TENANT, TENANT_SHAPE: o.shape ?? "company", QYVR_ENV: o.qyvrEnv ?? "test", MEMBERS: JSON.stringify(members) };
+  const env = { TENANT_ID: TENANT, TENANT_SHAPE: o.shape ?? "company", QYVR_ENV: o.qyvrEnv ?? "test", HOST: { memberSeed: JSON.stringify(members) } };
   const performed: string[] = [];
   const calendar = new Map<string, Map<string, string>>(members.map((m) => [m.email, new Map([["evt-1", "thu"], ["evt-2", "wed"], ["evt-9", "mon"]])]));
   const pages = o.pages ?? {};
@@ -289,7 +289,7 @@ export function authorityWorld(o: WorldOptions = {}) {
     return { fileList: async (i, r) => f().list(i, r), fileRead: async (i, r) => f().read(i, r), fileWrite: async (i, c) => f().write(i, c), fileDelete: async (i, r) => f().remove(i, r) };
   };
 
-  const nameOf = displayNames(env.MEMBERS);
+  const nameOf = displayNames(env.HOST.memberSeed);
   const request = (r: ColleagueRequest) =>
     receiveRequest(
       {

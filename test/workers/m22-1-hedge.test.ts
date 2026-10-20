@@ -13,7 +13,6 @@ import { ChatEngine, type EngineCtx } from "../../packages/agent/src/chat/engine
 import { ASKING, CHAT_TASK, REQUEST_TASK } from "../../packages/agent/src/chat/instructions.ts";
 import { ownerOnly } from "../../packages/agent/src/chat/protocol.ts";
 import { type Directory, route } from "../../packages/agent/src/http/routes.ts";
-import { PrimaryFault } from "../../packages/agent/src/model/fault.ts";
 import type { Admission, LedgerSink, ModelCallRow } from "../../packages/agent/src/ledger/types.ts";
 import { createStreamFn } from "../../packages/agent/src/model/adapter.ts";
 import { HEDGE_LOST } from "../../packages/agent/src/model/hedge.ts";
@@ -353,25 +352,6 @@ describe("[M22.1] asking, one question at a time (B8, B10)", () => {
     expect(ASKING).not.toMatch(/grant|permi|allow|approv|may /i);
     // A colleague's request chat keeps its own task block.
     expect(REQUEST_TASK).not.toContain(ASKING);
-  });
-});
-
-describe("[M22.1] the staging lane's forced primary failure", () => {
-  it("armed once, the next hedged step's primary answers 503 unsent and the hedge serves it; the step after goes to the primary again", async () => {
-    const fake = new FakeModel([{ text: "From the hedge." }, { text: "From the primary." }]);
-    const fault = new PrimaryFault();
-    const ai = fault.wrap(fake.binding as unknown as Ai);
-    const rows: ModelCallRow[] = [];
-    const step = async () => {
-      const streamFn = createStreamFn({ ai, ledger: { record: async (r) => void rows.push(r) }, wait: async () => {}, now: () => T0, schedule: clock().schedule }, { tenant: ada.company, person: ada.email, runId: "r", route: "chat" });
-      return (await streamFn(modelFor("chat"), normalizeContext({ messages: [{ role: "user", content: "hi", timestamp: T0 }] }), {})).result();
-    };
-    fault.arm();
-    expect((await step()).content).toEqual([{ type: "text", text: "From the hedge." }]);
-    expect((await step()).content).toEqual([{ type: "text", text: "From the primary." }]);
-    // The forced 503 never reached the model: only the hedge and the next primary were requests.
-    expect(fake.requests.map((r) => r.model)).toEqual([GLM_WORKERS_AI, GLM_OPENROUTER]);
-    expect(rows.map((r) => [r.model, r.status, r.httpStatus])).toEqual([[GLM_OPENROUTER, "http_error", 503], [GLM_WORKERS_AI, "ok", 200], [GLM_OPENROUTER, "ok", 200]]);
   });
 });
 

@@ -6,6 +6,7 @@
 // answer comes back redacted and scrubbed. A refusal is an answer with status 403 and its code, never
 // a network error, so a script and a stock SDK both see what happened. A raw socket is refused: egress
 // carries HTTP alone. Nothing the code sends names a person or a tenant; props alone do.
+import { unavailable } from "@qyvr/host";
 import { WorkerEntrypoint } from "cloudflare:workers";
 import type { VaultEgress } from "../connectors/egress.ts";
 import type { EgressResult } from "../egress/module.ts";
@@ -79,7 +80,7 @@ export const SOCKET_REFUSED = "EGRESS_SOCKET_REFUSED";
 
 /** What `codeFor` needs of the Chat object: its env and its own `ctx.exports`. */
 export interface CodeHost {
-  env: { LOADER: LoaderLike; TENANT_ID: string; VAULT: { get(id: DurableObjectId): unknown; idFromName(name: string): DurableObjectId } };
+  env: { LOADER?: LoaderLike; TENANT_ID: string; VAULT: { get(id: DurableObjectId): unknown; idFromName(name: string): DurableObjectId } };
   exports: { Egress(options: { props: EgressProps }): Fetcher };
 }
 
@@ -90,9 +91,12 @@ export interface CodeHost {
  */
 export function codeFor(host: CodeHost, person: string): CodeApi {
   const tenant = host.env.TENANT_ID;
+  const loader = host.env.LOADER;
+  // A deploy without the Worker Loader binding refuses every run in words; nothing is loaded or sent.
+  if (!loader) return { run: async () => unavailable("code", "Code Mode needs the Worker Loader binding, which this deploy does not have") };
   const vault = () => host.env.VAULT.get(host.env.VAULT.idFromName(tenant)) as { surrogate(person: string, ref: string): Promise<{ ok: true; token: string } | { ok: false; code: string; reason: string }> };
   return codeApi({
-    loader: host.env.LOADER,
+    loader,
     tenant,
     person,
     outbound: host.exports.Egress({ props: { tenant, person } }),

@@ -34,7 +34,7 @@ export interface SubAgentWorldOptions {
 export function subagentWorld(o: SubAgentWorldOptions = {}) {
   const clock = { now: T0 };
   const fake = new FakeModel(o.script ?? []);
-  const env = { TENANT_ID: TENANT, TENANT_SHAPE: "company", QYVR_ENV: "test", MEMBERS: JSON.stringify([ada].map((p) => ({ email: p.email, role: p.role, name: p.name }))) };
+  const env = { TENANT_ID: TENANT, TENANT_SHAPE: "company", QYVR_ENV: "test", HOST: { memberSeed: JSON.stringify([ada].map((p) => ({ email: p.email, role: p.role, name: p.name }))) } };
   const performed: string[] = [];
   const ledgerH = new ObjectHarness("ledger", (ctx, e) => new Ledger(ctx as DurableObjectState, e as Env), env, (l) => {
     l.now = () => clock.now;

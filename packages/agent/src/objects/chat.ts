@@ -3,7 +3,6 @@
 // transcript and outbox are the engine's (`chat/engine.ts`). The owner is decided here, on every
 // connection and every frame: the person comes from the header the agent script sets from props,
 // and frames go only to the owner's connections.
-import { PrimaryFault } from "../model/fault.ts";
 import { holdTypedSecrets } from "../vault/typed.ts";
 import { Agent, type Connection, type ConnectionContext, type WSMessage } from "agents";
 import { getAgentByName } from "agents";
@@ -13,7 +12,6 @@ import { displayNames } from "../company/members.ts";
 import { connectFrame, ownerOnly, type ProtocolFrame } from "../chat/protocol.ts";
 import { answerFrame } from "../chat/socket.ts";
 import { codeFor, type CodeHost } from "../code/egress.ts";
-import type { RunRequest } from "../code/run.ts";
 import { bindingPort, type BrowserBinding, browserOf } from "../browse/binding.ts";
 import { meteredPort } from "../browse/meter.ts";
 import type { LedgerSink } from "../ledger/types.ts";
@@ -24,6 +22,7 @@ import type { JobsApi } from "../jobs/tools.ts";
 import { type Job, jobName } from "./job.ts";
 import { PERSON_HEADER } from "../http/identity.ts";
 import { personFiles, personMemory, personTree } from "../memory/rpc.ts";
+import type { RenderResult } from "../render/render.ts";
 import { documentsApi } from "../render/tools.ts";
 import { onboardingNamespace, type OnboardingApi } from "../company/onboarding-tools.ts";
 import { BUILTIN_SKILLS } from "../skills/builtin.ts";
@@ -33,6 +32,7 @@ import type { SubAgentInput, SubAgentResult } from "../subagents/run.ts";
 import { SubAgentStore } from "../subagents/store.ts";
 import { verifyHandoff } from "../subagents/verifier.ts";
 import { migrateObject, probeObject } from "../migrations/catalog.ts";
+import { available, hostOf } from "../host.ts";
 
 type ConnectionState = { person: string };
 
@@ -69,12 +69,9 @@ export class Chat extends Agent<Env> {
     return this.hostInstance;
   }
 
-  /** Staging's live lane only (M22.1, `/dev/model-fault`): the engine's binding answers one forced primary failure. */
-  private readonly primaryFault = new PrimaryFault();
-
   private get engine(): ChatEngine {
-    const env = this.env.QYVR_ENV === "staging" ? { ...this.env, AI: this.primaryFault.wrap(this.env.AI) } : this.env;
-    this.engineInstance ??= new ChatEngine(this.ctx, env, {
+    const host = hostOf(this.env);
+    this.engineInstance ??= new ChatEngine(this.ctx, this.env, {
       wakeup: { arm: (at) => this.armResume(at), disarm: () => this.disarmResume() },
       // A turn that continues after a decision runs past the decide call; the alarm resumes it if this dies.
       defer: (p) => this.ctx.waitUntil(p),
@@ -82,8 +79,8 @@ export class Chat extends Agent<Env> {
       memory: (person) => personMemory(this.env, person),
       files: (person) => personFiles(this.env, person),
       tree: (person) => personTree(this.env, person),
-      documents: (person) => documentsApi(async (call, requester) => (await getAgentByName(this.env.PERSON, person)).documentCall(requester, call), (input) => this.env.RENDERER.getByName("render").render(input)),
-      skills: new SkillCatalog(this.env.AGENT_BUCKET, this.env.TENANT_SHAPE === "company" ? "company" : "standalone", (p) => this.company().teamsOf(p), BUILTIN_SKILLS),
+      documents: (person) => documentsApi(async (call, requester) => (await getAgentByName(this.env.PERSON, person)).documentCall(requester, call), async (input) => (available(host.render) ? ((await host.render.render(input)) as RenderResult) : host.render)),
+      skills: new SkillCatalog(this.env.AGENT_BUCKET, host.tenant.shape, (p) => this.company().teamsOf(p), BUILTIN_SKILLS),
       skillSeen: (person) => async (name, hash) => ((await getAgentByName(this.env.PERSON, person)).platformCall({ op: "skill-seen", name, hash }) as unknown as Promise<"first" | "same" | "changed">),
       code: (person) => codeFor(this.codeHost(), person),
       egress: (person) => egressFor(this.env.VAULT.get(this.env.VAULT.idFromName(this.env.TENANT_ID)) as unknown as VaultEgress, person),
@@ -108,8 +105,8 @@ export class Chat extends Agent<Env> {
         deliverReply: async (chatId, n) => (await getAgentByName(this.env.CHAT, chatId)).notify(n),
       },
       jobs: this.jobsApi(),
-      nameOf: displayNames(this.env.MEMBERS),
-      ...(this.env.TENANT_SHAPE === "company" ? { companyInstructions: async () => this.companyText(await this.company().instructions()) } : {}),
+      nameOf: displayNames(host.memberSeed),
+      ...(host.tenant.shape === "company" ? { companyInstructions: async () => this.companyText(await this.company().instructions()) } : {}),
       namespaces: (view) => [onboardingNamespace(this.onboardingApi(), () => view.owner() ?? "")],
       subagents: { open: () => new SubAgentStore(this.ctx.storage).open(), status: () => this.subagents.status(), close: (person, ids) => this.subagents.close(person, ids), delegate: (input) => this.subagents.delegate(input) },
     });
@@ -297,7 +294,7 @@ export class Chat extends Agent<Env> {
     return this.engine.compactionsFor(person);
   }
 
-  /** Staging's mail probe (M6.2): the notices, for the owner only. */
+  /** The notices, for the owner only. */
   async noticesFor(person: string): Promise<ReturnType<ChatEngine["noticesFor"]>> {
     return this.engine.noticesFor(person);
   }
@@ -312,44 +309,9 @@ export class Chat extends Agent<Env> {
     await this.subagents.step();
   }
 
-  /** The sub-agents' status, for the chat's owner only (staging's probe reads it). */
+  /** The sub-agents' status, for the chat's owner only. */
   async subagentStatus(person: string) {
     return this.engine.owner() === person ? this.subagents.status() : null;
-  }
-
-  /** Staging's live lane: a delegation started as the main agent's committed call would start it. */
-  async probeDelegate(person: string, requests: Array<{ role: "worker" | "coordinator"; brief: string }>) {
-    if (this.env.QYVR_ENV !== "staging") return { ok: false, code: "NOT_FOUND" };
-    const claimed = this.engine.claim(person);
-    if (!claimed.ok) return claimed;
-    const grp = `probe-${crypto.randomUUID().slice(0, 8)}`;
-    return { grp, decision: await this.subagents.delegate({ grp, turnId: grp, person, requests }) };
-  }
-
-  /** Staging's live lane (M25.5): one Code Mode script run from this object for its owner, as `code_execute` runs it. */
-  async probeCode(person: string, req: RunRequest) {
-    if (this.env.QYVR_ENV !== "staging") return { ok: false, code: "NOT_FOUND" };
-    const claimed = this.engine.claim(person);
-    if (!claimed.ok) return claimed;
-    return codeFor(this.codeHost(), person).run(req);
-  }
-
-  async probeGroup(person: string, grp: string) {
-    if (this.env.QYVR_ENV !== "staging" || this.engine.owner() !== person) return null;
-    return this.subagents.group(grp);
-  }
-
-  /** Staging's live lane: a stored worker asking to spawn, decided by the deployed host. */
-  /** Staging's live lane (M22.1): the next hedged step's primary fails, so the hedge serves it. */
-  async probeModelFault(person: string): Promise<{ ok: true } | { ok: false; code: string }> {
-    if (this.env.QYVR_ENV !== "staging" || this.engine.owner() !== person) return { ok: false, code: "CHAT_NOT_OWNER" };
-    this.primaryFault.arm();
-    return { ok: true };
-  }
-
-  async probeSpawn(person: string, id: string) {
-    if (this.env.QYVR_ENV !== "staging" || this.engine.owner() !== person) return { ok: false, code: "CHAT_NOT_OWNER" };
-    return this.subagents.spawn(id, [{ role: "worker", brief: "a worker's own sub-agent" }]);
   }
 
   /**

@@ -10,10 +10,12 @@ import { acceptsImages } from "../model/routes.ts";
 import { treeOf } from "../tree/rpc.ts";
 import type { ImageConverter } from "./caps.ts";
 import { imagesConverter } from "./images.ts";
+import { available, hostOf } from "../host.ts";
+import type { MarkdownResult } from "../render/reverse.ts";
 import type { AttachmentBucket, AttachmentDeps } from "./store.ts";
 
-/** The one converter a tenant script has: its own Images binding. */
-export const converterFor = (env: Pick<Env, "IMAGES">): ImageConverter => imagesConverter(env.IMAGES);
+/** The one converter a tenant script has: its own Images binding; without it, HEIC is refused in words (`toJpeg`). */
+export const converterFor = (env: Pick<Env, "IMAGES">): ImageConverter | null => (env.IMAGES ? imagesConverter(env.IMAGES) : null);
 
 /** The app's upload seam (`POST /app/attachments`): the bytes go to the bucket, the owner's `Person` keeps the row, and a HEIC is converted on the way. */
 export function appAttachments(env: Env): AttachmentDirectory {
@@ -34,7 +36,8 @@ export function attachmentDeps(env: Env, storage: DurableObjectStorage, person: 
       ingestAttachment(
         {
           tree: treeOf(storage, person),
-          renderer: { toMarkdown: (i) => env.RENDERER.getByName("render").toMarkdown(i) },
+          // The host's renderer (`hostOf(env).render`): a host without one refuses docx, odt, epub and rtf with its code.
+          renderer: { toMarkdown: async (i) => { const render = hostOf(env).render; return available(render) ? ((await render.toMarkdown(i)) as MarkdownResult) : render; } },
           caption: (image) => captionImage(model, { tenant: env.TENANT_ID, person: image.owner, attachmentId: image.attachmentId }, { bytes: image.bytes, mimeType: image.mimeType }),
           imageInput: acceptsImages("chat"),
         },

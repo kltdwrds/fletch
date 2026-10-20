@@ -12,7 +12,8 @@ import { completeForJob } from "../../../packages/agent/src/jobs/model.ts";
 import type { MemoryApi } from "../../../packages/agent/src/memory/tools.ts";
 import type { ToolSpec } from "../../../packages/agent/src/tools/registry.ts";
 import type { StepHandler } from "../../../packages/agent/src/jobs/steps.ts";
-import { Ledger, type StagingBudget } from "../../../packages/agent/src/objects/ledger.ts";
+import type { BudgetService } from "@qyvr/host";
+import { Ledger } from "../../../packages/agent/src/objects/ledger.ts";
 import { type FakeMode, FakeModel, type FakeStep } from "../../support/fake-model.ts";
 import { harnessNamespace, ObjectHarness } from "../../support/object-harness.ts";
 import people from "../../fixtures/people.json" with { type: "json" };
@@ -55,7 +56,7 @@ export function watchBody(o: { id?: string; chat?: string; every?: number; steps
   return lines.join("\n");
 }
 
-export function jobWorld(o: { tenant?: string; owner?: string; script?: FakeStep[]; mode?: FakeMode; memory?: MemoryApi; docs?: Record<string, string>; extraTools?: ToolSpec[]; steps?: Record<string, StepHandler>; env?: "staging" | "prod"; budget?: StagingBudget; ledgers?: ReturnType<typeof ledgerSpace>; clock?: { now: number }; index?: JobDeps["index"]; forget?: JobDeps["forget"] } = {}) {
+export function jobWorld(o: { tenant?: string; owner?: string; script?: FakeStep[]; mode?: FakeMode; memory?: MemoryApi; docs?: Record<string, string>; extraTools?: ToolSpec[]; steps?: Record<string, StepHandler>; env?: "staging" | "prod"; budget?: BudgetService; ledgers?: ReturnType<typeof ledgerSpace>; clock?: { now: number }; index?: JobDeps["index"]; forget?: JobDeps["forget"] } = {}) {
   const tenant = o.tenant ?? ada.company;
   const owner = o.owner ?? ada.email;
   const clock = o.clock ?? { now: T0 };
@@ -133,10 +134,10 @@ export function jobWorld(o: { tenant?: string; owner?: string; script?: FakeStep
   return world;
 }
 
-/** The tenants' Ledgers on one clock; `budget` is the dispatcher's staging cap, shared by every tenant. */
-export function ledgerSpace(clock: { now: number }, env: "staging" | "prod" = "staging", budget?: StagingBudget | ((tenant: string) => StagingBudget)) {
+/** The tenants' Ledgers on one clock; `budget` is the host's cross-tenant cap, shared by every tenant. */
+export function ledgerSpace(clock: { now: number }, env: "staging" | "prod" = "staging", budget?: BudgetService | ((tenant: string) => BudgetService)) {
   return harnessNamespace((name) =>
-    new ObjectHarness(name, (ctx, e) => new Ledger(ctx as DurableObjectState, e as Env), { QYVR_ENV: env, ...(budget ? { BUDGET: typeof budget === "function" ? budget(name) : budget } : {}) }, (l) => {
+    new ObjectHarness(name, (ctx, e) => new Ledger(ctx as DurableObjectState, e as Env), { QYVR_ENV: env, ...(budget ? { HOST: { budget: typeof budget === "function" ? budget(name) : budget } } : {}) }, (l) => {
       l.now = () => clock.now;
     }),
   );

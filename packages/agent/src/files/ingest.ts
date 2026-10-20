@@ -11,6 +11,7 @@
 // Every page of what is written is a `file_read` page, so nothing over the spill threshold reaches
 // the model whole; the model is given one line per attachment (`describeForModel`) with the pointer.
 // The tree decides the owner on every write: an `owner` that is not the tree's is refused.
+import type { HostFailure } from "@qyvr/host";
 import type { MarkdownResult, ReverseFormat } from "../render/reverse.ts";
 import { IMAGE_INPUT_MAX, IMAGE_TYPES, pageCount, safeSegment, TREE_BYTES_MAX, type TreeWriteResult } from "../tree/tree.ts";
 import { odpToMarkdown, odsToMarkdown } from "./convert/odf.ts";
@@ -27,8 +28,8 @@ export type IngestResult =
 export interface IngestDeps {
   /** The owner's working tree (`PersonTree`, or `directTreeApi`'s write over RPC); it decides the owner. */
   tree: { write(input: { path: string; text?: string; bytes?: Uint8Array }, requester: string): Promise<TreeWriteResult> };
-  /** The Renderer's reverse direction: `env.RENDERER.getByName("render").toMarkdown(input)` in production. */
-  renderer: { toMarkdown(input: unknown): Promise<MarkdownResult> };
+  /** The renderer's reverse direction: the host's (`hostOf(env).render.toMarkdown`), or its refusal where it has none. */
+  renderer: { toMarkdown(input: unknown): Promise<MarkdownResult | HostFailure> };
   /** The caption step through the model adapter (`captionImage`); absent, an image the model cannot be shown is refused. */
   caption?: (image: { bytes: Uint8Array; mimeType: string; attachmentId: string; owner: string }) => Promise<{ ok: true; text: string } | { ok: false; code: string; reason: string }>;
   /** `acceptsImages("chat")`: the chat route's model takes image input. */

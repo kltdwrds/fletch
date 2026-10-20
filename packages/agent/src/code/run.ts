@@ -8,6 +8,7 @@
 // reuses one Dynamic Worker and no two people ever share one (each is bound to its own person's
 // egress). Credentials the script asks for arrive as surrogates the Vault mints for the person; its
 // result comes back as JSON, bounded.
+import type { HostFailure } from "@qyvr/host";
 
 export const COMPATIBILITY_DATE = "2026-10-01";
 export const WRAPPER_VERSION = "2";
@@ -56,7 +57,9 @@ export type RunResult =
       /** True when this call compiled the Worker; false when the loader reused one. */
       loaded: boolean;
     }
-  | RunFailure;
+  | RunFailure
+  /** HOST_CODE_UNAVAILABLE: the deploy has no Worker Loader binding (`codeFor`). */
+  | HostFailure;
 
 /** What the runner needs of the loader; the real `LOADER` binding and a test fake both fit. */
 export interface LoaderLike {

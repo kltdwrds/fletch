@@ -1,10 +1,9 @@
-// Push and mail routes (M6.1). The webhook route is public and answers before any Access session:
+// Push and mail routes (M6.1). The webhook route is public and answers before any session:
 // its signature is its authentication, checked by the source's own `Ingress`, which logs a refusal.
 // The rest serve a session: a person creates, inspects and switches their own sources and sends mail
 // from their own chats; each object decides ownership again where the data lives.
 import type { Created, IngressRefusal } from "../ingress/engine.ts";
 import type { SourceKind } from "../ingress/store.ts";
-import type { MailSealService } from "../mail/inbound.ts";
 import type { InboundMail, OutboundMail, ReceiveResult } from "../person/mail.ts";
 
 export interface IngressStub {
@@ -16,9 +15,8 @@ export interface IngressStub {
   stop(by: string): Promise<{ ok: true } | IngressRefusal>;
 }
 
-/** How mail routes reach the dispatcher's seal check and the person's objects. */
+/** How mail routes reach the person's objects; sending goes out through the host's mail (`hostOf(env).mail`). */
 export interface MailDirectory {
-  seal: MailSealService;
   deliver(person: string, m: InboundMail): Promise<ReceiveResult>;
   send(person: string, m: OutboundMail): Promise<unknown>;
 }

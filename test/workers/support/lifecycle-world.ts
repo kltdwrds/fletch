@@ -3,6 +3,7 @@
 // `PersonMemory`, `PersonalLearning` and `MemoryImport` over the object harness and one in-memory R2.
 // The model is the scripted fake on the `AI` binding the referee, the handover draft and the import's
 // extraction call. fletch has no platform to convert a tenant through, so the world has no converter.
+import { unavailable } from "@qyvr/host";
 import { upsertEntity } from "../../../packages/agent/src/memory/entities.ts";
 import { PersonMemory } from "../../../packages/agent/src/memory/store.ts";
 import { PersonalLearning } from "../../../packages/agent/src/learning/personal.ts";
@@ -30,7 +31,7 @@ export function lifecycleWorld(o: { script?: FakeStep[]; roles?: Record<string, 
   const clock = { now: T0 };
   const fake = new FakeModel(o.script ?? []);
   const members = [ada].map((p) => ({ email: p.email, role: o.roles?.[p.email] ?? p.role, name: p.name }));
-  const env = { TENANT_ID: TENANT, TENANT_SHAPE: "company", QYVR_ENV: "test", MEMBERS: JSON.stringify(members) };
+  const env = { TENANT_ID: TENANT, TENANT_SHAPE: "company", QYVR_ENV: "test", HOST: { memberSeed: JSON.stringify(members) } };
   const ledgerH = new ObjectHarness("ledger", (ctx, e) => new Ledger(ctx as DurableObjectState, e as Env), env, (l) => {
     l.now = () => clock.now;
   });
@@ -68,7 +69,7 @@ export function lifecycleWorld(o: { script?: FakeStep[]; roles?: Record<string, 
     files: { dump: () => host(email).files.dump(), purgeAll: () => host(email).files.purgeAll() },
     work: { purge: () => purgeWork(host(email).tree, host(email).attachments, host(email).links) },
     company: { propose: (p, i) => company().promotionPropose(p, i), offboardingPolicy: (p) => company().offboardingPolicy(p), depart: (p) => company().depart(p) },
-    converter: null,
+    converter: unavailable("provisioning", "fletch has no platform to convert a tenant through"),
     pending: host(email).pending,
     model,
   });

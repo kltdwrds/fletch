@@ -40,7 +40,8 @@ export function codeNamespace(code: CodeApi | undefined, own = true): Namespace 
       if (!own) throw new Error("CODE_NOT_ON_REQUEST: code runs with the owner's own egress and credentials, on the owner's own turns; a colleague's request never runs it");
       if (!code) throw new Error("CODE_UNAVAILABLE: this agent has no Worker Loader");
       const r = await code.run({ script: p.script, input: p.input, ...(p.credentials ? { credentials: p.credentials } : {}) });
-      const logs = r.logs?.length ? ["logs:", ...r.logs.slice(0, LOG_LINES).map((l) => `  ${l}`)] : [];
+      const lines = "logs" in r ? (r.logs ?? []) : [];
+      const logs = lines.length ? ["logs:", ...lines.slice(0, LOG_LINES).map((l) => `  ${l}`)] : [];
       if (!r.ok) throw new Error([`${r.code}: ${r.reason}`, ...logs].join("\n"));
       const text = [`result: ${JSON.stringify(r.result)}`, ...logs, `worker ${r.workerId} (${r.loaded ? "loaded" : "reused"})`].join("\n");
       return { content: [{ type: "text", text }], details: { workerId: r.workerId, loaded: r.loaded } };

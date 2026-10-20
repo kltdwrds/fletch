@@ -1,8 +1,7 @@
 // The Vault object (AD-1, AD-12, M13): one per tenant. It hosts `vault/core.ts` over its SQLite, with the
-// dispatcher's key entrypoint as KEYS (tenant in props) and the egress module inside it. A company
+// host's key service (`hostOf(env).keys`, the tenant its own) and the egress module inside it. A company
 // connector's credential resolves only when the `Company` says the person holds a company grant (M10.2).
 import { DurableObject } from "cloudflare:workers";
-import type { KeyService } from "../../../platform/dispatcher/src/keys.ts";
 import { browserOf, captureState, injectField, restoreState } from "../browse/binding.ts";
 import type { EgressContext, EgressResult, FillResult } from "../egress/module.ts";
 import { egressNetwork } from "../egress/outbound.ts";
@@ -11,6 +10,7 @@ import type { CredentialInfo, GrantInfo, PutResult, VaultCore } from "../vault/c
 import { BrowserStateVault } from "../vault/browser-state.ts";
 import type { CardWriter, Writer } from "../vault/hosts.ts";
 import { migrateObject, probeObject } from "../migrations/catalog.ts";
+import { hostOf } from "../host.ts";
 
 export class Vault extends DurableObject<Env> {
   private readonly schema = migrateObject(this.ctx, "vault");
@@ -23,7 +23,7 @@ export class Vault extends DurableObject<Env> {
     const browser = browserOf(this.env);
     this.coreInstance ??= new BrowserStateVault(this.ctx, {
       tenant: this.env.TENANT_ID,
-      keys: this.env.KEYS as unknown as KeyService,
+      keys: hostOf(this.env).keys,
       fetch: egressNetwork,
       now: () => Date.now(),
       entitled: (person, connector, purpose) => this.env.COMPANY.get(this.env.COMPANY.idFromName(this.env.TENANT_ID)).connectorEntitled(person, connector, purpose),

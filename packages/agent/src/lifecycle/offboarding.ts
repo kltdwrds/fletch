@@ -16,6 +16,8 @@ import { slugify } from "../memory/home.ts";
 import type { PersonMemory } from "../memory/store.ts";
 import { createStreamFn } from "../model/adapter.ts";
 import { modelFor } from "../model/routes.ts";
+import type { HostFailure } from "@qyvr/host";
+import { available } from "../host.ts";
 import { type ExportOptions, exportPersonal, purgePersonal } from "./bundle.ts";
 
 type Refusal = { ok: false; code: string; reason: string };
@@ -66,7 +68,8 @@ export interface OffboardingDeps {
   /** The working tree, attachments and share links (M24.3), purged with the rest (`purgeWork`). */
   work: { purge(): Promise<WorkPurged> };
   company: OffboardingCompany;
-  converter: Converter | null;
+  /** The host's provisioning (`hostOf(env).provisioning`); a host without it refuses the conversion with its code. */
+  converter: Converter | HostFailure;
   pending: ConversionState;
   /** The person's display name, for the standalone tenant's member list. */
   name?: string;
@@ -178,7 +181,7 @@ export async function finishOffboarding(deps: OffboardingDeps, actor: Actor, cho
     if (!done.ok) return done;
     return { ok: true, choice: "export", markdown: bundle.markdown, files: bundle.files, excluded: bundle.excluded, purged: done.purged };
   }
-  if (!deps.converter) return { ok: false, code: "CONVERSION_UNAVAILABLE", reason: "no provisioning API is bound, so nothing was converted or purged" };
+  if (!available(deps.converter)) return { ok: false, code: deps.converter.code, reason: `${deps.converter.reason}; nothing was converted or purged` };
   const c = await deps.converter.requestConversion({ person, ...(deps.name ? { name: deps.name } : {}) });
   if (!c.ok) return { ok: false, code: c.code, reason: `${c.reason}; nothing was purged` };
   if (!c.request.tenant) return { ok: false, code: "CONVERSION_TENANT_MISSING", reason: "the platform named no tenant; nothing was purged" };
