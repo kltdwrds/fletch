@@ -46,6 +46,7 @@ describe("[M0.2] env guard", () => {
   it("the hermetic vitest config loads no env file and runs the guard before every file", () => {
     expect(config.envDir).toBe(false);
     expect(config.test?.env).toBeUndefined();
-    expect(config.test?.setupFiles).toEqual(["test/support/hermetic.setup.ts"]);
+    // The guard runs first; the test host (F1) is installed after it.
+    expect(config.test?.setupFiles).toEqual(["test/support/hermetic.setup.ts", "test/support/host.setup.ts"]);
   });
 });
