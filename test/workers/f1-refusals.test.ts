@@ -10,6 +10,9 @@ import { Ledger } from "../../packages/agent/src/objects/ledger.ts";
 import { Person } from "../../packages/agent/src/objects/person.ts";
 import type { ModelCallRow } from "../../packages/agent/src/ledger/types.ts";
 import people from "../fixtures/people.json" with { type: "json" };
+import { call, egressWorld, load, ada as adaOf } from "./support/egress-world.ts";
+import { converterFor } from "../../packages/agent/src/attachments/wiring.ts";
+import { ada as adaA, attachmentWorld, HEIC, JPEG } from "./support/attachment-world.ts";
 import { ObjectHarness } from "../support/object-harness.ts";
 import type { TestHostOverrides } from "../support/host.ts";
 import { asBucket, FakeR2 } from "./support/fake-r2.ts";
@@ -66,5 +69,23 @@ describe("[F1] a host without mail, workspace, render", () => {
     expect(h.rows("SELECT person, run_id, input_tokens FROM model_calls")).toEqual([{ person: sam.email, run_id: "r1", input_tokens: 10 }]);
     expect(reports).toEqual([]);
     expect(await h.instance.admit({ person: sam.email, runId: "r2" })).toMatchObject({ ok: true });
+  });
+
+  it("a chat turn whose tool call reaches Code Mode without a Worker Loader gets HOST_CODE_UNAVAILABLE with its reason, and nothing runs", async () => {
+    const { w, net } = egressWorld([load("code"), call("code_execute", { script: "return 1;" }), { text: "Could not." }], { code: true, noLoader: true });
+    await w.say(adaOf.email, "Compute.");
+    const shown = JSON.stringify(w.fake.requests.at(-1)!.inputs.messages.filter((m: { role: string }) => m.role === "tool"));
+    expect(shown).toContain("HOST_CODE_UNAVAILABLE");
+    expect(shown).toContain("Code Mode needs the Worker Loader binding, which this deploy does not have");
+    expect(net.sent).toEqual([]);
+  });
+
+  it("with no Images binding a HEIC is refused HOST_IMAGES_UNAVAILABLE in words, and a JPEG still ingests", async () => {
+    // The agent's own wiring: no IMAGES in the env, so `converterFor` hands the store no converter.
+    const w = attachmentWorld({ convert: converterFor({}) });
+    const heic = await w.upload(adaA.email, "pears.heic", HEIC);
+    expect(heic).toMatchObject({ status: 422, body: { ok: false, code: "HOST_IMAGES_UNAVAILABLE", words: expect.stringContaining("pears.heic is a HEIC image, and converting it to JPEG needs the Images binding, which this deploy does not have") } });
+    expect(w.r2.puts).toEqual([]);
+    expect(await w.upload(adaA.email, "photo.jpg", JPEG)).toMatchObject({ status: 201, body: { ok: true } });
   });
 });

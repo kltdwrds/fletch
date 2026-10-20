@@ -87,8 +87,9 @@ export function codeFetchNamespace(vault: () => VaultCore, owner: () => string):
  * which honours `globalOutbound` for fetch() and connect()) and the script's own `Egress` entrypoint,
  * constructed with the props the Chat object names, over this world's real Vault.
  */
-export function codeHost(vault: () => VaultCore, loader = new FakeLoader(), tenant = TENANT) {
-  const env = { LOADER: loader, TENANT_ID: tenant, VAULT: { idFromName: (n: string) => ({ name: n }) as unknown as DurableObjectId, get: () => vault() } };
+export function codeHost(vault: () => VaultCore, loader: FakeLoader | null = new FakeLoader(), tenant = TENANT) {
+  // A null loader is a deploy without the Worker Loader binding: `LOADER` is absent from the env.
+  const env = { ...(loader ? { LOADER: loader } : {}), TENANT_ID: tenant, VAULT: { idFromName: (n: string) => ({ name: n }) as unknown as DurableObjectId, get: () => vault() } };
   const egresses: Array<{ props: { tenant: string; person: string } }> = [];
   const host: CodeHost = {
     env,
@@ -99,16 +100,16 @@ export function codeHost(vault: () => VaultCore, loader = new FakeLoader(), tena
       },
     },
   };
-  return { host, loader, egresses };
+  return { host, loader: loader as FakeLoader, egresses };
 }
 
 /** The chats of `authorityWorld` over one Vault, with `code_fetch` and the credentials namespace loaded by the script; with `code`, `code_execute` runs as the Chat object runs it. */
-export function egressWorld(script: FakeStep[], o: { stores?: boolean; name?: string; extra?: (owner: () => string) => Namespace; code?: boolean } = {}) {
+export function egressWorld(script: FakeStep[], o: { stores?: boolean; name?: string; extra?: (owner: () => string) => Namespace; code?: boolean; noLoader?: boolean } = {}) {
   const net = echoVendor();
   const clock = { now: Date.UTC(2026, 9, 16, 12, 0) };
   const vaultH = vaultOf(o.name ?? "vault-m25", net.fetch, () => clock.now);
   const vault = () => vaultH.instance;
-  const code = codeHost(vault);
+  const code = codeHost(vault, o.noLoader ? null : undefined);
   const w = authorityWorld({
     script,
     ...(o.stores ? { stores: true } : {}),

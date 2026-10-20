@@ -96,14 +96,14 @@ describe("[M24.3] mail's attachments land in the same table, and a dropped one i
     expect(text).toContain("Not kept: press.pdf was not kept: attachments cannot be kept here. (ATTACHMENTS_UNAVAILABLE)");
   });
 
-  it("a HEIC in mail with no converter injected is dropped IMAGE_CONVERT_UNAVAILABLE and said; with one it is kept as JPEG", async () => {
+  it("a HEIC in mail with no converter injected is dropped HOST_IMAGES_UNAVAILABLE and said; with one it is kept as JPEG", async () => {
     const heic = new Uint8Array([0, 0, 0, 24, 102, 116, 121, 112, 104, 101, 105, 99]);
     const body = multipart("m3", [part(["Content-Type: text/plain"], "A photo."), part(['Content-Type: image/heic; name="pears.heic"', "Content-Transfer-Encoding: base64"], b64(heic))]);
     const mail = message({ from: ada.email, subject: "Pears", extra: 'Content-Type: multipart/mixed; boundary="m3"', body });
     const without = attachmentWorld();
     const w1 = mailWorld({ attachments: (email) => (m) => without.store(email).fromMail(m) });
     await w1.receive(adaAgent, ada.email, mail);
-    expect(w1.notices(ada.email)[0]?.text).toContain("1 not kept (IMAGE_CONVERT_UNAVAILABLE)");
+    expect(w1.notices(ada.email)[0]?.text).toContain("1 not kept (HOST_IMAGES_UNAVAILABLE)");
     expect(without.rows(ada.email)).toEqual([]);
     const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2]);
     const withOne = attachmentWorld({ convert: async () => ({ ok: true, bytes: jpeg, mime: "image/jpeg" }) });

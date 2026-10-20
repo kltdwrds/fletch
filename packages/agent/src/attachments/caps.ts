@@ -81,7 +81,7 @@ export type ImageConverter = (input: { bytes: Uint8Array; mime: string }) => Pro
 /** HEIC and AVIF become JPEG through the converter; without one, or when it fails, the file is refused in words. */
 export async function toJpeg(convert: ImageConverter | null, a: Accepted, bytes: Uint8Array): Promise<{ ok: true; name: string; bytes: Uint8Array } | Refusal> {
   const kind = a.mime === "image/avif" ? "an AVIF" : "a HEIC";
-  const unavailable: Refusal = { ok: false, code: "IMAGE_CONVERT_UNAVAILABLE", words: `${a.name} is ${kind} image, and converting it to JPEG is not available here yet, so it was not attached. Save it as JPEG and attach it again.` };
+  const unavailable: Refusal = { ok: false, code: "HOST_IMAGES_UNAVAILABLE", words: `${a.name} is ${kind} image, and converting it to JPEG needs the Images binding, which this deploy does not have, so it was not attached. Save it as JPEG and attach it again.` };
   if (!convert) return unavailable;
   let r: Converted;
   try {
@@ -89,7 +89,7 @@ export async function toJpeg(convert: ImageConverter | null, a: Accepted, bytes:
   } catch (e) {
     r = { ok: false, code: "IMAGE_CONVERT_FAILED", reason: String((e as Error)?.message ?? e).slice(0, 200) };
   }
-  if (!r.ok && r.code === "IMAGE_CONVERT_UNAVAILABLE") return unavailable;
+  if (!r.ok && r.code === "HOST_IMAGES_UNAVAILABLE") return unavailable;
   if (!r.ok) return { ok: false, code: r.code || "IMAGE_CONVERT_FAILED", words: `${a.name} could not be converted to JPEG (${r.reason}), so it was not attached.` };
   if (r.mime !== "image/jpeg" || !isJpeg(r.bytes)) return { ok: false, code: "IMAGE_CONVERT_FAILED", words: `${a.name} could not be converted to JPEG (the converter did not answer with a JPEG), so it was not attached.` };
   return { ok: true, name: a.name.replace(/\.[A-Za-z0-9]+$/, ".jpg"), bytes: r.bytes };

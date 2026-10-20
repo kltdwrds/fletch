@@ -1,7 +1,7 @@
 // The production image converter (M24.4): an uploaded or mailed HEIC becomes JPEG through the Images
 // binding, in-process, from the upload's own bytes. No URL is built and nothing is fetched, so the
 // private object never leaves the Worker. AVIF input is Enterprise-only on Images (platform-facts.md), so it
-// stays refused in words with `IMAGE_CONVERT_UNAVAILABLE` until it is on the plan.
+// stays refused in words with `HOST_IMAGES_UNAVAILABLE` until it is on the plan.
 import type { Converted, ImageConverter } from "./caps.ts";
 
 const HEIC = new Set(["image/heic", "image/heif"]);
@@ -12,7 +12,7 @@ const NOT_AN_IMAGE = 9412;
 export function imagesConverter(images: ImagesBinding): ImageConverter {
   return async ({ bytes, mime }): Promise<Converted> => {
     if (!HEIC.has(mime)) {
-      return { ok: false, code: "IMAGE_CONVERT_UNAVAILABLE", reason: "only HEIC converts here; AVIF input needs a Cloudflare plan this platform is not on" };
+      return { ok: false, code: "HOST_IMAGES_UNAVAILABLE", reason: "only HEIC converts here; AVIF input needs a Cloudflare plan this deploy is not on" };
     }
     try {
       const result = await images.input(new Blob([bytes as Uint8Array<ArrayBuffer>]).stream()).output({ format: "image/jpeg" });

@@ -148,10 +148,10 @@ describe("[M24.3] HEIC and AVIF become JPEG", () => {
     expect([lying.r2.puts, lying.rows(ada.email)]).toEqual([[], []]);
   });
 
-  it("with no converter injected, HEIC is refused IMAGE_CONVERT_UNAVAILABLE in words", async () => {
+  it("with no converter injected, HEIC is refused HOST_IMAGES_UNAVAILABLE in words", async () => {
     const w = attachmentWorld();
     const r = await w.upload(ada.email, "pears.heic", HEIC);
-    expect(r).toMatchObject({ status: 422, body: { code: "IMAGE_CONVERT_UNAVAILABLE", words: expect.stringContaining("pears.heic is a HEIC image, and converting it to JPEG is not available here yet") } });
+    expect(r).toMatchObject({ status: 422, body: { code: "HOST_IMAGES_UNAVAILABLE", words: expect.stringContaining("pears.heic is a HEIC image, and converting it to JPEG needs the Images binding, which this deploy does not have") } });
     expect(w.r2.puts).toEqual([]);
   });
 });
