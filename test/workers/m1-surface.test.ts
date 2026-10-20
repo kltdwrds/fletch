@@ -40,7 +40,6 @@ function world(env: Partial<Env> = {}) {
       invite: async () => ({ ok: false, code: "NOT_AN_ADMIN" }),
       resyncAccess: async () => ({ ok: false, code: "NOT_AN_ADMIN" }),
     }),
-    modelSample: async () => ({ ok: true, raw: "data: [DONE]\n\n" }),
   };
   const call = (path: string, person?: string, init: RequestInit = {}, tenant = TENANT) =>
     route(new Request(`https://${TENANT}.qyvr-staging.dev${path}`, init), base, { tenant, ...(person ? { person } : {}) }, dir);
@@ -83,15 +82,8 @@ describe("[M1.2] chat surface", () => {
     expect(w.forwarded).toHaveLength(0);
   });
 
-  it("the stream sample route exists in staging only", async () => {
-    const staging = world();
-    expect((await staging.call("/dev/model-sample", ada.email, { method: "POST" })).status).toBe(200);
-    const prod = world({ QYVR_ENV: "prod" } as Partial<Env>);
-    expect((await prod.call("/dev/model-sample", ada.email, { method: "POST" })).status).toBe(404);
-  });
-
   it("props carry only what the dispatcher wrote; a person in props is never read as the session", () => {
-    expect(propsOf({ props: { tenant: TENANT, devPerson: ada.email } })).toEqual({ tenant: TENANT, devPerson: ada.email });
+    expect(propsOf({ props: { tenant: TENANT, devPerson: ada.email } })).toEqual({ tenant: TENANT });
     expect(propsOf({ props: { tenant: TENANT, person: ada.email, platform: "yes" } })).toEqual({ tenant: TENANT });
     expect(propsOf({ props: { tenant: TENANT } })).toEqual({ tenant: TENANT });
     expect(propsOf({ props: {} })).toBeNull();

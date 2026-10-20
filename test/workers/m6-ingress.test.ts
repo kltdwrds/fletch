@@ -127,12 +127,14 @@ describe("[M6.1] webhook ingress", () => {
     const w = await setup();
     const engine = w.ingress.engine();
     const dir = { ingress: (id: string) => (id === SOURCE ? engine : null) as unknown as IngressStub } as unknown as Directory;
-    const env = { TENANT_ID: "solo-sam", TENANT_SHAPE: "company", QYVR_ENV: "staging", ACCESS_ISSUER: "https://team.cloudflareaccess.com", ACCESS_AUD: "aud", ACCESS_LIVE_CLIENT_ID: "" };
+    // A host whose identity finds no session on these requests, as a signed-out browser's would be.
+    const identity = { verify: async () => ({ ok: false, code: "SESSION_MISSING", reason: "no session", status: 401 }), routes: async () => null };
+    const env = { TENANT_ID: "solo-sam", TENANT_SHAPE: "company", QYVR_ENV: "test", HOST: { identity } };
     const agent = (path: string, init: RequestInit) =>
-      serve(new Request(`https://solo-sam.example${path}`, init), env as never, { tenant: "solo-sam" }, { dir, keys: { keys: async () => [] } as never, now: () => w.clock.now });
+      serve(new Request(`https://solo-sam.example${path}`, init), env as never, { tenant: "solo-sam" }, { dir, now: () => w.clock.now });
     const code = async (r: Response) => [r.status, ((await r.json()) as { code: string }).code];
     const signed = await signWebhook(w.secret, "evt-h", Math.floor(w.clock.now / 1000), body);
-    // Only the three signature headers reach the Ingress; an Access-looking header changes nothing.
+    // Only the three signature headers reach the Ingress; an identity-looking header changes nothing.
     expect(await code(await agent(`/hooks/${SOURCE}`, { method: "POST", headers: { ...signed, "cf-access-authenticated-user-email": ada.email }, body }))).toEqual([202, "INGRESS_ACCEPTED"]);
     expect(await code(await agent(`/hooks/${SOURCE}`, { method: "POST", headers: { "webhook-id": "evt-u" }, body }))).toEqual([401, "HOOK_HEADERS_MISSING"]);
     expect(await code(await agent("/hooks/not-a-source", { method: "POST", body }))).toEqual([404, "INGRESS_UNKNOWN"]);

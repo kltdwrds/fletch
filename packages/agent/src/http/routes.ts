@@ -1,5 +1,5 @@
-// The agent script's HTTP surface. Every route but /health serves a session `serve.ts` resolved from
-// the tenant's Access token and the `Company`'s member list; each object it reaches decides access
+// The agent script's HTTP surface. Every route but /health serves a session `serve.ts` resolved through
+// the host's identity (`hostOf(env).identity`) and the `Company`'s member list; each object it reaches decides access
 // again where the data lives (the `Company` checks the inviter is an admin, the `Person` owns which
 // chats are whose, the `Chat` admits only its owner, the `Ledger` returns only that person's rows).
 // Nothing in a request names the person.
@@ -15,6 +15,7 @@ import { type LifecycleDirectory, lifecycleRoutes } from "./lifecycle-routes.ts"
 import { isAdminRole } from "../company/members.ts";
 import { type IngressStub, type MailDirectory, pushRoutes } from "./ingress-routes.ts";
 import { PERSON_HEADER } from "./identity.ts";
+import { hostOf } from "../host.ts";
 import { APP_PAGE, MANIFEST, SERVICE_WORKER } from "./page.ts";
 import { type VaultDirectory, vaultRoutes } from "./vault-routes.ts";
 import { type DeliveryDirectory, deliveryRoutes } from "./delivery-routes.ts";
@@ -45,8 +46,6 @@ export interface Directory {
   };
   chat(chatId: string): { fetch(request: Request): Promise<Response> };
   ledger(): { modelCalls(filter: { runId?: string; person: string }): Promise<ModelCallRow[]> };
-  /** Staging only: one recorded model stream (`/dev/model-sample`). */
-  modelSample?(person: string): Promise<{ raw: string; ok: boolean; error?: string }>;
   /** M6.1: a push source's `Ingress` by its id. */
   ingress?(id: string): IngressStub;
   /** M6.1: the seal check and the person's mail. */
@@ -78,7 +77,7 @@ export interface Directory {
 const json = (body: unknown, status = 200) => Response.json(body, { status });
 const CHAT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-export async function route(request: Request, env: Pick<Env, "TENANT_ID" | "QYVR_ENV" | "TENANT_SHAPE">, props: AgentProps | null, dir: Directory): Promise<Response> {
+export async function route(request: Request, env: Env, props: AgentProps | null, dir: Directory): Promise<Response> {
   const url = new URL(request.url);
   if (url.pathname === "/health" && request.method === "GET") {
     return json({ ok: true, tenant: env.TENANT_ID, objects: OBJECT_CLASSES });
@@ -98,7 +97,7 @@ export async function route(request: Request, env: Pick<Env, "TENANT_ID" | "QYVR
     return new Response(SERVICE_WORKER, { headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store" } });
   }
   if (url.pathname === "/me" && request.method === "GET") {
-    return json({ tenant: env.TENANT_ID, shape: env.TENANT_SHAPE, person, role: props.role ?? null });
+    return json({ tenant: env.TENANT_ID, shape: hostOf(env).tenant.shape, person, role: props.role ?? null });
   }
   if (url.pathname === "/admin/members" && request.method === "GET") {
     // The Company decides: only an admin it lists sees the member list.
@@ -141,7 +140,7 @@ export async function route(request: Request, env: Pick<Env, "TENANT_ID" | "QYVR
   if (dashboard) return dashboard;
   const admin = await adminRoutes(request, url, person, dir.admin);
   if (admin) return admin;
-  const lifecycle = await lifecycleRoutes(request, url, person, env, dir.lifecycle);
+  const lifecycle = await lifecycleRoutes(request, url, person, dir.lifecycle);
   if (lifecycle) return lifecycle;
   const vault = await vaultRoutes(request, url, person, dir.vault);
   if (vault) return vault;
@@ -152,11 +151,6 @@ export async function route(request: Request, env: Pick<Env, "TENANT_ID" | "QYVR
   if (url.pathname === "/ledger/calls" && request.method === "GET") {
     const runId = url.searchParams.get("run") ?? undefined;
     return json({ calls: await dir.ledger().modelCalls({ person, ...(runId ? { runId } : {}) }) });
-  }
-  if (url.pathname === "/dev/model-sample" && request.method === "POST") {
-    if (env.QYVR_ENV !== "staging" || !dir.modelSample) return json({ code: "NOT_FOUND" }, 404);
-    const sample = await dir.modelSample(person);
-    return sample.ok ? new Response(sample.raw, { headers: { "content-type": "text/event-stream" } }) : json({ code: "MODEL_SAMPLE_FAILED", detail: sample.error }, 502);
   }
   return json({ code: "NOT_FOUND" }, 404);
 }

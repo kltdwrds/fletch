@@ -39,8 +39,8 @@ const renderStep = (to: string, name = "henley-brief", id = "r1"): FakeStep => (
 
 /** One request to the agent script with no session at all: the public door `serve.ts` answers first. */
 async function publicGet(w: ReturnType<typeof authorityWorld>, path: string) {
-  const keys = { keys: async () => { throw new Error("no Access keys in this test: a public route never asks for them"); } };
-  const res = await serve(new Request(`https://${TENANT}.example${path}`), { TENANT_ID: TENANT, TENANT_SHAPE: "company", QYVR_ENV: "test", ACCESS_ISSUER: "", ACCESS_AUD: "", ACCESS_LIVE_CLIENT_ID: "" } as never, { tenant: TENANT }, { dir: w.dir as never, keys: keys as never, now: () => w.clock.now });
+  // The test host's identity verifies nobody: a public route must answer before it is asked.
+  const res = await serve(new Request(`https://${TENANT}.example${path}`), { TENANT_ID: TENANT, TENANT_SHAPE: "company", QYVR_ENV: "test" } as never, { tenant: TENANT }, { dir: w.dir as never, now: () => w.clock.now });
   return res;
 }
 

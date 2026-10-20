@@ -7,7 +7,7 @@ import { ObjectHarness } from "../support/object-harness.ts";
 /** AD-1's seven classes, written out here so the test does not trust the code's own list. */
 const AD1_OBJECTS = ["Person", "Company", "Chat", "Job", "Ingress", "Ledger", "Vault"] as const;
 
-const env = { TENANT_ID: "solo-sam", QYVR_ENV: "staging" } as unknown as Env;
+const env = { TENANT_ID: "solo-sam", QYVR_ENV: "test" } as unknown as Env;
 const call = (path: string, init?: RequestInit, props: Record<string, unknown> = { tenant: "solo-sam" }) =>
   worker.fetch(new Request(`https://solo-sam.qyvr-staging.dev${path}`, init) as Request<unknown, IncomingRequestCfProperties>, env, {
     props,
@@ -30,12 +30,18 @@ describe("[M0.1] agent script", () => {
   });
 
   it("answers every route but /health only to a verified session; a person in props names nobody", async () => {
-    // From M4.1 the person comes from the tenant's Access token alone (test/workers/m4-identity.test.ts
-    // covers the token paths and NOT_FOUND for a signed-in member).
+    // The person comes from the host's identity alone (F1); the test host verifies nobody, so it refuses in words.
     const ada = { tenant: "solo-sam", person: "sam@solo-sam.example" };
     const res = await call("/nope", undefined, ada);
-    expect([res.status, ((await res.json()) as { code: string }).code]).toEqual([503, "ACCESS_NOT_CONFIGURED"]);
+    expect([res.status, ((await res.json()) as { code: string }).code]).toEqual([503, "IDENTITY_UNAVAILABLE"]);
     const post = await call("/health", { method: "POST" }, ada);
-    expect([post.status, ((await post.json()) as { code: string }).code]).toEqual([503, "ACCESS_NOT_CONFIGURED"]);
+    expect([post.status, ((await post.json()) as { code: string }).code]).toEqual([503, "IDENTITY_UNAVAILABLE"]);
+  });
+
+  it("with no props, the script serves its own tenant: /health answers and every other route asks the host's identity", async () => {
+    const health = await worker.fetch(new Request("https://solo-sam.example/health") as Request<unknown, IncomingRequestCfProperties>, env, {} as ExecutionContext);
+    expect(health.status).toBe(200);
+    const res = await worker.fetch(new Request("https://solo-sam.example/") as Request<unknown, IncomingRequestCfProperties>, env, {} as ExecutionContext);
+    expect([res.status, ((await res.json()) as { code: string }).code]).toEqual([503, "IDENTITY_UNAVAILABLE"]);
   });
 });

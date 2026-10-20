@@ -28,8 +28,6 @@ export interface LifecycleDirectory {
   conversionBundle(person: string, request: unknown): Answer;
   conversionComplete(person: string, input: { request?: unknown; ok?: unknown; code?: unknown }): Answer;
   conversionRestore(person: string, markdown: unknown): Answer;
-  /** Staging only: the person's own memory search, for the live lane. */
-  memorySearch?(person: string, queries: string[]): Answer;
 }
 
 const json = (body: unknown, status = 200) => Response.json(body, { status });
@@ -49,7 +47,7 @@ const answer = (r: unknown) => json(r, statusOf(r));
 const body = async (request: Request) => ((await request.json().catch(() => null)) ?? {}) as Record<string, unknown>;
 const ID = /^[A-Za-z0-9_-]{1,80}$/;
 
-export async function lifecycleRoutes(request: Request, url: URL, person: string, env: Pick<Env, "QYVR_ENV">, dir: LifecycleDirectory | undefined): Promise<Response | null> {
+export async function lifecycleRoutes(request: Request, url: URL, person: string, dir: LifecycleDirectory | undefined): Promise<Response | null> {
   if (!dir) return null;
   const me: Actor = { kind: "person", email: person };
   const get = request.method === "GET";
@@ -79,11 +77,6 @@ export async function lifecycleRoutes(request: Request, url: URL, person: string
     return answer(await dir.onboardingReview(me, { accept: b.accept, reject: b.reject }));
   }
 
-  if (p === "/dev/memory/search" && post) {
-    if (env.QYVR_ENV !== "staging" || !dir.memorySearch) return json({ code: "NOT_FOUND" }, 404);
-    const q = (await body(request)).queries;
-    return json(await dir.memorySearch(person, Array.isArray(q) ? q.map(String).slice(0, 5) : []));
-  }
   return null;
 }
 

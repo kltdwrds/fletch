@@ -1,26 +1,24 @@
-// The agent script's request path (M4.1): props must name this script's tenant; the dispatcher's
-// own provisioning calls reach the platform routes; everything else is identified from the Access
-// token (`identity.ts`) before any route runs. `/health` alone answers without a session.
+// The agent script's request path (M4.1, F1): props must name this script's tenant; a platform's own
+// calls (props.platform) reach the platform routes; the host's own routes (login, logout, recovery)
+// answer with no session; everything else is identified by the host's identity (`identity.ts`) before
+// any route runs. `/health`, share links and webhooks answer without a session.
 import { OBJECT_CLASSES } from "../objects/names.ts";
-import type { KeySource } from "./access.ts";
 import { type DispatchProps, identify } from "./identity.ts";
 import { HOOK_PATH, webhook } from "./ingress-routes.ts";
 import { shareRoute } from "./share-routes.ts";
 import { platformLifecycle } from "./lifecycle-routes.ts";
 import { type Directory, route } from "./routes.ts";
 import { log } from "../obs/log.ts";
+import { hostOf } from "../host.ts";
 
 export interface ServeDeps {
   dir: Directory;
-  keys: KeySource;
   now(): number;
 }
 
-type ServeEnv = Pick<Env, "TENANT_ID" | "TENANT_SHAPE" | "QYVR_ENV" | "ACCESS_ISSUER" | "ACCESS_AUD" | "ACCESS_LIVE_CLIENT_ID">;
-
 const json = (body: unknown, status = 200) => Response.json(body, { status });
 
-export async function serve(request: Request, env: ServeEnv, props: DispatchProps | null, deps: ServeDeps): Promise<Response> {
+export async function serve(request: Request, env: Env, props: DispatchProps | null, deps: ServeDeps): Promise<Response> {
   const url = new URL(request.url);
   if (url.pathname === "/health" && request.method === "GET") {
     return json({ ok: true, tenant: env.TENANT_ID, objects: OBJECT_CLASSES });
@@ -55,7 +53,11 @@ export async function serve(request: Request, env: ServeEnv, props: DispatchProp
   const hook = url.pathname.match(HOOK_PATH);
   if (hook && deps.dir.ingress) return webhook(request, hook[1] as string, deps.dir.ingress);
 
-  const who = await identify(request, env, props, { keys: deps.keys, lookup: (email) => deps.dir.company().lookup(email), now: deps.now });
+  // Login, logout and recovery are the host's, answered before any session exists.
+  const owned = await hostOf(env).identity.routes(request, url);
+  if (owned) return owned;
+
+  const who = await identify(request, env, (email) => deps.dir.company().lookup(email));
   if (!who.ok) {
     if (who.status === 503) log("identity.unavailable", { tenant: env.TENANT_ID, code: who.code }, "error");
     return json({ code: who.code, reason: who.reason }, who.status);
