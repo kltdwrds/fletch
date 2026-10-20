@@ -33,6 +33,10 @@ QYVR_LIVE=1 CF_LIVE_ACCOUNT_ID=... CF_LIVE_TOKEN=... pnpm vitest run test/live/f
 `pnpm accept F1` runs it as its `live` step under the same variables and otherwise prints `live: skipped (no account)`.
 The tag `v0.1.0` follows a passing run. See `docs/DECISIONS.md`.
 
+The run leaves objects in the bucket `<name>-agent` (the agent keeps MEMORY.md there), and R2's API cannot empty a bucket,
+so the cleanup reports the bucket by name. Delete it by hand: Dashboard, R2, the bucket, delete its objects, then delete the
+bucket. `node scripts/live-sweep.ts` (same two variables) removes every other `fletch-ci-` leftover.
+
 ## Set up your own fletch (about ten minutes)
 
 You need a Cloudflare account (the free plan works), Node 24.19 or newer, and pnpm.

@@ -43,3 +43,10 @@ jobs:
           CF_LIVE_ACCOUNT_ID: ${{ secrets.CF_LIVE_ACCOUNT_ID }}
           CF_LIVE_TOKEN: ${{ secrets.CF_LIVE_TOKEN }}
         run: pnpm vitest run test/live/f1-deploy.live.test.ts
+      - name: Sweep fletch-ci- leftovers
+        # A cancelled, crashed or timed-out run skips its own cleanup; this deletes every fletch-ci- resource, and only those.
+        if: always()
+        env:
+          CF_LIVE_ACCOUNT_ID: ${{ secrets.CF_LIVE_ACCOUNT_ID }}
+          CF_LIVE_TOKEN: ${{ secrets.CF_LIVE_TOKEN }}
+        run: node scripts/live-sweep.ts

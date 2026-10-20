@@ -7,5 +7,5 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": { "types": ["node"] },
   "include": ["scripts/**/*.ts", "test/**/*.ts", "vitest.config.ts"],
-  "exclude": ["test/workers/**", "test/scenarios/**", "test/support/object-harness.ts", "test/support/host.ts", "test/support/host.setup.ts", "test/support/soft-authenticator.ts", "test/live/f1-deploy.live.test.ts", "node_modules"]
+  "exclude": ["test/workers/**", "test/scenarios/**", "test/support/object-harness.ts", "test/support/host.ts", "test/support/host.setup.ts", "test/support/soft-authenticator.ts", "test/live/f1-deploy.live.test.ts", "scripts/live-sweep.ts", "node_modules"]
 }

@@ -59,3 +59,73 @@ describe("[F1] live test: the setup link", () => {
     expect(parseSetupLink("fletch is deployed:\nhttps://fletch-ci-42.solo-sam.workers.dev\nSetup was already done")).toBeNull();
   });
 });
+
+describe("[F1] live test: nothing secret is printed", () => {
+  it("knows the shapes of a recovery code and a setup token without echoing them", async () => {
+    const { isRecoveryShape, isSetupTokenShape } = await import("./lib.ts");
+    expect(isRecoveryShape("ABCDE-12345-fghij-KLMNO")).toBe(true);
+    for (const bad of ["ABCDE12345FGHIJKLMNO", "ABCDE-12345-fghij", "ABCDE-12345-fghij-KLMN!", undefined, 7]) expect(isRecoveryShape(bad)).toBe(false);
+    expect(isSetupTokenShape("a".repeat(43))).toBe(true);
+    expect(isSetupTokenShape("short")).toBe(false);
+    expect(isSetupTokenShape(`${"a".repeat(40)} `)).toBe(false);
+  });
+
+  it("reads the login page's state word, and masks a value only inside GitHub Actions", async () => {
+    const { maskCommand, pageState } = await import("./lib.ts");
+    expect(pageState('<html><body data-state="register">x</body>')).toBe("register");
+    expect(pageState("<html>no state</html>")).toBeNull();
+    expect(maskCommand("s3cret", { GITHUB_ACTIONS: "true" })).toBe("::add-mask::s3cret");
+    expect(maskCommand("s3cret", {})).toBeNull();
+    expect(maskCommand("two\nlines", { GITHUB_ACTIONS: "true" })).toBeNull();
+    expect(maskCommand("", { GITHUB_ACTIONS: "true" })).toBeNull();
+  });
+});
+
+describe("[F1] live test: the sweep", () => {
+  const listing = {
+    workers: ["fletch-ci-1", "qyvr-base", "fletch-ci-", "my-fletch-ci-2", "fletch-ci-Bad"],
+    buckets: ["fletch-ci-1-agent", "fletch-ci-1", "qyvr-base-agent", "fletch-ci--agent", "other-fletch-ci-1-agent"],
+    indexes: ["fletch-ci-1-memory", "qyvr-base-memory", "fletch-ci-1-agent", "fletch-ci-2-memory"],
+  };
+
+  it("plans only fletch-ci- names, each in its own kind's suffix", async () => {
+    const { planSweep } = await import("./lib.ts");
+    expect(planSweep(ACCOUNT, listing).map((s) => `${s.kind}:${s.name}`)).toEqual(["worker:fletch-ci-1", "bucket:fletch-ci-1-agent", "index:fletch-ci-1-memory", "index:fletch-ci-2-memory"]);
+    expect(planSweep("bad", listing)).toEqual([]);
+  });
+
+  it("re-checks the guard before each DELETE: a tampered step is never sent", async () => {
+    const { runSteps } = await import("./sweep.ts");
+    const calls: string[] = [];
+    const api = { call: async (m: string, p: string) => void calls.push(`${m} ${p}`) } as never;
+    const ok = { kind: "worker", name: "fletch-ci-1", method: "DELETE", path: `/accounts/${ACCOUNT}/workers/scripts/fletch-ci-1?force=true` } as const;
+    const out = await runSteps(api, [ok, { ...ok, name: "qyvr-base", path: `/accounts/${ACCOUNT}/workers/scripts/qyvr-base` }, { ...ok, path: `/accounts/${ACCOUNT}/workers/scripts/qyvr-base` }], () => {});
+    expect(calls).toEqual([`DELETE ${ok.path}`]);
+    expect(out.deleted).toEqual(["worker fletch-ci-1"]);
+    expect(out.leaked).toHaveLength(2);
+  });
+
+  it("lists, deletes the fletch-ci- set, treats 404 as gone and reports a non-empty bucket by name", async () => {
+    const { sweep } = await import("./sweep.ts");
+    const calls: string[] = [];
+    const fail = (status: number, message: string) => Object.assign(new Error(message), { status });
+    const api = {
+      call: async (method: string, path: string) => {
+        calls.push(`${method} ${path.replace(`/accounts/${ACCOUNT}`, "")}`);
+        if (method === "GET" && path.endsWith("/workers/scripts")) return [{ id: "fletch-ci-1" }, { id: "qyvr-base" }];
+        if (method === "GET" && path.endsWith("/r2/buckets")) return { buckets: [{ name: "fletch-ci-1-agent" }, { name: "qyvr-base-agent" }] };
+        if (method === "GET") return [{ name: "fletch-ci-1-memory" }, { name: "qyvr-base-memory" }];
+        if (path.includes("/workers/scripts/")) throw fail(404, "gone");
+        if (path.includes("/r2/buckets/")) throw fail(409, "DELETE bucket -> 409 10008: bucket is not empty tok-1");
+        return null;
+      },
+    };
+    const out = await sweep(api as never, ACCOUNT, () => {}, (t) => t.replaceAll("tok-1", "[token]"));
+    expect(calls.filter((c) => c.startsWith("DELETE"))).toEqual(["DELETE /workers/scripts/fletch-ci-1?force=true", "DELETE /r2/buckets/fletch-ci-1-agent", "DELETE /vectorize/v2/indexes/fletch-ci-1-memory"]);
+    expect(out.gone).toEqual(["worker fletch-ci-1"]);
+    expect(out.deleted).toEqual(["index fletch-ci-1-memory"]);
+    expect(out.leaked).toHaveLength(1);
+    expect(out.leaked[0]).toMatch(/^bucket fletch-ci-1-agent: .*\[token\].*Dashboard, R2/);
+    expect(out.leaked[0]).not.toContain("tok-1");
+  });
+});

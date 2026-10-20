@@ -62,3 +62,56 @@ export function parseSetupLink(output: string): { url: string; token: string; li
 export function runIdFrom(env: Record<string, string | undefined>, now: number): string {
   return env.GITHUB_RUN_ID?.trim() || now.toString(36);
 }
+
+// --- what the run may print ------------------------------------------------------------------------
+
+/** A recovery code's shape (four groups of five, dash-separated). Asserted instead of the code itself, so a failure prints nothing secret. */
+export const isRecoveryShape = (code: unknown): boolean => typeof code === "string" && /^[A-Za-z0-9]{5}(?:-[A-Za-z0-9]{5}){3}$/.test(code);
+
+/** A setup token's shape (base64url, at least 32 characters). */
+export const isSetupTokenShape = (token: unknown): boolean => typeof token === "string" && /^[A-Za-z0-9_-]{32,}$/.test(token);
+
+/** The login page's `data-state` word, or null. A test compares this, never the page body. */
+export function pageState(html: string): string | null {
+  return html.match(/<body[^>]*\sdata-state="([a-z]+)"/)?.[1] ?? null;
+}
+
+/** GitHub Actions' mask command for `value`, or null outside Actions; printed as soon as a secret is known. */
+export function maskCommand(value: string, env: Record<string, string | undefined>): string | null {
+  return env.GITHUB_ACTIONS && value && !/[\r\n]/.test(value) ? `::add-mask::${value}` : null;
+}
+
+// --- the sweep -------------------------------------------------------------------------------------
+
+/** What an account holds, by name. */
+export interface Listing {
+  workers: string[];
+  buckets: string[];
+  indexes: string[];
+}
+
+const SUFFIX: Record<ResourceKind, string> = { worker: "", bucket: "-agent", index: "-memory" };
+
+/**
+ * Whether a delete step may run: its name is `<fletch-ci- name><suffix for its kind>`, and its path ends with
+ * exactly that name. Checked when a plan is made and again immediately before each DELETE.
+ */
+export function stepAllowed(step: CleanupStep): boolean {
+  const suffix = SUFFIX[step.kind];
+  if (suffix === undefined || step.method !== "DELETE" || typeof step.name !== "string") return false;
+  if (suffix && !step.name.endsWith(suffix)) return false;
+  const base = suffix ? step.name.slice(0, -suffix.length) : step.name;
+  return isCiName(base) && step.path.split("?")[0]?.endsWith(`/${step.name}`) === true;
+}
+
+/** Deletes for every `fletch-ci-` Worker, `<name>-agent` bucket and `<name>-memory` index in `listing`; anything else is ignored. */
+export function planSweep(accountId: string, listing: Listing): CleanupStep[] {
+  if (!/^[0-9a-f]{32}$/.test(accountId)) return [];
+  const base = `/accounts/${accountId}`;
+  const steps: CleanupStep[] = [
+    ...listing.workers.map((name): CleanupStep => ({ kind: "worker", name, method: "DELETE", path: `${base}/workers/scripts/${name}?force=true` })),
+    ...listing.buckets.map((name): CleanupStep => ({ kind: "bucket", name, method: "DELETE", path: `${base}/r2/buckets/${name}` })),
+    ...listing.indexes.map((name): CleanupStep => ({ kind: "index", name, method: "DELETE", path: `${base}/vectorize/v2/indexes/${name}` })),
+  ];
+  return steps.filter(stepAllowed);
+}

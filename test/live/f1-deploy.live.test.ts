@@ -15,11 +15,12 @@ import { randomUUID } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { CloudflareApi, statusOf } from "@qyvr/host-cloudflare";
-import { afterAll, describe, expect, it } from "vitest";
+import { CloudflareApi } from "@qyvr/host-cloudflare";
+import { afterAll, afterEach, describe, expect, it, type TestContext } from "vitest";
 import { init } from "../../packages/create-fletch/src/init.ts";
 import { softAuthenticator } from "../support/soft-authenticator.ts";
-import { parseSetupLink, planCleanup, runIdFrom, workerNameFor } from "./lib.ts";
+import { isRecoveryShape, isSetupTokenShape, maskCommand, pageState, parseSetupLink, planCleanup, runIdFrom, workerNameFor } from "./lib.ts";
+import { runSteps, sweep } from "./sweep.ts";
 
 const ACCOUNT_ID = process.env.CF_LIVE_ACCOUNT_ID ?? "";
 const TOKEN = process.env.CF_LIVE_TOKEN ?? "";
@@ -39,6 +40,24 @@ const state: { dir: string; url: string; setup: string; cookie: string; recovery
   recovery: "",
 };
 const lines: string[] = [];
+
+/** Set by the first failing step; every later step is skipped, so one root failure is not buried under noise. */
+let failed = false;
+const guarded = (fn: (ctx: TestContext) => Promise<void> | void) => async (ctx: TestContext) => {
+  if (failed) ctx.skip();
+  try {
+    await fn(ctx);
+  } catch (error) {
+    failed = true;
+    throw error;
+  }
+};
+
+/** A secret is masked in the Actions log the moment it is known (no effect elsewhere). */
+const mask = (value: string | undefined) => {
+  const command = value ? maskCommand(value, process.env) : null;
+  if (command) console.log(command);
+};
 
 /** A pause that ends when a timeout signal aborts: the live lane waits on Cloudflare, the hermetic lane never runs this. */
 const pause = (ms: number) => new Promise<void>((done) => AbortSignal.timeout(ms).addEventListener("abort", () => done()));
@@ -68,9 +87,10 @@ async function registerPasskey(key: NonNullable<typeof state.keyA>, auth: { setu
   const setup = "setup" in auth ? { setup: auth.setup } : {};
   const cookie = "cookie" in auth ? auth.cookie : undefined;
   const o = await http("POST", "/login/register/options", { body: setup, ...(cookie ? { cookie } : {}) });
-  expect(o.res.status, o.text).toBe(200);
+  expect(o.res.status).toBe(200);
   const done = await http("POST", "/login/register/verify", { body: { ...setup, challengeId: o.body.challengeId, credential: await key.create(o.body.options as { challenge: string }) }, ...(cookie ? { cookie } : {}) });
-  expect(done.res.status, done.text).toBe(200);
+  // A failing status prints the status only: the body of a success carries the recovery code.
+  expect(done.res.status).toBe(200);
   expect(done.body.ok).toBe(true);
   return { cookie: cookieOf(done.res), recoveryCode: done.body.recoveryCode as string | undefined };
 }
@@ -106,25 +126,32 @@ function turn(chatId: string, cookie: string, text: string): Promise<string> {
   });
 }
 
-describe("[F1] the ten-minute path", () => {
-  it("has the account and token it needs", () => {
-    expect(ACCOUNT_ID, "set CF_LIVE_ACCOUNT_ID").toMatch(/^[0-9a-f]{32}$/);
-    expect(TOKEN, "set CF_LIVE_TOKEN").not.toBe("");
+describe.sequential("[F1] the ten-minute path", () => {
+  // A step that timed out never threw inside `guarded`; its recorded failure stops the rest all the same.
+  afterEach((ctx) => {
+    if (ctx.task.result?.state === "fail") failed = true;
   });
 
-  it("init deploys a Worker named fletch-ci-<run id> and prints the setup link", { timeout: 15 * MINUTE }, async () => {
+  it("has the account and token it needs", guarded(() => {
+    expect(/^[0-9a-f]{32}$/.test(ACCOUNT_ID), "set CF_LIVE_ACCOUNT_ID to the 32-character account id").toBe(true);
+    expect(TOKEN !== "", "set CF_LIVE_TOKEN").toBe(true);
+  }));
+
+  it("init deploys a Worker named fletch-ci-<run id> and prints the setup link", { timeout: 15 * MINUTE }, guarded(async () => {
     state.dir = mkdtempSync(join(tmpdir(), "fletch-live-"));
     const result = await init({ accountId: ACCOUNT_ID, token: TOKEN, name: NAME, ownerEmail: OWNER_EMAIL, paid: false, cwd: state.dir }, { log: (line) => lines.push(line) });
     expect(result, JSON.stringify(result)).toMatchObject({ ok: true });
     if (!result.ok) return;
     const link = parseSetupLink(lines.join("\n"));
-    expect(link, "init printed no /login?setup= link").not.toBeNull();
+    mask(link?.token);
+    expect(link !== null, "init printed no /login?setup= link").toBe(true);
+    expect(isSetupTokenShape(link?.token), "the setup token has an unexpected shape").toBe(true);
     expect(link?.url).toBe(result.url);
     state.url = result.url;
     state.setup = link?.token ?? "";
-  });
+  }));
 
-  it("GET /health is 200 and lists seven objects", { timeout: 5 * MINUTE }, async () => {
+  it("GET /health is 200 and lists seven objects", { timeout: 5 * MINUTE }, guarded(async () => {
     // A fresh workers.dev route can take a little while to answer; wait for the first 200, never loop on a failing assertion.
     let last = "";
     for (let waited = 0; waited < 3 * MINUTE; waited += 5_000) {
@@ -138,36 +165,36 @@ describe("[F1] the ten-minute path", () => {
       await pause(5_000);
     }
     throw new Error(`/health never answered 200: ${last}`);
-  });
+  }));
 
-  it("GET /app/chats without a session is 401 SESSION_MISSING", async () => {
+  it("GET /app/chats without a session is 401 SESSION_MISSING", guarded(async () => {
     const r = await http("GET", "/app/chats");
     expect(r.res.status).toBe(401);
     expect(r.body.code).toBe("SESSION_MISSING");
-  });
+  }));
 
-  it("GET /login?setup=... is 200 HTML in the register state", async () => {
+  it("GET /login?setup=... is 200 HTML in the register state", guarded(async () => {
     const r = await http("GET", `/login?setup=${state.setup}`);
     expect(r.res.status).toBe(200);
     expect(r.res.headers.get("content-type")).toMatch(/text\/html/);
-    expect(r.text).toContain('data-state="register"');
-    const bare = await http("GET", "/login");
-    expect(bare.text).toContain('data-state="setup"');
-  });
+    expect(pageState(r.text)).toBe("register");
+    expect(pageState((await http("GET", "/login")).text)).toBe("setup");
+  }));
 
-  it("registers a passkey with the setup token and receives a recovery code", async () => {
+  it("registers a passkey with the setup token and receives a recovery code", guarded(async () => {
     const origin = new URL(state.url);
     state.keyA = await softAuthenticator(origin.origin, origin.hostname);
     const first = await registerPasskey(state.keyA, { setup: state.setup });
     expect(first.cookie).not.toBe("");
-    expect(first.recoveryCode?.replaceAll("-", "")).toHaveLength(20);
+    mask(first.recoveryCode);
+    expect(isRecoveryShape(first.recoveryCode), "the recovery code has an unexpected shape").toBe(true);
     state.cookie = first.cookie;
     state.recovery = first.recoveryCode as string;
     const signedIn = await http("GET", "/app/chats", { cookie: state.cookie });
     expect(signedIn.res.status, signedIn.text).toBe(200);
-  });
+  }));
 
-  it("remembers that the favourite colour is teal, and says so in a new chat", { timeout: 10 * MINUTE }, async () => {
+  it("remembers that the favourite colour is teal, and says so in a new chat", { timeout: 10 * MINUTE }, guarded(async () => {
     const opened = async () => {
       const r = await http("POST", "/chats", { cookie: state.cookie });
       expect(r.res.status, r.text).toBe(201);
@@ -176,9 +203,9 @@ describe("[F1] the ten-minute path", () => {
     await turn(await opened(), state.cookie, "remember that my favourite colour is teal");
     const answer = await turn(await opened(), state.cookie, "what is my favourite colour");
     expect(answer.toLowerCase()).toContain("teal");
-  });
+  }));
 
-  it("refuses to delete the only passkey, then deletes one of two and signs in with the recovery code once", { timeout: 5 * MINUTE }, async () => {
+  it("refuses to delete the only passkey, then deletes one of two and signs in with the recovery code once", { timeout: 5 * MINUTE }, guarded(async () => {
     const keyA = state.keyA as NonNullable<typeof state.keyA>;
     const only = await http("DELETE", `/login/passkeys/${encodeURIComponent(keyA.id)}`, { cookie: state.cookie });
     expect(only.res.status).toBe(409);
@@ -199,37 +226,34 @@ describe("[F1] the ten-minute path", () => {
 
     // The recovery code: a session good only under /login, and good once.
     const recovered = await http("POST", "/login/recover", { body: { email: OWNER_EMAIL, code: state.recovery } });
-    expect(recovered.res.status, recovered.text).toBe(200);
-    expect(recovered.body).toEqual({ ok: true, needsPasskey: true });
+    expect(recovered.res.status).toBe(200);
+    expect(recovered.body.needsPasskey).toBe(true);
     const gated = await http("GET", "/app/chats", { cookie: cookieOf(recovered.res) });
     expect([gated.res.status, gated.body.code]).toEqual([403, "PASSKEY_REQUIRED"]);
     const spent = await http("POST", "/login/recover", { body: { email: OWNER_EMAIL, code: state.recovery } });
-    expect(spent.res.status).toBe(403);
-    expect(spent.body.code).toBe("RECOVERY_CODE_SPENT");
-  });
+    expect([spent.res.status, spent.body.code]).toEqual([403, "RECOVERY_CODE_SPENT"]);
+  }));
 
-  it("prints the wall-clock time", () => {
+  it("prints the wall-clock time", guarded(async () => {
     const seconds = Math.round((Date.now() - t0) / 1000);
-    console.log(`F1 live: ${NAME} took ${Math.floor(seconds / 60)} min ${seconds % 60} s from the first step to here (the ten-minute claim is measured, not asserted)`);
-  });
+    console.log(`F1 live: ${NAME} elapsed ${Math.floor(seconds / 60)} min ${seconds % 60} s over the whole path (the ten-minute claim is measured, not asserted)`);
+  }));
 });
 
 afterAll(async () => {
   if (state.dir) rmSync(state.dir, { recursive: true, force: true });
   if (!ACCOUNT_ID || !TOKEN) return;
   const plan = planCleanup(ACCOUNT_ID, NAME);
-  if (!plan.ok) throw new Error(`cleanup refused: ${plan.reason}`);
-  const cf = new CloudflareApi(TOKEN);
-  const leaked: string[] = [];
-  for (const step of plan.steps) {
-    try {
-      await cf.call(step.method, step.path);
-      console.log(`cleanup: deleted ${step.kind} ${step.name}`);
-    } catch (error) {
-      // 404: it was never created, or already gone. Anything else is left behind and said so.
-      if (statusOf(error) === 404) console.log(`cleanup: ${step.kind} ${step.name} was not there`);
-      else leaked.push(`${step.kind} ${step.name}: ${(error as Error).message.replaceAll(TOKEN, "[token]")}`);
-    }
+  if (!plan.ok) {
+    // Said once; the root failure (a bad account id or name) is already the failing test.
+    console.error(`cleanup refused: ${plan.reason}`);
+    return;
   }
-  if (leaked.length) throw new Error(`cleanup left resources behind, delete them by hand:\n${leaked.join("\n")}`);
-}, 5 * MINUTE);
+  const cf = new CloudflareApi(TOKEN);
+  const scrub = (text: string) => text.replaceAll(TOKEN, "[token]");
+  // This run's own resources first, then the sweep of every fletch-ci- leftover (an earlier run that was cancelled or timed out).
+  const mine = await runSteps(cf, plan.steps, console.log, scrub);
+  const swept = await sweep(cf, ACCOUNT_ID, console.log, scrub).catch((error: Error) => ({ deleted: [], gone: [], leaked: [`sweep failed: ${scrub(error.message)}`] }));
+  const leaked = [...mine.leaked, ...swept.leaked];
+  if (leaked.length) throw new Error(`cleanup left resources behind, delete them by hand:\n${[...new Set(leaked)].join("\n")}`);
+}, 10 * MINUTE);

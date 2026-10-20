@@ -3,6 +3,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": { "types": ["node", "@cloudflare/workers-types"] },
-  "include": ["src/**/*.ts", "test/**/*.ts", "../../test/live/f1-deploy.live.test.ts", "../../test/live/lib.ts", "../../test/support/soft-authenticator.ts"],
+  "include": ["src/**/*.ts", "test/**/*.ts", "../../test/live/f1-deploy.live.test.ts", "../../test/live/lib.ts", "../../test/live/sweep.ts", "../../scripts/live-sweep.ts", "../../test/support/soft-authenticator.ts"],
   "exclude": ["node_modules"]
 }
