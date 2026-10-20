@@ -1,9 +1,32 @@
 {
   "name": "@qyvr/host",
   "version": "0.0.0",
+  "description": "Host contracts and platform-free logic for a personal agent: identity, keys, budget, mail, workspace, and the refusals for what a host lacks.",
   "type": "module",
   "license": "Apache-2.0",
-  "repository": { "type": "git", "url": "git+https://github.com/qyvr-ai/qyvr-js.git", "directory": "packages/host" },
-  "exports": { ".": "./src/index.ts" },
-  "publishConfig": { "access": "public" }
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qyvr-ai/fletch.git",
+    "directory": "packages/host"
+  },
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && node ../../scripts/rewrite-dts.mjs dist"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261019.1"
+  }
 }

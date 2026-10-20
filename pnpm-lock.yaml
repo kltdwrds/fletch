@@ -93,7 +93,11 @@ importers:
         specifier: 4.149.0
         version: 4.149.0(@cloudflare/workers-types@5.20261019.1)(@types/node@26.1.0)
 
-  packages/host: {}
+  packages/host:
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: 5.20261019.1
+        version: 5.20261019.1
 
   packages/host-cloudflare:
     dependencies:
@@ -106,6 +110,10 @@ importers:
       '@simplewebauthn/server':
         specifier: 14.0.3
         version: 14.0.3
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: 5.20261019.1
+        version: 5.20261019.1
 
 packages:
 

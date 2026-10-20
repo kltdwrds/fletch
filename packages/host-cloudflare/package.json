@@ -1,16 +1,25 @@
 {
   "name": "@qyvr/host-cloudflare",
   "version": "0.0.0",
+  "description": "The Cloudflare implementation of @qyvr/host on one Durable Object, and the provisioning library for one account.",
   "type": "module",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/qyvr-ai/qyvr-js.git",
+    "url": "git+https://github.com/qyvr-ai/fletch.git",
     "directory": "packages/host-cloudflare"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
   "publishConfig": {
     "access": "public"
   },
@@ -19,7 +28,19 @@
     "@qyvr/host": "workspace:*",
     "@simplewebauthn/server": "14.0.3"
   },
+  "peerDependencies": {
+    "@cloudflare/workers-types": ">=4"
+  },
+  "peerDependenciesMeta": {
+    "@cloudflare/workers-types": {
+      "optional": true
+    }
+  },
   "scripts": {
-    "test": "vitest run --root ../.. packages/host-cloudflare"
+    "test": "vitest run --root ../.. packages/host-cloudflare",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && node ../../scripts/rewrite-dts.mjs dist"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261019.1"
   }
 }

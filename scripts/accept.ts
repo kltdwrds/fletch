@@ -243,7 +243,10 @@ function hermeticTests(target: PartId): StepOutcome {
 function bundleStep(): StepOutcome {
   const out = mkdtempSync(join(tmpdir(), "fletch-bundle-"));
   try {
-    const res = sh("pnpm", ["exec", "wrangler", "deploy", "--dry-run", "--config", "wrangler.jsonc", "--outdir", out], hermeticEnv(), join(root, AGENT_PACKAGE));
+    // The workspace's @qyvr/* packages export their sources under the `development` condition (dist is built only
+    // for publishing), so the bundle asks for it besides wrangler's own conditions.
+    const env = { ...hermeticEnv(), WRANGLER_BUILD_CONDITIONS: "development,workerd,worker,browser" };
+    const res = sh("pnpm", ["exec", "wrangler", "deploy", "--dry-run", "--config", "wrangler.jsonc", "--outdir", out], env, join(root, AGENT_PACKAGE));
     const bundled = res.status === 0 && readdirSync(out).some((f) => f.endsWith(".js"));
     return { ok: bundled, count: bundled ? "1/1 scripts bundled" : "0/1 scripts bundled", detail: bundled ? [`${AGENT_PACKAGE}: bundled`] : [`${AGENT_PACKAGE}: FAILED`, res.out.trim().split("\n").slice(-30).join("\n")] };
   } finally {
