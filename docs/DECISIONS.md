@@ -30,3 +30,17 @@ Whatever the result, the agent already behaves correctly: `LOADER?` and `IMAGES?
 - **`create-fletch` deploys from a fletch checkout.** The `wrangler.jsonc` it writes sets `main` to the checkout's `packages/agent/src/index.ts` (a path relative to the written file), and `wrangler deploy` runs as a child process with the wrangler `create-fletch` depends on. Publishing the agent as a package for `npm create fletch` is Task 12.
 - **`init` sets two Worker secrets, each only when missing:** `MASTER_KEY` and `SETUP_TOKEN` (both 32 random bytes, base64url). A fresh account gets two secret puts, a second run none. The setup link is printed only by the run that minted `SETUP_TOKEN`.
 - **`tokenScopes(cf, accountId)` takes the account id**, which the per-scope probes and the account-token verify endpoint need.
+
+## F1 exit test: written, not yet run
+
+Status: OPEN. The test is written and its pure helpers are tested hermetically; nobody has run it against Cloudflare, and the tag `v0.1.0` waits for a passing run.
+
+`test/live/f1-deploy.live.test.ts` calls `init()` against a throwaway account (Worker `fletch-ci-<run id>`, `paid: false`, owner `sam@solo-sam.example`, a temp `--dir`), then walks the ten-minute path: `/health` lists seven objects, `/app/chats` is `401 SESSION_MISSING`, `/login?setup=` is the register page, a software ES256 passkey registers with the setup token and yields a recovery code, a chat remembers "my favourite colour is teal" and answers it in a new chat, deleting the only passkey is refused with `LOGIN_LAST_PASSKEY`, a second passkey is added and one deleted, and the recovery code signs in once and then fails with `RECOVERY_CODE_SPENT`. It prints the wall-clock time (measured, not asserted). `afterAll` always deletes the Worker, the bucket `<name>-agent` and the index `<name>-memory`, and only names that start with `fletch-ci-`.
+
+Run it (the command Kyle runs):
+
+```
+QYVR_LIVE=1 CF_LIVE_ACCOUNT_ID=... CF_LIVE_TOKEN=... pnpm vitest run test/live/f1-deploy.live.test.ts
+```
+
+`pnpm accept F1` runs the same file as its `live` step under those variables, and otherwise prints `live: skipped (no account)` and passes. `.github/workflows/live-deploy.yml` runs it on manual dispatch and when a release is published, from the secrets `CF_LIVE_ACCOUNT_ID` and `CF_LIVE_TOKEN`, and fails with the missing names if either is absent. The tag `v0.1.0` follows a passing run.

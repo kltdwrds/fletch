@@ -1,8 +1,8 @@
 // create-fletch runs under Node, and imports @qyvr/host-cloudflare, whose sources are written over the Workers
-// types; both sets are loaded.
+// types; both sets are loaded. It also holds the live exit test (test/live/), which calls init().
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": { "types": ["node", "@cloudflare/workers-types"] },
-  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "include": ["src/**/*.ts", "test/**/*.ts", "../../test/live/f1-deploy.live.test.ts", "../../test/live/lib.ts", "../../test/support/soft-authenticator.ts"],
   "exclude": ["node_modules"]
 }

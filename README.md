@@ -20,6 +20,19 @@ pnpm accept F1
 scans, the harness checks and typecheck, in that order, and ends with one `ACCEPT <id>: PASS` or
 `ACCEPT <id>: FAIL (<step>)` line.
 
+## F1 exit test: written, not yet run
+
+`test/live/f1-deploy.live.test.ts` deploys a Worker named `fletch-ci-<run id>` into a throwaway Cloudflare account,
+walks the ten-minute path (health, passkey with a setup token, recovery code, a memory round trip, the last-passkey
+rule), prints the wall-clock time, and deletes the Worker, bucket and index. It has not been run yet. To run it:
+
+```
+QYVR_LIVE=1 CF_LIVE_ACCOUNT_ID=... CF_LIVE_TOKEN=... pnpm vitest run test/live/f1-deploy.live.test.ts
+```
+
+`pnpm accept F1` runs it as its `live` step under the same variables and otherwise prints `live: skipped (no account)`.
+The tag `v0.1.0` follows a passing run. See `docs/DECISIONS.md`.
+
 ## Set up your own fletch (about ten minutes)
 
 You need a Cloudflare account (the free plan works), Node 24.19 or newer, and pnpm.
