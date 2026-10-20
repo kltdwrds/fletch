@@ -1,6 +1,7 @@
 // The host for one owner on one deploy (F1): keys from the `MASTER_KEY` secret, the owner from `OWNER_EMAIL`,
 // no cross-tenant budget, and every platform service refused with its code and a reason the UI shows.
 import { type Host, unavailable } from "@qyvr/host";
+import { normalizeEmail } from "./email.ts";
 import { secretKeyService } from "./keys.ts";
 
 export interface SingleAccountEnv {
@@ -11,11 +12,6 @@ export interface SingleAccountEnv {
   MASTER_KEY?: string;
   /** Where sessions and passkeys live: the sign-in calls the Company by name (Tasks 7-9). */
   COMPANY: DurableObjectNamespace;
-}
-
-/** A member address as stored and compared: trimmed and lower-cased. */
-function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
 }
 
 const notInBuild = (feature: string) => `${feature} is not part of the self-host build; see README`;

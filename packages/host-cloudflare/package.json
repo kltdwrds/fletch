@@ -15,6 +15,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@noble/hashes": "2.4.0",
     "@qyvr/host": "workspace:*"
   },
   "scripts": {
