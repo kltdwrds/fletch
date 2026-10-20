@@ -1,5 +1,5 @@
 // M1.1: the Chat object end to end over the fake model, through the object harness: recovery after
-// eviction, the adapter's 429 and drop handling, the gateway option, the Ledger, ownership, the
+// eviction, the adapter's 429 and drop handling, the absent gateway option, the Ledger, ownership, the
 // compromised-model guard and compaction. Fixture people are Sam Solo and Pat of solo-sam.
 import { normalizeContext } from "@earendil-works/pi-ai";
 import { describe, expect, it } from "vitest";
@@ -112,7 +112,8 @@ describe("[M1.1] model adapter", () => {
   });
 
   it("a dropped stream surfaces as a failed turn, never as success", async () => {
-    // From M22.1 a chat-route drop before the first token goes to the hedge; both legs break here.
+    // A self-host chat route is unhedged (Workers AI): the drop is the turn's one attempt. On a deploy that
+    // puts chat on OpenRouter it goes to the hedge instead (test/workers/m22-1-hedge.test.ts).
     const dropped: FakeStep = { drop: { text: "Your Tuesday is completely free and", afterBytes: 150 } };
     const { chat, ledgerRows } = setup([dropped, dropped]);
     const socket = chat.connect();
@@ -123,19 +124,19 @@ describe("[M1.1] model adapter", () => {
     expect(framesOf(socket.frames, "message")).toHaveLength(0);
     expect(chat.rows("SELECT role FROM messages").map((r) => r.role)).toEqual(["user"]);
     expect(chat.rows("SELECT status, code FROM turns")).toEqual([{ status: "failed", code: "MODEL_STREAM_DROPPED" }]);
-    expect((await ledgerRows()).map((r) => [r.attempt, r.status, r.code])).toEqual([[1, "dropped", "MODEL_STREAM_DROPPED"], [2, "dropped", "MODEL_STREAM_DROPPED"]]);
+    expect((await ledgerRows()).map((r) => [r.attempt, r.status, r.code])).toEqual([[1, "dropped", "MODEL_STREAM_DROPPED"]]);
   });
 
-  it("model traffic reaches only the fake binding, with the gateway option, and makes zero outbound requests", async () => {
+  it("model traffic reaches only the fake binding, with no gateway option on a self-host deploy, and makes zero outbound requests", async () => {
     const { fake, chat } = setup([{ text: "Hi." }]);
     const before = hermeticNetwork.getUnmockedCalls().length;
     expect(await chat.instance.send({ person: ada.id, text: "Hi" })).toMatchObject({ status: "done" });
     expect(hermeticNetwork.getUnmockedCalls()).toHaveLength(before);
     expect(fake.requests).toHaveLength(1);
-    // The chat route's primary is OpenRouter's GLM through the binding's gateway (M22.1).
-    expect(fake.requests[0]?.model).toBe("z-ai/glm-5.3-flash");
-    expect(fake.requests[0]?.universal).toMatchObject({ gatewayId: "qyvr", provider: "openrouter" });
-    expect(fake.requests[0]?.options.gateway).toEqual({ id: "qyvr", collectLog: false });
+    // A deploy that configures no gateway and no chat provider (self-host, spec section 2): Workers AI over the binding.
+    expect(fake.requests[0]?.model).toBe("@cf/zai-org/glm-5.3-flash");
+    expect(fake.requests[0]?.universal).toBeUndefined();
+    expect(fake.requests[0]?.options.gateway).toBeUndefined();
     expect(fake.requests[0]?.inputs.stream).toBe(true);
   });
 
@@ -148,7 +149,7 @@ describe("[M1.1] model adapter", () => {
     const b = await chatFor("chat-bo").instance.send({ person: other.id, text: "Hello" });
     if (a.status !== "done" || b.status !== "done") throw new Error("turns failed");
     expect(await ledgerRows()).toEqual([
-      expect.objectContaining({ tenant: "solo-sam", person: ada.id, runId: a.turnId, route: "chat", model: "z-ai/glm-5.3-flash", provider: "openrouter/FakeHost", status: "ok", inputTokens: 120, outputTokens: 39, reasoningTokens: 30 }),
+      expect.objectContaining({ tenant: "solo-sam", person: ada.id, runId: a.turnId, route: "chat", model: "@cf/zai-org/glm-5.3-flash", provider: "workers-ai", status: "ok", inputTokens: 120, outputTokens: 39, reasoningTokens: 30 }),
       expect.objectContaining({ tenant: "solo-sam", person: other.id, runId: b.turnId, route: "chat", status: "ok", inputTokens: 140, outputTokens: 27, reasoningTokens: 20 }),
     ]);
   });

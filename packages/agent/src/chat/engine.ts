@@ -11,7 +11,7 @@ import { treeSpill } from "../tree/spill.ts";
 import type { LedgerSink } from "../ledger/types.ts";
 import type { Message } from "@earendil-works/pi-ai";
 import { createStreamFn } from "../model/adapter.ts";
-import { modelFor, type Route } from "../model/routes.ts";
+import { modelConfig, modelFor, type Route } from "../model/routes.ts";
 import { ToolRegistry, ToolSession } from "../tools/registry.ts";
 import { coreNamespace } from "../tools/search.ts";
 import { compact, type Compacted } from "./compact-turn.ts";
@@ -203,7 +203,7 @@ export class ChatEngine {
 
   /** Starts the turn a person's row asks for; `queued` when it waited in the mailbox, so a refusal still says what happened. */
   private async begin(row: MailRow, queued: boolean): Promise<SendResult> {
-    const opened = await openTurn({ store: this.store, mailbox: this.mailbox, hooks: this.hooks, ledger: this.ledger(), tenant: this.env.TENANT_ID, now: this.now }, row, queued);
+    const opened = await openTurn({ store: this.store, mailbox: this.mailbox, hooks: this.hooks, ledger: this.ledger(), tenant: this.env.TENANT_ID, now: this.now, models: modelConfig(this.env) }, row, queued);
     if (opened.kind === "refused") return { status: "refused", code: opened.code };
     // Stored as running now, which marks the chat busy; a drain when it ends must not see it still opening.
     this.opening = false;
@@ -402,7 +402,7 @@ export class ChatEngine {
   }
 
   private streamFn(route: Route, person: string, runId: string) {
-    return createStreamFn({ ai: this.env.AI, ledger: this.ledger(), wait: this.wait, now: this.now, schedule: this.schedule }, { tenant: this.env.TENANT_ID, person, runId, route });
+    return createStreamFn({ ai: this.env.AI, ledger: this.ledger(), wait: this.wait, now: this.now, schedule: this.schedule, models: modelConfig(this.env) }, { tenant: this.env.TENANT_ID, person, runId, route });
   }
 
   private nameOf(email: string): string {
@@ -479,14 +479,14 @@ export class ChatEngine {
       const status = this.store.turn(turnId)?.status;
       if (status !== "running") return status === "stopped" ? { status: "stopped", turnId } : { status: "done", turnId };
       if (!admitted) {
-        const a = await admitTurn(this.ledger(), { tenant: this.env.TENANT_ID, person, turnId, model: modelFor("chat").id }, this.now);
+        const a = await admitTurn(this.ledger(), { tenant: this.env.TENANT_ID, person, turnId, model: modelFor("chat", modelConfig(this.env)).id }, this.now);
         if (!a.ok) return this.failTurn(turnId, a.code, a.reason);
       }
       const effects = new EffectBuffer();
       const state = this.gateState(turnId);
       const session = this.toolSession(person, effects, this.contextOf(turnId, person), state);
       await this.flushOutbox(session);
-      const model = modelFor("chat");
+      const model = modelFor("chat", modelConfig(this.env));
       // A resumed step replays the blocks its turn assembled (M24.2), so it is the step it replaces.
       let messages: Message[];
       if (this.projections.has(turnId)) {

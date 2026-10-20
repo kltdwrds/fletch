@@ -38,6 +38,7 @@ import { legFor } from "../memory/semantic.ts";
 import { migrateObject, probeObject } from "../migrations/catalog.ts";
 import { available, hostOf } from "../host.ts";
 import { type LoginCall, type LoginResultOf, runLoginCall } from "@qyvr/host-cloudflare";
+import { modelConfig } from "../model/routes.ts";
 
 export class Company extends DurableObject<Env> {
   private readonly schema = migrateObject(this.ctx, "company");
@@ -88,7 +89,7 @@ export class Company extends DurableObject<Env> {
   }
 
   private loopModel(): LoopModel {
-    return { ai: this.env.AI, ledger: this.ledger as never, tenant: this.env.TENANT_ID, wait: (ms) => new Promise<void>((r) => setTimeout(r, ms)) };
+    return { ai: this.env.AI, models: modelConfig(this.env), ledger: this.ledger as never, tenant: this.env.TENANT_ID, wait: (ms) => new Promise<void>((r) => setTimeout(r, ms)) };
   }
 
   private get loops(): CompanyLoops {
@@ -184,7 +185,7 @@ export class Company extends DurableObject<Env> {
       },
       referee: (i) =>
         referee(
-          { ai: this.env.AI, ledger: this.ledger as never, tenant: this.env.TENANT_ID, now: () => Date.now(), wait: (ms) => new Promise<void>((r) => setTimeout(r, ms)) },
+          { ai: this.env.AI, models: modelConfig(this.env), ledger: this.ledger as never, tenant: this.env.TENANT_ID, now: () => Date.now(), wait: (ms) => new Promise<void>((r) => setTimeout(r, ms)) },
           { ...i, context: i.target === "company" ? (this.instructionsStore.current()?.text ?? "") : "" },
         ),
       writeSkill: (target, name, text, writer) => {
@@ -261,7 +262,7 @@ export class Company extends DurableObject<Env> {
       ...(this.env.AGENT_BUCKET ? { bucket: this.env.AGENT_BUCKET } : {}),
       now: () => Date.now(),
       // The semantic half of company and team search (M12.2): the tenant index, the company's namespace.
-      semantic: (sql: () => SqlStorage) => this.env.MEMORY_INDEX && legFor({ index: this.env.MEMORY_INDEX, ai: this.env.AI, ledger: this.ledger as never, tenant: this.env.TENANT_ID, store: COMPANY_OWNER, sql, now: () => Date.now() }),
+      semantic: (sql: () => SqlStorage) => this.env.MEMORY_INDEX && legFor({ index: this.env.MEMORY_INDEX, ai: this.env.AI, models: modelConfig(this.env), ledger: this.ledger as never, tenant: this.env.TENANT_ID, store: COMPANY_OWNER, sql, now: () => Date.now() }),
     });
     return this.memoryInstance;
   }

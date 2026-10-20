@@ -42,6 +42,7 @@ import { log } from "../obs/log.ts";
 import { migrateObject } from "../migrations/catalog.ts";
 import { available, hostOf } from "../host.ts";
 import { type PersonPlatformCall, personPlatformCall } from "../migrations/person-api.ts";
+import { modelConfig } from "../model/routes.ts";
 
 /** Buffered daily lines reach R2 within this many seconds of the first unrendered write. */
 export const RENDER_DELAY_S = 60;
@@ -169,7 +170,7 @@ export class Person extends Agent<Env> {
   }
 
   private modelDeps() {
-    return { ai: this.env.AI, ledger: this.env.LEDGER.get(this.env.LEDGER.idFromName(this.env.TENANT_ID)) as never, tenant: this.env.TENANT_ID, now: () => Date.now(), wait: (ms: number) => new Promise<void>((r) => setTimeout(r, ms)) };
+    return { ai: this.env.AI, models: modelConfig(this.env), ledger: this.env.LEDGER.get(this.env.LEDGER.idFromName(this.env.TENANT_ID)) as never, tenant: this.env.TENANT_ID, now: () => Date.now(), wait: (ms: number) => new Promise<void>((r) => setTimeout(r, ms)) };
   }
 
   private get memory(): MemoryService {

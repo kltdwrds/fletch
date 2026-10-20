@@ -1,6 +1,6 @@
 // The model adapter (KICKOFF "Model calls through the adapter only"): the one place a model is
-// called. It is pi's `StreamFn` over the `AI` binding through the gateway with `collectLog: false`
-// (AD-11), retries a 429 after Retry-After, reports a broken stream as a failed call, and writes a
+// called. It is pi's `StreamFn` over the `AI` binding, through an AI Gateway with `collectLog: false`
+// only when the deploy configures one (AD-11, `ModelConfig`), retries a 429 after Retry-After, reports a broken stream as a failed call, and writes a
 // Ledger row for every attempt. Per pi's contract it never throws: failures end the stream with
 // an `error` event whose message starts with a stable code.
 //
@@ -10,7 +10,7 @@
 //
 // From M22.1 a route with a hedge in `HEDGES` (chat) races its primary against the hedge instead
 // (`hedge.ts`), and a model is reached through `transport.ts`: Workers AI over the binding, or
-// OpenRouter through the binding's gateway with the stored BYOK key.
+// OpenRouter through the configured gateway with its stored BYOK key.
 import {
   type AssistantMessage,
   type AssistantMessageEventStream,
@@ -20,15 +20,15 @@ import {
 } from "@earendil-works/pi-ai";
 import type { StreamFn } from "@earendil-works/pi-agent-core";
 import type { CallStatus, LedgerSink, ModelCallRow } from "../ledger/types.ts";
-import { CALL_BOUNDS, EMBEDDING_DIMENSIONS, EMBEDDING_MODEL, EMBEDDING_POOLING, HEDGES, type Route } from "./routes.ts";
+import { CALL_BOUNDS, EMBEDDING_DIMENSIONS, EMBEDDING_MODEL, EMBEDDING_POOLING, hedgeFor, type ModelConfig, type Route } from "./routes.ts";
 import { callHedged } from "./hedge.ts";
 import { abortable, guarded, readInto, type Served, tapped, zeroUsage } from "./read.ts";
-import { GATEWAY_OPTION, providerName, requestBody, send } from "./transport.ts";
+import { gatewayOption, providerName, requestBody, send } from "./transport.ts";
 import { StreamFault, toWire } from "./wire.ts";
 import { traceChat } from "../obs/spans.ts";
 
 export { MALFORMED_ARGS_KEY } from "./read.ts";
-export { GATEWAY_OPTION } from "./transport.ts";
+export { gatewayOption } from "./transport.ts";
 
 export interface CallAttribution {
   tenant: string;
@@ -49,6 +49,8 @@ export interface AdapterDeps {
   schedule?: (fn: () => void, ms: number) => () => void;
   /** Sees the raw stream text as it arrives; only the staging stream recording sets it. */
   tap?: (raw: string) => void;
+  /** How the deploy reaches models (`modelConfig(env)`); absent, a self-host deploy's: Workers AI, no gateway. */
+  models?: ModelConfig;
 }
 
 /** Retries after a 429 before the call fails; a Retry-After above the cap fails at once. */
@@ -91,7 +93,7 @@ async function callModel(
   stream: AssistantMessageEventStream,
 ): Promise<void> {
   const wire = toWire(context.messages);
-  const hedge = HEDGES[who.route];
+  const hedge = hedgeFor(who.route, deps.models);
   if (hedge) return callHedged(deps, who, model, hedge, { messages: wire.messages, tools: wire.tools, ...(maxTokens ? { maxTokens } : {}) }, signal, stream);
   const message: AssistantMessage = {
     role: "assistant",
@@ -195,7 +197,7 @@ async function callModel(
       return record(row(attempt, status, code, httpStatus));
     };
     try {
-      res = await abortable(send(deps.ai, model.id, inputs, attemptAbort.signal), attemptAbort.signal);
+      res = await abortable(send(deps.ai, model.id, inputs, attemptAbort.signal, deps.models), attemptAbort.signal);
     } catch (err) {
       settle();
       if (late) {
@@ -267,7 +269,13 @@ export type EmbedResult = { ok: true; vectors: number[][] } | { ok: false; code:
  * by the Ledger first and written to it as one row with route `embedding`. The binding reports no
  * usage for embeddings, so the row's input tokens are estimated at four characters a token.
  */
-export async function embed(deps: Pick<AdapterDeps, "ai" | "ledger" | "now">, who: Omit<CallAttribution, "route" | "ceiling">, texts: string[]): Promise<EmbedResult> {
+/** The embedding call's options: the gateway when one is configured, else none. */
+function embedOptions(models: ModelConfig | undefined): { gateway?: { id: string; collectLog: false } } {
+  const gateway = gatewayOption(models);
+  return gateway ? { gateway } : {};
+}
+
+export async function embed(deps: Pick<AdapterDeps, "ai" | "ledger" | "now" | "models">, who: Omit<CallAttribution, "route" | "ceiling">, texts: string[]): Promise<EmbedResult> {
   if (!texts.length) return { ok: true, vectors: [] };
   if (texts.length > MAX_EMBED_TEXTS) return { ok: false, code: "EMBED_TOO_MANY", reason: `one call embeds at most ${MAX_EMBED_TEXTS} texts` };
   const timing: { startedAt: number | null } = { startedAt: null };
@@ -288,7 +296,7 @@ export async function embed(deps: Pick<AdapterDeps, "ai" | "ledger" | "now">, wh
   let out: { data?: unknown };
   timing.startedAt = deps.now();
   try {
-    out = (await deps.ai.run(EMBEDDING_MODEL, { text: texts, pooling: EMBEDDING_POOLING }, { gateway: GATEWAY_OPTION })) as { data?: unknown };
+    out = (await deps.ai.run(EMBEDDING_MODEL, { text: texts, pooling: EMBEDDING_POOLING }, embedOptions(deps.models))) as { data?: unknown };
   } catch (err) {
     return fail("failed", "EMBED_CALL_FAILED", String(err));
   }

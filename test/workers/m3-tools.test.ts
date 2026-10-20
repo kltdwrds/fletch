@@ -136,9 +136,7 @@ describe("[M3.1] tool registry", () => {
     ]);
     const sending = chat.instance.send({ person: ada.email, text: "post it" });
     await fake.reached("posting");
-    fake.drop("posting");
-    // From M22.1 a chat-route drop before the first token goes to the hedge, which breaks the same way.
-    await fake.reached("posting", 2);
+    // A self-host chat route is unhedged (Workers AI), so the drop is the step's one attempt.
     fake.drop("posting");
     expect(await sending).toMatchObject({ status: "failed" });
     expect(log).toEqual([]);

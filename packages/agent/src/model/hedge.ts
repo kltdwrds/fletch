@@ -157,7 +157,7 @@ export async function callHedged(
     const body = requestBody(who.route, me.model, parts);
     let res: Response;
     try {
-      res = await abortable(send(deps.ai, me.model, body, me.abort.signal), me.abort.signal);
+      res = await abortable(send(deps.ai, me.model, body, me.abort.signal, deps.models), me.abort.signal);
     } catch (err) {
       return failed("failed", "MODEL_CALL_FAILED", String(err), null);
     }

@@ -1,0 +1,104 @@
+// F1: how a deploy reaches models. A self-host deploy (spec section 2, "Assumed") sends every route to
+// Workers AI over the AI binding with no key and no AI Gateway option; a gateway is used only when the
+// deploy sets `AI_GATEWAY_ID`, and OpenRouter (BYOK through that gateway) only when it also sets
+// `CHAT_PROVIDER = "openrouter"`. Every claim runs the production engine, adapter and Ledger over the
+// scripted fake, with the vars create-fletch's template actually ships.
+import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+import { parseJsonc, TEMPLATE } from "../../packages/create-fletch/src/init.ts";
+import { ChatEngine, type EngineCtx } from "../../packages/agent/src/chat/engine.ts";
+import { admitPolicy, isPriced } from "../../packages/agent/src/ledger/budget.ts";
+import { embed } from "../../packages/agent/src/model/adapter.ts";
+import { type ChatRoute, DEFAULT_TIER, hedgeFor, isOpenRouter, modelConfig, modelFor, ROUTES, routeModel, SELF_HOST_MODELS } from "../../packages/agent/src/model/routes.ts";
+import { Ledger } from "../../packages/agent/src/objects/ledger.ts";
+import { FakeModel } from "../support/fake-model.ts";
+import { harnessNamespace, ObjectHarness } from "../support/object-harness.ts";
+import people from "../fixtures/people.json" with { type: "json" };
+
+const sam = people.people.find((p) => p.id === "sam-solo")!;
+const T0 = Date.UTC(2026, 9, 20, 9, 0, 0);
+
+/** The vars a create-fletch deploy ships, read from the template itself. */
+const TEMPLATE_VARS = (parseJsonc(readFileSync(TEMPLATE, "utf8")) as { vars: Record<string, string> }).vars;
+const SELF_HOST_VARS: Record<string, string> = { ...TEMPLATE_VARS, TENANT_ID: "base", OWNER_EMAIL: sam.email };
+
+/** One chat turn through the production engine and Ledger, on an env with `vars`. */
+async function turn(vars: Record<string, string>) {
+  const fake = new FakeModel([{ text: "Hello." }]);
+  const ledgers = harnessNamespace((name) => new ObjectHarness(name, (ctx, env) => new Ledger(ctx as DurableObjectState, env as Env), { QYVR_ENV: vars.QYVR_ENV }));
+  const env = { ...vars, AI: fake.binding, LEDGER: ledgers.binding };
+  const chat = new ObjectHarness("chat-sam", (ctx, e) => new ChatEngine(ctx as EngineCtx, e as Env), env, (c) => {
+    c.now = () => T0;
+    c.wait = async () => {};
+  });
+  const result = await chat.instance.send({ person: sam.email, text: "Hi" });
+  return { fake, result };
+}
+
+describe("[F1] a self-host deploy's models", () => {
+  it("the template sets no gateway and no chat provider, so its config is Workers AI with no gateway", () => {
+    expect(TEMPLATE_VARS).not.toHaveProperty("AI_GATEWAY_ID");
+    expect(TEMPLATE_VARS).not.toHaveProperty("CHAT_PROVIDER");
+    expect(modelConfig(SELF_HOST_VARS)).toEqual(SELF_HOST_MODELS);
+    expect(SELF_HOST_MODELS).toEqual({ gatewayId: null, chatProvider: "workers-ai" });
+  });
+
+  it("no route names an OpenRouter model and none hedges", () => {
+    for (const route of Object.keys(ROUTES) as ChatRoute[]) {
+      expect(isOpenRouter(routeModel(route, SELF_HOST_MODELS)), route).toBe(false);
+      expect(modelFor(route, SELF_HOST_MODELS).provider, route).toBe("cloudflare-workers-ai");
+      expect(hedgeFor(route, SELF_HOST_MODELS), route).toBeUndefined();
+    }
+  });
+
+  it("a chat turn calls Workers AI's GLM over the binding with no gateway option and no universal request", async () => {
+    const { fake, result } = await turn(SELF_HOST_VARS);
+    expect(result).toMatchObject({ status: "done" });
+    expect(fake.requests).toHaveLength(1);
+    expect(fake.requests[0]?.model).toBe("@cf/zai-org/glm-5.3-flash");
+    expect(fake.requests[0]?.universal).toBeUndefined();
+    expect(fake.requests[0]?.options).not.toHaveProperty("gateway");
+  });
+
+  it("an embedding call carries no gateway option", async () => {
+    const fake = new FakeModel([]);
+    const out = await embed({ ai: fake.binding as unknown as Ai, ledger: { record: async () => {} }, now: () => T0, models: modelConfig(SELF_HOST_VARS) }, { tenant: "base", person: sam.email, runId: "r" }, ["hello"]);
+    expect(out).toMatchObject({ ok: true });
+    expect(fake.embeddingRequests[0]?.options).not.toHaveProperty("gateway");
+  });
+
+  it("every default route's model is priced and in the default tier, so turn one is never refused MODEL_UNPRICED", () => {
+    for (const route of ["chat", "compaction", "job", "subagent", "verifier", "caption"] as const) {
+      const model = routeModel(route, SELF_HOST_MODELS);
+      expect(isPriced(model), `${route}: ${model}`).toBe(true);
+      expect(admitPolicy({ modelTier: DEFAULT_TIER, disabled: [] }, { person: sam.email, runId: "r", model })).toEqual({ ok: true });
+    }
+  });
+});
+
+describe("[F1] a deploy that configures a gateway", () => {
+  it("with AI_GATEWAY_ID set, the chat turn stays on Workers AI and carries that gateway with logs off", async () => {
+    const { fake, result } = await turn({ ...SELF_HOST_VARS, AI_GATEWAY_ID: "my-gateway" });
+    expect(result).toMatchObject({ status: "done" });
+    expect(fake.requests[0]?.model).toBe("@cf/zai-org/glm-5.3-flash");
+    expect(fake.requests[0]?.options.gateway).toEqual({ id: "my-gateway", collectLog: false });
+  });
+
+  it("with AI_GATEWAY_ID and CHAT_PROVIDER=openrouter, chat goes to OpenRouter through that gateway, hedged to Workers AI", async () => {
+    const vars = { ...SELF_HOST_VARS, AI_GATEWAY_ID: "my-gateway", CHAT_PROVIDER: "openrouter" };
+    const { fake, result } = await turn(vars);
+    expect(result).toMatchObject({ status: "done" });
+    expect(fake.requests[0]?.model).toBe("z-ai/glm-5.3-flash");
+    expect(fake.requests[0]?.universal).toMatchObject({ gatewayId: "my-gateway", provider: "openrouter" });
+    expect(hedgeFor("chat", modelConfig(vars))?.model).toBe("@cf/zai-org/glm-5.3-flash");
+    // Every other route stays on Workers AI.
+    expect(routeModel("job", modelConfig(vars))).toBe("@cf/zai-org/glm-5.3-flash");
+  });
+
+  it("CHAT_PROVIDER=openrouter without a gateway keeps chat on Workers AI: OpenRouter's key lives only in a gateway", async () => {
+    expect(modelConfig({ CHAT_PROVIDER: "openrouter" })).toEqual(SELF_HOST_MODELS);
+    const { fake } = await turn({ ...SELF_HOST_VARS, CHAT_PROVIDER: "openrouter" });
+    expect(fake.requests[0]?.model).toBe("@cf/zai-org/glm-5.3-flash");
+    expect(fake.requests[0]?.options).not.toHaveProperty("gateway");
+  });
+});

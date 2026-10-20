@@ -9,7 +9,7 @@ import { fence } from "../context/fence.ts";
 import { dayStart } from "../ledger/budget.ts";
 import type { LedgerSink, RunRow, RunSignal } from "../ledger/types.ts";
 import { createStreamFn } from "../model/adapter.ts";
-import { modelFor } from "../model/routes.ts";
+import { type ModelConfig, modelFor } from "../model/routes.ts";
 
 export const PERSON_LOOPS = ["memory-upkeep", "relationships", "reflection", "skill-review"] as const;
 export const COMPANY_LOOPS = ["company-upkeep", "company-skill-review", "onboarding-study", "cost-report"] as const;
@@ -40,6 +40,8 @@ export interface LoopLedger extends LedgerSink {
 
 export interface LoopModel {
   ai: Ai;
+  /** The deploy's model configuration (`modelConfig(env)`). */
+  models?: ModelConfig;
   ledger: LoopLedger;
   tenant: string;
   wait: (ms: number) => Promise<void>;
@@ -166,7 +168,7 @@ export class LoopRun {
     const spent = await this.m.ledger.loopSpend(this.owner, this.loop, dayStart(this.now()));
     const model = modelFor("job");
     const streamFn = createStreamFn(
-      { ai: this.m.ai, ledger: this.m.ledger, wait: this.m.wait, now: this.now },
+      { ai: this.m.ai, ledger: this.m.ledger, wait: this.m.wait, now: this.now, models: this.m.models },
       { tenant: this.m.tenant, person: this.owner, runId: this.runId, route: "job", ceiling: this.setting.budget - spent },
     );
     const context = normalizeContext({

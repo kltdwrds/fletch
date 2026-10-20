@@ -5,12 +5,14 @@
 import { normalizeContext } from "@earendil-works/pi-ai";
 import { fence } from "../context/fence.ts";
 import { createStreamFn } from "../model/adapter.ts";
-import { modelFor } from "../model/routes.ts";
+import { type ModelConfig, modelFor } from "../model/routes.ts";
 import type { LedgerSink } from "../ledger/types.ts";
 import type { Verdict } from "./store.ts";
 
 export interface VerifyDeps {
   ai: Ai;
+  /** The deploy's model configuration (`modelConfig(env)`). */
+  models?: ModelConfig;
   ledger: LedgerSink;
   tenant: string;
   now: () => number;
@@ -48,7 +50,7 @@ export function parseVerdict(raw: string): { verdict: "pass" | "fail"; reason: s
 
 export async function verifyHandoff(deps: VerifyDeps, who: { person: string; subagent: string }, brief: string, handoff: string): Promise<VerifyResult> {
   const model = modelFor("verifier");
-  const streamFn = createStreamFn({ ai: deps.ai, ledger: deps.ledger, wait: deps.wait, now: deps.now }, { tenant: deps.tenant, person: who.person, runId: `verifier:${who.subagent}`, route: "verifier" });
+  const streamFn = createStreamFn({ ai: deps.ai, ledger: deps.ledger, wait: deps.wait, now: deps.now, models: deps.models }, { tenant: deps.tenant, person: who.person, runId: `verifier:${who.subagent}`, route: "verifier" });
   const at = deps.now();
   const context = normalizeContext({
     messages: [

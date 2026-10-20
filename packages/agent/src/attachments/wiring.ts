@@ -6,7 +6,7 @@ import { getAgentByName } from "agents";
 import type { AttachmentDirectory } from "../http/attachment-routes.ts";
 import { describeForModel, ingestAttachment } from "../files/ingest.ts";
 import { captionImage } from "../model/caption.ts";
-import { acceptsImages } from "../model/routes.ts";
+import { acceptsImages, modelConfig } from "../model/routes.ts";
 import { treeOf } from "../tree/rpc.ts";
 import type { ImageConverter } from "./caps.ts";
 import { imagesConverter } from "./images.ts";
@@ -28,7 +28,7 @@ export function appAttachments(env: Env): AttachmentDirectory {
 
 export function attachmentDeps(env: Env, storage: DurableObjectStorage, person: string): AttachmentDeps {
   const ledger = env.LEDGER.get(env.LEDGER.idFromName(env.TENANT_ID)) as never;
-  const model = { ai: env.AI, ledger, now: () => Date.now(), wait: (ms: number) => new Promise<void>((r) => setTimeout(r, ms)) };
+  const model = { ai: env.AI, models: modelConfig(env), ledger, now: () => Date.now(), wait: (ms: number) => new Promise<void>((r) => setTimeout(r, ms)) };
   return {
     person,
     bucket: env.AGENT_BUCKET as unknown as AttachmentBucket,
@@ -39,7 +39,7 @@ export function attachmentDeps(env: Env, storage: DurableObjectStorage, person: 
           // The host's renderer (`hostOf(env).render`): a host without one refuses docx, odt, epub and rtf with its code.
           renderer: { toMarkdown: async (i) => { const render = hostOf(env).render; return available(render) ? ((await render.toMarkdown(i)) as MarkdownResult) : render; } },
           caption: (image) => captionImage(model, { tenant: env.TENANT_ID, person: image.owner, attachmentId: image.attachmentId }, { bytes: image.bytes, mimeType: image.mimeType }),
-          imageInput: acceptsImages("chat"),
+          imageInput: acceptsImages("chat", modelConfig(env)),
         },
         input,
       ),

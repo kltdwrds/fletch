@@ -9,7 +9,7 @@ import type { LedgerSink } from "../ledger/types.ts";
 import { oneLine } from "../memory/home.ts";
 import { MAX_LINE_CHARS, type PersonMemory } from "../memory/store.ts";
 import { createStreamFn } from "../model/adapter.ts";
-import { modelFor } from "../model/routes.ts";
+import { type ModelConfig, modelFor } from "../model/routes.ts";
 import { forbiddenContent } from "../learning/referee.ts";
 import type { Actor } from "../learning/ladder.ts";
 import { parseBundle, ROWS_PATH } from "./bundle.ts";
@@ -29,6 +29,8 @@ export interface ImportPlan {
 }
 export interface ImportDeps {
   ai: Ai;
+  /** The deploy's model configuration (`modelConfig(env)`). */
+  models?: ModelConfig;
   ledger: LedgerSink;
   tenant: string;
   now: () => number;
@@ -55,7 +57,7 @@ function fromBundle(markdown: string): ImportItem[] | null {
 
 async function extract(deps: ImportDeps, person: string, id: string, summary: string): Promise<ImportItem[] | Refusal> {
   const model = modelFor("verifier");
-  const streamFn = createStreamFn({ ai: deps.ai, ledger: deps.ledger, wait: deps.wait, now: deps.now }, { tenant: deps.tenant, person, runId: `import:${id}`, route: "verifier" });
+  const streamFn = createStreamFn({ ai: deps.ai, ledger: deps.ledger, wait: deps.wait, now: deps.now, models: deps.models }, { tenant: deps.tenant, person, runId: `import:${id}`, route: "verifier" });
   const context = normalizeContext({
     messages: [
       { role: "system", content: EXTRACT_INSTRUCTIONS, timestamp: 0 },

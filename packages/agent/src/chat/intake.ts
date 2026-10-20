@@ -4,7 +4,7 @@
 // keeps nothing; a row that waited in the mailbox is never refused silently: its turn opens and fails
 // with the code, so the person sees what happened to it.
 import type { LedgerSink } from "../ledger/types.ts";
-import { modelFor } from "../model/routes.ts";
+import { type ModelConfig, modelFor } from "../model/routes.ts";
 import type { StandingCopy } from "../memory/standing.ts";
 import { extractUrls, UrlTable, URLS_KEY } from "../browse/urls.ts";
 import { admitTurn } from "./admission.ts";
@@ -20,6 +20,8 @@ export interface IntakeDeps {
   ledger: LedgerSink;
   tenant: string;
   now: () => number;
+  /** The deploy's model configuration: the chat route's model the turn is admitted for. */
+  models?: ModelConfig;
 }
 
 export type Opened = { kind: "refused"; code: "MEMORY_UNAVAILABLE" } | { kind: "started"; turnId: string; at: number; failed?: { code: string; reason: string } };
@@ -27,7 +29,7 @@ export type Opened = { kind: "refused"; code: "MEMORY_UNAVAILABLE" } | { kind: "
 export async function openTurn(d: IntakeDeps, row: MailRow, queued: boolean): Promise<Opened> {
   const turnId = crypto.randomUUID();
   const person = row.person;
-  const admitted = await admitTurn(d.ledger, { tenant: d.tenant, person, turnId, model: modelFor("chat").id }, d.now);
+  const admitted = await admitTurn(d.ledger, { tenant: d.tenant, person, turnId, model: modelFor("chat", d.models).id }, d.now);
   let standing: StandingCopy[] | undefined;
   let failed = admitted.ok ? undefined : { code: admitted.code, reason: admitted.reason };
   if (admitted.ok && d.hooks.memory) {

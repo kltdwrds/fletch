@@ -8,6 +8,7 @@ import { personMemory } from "../memory/rpc.ts";
 import { runSubAgent, type SubAgentInput, type SubAgentResult } from "../subagents/run.ts";
 import { subAgentReads } from "../subagents/namespaces.ts";
 import { migrateObject, probeObject } from "../migrations/catalog.ts";
+import { modelConfig } from "../model/routes.ts";
 
 export class SubAgent extends DurableObject<Env> {
   private readonly schema = migrateObject(this.ctx, "subagent");
@@ -20,6 +21,7 @@ export class SubAgent extends DurableObject<Env> {
     const vault = env.VAULT.get(env.VAULT.idFromName(env.TENANT_ID)) as unknown as VaultEgress;
     return runSubAgent(this.ctx.storage, {
       ai: env.AI,
+      models: modelConfig(env),
       ledger: env.LEDGER.get(env.LEDGER.idFromName(env.TENANT_ID)),
       tenant: env.TENANT_ID,
       namespaces: (person) => subAgentReads({ person, memory: personMemory(env, person), egress: egressFor(vault, person), source: `subagent:${input.id}` }),

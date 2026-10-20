@@ -8,10 +8,12 @@ import { normalizeContext } from "@earendil-works/pi-ai";
 import { fence } from "../context/fence.ts";
 import type { LedgerSink } from "../ledger/types.ts";
 import { createStreamFn } from "../model/adapter.ts";
-import { modelFor } from "../model/routes.ts";
+import { type ModelConfig, modelFor } from "../model/routes.ts";
 
 export interface RefereeDeps {
   ai: Ai;
+  /** The deploy's model configuration (`modelConfig(env)`). */
+  models?: ModelConfig;
   ledger: LedgerSink;
   tenant: string;
   now: () => number;
@@ -78,7 +80,7 @@ export async function referee(deps: RefereeDeps, input: RefereeInput): Promise<R
   const found = forbiddenContent(input.proposal);
   if (found) return { verdict: "reject", code: "PROMOTION_SENSITIVE", reason: `the artifact holds ${found}`, tokens: 0 };
   const model = modelFor("verifier");
-  const streamFn = createStreamFn({ ai: deps.ai, ledger: deps.ledger, wait: deps.wait, now: deps.now }, { tenant: deps.tenant, person: input.person, runId: `referee:${input.id}`, route: "verifier" });
+  const streamFn = createStreamFn({ ai: deps.ai, ledger: deps.ledger, wait: deps.wait, now: deps.now, models: deps.models }, { tenant: deps.tenant, person: input.person, runId: `referee:${input.id}`, route: "verifier" });
   const context = normalizeContext({
     messages: [
       { role: "system", content: REFEREE_INSTRUCTIONS, timestamp: 0 },

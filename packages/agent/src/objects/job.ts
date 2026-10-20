@@ -13,6 +13,7 @@ import { personMemory } from "../memory/rpc.ts";
 import { deliveredNotices } from "../jobs/notices.ts";
 import type { LedgerSink, RunRow } from "../ledger/types.ts";
 import { migrateObject, probeObject } from "../migrations/catalog.ts";
+import { modelConfig } from "../model/routes.ts";
 
 /** The object name for a person's job. */
 export const jobName = (owner: string, id: string) => `${owner.trim().toLowerCase()}/${id}`;
@@ -48,7 +49,7 @@ export class Job extends DurableObject<Env> {
         const egress = egressFor(vault, owner);
         return jobToolSpecs({ owner, jobId, get: (url, headers) => egress({ url, method: "GET", headers }, `job:${jobId}`), memory: personMemory(env, owner), egress, bucket: env.AGENT_BUCKET });
       },
-      complete: (a) => completeForJob({ ai: env.AI, ledger, tenant: env.TENANT_ID, now: () => Date.now(), wait: (ms) => new Promise((r) => setTimeout(r, ms)) }, a),
+      complete: (a) => completeForJob({ ai: env.AI, models: modelConfig(env), ledger, tenant: env.TENANT_ID, now: () => Date.now(), wait: (ms) => new Promise((r) => setTimeout(r, ms)) }, a),
       // Through the owner's delivery (M14.1): into this chat at once, pushed or mailed when no client is open.
       chat: (chatId) =>
         deliveredNotices(chatId, {

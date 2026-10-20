@@ -11,7 +11,7 @@ import { PLATFORM_INSTRUCTIONS } from "../chat/instructions.ts";
 import { scrubSurrogates, scrubValue } from "../egress/surrogate.ts";
 import type { LedgerSink } from "../ledger/types.ts";
 import { createStreamFn } from "../model/adapter.ts";
-import { modelFor } from "../model/routes.ts";
+import { type ModelConfig, modelFor } from "../model/routes.ts";
 import type { ToolSpec } from "../tools/registry.ts";
 import { readOnlyForJob, TERMINAL_SPECS, TERMINAL_TOOLS } from "./job-tools.ts";
 import { type CallRecord, certifySilence, type SilenceClaim } from "./silence.ts";
@@ -44,6 +44,8 @@ export interface JobModelInput {
 
 export interface JobModelDeps {
   ai: Ai;
+  /** The deploy's model configuration (`modelConfig(env)`). */
+  models?: ModelConfig;
   ledger: LedgerSink;
   tenant: string;
   now: () => number;
@@ -121,7 +123,7 @@ export async function jobLoop(call: (messages: Message[]) => Promise<AssistantMe
 export async function completeForJob(deps: JobModelDeps, a: JobModelInput): Promise<JobModelResult> {
   const model = modelFor("job");
   const streamFn = createStreamFn(
-    { ai: deps.ai, ledger: deps.ledger, now: deps.now, wait: deps.wait },
+    { ai: deps.ai, ledger: deps.ledger, now: deps.now, wait: deps.wait, models: deps.models },
     { tenant: deps.tenant, person: a.person, runId: a.runId, route: "job", ceiling: a.ceiling },
   );
   const offered = (a.tools ?? []).filter(readOnlyForJob);

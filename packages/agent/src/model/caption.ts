@@ -19,13 +19,13 @@ const INSTRUCTIONS =
 export type CaptionResult = { ok: true; text: string } | { ok: false; code: string; reason: string };
 
 export async function captionImage(
-  deps: Pick<AdapterDeps, "ai" | "ledger" | "wait" | "now">,
+  deps: Pick<AdapterDeps, "ai" | "ledger" | "wait" | "now" | "models">,
   who: { tenant: string; person: string; attachmentId: string },
   image: { bytes: Uint8Array; mimeType: string },
 ): Promise<CaptionResult> {
   if (image.bytes.byteLength > CAPTION_MAX_BYTES) return { ok: false, code: "CAPTION_TOO_LARGE", reason: `the image is ${image.bytes.byteLength} bytes; at most ${CAPTION_MAX_BYTES} are captioned` };
   const model = modelFor("caption");
-  const streamFn = createStreamFn({ ai: deps.ai, ledger: deps.ledger, wait: deps.wait, now: deps.now }, { tenant: who.tenant, person: who.person, runId: `caption:${who.attachmentId}`, route: "caption", ceiling: CAPTION_CEILING });
+  const streamFn = createStreamFn({ ai: deps.ai, ledger: deps.ledger, wait: deps.wait, now: deps.now, models: deps.models }, { tenant: who.tenant, person: who.person, runId: `caption:${who.attachmentId}`, route: "caption", ceiling: CAPTION_CEILING });
   let data = "";
   for (let i = 0; i < image.bytes.length; i += 0x8000) data += String.fromCharCode(...image.bytes.subarray(i, i + 0x8000));
   const context = normalizeContext({

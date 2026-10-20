@@ -15,7 +15,7 @@ import type { Actor, Proposal } from "../learning/ladder.ts";
 import { slugify } from "../memory/home.ts";
 import type { PersonMemory } from "../memory/store.ts";
 import { createStreamFn } from "../model/adapter.ts";
-import { modelFor } from "../model/routes.ts";
+import { type ModelConfig, modelFor } from "../model/routes.ts";
 import type { HostFailure } from "@qyvr/host";
 import { available } from "../host.ts";
 import { type ExportOptions, exportPersonal, purgePersonal } from "./bundle.ts";
@@ -73,7 +73,7 @@ export interface OffboardingDeps {
   pending: ConversionState;
   /** The person's display name, for the standalone tenant's member list. */
   name?: string;
-  model: { ai: Ai; ledger: LedgerSink; tenant: string; now: () => number; wait: (ms: number) => Promise<void> };
+  model: { ai: Ai; models?: ModelConfig; ledger: LedgerSink; tenant: string; now: () => number; wait: (ms: number) => Promise<void> };
 }
 
 export const HANDOVER_INSTRUCTIONS = [
@@ -99,7 +99,7 @@ export async function startOffboarding(deps: OffboardingDeps, actor: Actor) {
   // Only what the person learned alone goes into the draft: a shared-setting line is not theirs to hand on.
   const notes = recent.filter((r) => !r.audience).reverse().map((r) => `${r.date}: ${r.text}`).join("\n");
   const model = modelFor("verifier");
-  const streamFn = createStreamFn({ ai: deps.model.ai, ledger: deps.model.ledger, wait: deps.model.wait, now: deps.model.now }, { tenant: deps.model.tenant, person, runId: `handover:${person}`, route: "verifier" });
+  const streamFn = createStreamFn({ ai: deps.model.ai, ledger: deps.model.ledger, wait: deps.model.wait, now: deps.model.now, models: deps.model.models }, { tenant: deps.model.tenant, person, runId: `handover:${person}`, route: "verifier" });
   const context = normalizeContext({
     messages: [
       { role: "system", content: HANDOVER_INSTRUCTIONS, timestamp: 0 },

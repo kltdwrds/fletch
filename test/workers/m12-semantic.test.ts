@@ -153,7 +153,8 @@ describe("[M12.2] semantic search", () => {
     // The failed sync's batch, the sync's, and the tool's and the raw search's phrasings; the company
     // store is empty, so it embeds nothing.
     expect(w.fake.embeddingRequests.map((r) => r.texts.length)).toEqual([2, 2, 2, 2]);
-    for (const r of w.fake.embeddingRequests) expect(r.options).toMatchObject({ gateway: { id: "qyvr", collectLog: false } });
+    // A self-host deploy configures no AI Gateway, so the embedding call carries no gateway option.
+    for (const r of w.fake.embeddingRequests) expect(r.options.gateway).toBeUndefined();
     const rows = (await w.ledger().modelCalls({ person: ada.email })).filter((r) => r.route === "embedding");
     expect(rows.map((r) => [r.model, r.status])).toEqual(Array.from({ length: 4 }, () => ["@cf/baai/bge-base-en-v1.5", "ok"]));
     expect(rows.every((r) => r.inputTokens > 0 && r.runId.startsWith("memory-index:"))).toBe(true);

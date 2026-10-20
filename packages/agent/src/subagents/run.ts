@@ -12,7 +12,7 @@ import { PLATFORM_INSTRUCTIONS } from "../chat/instructions.ts";
 import { EffectBuffer } from "../chat/tools.ts";
 import { MAX_STEPS_PER_TURN, runTurnLoop } from "../chat/turn.ts";
 import { createStreamFn } from "../model/adapter.ts";
-import { modelFor } from "../model/routes.ts";
+import { type ModelConfig, modelFor } from "../model/routes.ts";
 import type { LedgerSink } from "../ledger/types.ts";
 import { toolReference } from "../tools/reference.ts";
 import { type Gate, type Namespace, ToolRegistry, ToolSession, type ToolSpec } from "../tools/registry.ts";
@@ -44,6 +44,8 @@ export type SubAgentResult =
 
 export interface SubAgentDeps {
   ai: Ai;
+  /** The deploy's model configuration (`modelConfig(env)`). */
+  models?: ModelConfig;
   ledger: LedgerSink;
   tenant: string;
   /** The person's read tools for a sub-agent; anything but a plain observation is refused anyway. */
@@ -117,7 +119,7 @@ export async function runSubAgent(storage: Pick<DurableObjectStorage, "sql" | "t
   let last = "";
   const calls = new Set<string>();
   let stalled = 0;
-  const streamFn = createStreamFn({ ai: deps.ai, ledger: deps.ledger, wait: deps.wait, now: deps.now }, { tenant: deps.tenant, person: input.person, runId: `subagent:${input.id}`, route: "subagent" });
+  const streamFn = createStreamFn({ ai: deps.ai, ledger: deps.ledger, wait: deps.wait, now: deps.now, models: deps.models }, { tenant: deps.tenant, person: input.person, runId: `subagent:${input.id}`, route: "subagent" });
   const outcome = await runTurnLoop({
     turnId: input.id,
     model,

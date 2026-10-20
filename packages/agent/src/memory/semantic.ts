@@ -10,6 +10,7 @@
 // returns the keyword half and says so, never as a complete answer.
 import type { LedgerSink } from "../ledger/types.ts";
 import { embed } from "../model/adapter.ts";
+import type { ModelConfig } from "../model/routes.ts";
 import { sha256Hex } from "./home.ts";
 import type { Refusal } from "./store.ts";
 
@@ -182,12 +183,12 @@ export function enqueueVector(sql: SqlStorage, rowId: number, op: "upsert" | "de
  * model adapter under the store's name in the Ledger, and the store's own SQLite. No index bound, no
  * leg: search is keyword only.
  */
-export function legFor(d: { index: unknown; ai: Ai; ledger: LedgerSink; tenant: string; store: string; sql: () => SqlStorage; now: () => number }): SemanticLeg | undefined {
+export function legFor(d: { index: unknown; ai: Ai; models?: ModelConfig; ledger: LedgerSink; tenant: string; store: string; sql: () => SqlStorage; now: () => number }): SemanticLeg | undefined {
   if (!d.index) return undefined;
   return new SemanticLeg({
     sql: d.sql,
     index: d.index as VectorIndex,
-    embed: (texts) => embed({ ai: d.ai, ledger: d.ledger, now: d.now }, { tenant: d.tenant, person: d.store, runId: `memory-index:${crypto.randomUUID()}` }, texts),
+    embed: (texts) => embed({ ai: d.ai, ledger: d.ledger, now: d.now, models: d.models }, { tenant: d.tenant, person: d.store, runId: `memory-index:${crypto.randomUUID()}` }, texts),
     store: d.store,
   });
 }

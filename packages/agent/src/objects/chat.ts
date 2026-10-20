@@ -33,6 +33,7 @@ import { SubAgentStore } from "../subagents/store.ts";
 import { verifyHandoff } from "../subagents/verifier.ts";
 import { migrateObject, probeObject } from "../migrations/catalog.ts";
 import { available, hostOf } from "../host.ts";
+import { modelConfig } from "../model/routes.ts";
 
 type ConnectionState = { person: string };
 
@@ -52,7 +53,7 @@ export class Chat extends Agent<Env> {
    * runs no Queue consumer (DECISIONS-LOG M7.2).
    */
   private get subagents(): SubAgentHost {
-    const deps = { ai: this.env.AI, ledger: this.env.LEDGER.get(this.env.LEDGER.idFromName(this.env.TENANT_ID)), tenant: this.env.TENANT_ID, now: () => Date.now(), wait: (ms: number) => new Promise<void>((r) => setTimeout(r, ms)) };
+    const deps = { ai: this.env.AI, models: modelConfig(this.env), ledger: this.env.LEDGER.get(this.env.LEDGER.idFromName(this.env.TENANT_ID)), tenant: this.env.TENANT_ID, now: () => Date.now(), wait: (ms: number) => new Promise<void>((r) => setTimeout(r, ms)) };
     this.hostInstance ??= new SubAgentHost({
       store: new SubAgentStore(this.ctx.storage),
       transport: {

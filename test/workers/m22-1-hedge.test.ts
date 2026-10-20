@@ -16,7 +16,7 @@ import { type Directory, route } from "../../packages/agent/src/http/routes.ts";
 import type { Admission, LedgerSink, ModelCallRow } from "../../packages/agent/src/ledger/types.ts";
 import { createStreamFn } from "../../packages/agent/src/model/adapter.ts";
 import { HEDGE_LOST } from "../../packages/agent/src/model/hedge.ts";
-import { CALL_BOUNDS, GLM_OPENROUTER, GLM_WORKERS_AI, HEDGES, MODEL_TIERS, modelFor, OPENROUTER_PROVIDER } from "../../packages/agent/src/model/routes.ts";
+import { CALL_BOUNDS, GLM_OPENROUTER, GLM_WORKERS_AI, HEDGES, MODEL_TIERS, modelConfig, modelFor, OPENROUTER_PROVIDER } from "../../packages/agent/src/model/routes.ts";
 import { Ledger } from "../../packages/agent/src/objects/ledger.ts";
 import { FAKE_OPENROUTER_HOST, FakeModel, type FakeRequest, type FakeStep } from "../support/fake-model.ts";
 import { harnessNamespace, ObjectHarness } from "../support/object-harness.ts";
@@ -26,6 +26,9 @@ const T0 = Date.UTC(2026, 9, 15, 23, 0, 0);
 const HEDGE = HEDGES.chat as { model: string; delayMs: number };
 const BOUNDS = CALL_BOUNDS.chat as { firstTokenMs: number; totalMs: number };
 const ROOT = join(import.meta.dirname, "../..");
+/** A deploy configured as qyvr-co's (gateway `qyvr`, chat on OpenRouter): the only one that hedges. */
+const VARS = { AI_GATEWAY_ID: "qyvr", CHAT_PROVIDER: "openrouter" };
+const MODELS = modelConfig(VARS);
 
 /** Timers the test fires; a cancelled one never fires. */
 function clock() {
@@ -67,8 +70,8 @@ async function call(script: FakeStep[], person = ada.email) {
       return { ok: true };
     },
   };
-  const streamFn = createStreamFn({ ai: fake.binding as unknown as Ai, ledger, wait: async () => {}, now: () => T0, schedule: bounds.schedule }, { tenant: ada.company, person, runId: `run-${person}`, route: "chat" });
-  const stream = await streamFn(modelFor("chat"), normalizeContext({ messages: [{ role: "user", content: "hello", timestamp: T0 }] }), {});
+  const streamFn = createStreamFn({ ai: fake.binding as unknown as Ai, ledger, wait: async () => {}, now: () => T0, schedule: bounds.schedule, models: MODELS }, { tenant: ada.company, person, runId: `run-${person}`, route: "chat" });
+  const stream = await streamFn(modelFor("chat", MODELS), normalizeContext({ messages: [{ role: "user", content: "hello", timestamp: T0 }] }), {});
   const events: AssistantMessageEvent[] = [];
   const result = (async (): Promise<AssistantMessage> => {
     for await (const e of stream) events.push(e);
@@ -269,8 +272,8 @@ describe("[M22.1] two Ledger rows and one budget admission", () => {
         return { ok: false, code: "BUDGET_PERSON_EXHAUSTED", reason: "spent" };
       },
     };
-    const streamFn = createStreamFn({ ai: fake.binding as unknown as Ai, ledger, wait: async () => {}, now: () => T0, schedule: clock().schedule }, { tenant: ada.company, person: ada.email, runId: "r", route: "chat" });
-    const message = await (await streamFn(modelFor("chat"), normalizeContext({ messages: [{ role: "user", content: "hi", timestamp: T0 }] }), {})).result();
+    const streamFn = createStreamFn({ ai: fake.binding as unknown as Ai, ledger, wait: async () => {}, now: () => T0, schedule: clock().schedule, models: MODELS }, { tenant: ada.company, person: ada.email, runId: "r", route: "chat" });
+    const message = await (await streamFn(modelFor("chat", MODELS), normalizeContext({ messages: [{ role: "user", content: "hi", timestamp: T0 }] }), {})).result();
     expect(message.errorMessage).toMatch(/^BUDGET_PERSON_EXHAUSTED: /);
     expect(asked).toBe(1);
     expect(fake.requests).toHaveLength(0);
@@ -374,7 +377,7 @@ function world(script: FakeStep[]) {
   const ledgers = harnessNamespace((name) => new ObjectHarness(name, (ctx, env) => new Ledger(ctx as DurableObjectState, env as Env), {}, (l) => {
     l.now = () => T0;
   }));
-  const env = { TENANT_ID: ada.company, QYVR_ENV: "test", AI: fake.binding, LEDGER: ledgers.binding };
+  const env = { TENANT_ID: ada.company, QYVR_ENV: "test", ...VARS, AI: fake.binding, LEDGER: ledgers.binding };
   const conns: Array<{ state: { person: string }; frames: Array<Record<string, unknown>>; send(d: string): void }> = [];
   const chatOf = (name: string, owner: string) => {
     const h: ObjectHarness<ChatEngine> = new ObjectHarness(name, (ctx, e) => new ChatEngine(ctx as EngineCtx, e as Env, { sockets: () => ownerOnly(conns, h.instance.owner()) }), env, (c) => {

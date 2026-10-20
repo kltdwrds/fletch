@@ -11,4 +11,8 @@ interface Env {
   LOADER?: WorkerLoader;
   /** Cloudflare Images (M24.4): HEIC to JPEG. */
   IMAGES?: ImagesBinding;
+  /** An AI Gateway id: every model call goes through it. Unset on a self-host deploy, so no gateway option is sent (`model/routes.ts`). */
+  AI_GATEWAY_ID?: string;
+  /** `openrouter` puts the chat route on OpenRouter through `AI_GATEWAY_ID`'s stored BYOK key; anything else, or no gateway, keeps Workers AI. */
+  CHAT_PROVIDER?: string;
 }

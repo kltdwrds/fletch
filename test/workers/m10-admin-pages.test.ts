@@ -4,7 +4,7 @@
 // whose credentials the real Vault resolves only under a company grant, and company skills written by
 // admins alone and read by every member's catalog.
 import { describe, expect, it } from "vitest";
-import { HEDGES, MODEL_TIERS, ROUTES } from "../../packages/agent/src/model/routes.ts";
+import { GLM_OPENROUTER, HEDGES, MODEL_TIERS, ROUTES } from "../../packages/agent/src/model/routes.ts";
 import { VaultCore } from "../../packages/agent/src/vault/core.ts";
 import { ObjectHarness } from "../support/object-harness.ts";
 import { ada, authorityWorld } from "./support/authority-world.ts";
@@ -21,9 +21,12 @@ describe("[M10.2] admin pages", () => {
     expect(set.body).toMatchObject({ settings: { budgets: { personDailyMicros: 40_000, tenantDailyMicros: 20_000_000 }, budgetsSet: { personDailyMicros: 40_000 }, modelTier: "economy" } });
     expect(w.ledger().budgets()).toEqual({ personDailyMicros: 40_000, tenantDailyMicros: 20_000_000 });
     expect(w.ledger().budgetsSet()).toEqual({ personDailyMicros: 40_000 });
-    // The economy tier admits D1's default model, on both of the chat route's hosts (M22.1), and refuses the smoke route's, before the call.
-    expect(MODEL_TIERS.economy).toEqual([ROUTES.chat, HEDGES.chat?.model]);
+    // The economy tier admits D1's default model, on both hosts the chat route may use (Workers AI by default,
+    // OpenRouter when a deploy configures it, M22.1), and refuses the smoke route's, before the call.
+    expect(MODEL_TIERS.economy).toEqual([GLM_OPENROUTER, ROUTES.chat]);
+    expect(ROUTES.chat).toBe(HEDGES.chat?.model);
     expect(await w.ledger().admit({ person: ada.email, runId: "r1", model: ROUTES.chat })).toEqual({ ok: true });
+    expect(await w.ledger().admit({ person: ada.email, runId: "r1", model: GLM_OPENROUTER })).toEqual({ ok: true });
     expect(await w.ledger().admit({ person: ada.email, runId: "r1", model: HEDGES.chat?.model })).toEqual({ ok: true });
     expect(await w.ledger().admit({ person: ada.email, runId: "r1", model: ROUTES.smoke })).toMatchObject({ ok: false, code: "MODEL_TIER_REFUSED" });
     // The standard tier admits the smoke route's model, which has no price, so the dollar caps refuse it (M28.1).
