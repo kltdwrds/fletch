@@ -111,6 +111,22 @@ describe("[F1] create-fletch init", () => {
     expect(s.wrangler.runs[0]).toMatchObject({ configPath: join(s.cwd, "wrangler.jsonc"), env: { CLOUDFLARE_API_TOKEN: "test-token", CLOUDFLARE_ACCOUNT_ID: ACCOUNT } });
   });
 
+  it("refuses INIT_OWNER_CHANGE when the deploy's config names another owner, before any call, and keeps the file", async () => {
+    const s = setup();
+    expect(await s.run()).toEqual({ ok: true, url: URL_ });
+    const written = readFileSync(join(s.cwd, "wrangler.jsonc"), "utf8");
+    const calls = s.cf.writes().length;
+    const other = await init({ accountId: ACCOUNT, token: "test-token", name: "sam", ownerEmail: `pat@${"solo-sam"}.example`, paid: false, cwd: s.cwd }, { fetch: s.cf.fetch, deploy: s.wrangler.deploy, log: () => {} });
+    expect(other).toMatchObject({ ok: false, code: "INIT_OWNER_CHANGE" });
+    expect(other.ok === false && other.reason).toContain("--owner-email sam@solo-sam.example");
+    expect(readFileSync(join(s.cwd, "wrangler.jsonc"), "utf8")).toBe(written);
+    expect(s.cf.writes()).toHaveLength(calls);
+    expect(s.wrangler.runs).toHaveLength(1);
+    // The same owner in other case and spacing is the same owner.
+    const same = await init({ accountId: ACCOUNT, token: "test-token", name: "sam", ownerEmail: " SAM@solo-sam.example ", paid: false, cwd: s.cwd }, { fetch: s.cf.fetch, deploy: s.wrangler.deploy, log: () => {} });
+    expect(same).toEqual({ ok: true, url: URL_ });
+  });
+
   it("--paid adds the Worker Loader and Images bindings", async () => {
     const s = setup(fakeAccount(), { paid: true });
     await s.run();

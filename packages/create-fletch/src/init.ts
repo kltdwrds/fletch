@@ -107,6 +107,20 @@ const scopeReason = (scope: string, accountId: string) => `the API token can rea
 
 const refuse = (code: string, reason: string): InitResult => ({ ok: false, code, reason });
 
+/** An address as the agent compares it (`normalizeEmail` in @qyvr/host-cloudflare): trimmed and lower-cased. */
+const sameAddress = (email: string) => email.trim().toLowerCase();
+
+/** The OWNER_EMAIL a create-fletch config at `configPath` names, or null when there is none to read. */
+function existingOwner(configPath: string): string | null {
+  if (!existsSync(configPath)) return null;
+  try {
+    const owner = (parseJsonc(readFileSync(configPath, "utf8")) as { vars?: { OWNER_EMAIL?: unknown } }).vars?.OWNER_EMAIL;
+    return typeof owner === "string" && owner.trim() ? sameAddress(owner) : null;
+  } catch {
+    return null;
+  }
+}
+
 function validate(opts: InitOptions): InitResult | null {
   if (!NAME.test(opts.name ?? "")) return refuse("NAME_INVALID", `the name "${opts.name ?? ""}" must be 2 to 31 characters of a-z, 0-9 and -, starting with a letter`);
   if (!EMAIL.test(opts.ownerEmail ?? "")) return refuse("OWNER_EMAIL_INVALID", opts.ownerEmail ? `"${opts.ownerEmail}" is not an email address` : "the owner's email address is required: it names the one account that can sign in");
@@ -127,6 +141,13 @@ export async function init(input: InitOptions, deps: InitDeps = {}): Promise<Ini
   const configPath = join(opts.cwd, "wrangler.jsonc");
   if (existsSync(configPath) && !readFileSync(configPath, "utf8").startsWith(CONFIG_HEADER.split("\n")[0] as string)) {
     return refuse("INIT_CONFIG_EXISTS", `${configPath} exists and was not written by create-fletch; move it aside or run in another directory (--dir) so it is not overwritten`);
+  }
+  const owner = existingOwner(configPath);
+  if (owner && owner !== sameAddress(opts.ownerEmail)) {
+    return refuse(
+      "INIT_OWNER_CHANGE",
+      `${configPath} is the deploy of ${owner}; its passkeys, sessions and recovery code belong to that address, so another owner would be locked out of it. Run again with --owner-email ${owner}, or set up a new deploy for ${opts.ownerEmail} with another --name and --dir`,
+    );
   }
   // The scope probes prove read access only. Creating a bucket or an index, and the deploy, can still be
   // refused with 403 for a token that holds "Read" without "Edit"; that is mapped to the scope of the step.
