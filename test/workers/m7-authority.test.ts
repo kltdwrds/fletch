@@ -1,5 +1,6 @@
 
 import { describe, expect, it } from "vitest";
+import { verifyJournal } from "../../packages/agent/src/grants/verify.ts";
 import { ada, authorityWorld, } from "./support/authority-world.ts";
 
 const own = (subject: string, mode = "auto") => ({ grantee: { kind: "own-agent" }, subject: { kind: "action-kind", ref: subject }, mode });
@@ -20,6 +21,18 @@ describe("[M7.1] approvals: only the principal decides", () => {
     await w.say(ada.email, "Buy another.", chatId);
     expect(w.performed).toHaveLength(1);
     expect(w.cardsOf(ada.email).filter((c) => c.state === "pending")).toHaveLength(1);
+  });
+
+  it("a declined proposal is final: proposed again, it is refused without a new card", async () => {
+    const send = { toolCall: { name: "mail_send", arguments: {  } } };
+    const w = authorityWorld({ script: [send, send, { text: "I won't." }] });
+    const { chatId } = await w.say(ada.email, "Send it.");
+    const [card] = w.cardsOf(ada.email);
+    await w.http(ada.email, "POST", `/chats/${chatId}/cards/decide`, { ids: [card?.id], choice: "deny" });
+    await w.say(ada.email, "Keep going.", chatId);
+    expect(w.performed).toEqual([]);
+    expect(w.cardsOf(ada.email)).toHaveLength(1);
+    expect((await w.journal()).map((r) => r.outcome)).toEqual(["PENDING", "DECLINED", "DENIED_BEFORE"]);
   });
 });
 
@@ -47,5 +60,38 @@ describe("[M7.1] simulation, the latch and awaitDecision", () => {
     const ids = w.cardsOf(ada.email).map((c) => c.id);
     expect((await w.http(ada.email, "POST", `/chats/${chatId}/cards/decide`, { ids, choice: "once" })).body).toMatchObject({ results: [{ ok: true, outcome: "DONE" }] });
     expect(w.calendar.get(ada.email)?.get("evt-2")).toBe("fri");
+  });
+
+  it("awaitDecision when nothing can be projected: the turn stops at the proposal", async () => {
+    const w = authorityWorld({ script: [{ toolCall: { name: "mail_send", arguments: {  } } }, { text: "unused" }] });
+    const { result } = await w.say(ada.email, "Mail Bo.");
+    expect(result).toMatchObject({ status: "done", awaiting: true });
+    expect(w.fake.remaining).toBe(1);
+    const toolText = w.transcriptOf(ada.email).find((m) => m.includes("AWAITING_DECISION"));
+    expect(toolText).toContain("Sam Solo decides whether this runs");
+  });
+});
+
+describe("[M7.1] the code gate, planted", () => {
+  it("an action whose grant is revoked between the call and the commit does not run", async () => {
+    const w = authorityWorld({ script: [{ toolCall: { name: "mail_send", arguments: {  } } }, { text: "Sent." }] });
+    const g = await w.grant(ada.email, own("mail.send"));
+    w.hooks.beforeCommit = async () => {
+      await w.http(ada.email, "POST", `/api/grants/${g.id}/revoke`);
+    };
+    await w.say(ada.email, "Mail Bo.");
+    expect(w.performed).toEqual([]);
+    expect((await w.journal()).map((r) => [r.decision, r.outcome])).toEqual([["ask", "PENDING"]]);
+  });
+
+  it("with a standing grant the action runs without a card and cites the grant (B9)", async () => {
+    const w = authorityWorld({ script: [{ toolCall: { name: "mail_send", arguments: {  } } }, { text: "Sent." }] });
+    const g = await w.grant(ada.email, own("mail.send"));
+    await w.say(ada.email, "Mail Bo.");
+    expect(w.performed).toHaveLength(1);
+    expect(w.cardsOf(ada.email)).toEqual([]);
+    const rows = await w.journal();
+    expect(rows).toMatchObject([{ decision: "auto", grantId: g.id, outcome: "DONE" }]);
+    expect(verifyJournal(rows, await w.grantsNow(), await w.view())).toEqual([]);
   });
 });

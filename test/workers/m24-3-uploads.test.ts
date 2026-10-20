@@ -29,6 +29,14 @@ describe("[M24.3] uploads go to the person's own content address", () => {
     expect(w.ingested).toEqual([{ owner: ada.email, attachmentId: a.id, name: "orchard.pdf", mime: "application/pdf", size: PDF.byteLength }]);
   });
 
+  it("the person is the session's alone: a form naming another person, a key or a type is ignored", async () => {
+    const w = attachmentWorld();
+    const r = await w.upload(ada.email, "orchard.pdf", PDF, { type: "text/html", fields: { mime: "text/html" } });
+    expect(r.status).toBe(201);
+    expect(r.body.attachment).toMatchObject({ mime: "application/pdf" });
+    expect(w.r2.puts).toEqual([await keyOf(ada.email, PDF)]);
+  });
+
   it("an upload must come from the app's own page: another origin is refused APP_ORIGIN and nothing is stored", async () => {
     const w = attachmentWorld();
     const r = await w.upload(ada.email, "orchard.pdf", PDF, { headers: { origin: "https://elsewhere.example" } });

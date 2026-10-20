@@ -43,6 +43,16 @@ describe("[M3.1] files", () => {
     expect(await files().read({ path: "data/big.txt" }, ada.email)).toMatchObject({ ok: false, code: "FILES_UNAVAILABLE" });
   });
 
+  it("only the owner reads, writes, lists or deletes: Bo is refused on Ada's files with FILES_NOT_OWNER", async () => {
+    const { files } = setup();
+    await files().write({ path: "private.md", text: "mine" }, { requester: ada.email, writer });
+    expect(await files().read({ path: "private.md" }, other.email)).toMatchObject({ ok: false, code: "FILES_NOT_OWNER" });
+    expect(await files().list({}, other.email)).toMatchObject({ ok: false, code: "FILES_NOT_OWNER" });
+    expect(await files().write({ path: "private.md", text: "theirs" }, { requester: other.email, writer: `agent:${other.email}` })).toMatchObject({ ok: false, code: "FILES_NOT_OWNER" });
+    expect(await files().remove({ path: "private.md" }, other.email)).toMatchObject({ ok: false, code: "FILES_NOT_OWNER" });
+    expect(await files().read({ path: "private.md" }, ada.email)).toMatchObject({ ok: true, lines: [{ n: 1, text: "mine" }] });
+  });
+
   it("paths stay inside the person's files prefix and sizes are bounded", async () => {
     const { files } = setup();
     for (const bad of ["../MEMORY.md", "/etc/passwd", "a//b", "notes/", ".hidden", "a/../b", "", "x".repeat(201)]) expect(parseFilePath(bad)).toBeNull();
@@ -52,3 +62,6 @@ describe("[M3.1] files", () => {
     expect(await files().read({ path: "missing.txt" }, ada.email)).toMatchObject({ ok: false, code: "FILES_NOT_FOUND" });
   });
 });
+
+/** A former member's label: rows and files keyed by a person who is not on the roster (fletch's fixtures hold one person). */
+const other = { ...ada, id: "former-member", email: "former-member", name: "Pat" };

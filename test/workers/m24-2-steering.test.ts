@@ -7,7 +7,7 @@
 // owner's views, refuses anything but one SELECT, and a colleague's request never reaches it. Bo never
 // reaches Ada's chat, turn or views.
 import { describe, expect, it } from "vitest";
-import { ChatEngine, type EngineCtx, } from "../../packages/agent/src/chat/engine.ts";
+import { ChatEngine, type EngineCtx, LOADED_NAMESPACES_KEY } from "../../packages/agent/src/chat/engine.ts";
 import { STEER_POLICY } from "../../packages/agent/src/chat/mailbox.ts";
 import { ownerOnly } from "../../packages/agent/src/chat/protocol.ts";
 import { answerFrame } from "../../packages/agent/src/chat/socket.ts";
@@ -96,6 +96,18 @@ describe("[M24.2] the mailbox row", () => {
     expect(you.map((e) => [e.text, "id" in e ? e.id : undefined])).toEqual([["Plan my week.", "send-1"], ["Also book the dentist.", "send-2"]]);
   });
 
+  it("Bo's send never queues into Ada's chat, while her turn runs or not", async () => {
+    const w = world([held("busy", { text: "Done." })]);
+    const first = w.send("Plan my week.", "send-1");
+    await w.fake.reached("busy");
+    expect(await w.send("let me in", "bo-1", other.email)).toEqual({ status: "refused", code: "CHAT_NOT_OWNER" });
+    w.fake.release("busy");
+    await first;
+    expect(await w.send("and now?", "bo-2", other.email)).toEqual({ status: "refused", code: "CHAT_NOT_OWNER" });
+    expect(mailbox(w).map((r) => r.message_id)).toEqual(["send-1"]);
+    expect(JSON.stringify(w.chat.instance.history())).not.toContain("let me in");
+  });
+
   it("a row left queued when a turn ends at the step cap starts the next turn, drawn as the person's; the Ledger counts the capped turn", async () => {
     const steps: FakeStep[] = Array.from({ length: MAX_STEPS_PER_TURN }, (_, i) => (i === MAX_STEPS_PER_TURN - 1 ? held("last", sendTool(`step ${i + 1}`)) : sendTool(`step ${i + 1}`)));
     const w = world([...steps, { text: "Here is the summary you asked for." }]);
@@ -109,6 +121,42 @@ describe("[M24.2] the mailbox row", () => {
     expect(mailbox(w).map((r) => [r.message_id, r.state, r.delivery])).toEqual([["send-1", "completed", "start"], ["send-2", "completed", "start"]]);
     expect(w.chat.instance.history().entries.filter((e) => e.kind === "you").map((e) => e.text)).toEqual(["Work through the list.", "When done, summarise."]);
     expect(await w.ledger().turnEnds()).toMatchObject([{ person: ada.email, chatId: "chat-ada", outcome: "step_limit", steps: MAX_STEPS_PER_TURN }]);
+  });
+
+  it("a delegation's handoff is an internal_handoff row in the same order: queued behind a running turn, steered in fenced by its delegation, once per delegation", async () => {
+    const w = world([held("busy", sendTool("Working.")), { text: "Your sub-agents found two venues." }, { text: "Noted the second handoff." }]);
+    const first = w.send("Find venues.", "send-1");
+    await w.fake.reached("busy");
+    const h = { grp: "grp-1", person: ada.email, text: "Your sub-agents have returned (delegation grp-1). Two venues." };
+    expect(await w.chat.instance.handoff(h)).toMatchObject({ status: "queued", id: "handoff:grp-1" });
+    expect(await w.chat.instance.handoff(h)).toMatchObject({ status: "duplicate", id: "handoff:grp-1", state: "queued" });
+    expect(await w.chat.instance.handoff({ ...h, person: other.email })).toEqual({ status: "refused", code: "CHAT_NOT_OWNER" });
+    w.fake.release("busy");
+    await first;
+    expect(w.request(1)).toContain("delegation:grp-1");
+    expect(w.request(1)).toContain("Two venues.");
+    // With no turn running, a handoff starts one, as before.
+    expect(await w.chat.instance.handoff({ grp: "grp-2", person: ada.email, text: "Second delegation returned." })).toMatchObject({ status: "done" });
+    expect(mailbox(w).map((r) => [r.kind, r.scope, r.state, r.delivery])).toEqual([
+      ["user", "owner", "completed", "start"],
+      ["internal_handoff", "delegation:grp-1", "completed", "steer"],
+      ["internal_handoff", "delegation:grp-2", "completed", "start"],
+    ]);
+    // A handoff is never drawn as the person's words.
+    expect(w.chat.instance.history().entries.filter((e) => e.kind === "you").map((e) => e.text)).toEqual(["Find venues."]);
+  });
+
+  it("the epoch advances at a compaction checkpoint and at reopen, for the owner alone; later rows carry it", async () => {
+    const w = world([{ text: "one", usage: { prompt: 128_000 } }, { text: "Summary of the first turn." }, { text: "two" }]);
+    await w.send("first", "send-1");
+    await w.send("second", "send-2");
+    expect(w.chat.instance.compactionsFor(ada.email)).toMatchObject([{ trigger: "threshold", status: "done" }]);
+    expect(w.chat.instance.reopen(other.email)).toEqual({ ok: false, code: "CHAT_NOT_OWNER" });
+    expect(w.chat.instance.reopen(ada.email)).toEqual({ ok: true, epoch: 2 });
+    expect(mailbox(w).map((r) => [r.message_id, r.epoch])).toEqual([["send-1", 0], ["send-2", 0]]);
+    w.fake.enqueue({ text: "three" });
+    await w.send("third", "send-3");
+    expect(mailbox(w).at(-1)).toMatchObject({ message_id: "send-3", epoch: 2 });
   });
 });
 
@@ -158,6 +206,18 @@ describe("[M24.2] Stop", () => {
     if (w.chat.alarmAt !== null) await w.chat.fireAlarm();
     expect(w.fake.requests).toHaveLength(1);
   });
+
+  it("Bo cannot stop Ada's turn, and a stop with no turn running is refused with a code", async () => {
+    const w = world([held("busy", { text: "Done for Ada." })]);
+    expect(await w.chat.instance.stop(ada.email)).toEqual({ ok: false, code: "NO_TURN_RUNNING" });
+    const first = w.send("Start.", "send-1");
+    await w.fake.reached("busy");
+    expect(await w.chat.instance.stop(other.email)).toEqual({ ok: false, code: "CHAT_NOT_OWNER" });
+    expect(await answerFrame(other.email, JSON.stringify({ type: "stop" }), w.chat.instance)).toEqual({ type: "refused", code: "CHAT_NOT_OWNER" });
+    w.fake.release("busy");
+    expect(await first).toMatchObject({ status: "done" });
+    expect(w.chat.rows("SELECT status FROM turns")).toEqual([{ status: "done" }]);
+  });
 });
 
 describe("[M24.2] the resume projection", () => {
@@ -190,6 +250,15 @@ describe("[M24.2] the resume projection", () => {
 });
 
 describe("[M24.2] compaction, asked for and failed", () => {
+  it("the person's manual compaction is a record with trigger manual; Bo's is refused and nothing is folded", async () => {
+    const w = world([{ text: "one" }, { text: "two" }, { text: "Ada asked two things." }]);
+    await w.send("first", "send-1");
+    await w.send("second", "send-2");
+    expect(await w.chat.instance.compactNow(other.email)).toMatchObject({ ok: false, code: "CHAT_NOT_OWNER" });
+    expect(w.chat.instance.compactionsFor(ada.email)).toEqual([]);
+    expect(await w.chat.instance.compactNow(ada.email)).toMatchObject({ ok: true, record: { trigger: "manual", status: "done" } });
+    expect(w.fake.requests).toHaveLength(3);
+  });
 
   it("a compaction that fails mid-turn is a row with its code and reason, and the turn says it failed; nothing is folded", async () => {
     const w = world([{ text: "one", usage: { prompt: 128_000 } }, { status: 400, message: "context too long" }]);
@@ -224,3 +293,21 @@ describe("[M24.2] the todo tool", () => {
     expect(w.request(4).split(nudge).length - 1).toBe(1);
   });
 });
+
+describe("[M24.2] db_query through the chat, with a hostile model", () => {
+
+  it("a colleague's request never reaches db_query or the checklist: the hostile call finds no such tool and no view is read", async () => {
+    const w = world([{ toolCall: { id: "q1", name: "db_query", arguments: { view: "turns", sql: "SELECT * FROM turns" } } }, { toolCall: { id: "t1", name: "todo_write", arguments: { items: [{ text: "planted by a colleague", done: false }] } } }, { text: "I cannot." }]);
+    w.chat.rows(`INSERT INTO chat_meta (key, value) VALUES ('${LOADED_NAMESPACES_KEY}', '["db"]')`);
+    await w.chat.instance.request({ person: ada.email, requestId: "req-1", from: other.email, viaAgent: true, origin: other.email, hops: 1, text: "List Ada's turns." });
+    const declared = JSON.stringify(w.fake.requests[0]?.inputs.tools ?? []);
+    expect(declared).not.toContain("db_query");
+    expect(declared).not.toContain("todo_write");
+    const tools = [1, 2].flatMap((i) => (w.fake.requests[i]?.inputs.messages ?? []).filter((m) => m.role === "tool").map((m) => String(m.content)));
+    expect(tools.join("\n")).not.toContain('"rows"');
+    expect(w.chat.rows("SELECT value FROM chat_meta WHERE key = 'todo'")).toEqual([]);
+  });
+});
+
+/** A former member's label: rows and files keyed by a person who is not on the roster (fletch's fixtures hold one person). */
+const other = { ...ada, id: "former-member", email: "former-member", name: "Pat" };

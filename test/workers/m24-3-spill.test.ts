@@ -3,15 +3,51 @@
 // pointer; reading the pointer page by page gives the result back whole. Hooked once, in
 // `toAgentTool`, so it holds on the production path of a real chat for Ada and for Bo.
 import { describe, expect, it } from "vitest";
-import { SPILL_THRESHOLD, wrapLong } from "../../packages/agent/src/tree/spill.ts";
+import { SPILL_THRESHOLD, spillPath, wrapLong } from "../../packages/agent/src/tree/spill.ts";
 import { TREE_PAGE_BYTES } from "../../packages/agent/src/tree/tree.ts";
 import { toAgentTool } from "../../packages/agent/src/tools/registry.ts";
 import { ada, authorityWorld } from "./support/authority-world.ts";
 
 /** 300 lines of about 120 characters, each numbered so a cut shows. */
 const big = (who: string) => Array.from({ length: 300 }, (_, i) => `row ${String(i + 1).padStart(3, "0")} ${who} Henley ledger ${"·".repeat(90)}`).join("\n");
+const toolMessages = (w: ReturnType<typeof authorityWorld>, at: number) => w.fake.requests[at]?.inputs.messages.filter((m) => m.role === "tool").map((m) => String(m.content)) ?? [];
 
 describe("[M24.3] spill", () => {
+  it("through a real chat for each member, an oversized result reaches the model as a stub, and file_read of the pointer returns it whole", async () => {
+    for (const who of [ada]) {
+      const pointer = spillPath("file_read", "r1");
+      const w = authorityWorld({
+        stores: true,
+        script: [
+          { toolCall: { id: "l", name: "tool_search", arguments: { load: ["files"] } } },
+          { toolCall: { id: "r1", name: "file_read", arguments: { path: "notes/ledger.md" } } },
+          { toolCall: { id: "p1", name: "file_read", arguments: { path: pointer, from: 1 } } },
+          { text: "Read it." },
+        ],
+      });
+      await w.host(who.email).files.write({ path: "notes/ledger.md", text: big(who.name) }, { requester: who.email, writer: "test" });
+      await w.say(who.email, "Read my ledger notes.");
+      // The request after the oversized read: the stub, never the whole page.
+      const afterRead = toolMessages(w, 2).at(-1) ?? "";
+      expect(afterRead).toMatch(/SPILLED: the file_read result is \d+ bytes \(\d+ lines\), over the 16 KiB/);
+      expect(afterRead).toContain(`file_read {"path":"${pointer}","from":1}`);
+      expect(afterRead).not.toContain("row 200");
+      expect(Buffer.byteLength(afterRead)).toBeLessThan(SPILL_THRESHOLD / 4);
+      for (const req of w.fake.requests) expect(JSON.stringify(req.inputs.messages)).not.toContain("row 150");
+      // What was spilled is the whole result: the tree holds it, owner-only.
+      const stored = await w.host(who.email).tree.readBytes({ path: pointer }, who.email);
+      if (!stored.ok) throw new Error(stored.code);
+      const text = new TextDecoder().decode(stored.bytes);
+      expect(text).toContain(`${who.name} Henley ledger`);
+      expect(text.split("\n").filter((l) => /^\d+: row /.test(l))).toHaveLength(200);
+      // Reading the pointer gives its first page back in context, bounded under the threshold.
+      const page = toolMessages(w, 3).at(-1) ?? "";
+      expect(page).toContain(`${pointer}, lines 1-`);
+      expect(page).toMatch(/1: notes\/ledger\.md sha256 [0-9a-f]{64}, lines 1-200 of 300; next page from 201/);
+      expect(Buffer.byteLength(page)).toBeLessThan(SPILL_THRESHOLD);
+      expect(await w.host(who.email).tree.readBytes({ path: pointer }, other.email)).toMatchObject({ ok: false, code: "TREE_NOT_OWNER" });
+    }
+  });
 
   it("every page of the pointer read back in order is the spilled result, line for line", async () => {
     const w = authorityWorld({ stores: true, script: [] });
@@ -54,3 +90,6 @@ describe("[M24.3] spill", () => {
     expect(TREE_PAGE_BYTES).toBeGreaterThan(2000 + 8);
   });
 });
+
+/** A former member's label: rows and files keyed by a person who is not on the roster (fletch's fixtures hold one person). */
+const other = { ...ada, id: "former-member", email: "former-member", name: "Pat" };

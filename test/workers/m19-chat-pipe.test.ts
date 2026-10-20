@@ -107,6 +107,23 @@ const syncs = (s: ScriptedSocket) => s.sent.filter((d) => JSON.parse(d).type ===
 const checkTimers = (p: Page) => p.t.live().filter((t) => t.ms === TURN_CHECK_MS);
 
 describe("[M19.1] the page reconciles while it says working (QYVR-169, QYVR-170)", () => {
+  it("a dropped turn_done: the page asks after one quiet bound and draws the reply, then holds no check; Bo gets nothing", async () => {
+    const w = world([{ text: "4" }]);
+    const { p, s0 } = await adaPage(w, (f) => f.type === "turn_done");
+    await p.type("what is 2+2?");
+    await settle();
+    // The reply streamed, but the turn's end never reached the page: it still says working, and waits one bound.
+    expect(p.bubbles()).toEqual([["m you", "what is 2+2?"], ["m agent", "4"]]);
+    expect(p.busy()).toBe(true);
+    expect(syncs(s0)).toBe(0);
+    p.t.fire(TURN_CHECK_MS);
+    await settle();
+    expect(syncs(s0)).toBe(1);
+    expect(p.busy()).toBe(false);
+    expect(p.bubbles()).toEqual([["m you", "what is 2+2?"], ["m agent", "4"]]);
+    // Not a keepalive: with no turn shown working, nothing is scheduled.
+    expect(checkTimers(p)).toEqual([]);
+  });
 
   it("a dropped turn_failed: the failure is drawn in words within one bound of the quiet socket", async () => {
     const w = world([{ status: 503 }, { status: 503 }]);
@@ -277,3 +294,25 @@ describe("[M19.1] a chat-route model call is bounded (QYVR-169)", () => {
 });
 
 const find = (root: El, pred: (e: El) => boolean): El[] => [...(pred(root) ? [root] : []), ...root.children.flatMap((c) => find(c, pred))];
+
+describe("[M19.1] cards in words", () => {
+  it("the approval card shows its title, one muted words line and its choices, and never the proposed arguments (M23.2)", async () => {
+    const w = world([]);
+    const { p, s0 } = await adaPage(w);
+    const proposed = { subject: "The report" };
+    p.deliver(s0, {
+      type: "card",
+      card: { id: "card-1", state: "pending", title: "Send mail to Lee", lines: ["Recipients: Lee", "Waiting for you"], proposed, choices: [{ choice: "once", label: "Allow once" }, { choice: "deny", label: "Decline" }], flag: null, status: "Waiting for your decision." },
+    });
+    const card = p.log.children.find((c) => c.dataset.card === "card-1") as El;
+    expect(card.children.map((c) => c.tag)).toEqual(["span", "h3", "p", "div", "p"]);
+    expect(card.children[1]?.textContent).toBe("Send mail to Lee");
+    expect(card.children[2]?.textContent).toBe("Recipients: Lee \u00b7 Waiting for you");
+    // The primary choice is last.
+    expect(card.children[3]?.children.map((b) => b.textContent)).toEqual(["Decline", "Allow once"]);
+    expect(card.children[4]?.textContent).toBe("Waiting for your decision.");
+    // The arguments are data: nowhere in the drawing.
+    expect(card.text()).not.toContain("other-tenant");
+    expect(find(card, (e) => e.tag === "details" || e.tag === "pre")).toEqual([]);
+  });
+});

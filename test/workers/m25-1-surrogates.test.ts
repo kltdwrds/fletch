@@ -24,6 +24,17 @@ async function world(name: string) {
 }
 
 describe("[M25.1] surrogate tokens", () => {
+  it("a surrogate is an opaque bearer-shaped token, minted per call; the Vault keeps its hash, never the token", async () => {
+    const w = await world("vault-sur-1");
+    const s1 = await w.mint(ada.email, ADA_REF);
+    const s2 = await w.mint(ada.email, ADA_REF);
+    expect(s1).toMatch(/^qyvs_[0-9a-f]{40}$/);
+    expect(s2).not.toBe(s1);
+    expect(s1).not.toContain("cred://");
+    const rows = JSON.stringify(w.h.rows("SELECT * FROM surrogates"));
+    expect(rows).not.toContain(s1);
+    expect(w.h.rows("SELECT person, ref FROM surrogates")).toEqual([{ person: ada.email, ref: ADA_REF }, { person: ada.email, ref: ADA_REF }]);
+  });
 
   it("at egress the surrogate is swapped for the value at an approved host, in the declared placement; the vendor's echo of either comes back scrubbed", async () => {
     const w = await world("vault-sur-2");

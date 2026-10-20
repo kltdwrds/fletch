@@ -161,6 +161,43 @@ describe("[M25.2] owner, stop condition and cadences", () => {
     expect(describeCadence(monthly)).toContain("every month on day 31 at 09:00");
     expect(describeCadence(leap)).toContain("every year on February 29");
   });
+
+  it("jobs_create takes monthly and yearly schedules; a yearly date no month has is refused", async () => {
+    const w = authorityWorld({ jobs: true, script: [] });
+    const chat = await open(w, ada.email);
+    w.fake.enqueue(
+      load,
+      create({ title: "Rent", instructions: "Remind me the rent is due.", schedule: { kind: "monthly", day_of_month: 1, at: "09:00" }, no_gate_reason: "A reminder." }),
+      create({ title: "Birthday", instructions: "Remind me of Bo's birthday.", schedule: { kind: "yearly", month: 3, day_of_month: 14, at: "08:00" }, no_gate_reason: "A reminder." }, "c2"),
+      create({ title: "Never", instructions: "Never.", schedule: { kind: "yearly", month: 2, day_of_month: 30, at: "08:00" }, no_gate_reason: "A reminder." }, "c3"),
+      { text: "Set." },
+    );
+    await w.say(ada.email, "Set the rent and the birthday.", chat);
+    const kinds = await Promise.all(w.jobIds(ada.email).map(async (id) => (await def(w, ada.email, id))?.timing.schedule.kind));
+    expect(kinds.sort()).toEqual(["monthly", "yearly"]);
+    expect(toolResults(w, ada.email)).toContain("SCHEDULE_INVALID");
+  });
+});
+
+describe("[M25.2] the saved home zone", () => {
+  it("a job reads the person's saved home zone: a zone reported later while travelling never moves it", async () => {
+    const w = authorityWorld({ jobs: true, script: [] });
+    const chat = await open(w, ada.email);
+    const send = (text: string, timeZone: string) => w.chats.harness(chat).instance.send({ person: ada.email, text, timeZone });
+    w.fake.enqueue(load, create({ title: "Stretch", instructions: "Remind me to stretch.", schedule: { kind: "daily", at: "08:00" }, no_gate_reason: "A reminder." }), { text: "Set." });
+    await send("Every morning at 8 remind me to stretch.", "Europe/London");
+    // Ada travels: her client now reports Tokyo. A new job is still set in her home zone.
+    w.fake.enqueue(create({ title: "Water", instructions: "Remind me to drink water.", schedule: { kind: "daily", at: "09:00" }, no_gate_reason: "A reminder." }, "c2"), { text: "Set." });
+    await send("Every morning at 9 remind me to drink water.", "Asia/Tokyo");
+    const zones = await Promise.all(w.jobIds(ada.email).map(async (id) => (await def(w, ada.email, id))?.timing.zone));
+    expect(zones).toEqual(["Europe/London", "Europe/London"]);
+    // A zone the person names for the job is still theirs to name.
+    w.fake.enqueue(create({ title: "Call", instructions: "Remind me to call home.", schedule: { kind: "daily", at: "18:00" }, no_gate_reason: "A reminder.", zone: "Asia/Tokyo" }, "c3"), { text: "Set." });
+    await send("Every evening at 6 Tokyo time remind me to call home.", "Asia/Tokyo");
+    const defs = await Promise.all(w.jobIds(ada.email).map((id) => def(w, ada.email, id)));
+    expect(defs.find((d) => d?.title === "Call")?.timing.zone).toBe("Asia/Tokyo");
+    expect(await w.host(ada.email).jobs.homeZone("America/New_York")).toBe("Europe/London");
+  });
 });
 
 describe("[M25.2] replay safety", () => {

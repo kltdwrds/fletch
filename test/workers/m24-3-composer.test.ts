@@ -5,7 +5,7 @@
 // chip with its code kept, and the refused file is not sent.
 import { describe, expect, it } from "vitest";
 import { PASTED_IMAGE_MAX } from "../../packages/agent/src/attachments/caps.ts";
-import { CHAT_MARKUP } from "../../packages/agent/src/http/app/chat.ts";
+import { ATTACH_TEXT, CHAT_MARKUP } from "../../packages/agent/src/http/app/chat.ts";
 import { ada, attachmentWorld } from "./support/attachment-world.ts";
 import { page } from "./support/page-harness.ts";
 
@@ -101,5 +101,33 @@ describe("[M24.3] the composer's attach control, in the canvas's shape", () => {
     await p.type("the rows");
     expect(sends()).toMatchObject([{ attachments: [(files.rows(ada.email)[0] as { id: string }).id] }]);
     expect(sends()[0]?.attachments).toHaveLength(1);
+  });
+
+  it("a send waits for an upload still running, and says so", async () => {
+    const files = attachmentWorld();
+    let release: () => void = () => {};
+    const frames: Array<Record<string, unknown>> = [];
+    const p = await page({
+      onSend: (d) => frames.push(JSON.parse(d)),
+      fetch: (path, init) => {
+        if (path !== "/app/attachments") return Promise.resolve(null);
+        const held = new Promise<void>((r) => {
+          release = r;
+        });
+        return held.then(() => track(files.http(ada.email, "POST", path, init?.body as unknown as FormData).then((r) => new Response(JSON.stringify(r.body), { status: r.status }))));
+      },
+    });
+    const s = p.sockets[0] as NonNullable<(typeof p.sockets)[0]>;
+    p.open(s);
+    p.deliver(s, { type: "history", entries: [], running: null });
+    Object.assign(p.byId("file"), { files: [new File([PDF], "orchard.pdf")] });
+    await (p.byId("file") as unknown as { onchange: () => unknown }).onchange();
+    await p.type("see this");
+    expect(frames.filter((f) => f.type === "send")).toEqual([]);
+    expect(p.bubbles().at(-1)).toEqual(["m note", ATTACH_TEXT.wait]);
+    release();
+    await settle();
+    await p.type("see this");
+    expect(frames.filter((f) => f.type === "send")).toMatchObject([{ attachments: [(files.rows(ada.email)[0] as { id: string }).id] }]);
   });
 });

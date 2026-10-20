@@ -9,7 +9,7 @@ import { APP_PAGE } from "../../packages/agent/src/http/page.ts";
 import { ToolRegistry, ToolSession, type ToolSpec } from "../../packages/agent/src/tools/registry.ts";
 import { FakeModel } from "../support/fake-model.ts";
 import { ObjectHarness } from "../support/object-harness.ts";
-import { ada, authorityWorld, } from "./support/authority-world.ts";
+import { ada, authorityWorld, T0 } from "./support/authority-world.ts";
 
 describe("[M7.1] authority guards, planted", () => {
   it("the performer refuses an action with no grant id and never runs it", async () => {
@@ -41,6 +41,15 @@ describe("[M7.1] authority guards, planted", () => {
     expect(chat.rows("SELECT COUNT(*) AS n FROM outbox")).toEqual([{ n: 0 }]);
   });
 
+  it("the Ledger refuses a journal row that carries text", async () => {
+    const w = authorityWorld();
+    const row = { id: "c:1", at: T0, actor: `agent:${ada.email}`, principal: ada.email, actionKind: "mail.send", subjectRef: "personal;connector:mail", counterpart: "own-agent", origin: ada.email, hops: 0, decision: "auto" as const, grantId: null, outcome: "DONE", runId: "t1", tokens: 1 };
+    expect(await w.ledger().journal(row)).toEqual({ ok: true, duplicate: false });
+    expect(await w.ledger().journal({ ...row, id: "c:2", subjectRef: "personal;resource:Dear Bo, the layoffs are on Friday" })).toMatchObject({ ok: false, code: "JOURNAL_ROW_INVALID", reason: "subjectRef" });
+    expect(await w.ledger().journal(row)).toEqual({ ok: true, duplicate: true });
+    expect(await w.journal()).toHaveLength(1);
+  });
+
   it("Q37: a resource the journal cannot hold is refused before the call, never run without its row", async () => {
     const w = authorityWorld({
       script: [
@@ -63,6 +72,16 @@ describe("[M7.1] authority guards, planted", () => {
     expect(rows[0]).toMatchObject({ actionKind: "reports.read", subjectRef: "personal;resource:weekly-report", decision: "auto", grantId: g.id, outcome: "DONE" });
     // Every action that ran has a row.
     expect(w.performed.length).toBe(rows.length);
+  });
+
+  it("a person's decision point answers only for its own person, and only for members", async () => {
+    const w = authorityWorld();
+    // The decision point of the owner's object, asked about another person's action (a former member's label) and a non-member counterpart.
+    const d = { actor: "agent:former-member", principal: "former-member", actionKind: "mail.send", subject: { scope: "personal" as const, ref: "personal" }, counterpart: { kind: "own-agent" as const }, origin: "former-member", hops: 0, at: T0 };
+    expect(await w.host(ada.email).authority.decide(d)).toMatchObject({ decision: "deny", code: "PRINCIPAL_MISMATCH" });
+    const fromCal = { ...d, actor: `agent:${ada.email}`, principal: ada.email, counterpart: { kind: "person" as const, id: "outside-sender" }, origin: "outside-sender" };
+    await w.grant(ada.email, { grantee: { kind: "any-member" }, subject: { kind: "action-kind", ref: "mail.send" }, mode: "auto" });
+    expect(await w.host(ada.email).authority.decide(fromCal)).toMatchObject({ decision: "deny", code: "COUNTERPART_NOT_A_MEMBER" });
   });
 
   it("the app renders cards from the harness's frame, choices included", () => {

@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { ChatEngine, type EngineCtx } from "../../packages/agent/src/chat/engine.ts";
 import { homeKey } from "../../packages/agent/src/memory/home.ts";
 import { Ledger } from "../../packages/agent/src/objects/ledger.ts";
-import { SkillCatalog } from "../../packages/agent/src/skills/catalog.ts";
+import { parseSkillFile, SkillCatalog } from "../../packages/agent/src/skills/catalog.ts";
 import { FakeModel, type FakeStep } from "../support/fake-model.ts";
 import { harnessNamespace, ObjectHarness } from "../support/object-harness.ts";
 import { FakeR2 } from "./support/fake-r2.ts";
@@ -28,6 +28,14 @@ async function seeded() {
 }
 
 describe("[M3.1] skills", () => {
+
+  it("the shortlist is the union the person may use, marked for the prompt, and a SKILL.md that does not parse is skipped", async () => {
+    const r2 = await seeded();
+    const catalog = new SkillCatalog(r2, "company");
+    expect((await catalog.shortlist(ada.email)).map((s) => `${s.name}:${s.scope}`)).toEqual(["deploy-checklist:platform", "expense-report:company", "weekly-review:personal"]);
+    expect(parseSkillFile("---\nname: Bad Name\ndescription: x\n---\n")).toBeNull();
+    expect(parseSkillFile('---\nname: ok\ndescription: "quoted text"\n---\nbody')).toEqual({ name: "ok", description: "quoted text", includeInPrompt: false, body: "body" });
+  });
 
   it("in the chat the shortlist sits in the Skills block with scope tags, and skill_read fences the body as tool output", async () => {
     const r2 = await seeded();

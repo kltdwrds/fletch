@@ -7,7 +7,7 @@
 // writes the code: an unlisted host, a raw socket, an undeclared placement, a leaked surrogate. Two
 // members: Bo's code never resolves Ada's surrogate, and each person's code runs on its own Worker.
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CODE_PURPOSE, REFUSAL_HEADER } from "../../packages/agent/src/code/egress.ts";
+import { CODE_PURPOSE, codeEgress, REFUSAL_HEADER } from "../../packages/agent/src/code/egress.ts";
 import { runScript } from "../../packages/agent/src/code/run.ts";
 import { SURROGATE_MARK } from "../../packages/agent/src/egress/surrogate.ts";
 import { hermeticNetwork } from "../support/hermetic-network.ts";
@@ -148,5 +148,37 @@ describe("[M25.5] the hostile model's code", () => {
     expect(shown).not.toMatch(/qyvs_[0-9a-f]/);
     expect(shown).not.toContain(tokens.ada);
     expect(JSON.stringify(w.transcriptOf(ada.email))).not.toMatch(/qyvs_[0-9a-f]/);
+  });
+});
+
+describe("[M25.5] the Egress entrypoint", () => {
+  it("props decide, on every call: another tenant or no person is refused with its code before the Vault is asked", async () => {
+    const asked: unknown[] = [];
+    const vault = {
+      egress: async (req: unknown) => {
+        asked.push(req);
+        return { ok: true as const, status: 200, headers: [], body: "{}" };
+      },
+    };
+    const req = () => new Request(`https://${ADA_HOST}/orders`);
+    const other = await codeEgress(req(), { tenant: "other-tenant", person: ada.email }, { tenant: TENANT, vault });
+    const nobody = await codeEgress(req(), { tenant: TENANT, person: "" }, { tenant: TENANT, vault });
+    const none = await codeEgress(req(), undefined, { tenant: TENANT, vault });
+    expect([other.status, other.headers.get(REFUSAL_HEADER)]).toEqual([403, "EGRESS_TENANT_MISMATCH"]);
+    expect([nobody.status, nobody.headers.get(REFUSAL_HEADER)]).toEqual([403, "EGRESS_NO_PERSON"]);
+    expect(none.headers.get(REFUSAL_HEADER)).toBe("EGRESS_TENANT_MISMATCH");
+    expect(asked).toEqual([]);
+    // The props' person, never anything the request carries, is who egress acts for.
+    const ok = await codeEgress(new Request(`https://${ADA_HOST}/orders`, { headers: {  } }), { tenant: TENANT, person: ada.email }, {
+      tenant: TENANT,
+      vault: {
+        egress: async (_req, ctx) => {
+          asked.push(ctx);
+          return { ok: true, status: 204, headers: [], body: "" };
+        },
+      },
+    });
+    expect(ok.status).toBe(204);
+    expect(asked).toEqual([{ person: ada.email, purpose: CODE_PURPOSE }]);
   });
 });

@@ -7,7 +7,7 @@ import type { ParsedMail } from "../../packages/agent/src/mail/mime.ts";
 import { PersonMail } from "../../packages/agent/src/person/mail.ts";
 import { findOneTimeCodes, OTP_FIELD } from "../../packages/agent/src/vault/otp.ts";
 import { ObjectHarness } from "../support/object-harness.ts";
-import { ada, SHOP_API, SHOP_LOGIN, seedShop, vaultWorld } from "./support/vault-world.ts";
+import { ada, by, SHOP_API, SHOP_LOGIN, seedShop, vaultWorld } from "./support/vault-world.ts";
 
 describe("[M13] capture form", () => {
   it("the capture form never echoes the value: the form, a save, a refusal, a value in the wrong field, and the settings list", async () => {
@@ -44,6 +44,19 @@ describe("[M13] capture form", () => {
     const w = vaultWorld();
     const html = captureForm({ ref: "cred://x", label: `key ${w.token}`, host: "", methods: "GET", header: "authorization", prefix: "", fills: false, permission: "standing", kind: "secret" }, { code: "VAULT_HOST_INVALID", reason: "a host is a DNS name" });
     expect(html).toContain(w.token);
+  });
+
+  it("a cross-site post is refused and saves nothing; Bo's list never shows Ada's credential", async () => {
+    const w = vaultWorld();
+    const form = { ref: "cred://shop-api", host: SHOP_API, value: w.token };
+    for (const from of ["https://attacker.example", null]) {
+      const r = await w.http(ada.email, "POST", "/vault/capture", { form }, from);
+      expect({ from, status: r.status, code: r.text.includes("VAULT_FORM_ORIGIN"), echoed: r.text.includes(w.token) }).toEqual({ from, status: 403, code: true, echoed: false });
+      expect(await w.http(ada.email, "POST", "/vault/hosts", { json: { ref: "cred://shop-api", host: SHOP_API } }, from)).toMatchObject({ status: 403 });
+    }
+    expect(w.vault().list(ada.email)).toEqual([]);
+    expect((await w.http(ada.email, "POST", "/vault/capture", { form })).status).toBe(201);
+    expect(JSON.parse((await w.http(other.email, "GET", "/vault")).text)).toEqual({ credentials: [], grants: [] });
   });
 });
 
@@ -95,6 +108,22 @@ describe("[M13] one-time codes", () => {
     expect(JSON.stringify([audit, w.vault().list(ada.email), w.vault().events(ada.email)])).not.toContain("482913");
   });
 
+  it("a code expires after ten minutes, is approved only for a host with a login and only by its owner", async () => {
+    const w = vaultWorld();
+    await seedShop(w);
+    const mail = mailWorld(w);
+    await mail.receive("Use security code K7Q2M9 to sign in.");
+    const ref = refIn(mail.notices[0]!.text);
+    expect(await w.vault().approveOneTimeCode({ ref, host: SHOP_LOGIN }, by(other.email))).toMatchObject({ ok: false, code: "VAULT_CRED_UNKNOWN" });
+    expect(await w.vault().approveOneTimeCode({ ref, host: SHOP_API }, by(ada.email))).toMatchObject({ ok: false, code: "VAULT_OTP_HOST_UNKNOWN" });
+    expect(await w.vault().approveOneTimeCode({ ref, host: SHOP_LOGIN }, by(ada.email))).toMatchObject({ ok: true, grant: { oneShot: true, fill: true } });
+    expect(await w.fill(other.email, ref, SHOP_LOGIN, OTP_FIELD)).toMatchObject({ ok: false, code: "EGRESS_CRED_UNKNOWN" });
+    w.clock.now += 10 * 60_000;
+    expect(await w.fill(ada.email, ref, SHOP_LOGIN, OTP_FIELD)).toMatchObject({ ok: false, code: "EGRESS_CRED_EXPIRED" });
+    expect(w.vault().list(ada.email).find((c) => c.ref === ref)).toMatchObject({ kind: "one-time-code", status: "expired" });
+    expect(w.typed).toEqual([]);
+  });
+
   it("a code that cannot be kept is withheld from the chat, never shown", async () => {
     const w = vaultWorld();
     const mail = mailWorld(w, "failing");
@@ -110,3 +139,6 @@ describe("[M13] one-time codes", () => {
     expect(findOneTimeCodes("Verification code 2026 4417-8820").map((f) => f.code)).toEqual(["44178820"]);
   });
 });
+
+/** A former member's label: rows and files keyed by a person who is not on the roster (fletch's fixtures hold one person). */
+const other = { ...ada, id: "former-member", email: "former-member", name: "Pat" };

@@ -4,8 +4,11 @@
 // sub-agents bound to observation, the verifier on the cheap route, and recovery that never runs a
 // sub-agent twice. Each guard has a test that plants the violation on the production path.
 import { describe, expect, it } from "vitest";
+import { ownTask } from "../../packages/agent/src/chat/gate.ts";
+import { EffectBuffer } from "../../packages/agent/src/chat/tools.ts";
 import { MAX_DEPTH, MAX_FANOUT, spawnDecision } from "../../packages/agent/src/subagents/depth.ts";
 import { parseVerdict } from "../../packages/agent/src/subagents/verifier.ts";
+import { subagentsNamespace } from "../../packages/agent/src/subagents/tools.ts";
 import { ada, subagentWorld, verdict } from "./support/subagent-world.ts";
 
 const load = { toolCall: { id: "l1", name: "tool_search", arguments: { load: ["subagents"] } } };
@@ -89,6 +92,40 @@ describe("[M7.2] sub-agents: the depth cap", () => {
     expect(spawnDecision({ role: "worker", depth: 2 }, [{ role: "worker", brief: "b" }], 0)).toMatchObject({ ok: false, code: "SUBAGENT_WORKER_CANNOT_SPAWN" });
     expect(spawnDecision({ role: "main", depth: 0 }, Array.from({ length: MAX_FANOUT + 1 }, () => ({ role: "worker" as const, brief: "b" })), 0)).toMatchObject({ ok: false, code: "SUBAGENT_FANOUT_CAP" });
     expect(spawnDecision({ role: "main", depth: 0 }, [{ role: "worker", brief: "b" }], 12)).toMatchObject({ ok: false, code: "SUBAGENT_OPEN_CAP" });
+  });
+});
+
+describe("[M7.2] sub-agents: authority is inherited", () => {
+  it("a sub-agent's action and write are refused with a code and nothing runs", async () => {
+    const w = subagentWorld({
+      script: [
+        load,
+        delegate([{ role: "worker", brief: "Tell Bo the launch date." }]),
+        { text: "Started." },
+        { toolCall: { id: "m1", name: "mail_send", arguments: { to: ada.email } } },
+        { toolCall: { id: "m2", name: "drafts_save", arguments: { text: "launch Thursday" } } },
+        { text: "I could not send or save; the launch is Thursday." },
+        verdict("pass"),
+        { text: "The worker could not send; the launch is Thursday." },
+      ],
+    });
+    await w.say("Delegate telling Bo the launch date.");
+    await w.settle();
+    expect(w.performed).toEqual([]);
+    expect(new Set(w.toolResults().filter((t) => t.includes("SUBAGENT_ACTION_REFUSED"))).size).toBe(2);
+  });
+
+  it("only the person's own, unlatched task delegates", async () => {
+    const view = { open: () => 0, status: () => [], close: async () => ({ ok: true as const, closed: [], settled: [] }) };
+    const run = async (context: Parameters<typeof subagentsNamespace>[1]["context"], latched: boolean) => {
+      const effects = new EffectBuffer();
+      const spec = subagentsNamespace(view, { effects, context, latched: () => latched, person: ada.email }).tools[0];
+      const out = await spec?.execute("x1", { tasks: [{ role: "worker", brief: "b" }] } as never);
+      return { text: out?.content.map((c) => ("text" in c ? c.text : "")).join(""), queued: effects.size };
+    };
+    expect(await run({ counterpart: { kind: "person", id: other.email }, origin: other.email, hops: 0 }, false)).toMatchObject({ queued: 0, text: expect.stringContaining("SUBAGENT_OWN_TASK_ONLY") });
+    expect(await run(ownTask(ada.email), true)).toMatchObject({ queued: 0, text: expect.stringContaining("LATCH_NO_FORWARDING") });
+    expect(await run(ownTask(ada.email), false)).toMatchObject({ queued: 1 });
   });
 });
 
@@ -178,3 +215,6 @@ describe("[M7.2] sub-agents: transport and verifier", () => {
     expect(w.fake.requests.find((r) => r.inputs.messages.some((m) => String(m.content).includes("You check one sub-agent's handoff")))?.inputs.max_tokens).toBe(2048);
   });
 });
+
+/** A former member's label: rows and files keyed by a person who is not on the roster (fletch's fixtures hold one person). */
+const other = { ...ada, id: "former-member", email: "former-member", name: "Pat" };

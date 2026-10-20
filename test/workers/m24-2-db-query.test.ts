@@ -3,11 +3,12 @@
 // SQLite: every refusal is planted (a write, PRAGMA, ATTACH, two statements, sub-selects, an unknown
 // table, a comment, a quoted identifier), the 200-row cap says it cut, a store that drifted from its
 // views is refused, and a slow owner is answered at the tool's five-second bound, fired by the test.
-// The Ledger is two members' throughout: Ada's queries never read Bo's rows, whatever they name, and
+// The Ledger is one member's, with a former member's rows beside hers: Ada's queries never read Bo's rows, whatever they name, and
 // her dashboard counts her own turns that ended at the step cap or were stopped, never his.
 import { describe, expect, it } from "vitest";
 import type { ModelCallRow, TurnEndRow } from "../../packages/agent/src/ledger/types.ts";
 import { MAX_STEPS_PER_TURN } from "../../packages/agent/src/chat/turn.ts";
+import { personDashboard, rangeOf, renderDashboard } from "../../packages/agent/src/obs/dashboard.ts";
 import { Ledger } from "../../packages/agent/src/objects/ledger.ts";
 import { CHAT_VIEW_SCHEMA_VERSION, CHAT_VIEWS, queryChatView } from "../../packages/agent/src/views/chat-views.ts";
 import { LEDGER_VIEW_SCHEMA_VERSION, LEDGER_VIEWS } from "../../packages/agent/src/views/ledger-views.ts";
@@ -17,6 +18,9 @@ import { CHAT_MIGRATIONS } from "../../packages/agent/src/migrations/catalog.ts"
 import { migrate } from "../../packages/agent/src/migrations/engine.ts";
 import { ObjectHarness } from "../support/object-harness.ts";
 import { ada } from "./support/authority-world.ts";
+
+/** Another person's rows in the tenant's Ledger (a former member's): never a member, so no fixture identity. */
+const other = { email: "former-member" };
 
 const T0 = Date.UTC(2026, 9, 16, 9, 0, 0);
 
@@ -174,7 +178,7 @@ describe("[M24.2] the db_query tool", () => {
   });
 });
 
-/** The tenant's Ledger on real SQLite, with a call row, a job run and turn ends for Ada. */
+/** The tenant's Ledger on real SQLite, with a call row, a job run and turn ends for each of Ada and Bo. */
 async function wrenLedger() {
   const h = new ObjectHarness("ledger-wren", (ctx, env) => new Ledger(ctx as DurableObjectState, env as Env), { TENANT_ID: ada.company }, (l) => {
     l.now = () => T0;
@@ -182,22 +186,52 @@ async function wrenLedger() {
   const ledger = h.instance;
   const row = (person: string, runId: string): ModelCallRow => ({ tenant: ada.company, person, runId, route: "chat", model: "glm", attempt: 1, status: "ok", code: null, httpStatus: 200, inputTokens: 100, outputTokens: 10, reasoningTokens: 0, cachedTokens: 0, at: T0, startedAt: T0, firstTokenAt: T0, finishedAt: T0 });
   await ledger.record(row(ada.email, "ada-turn"));
-  for (const person of [ada.email]) {
+  await ledger.record(row(other.email, "bo-turn"));
+  for (const person of [ada.email, other.email]) {
     await ledger.recordRun({ runId: `${person}-run`, jobId: "digest", person, scheduledFor: T0, phase: "done", attempt: 1, step: 1, leaseUntil: null, timeoutAt: null, tokens: 0, costMicros: 0, signal: "notify", code: null, reason: null, nextProbe: null, startedAt: T0, updatedAt: T0 });
   }
   const end = (person: string, chatId: string, turnId: string, outcome: TurnEndRow["outcome"]): TurnEndRow => ({ person, chatId, turnId, outcome, steps: outcome === "step_limit" ? MAX_STEPS_PER_TURN : 3, at: T0 });
   await ledger.turnEnded(end(ada.email, "chat-ada", "a1", "step_limit"));
   await ledger.turnEnded(end(ada.email, "chat-ada", "a2", "step_limit"));
   await ledger.turnEnded(end(ada.email, "chat-ada", "a3", "stopped"));
+  await ledger.turnEnded(end(other.email, "chat-bo", "b1", "step_limit"));
+  await ledger.turnEnded(end(other.email, "chat-bo", "b2", "stopped"));
   return { h, ledger };
 }
 
 describe("[M24.2] the Ledger's views and turn ends, two members", () => {
+  it("Ada's query never reads Bo's rows, even when it names him: ledger_rows, runs and turn_ends answer hers alone", async () => {
+    const { ledger } = await wrenLedger();
+    const ask = (view: string, sql: string) => ledger.queryView(ada.email, { view, sql, version: LEDGER_VIEW_SCHEMA_VERSION });
+    expect(await ask("ledger_rows", `SELECT person, run_id FROM ledger_rows WHERE person = '${other.email}'`)).toEqual({ ok: true, view: "ledger_rows", rows: [], truncated: false });
+    expect(await ask("ledger_rows", "SELECT person, run_id FROM ledger_rows")).toMatchObject({ rows: [{ person: ada.email, run_id: "ada-turn" }] });
+    expect(await ask("runs", "SELECT person, run_id, phase, signal FROM runs")).toMatchObject({ rows: [{ person: ada.email, run_id: `${ada.email}-run`, phase: "done", signal: "notify" }] });
+    const ends = await ask("turn_ends", "SELECT chat_id, turn_id, outcome FROM turn_ends ORDER BY turn_id");
+    expect(ends).toMatchObject({ ok: true, rows: [{ turn_id: "a1" }, { turn_id: "a2" }, { turn_id: "a3" }] });
+    expect(JSON.stringify(ends)).not.toContain("chat-bo");
+    expect(await ask("turn_ends", `SELECT turn_id FROM turn_ends WHERE person = '${other.email}' OR 1 = 1`)).toMatchObject({ rows: [{ turn_id: "a1" }, { turn_id: "a2" }, { turn_id: "a3" }] });
+    // The Ledger's other tables are no view: a hostile statement reaches none of them.
+    expect(await ask("ledger_rows", "SELECT * FROM journal")).toMatchObject({ ok: false, code: "DB_QUERY_UNKNOWN_VIEW" });
+    expect(await ask("turns", "SELECT * FROM turns")).toMatchObject({ ok: false, code: "DB_QUERY_UNKNOWN_VIEW" });
+  });
 
   it("a turn end is kept once per chat and turn, and an unknown outcome is refused", async () => {
     const { h, ledger } = await wrenLedger();
     await ledger.turnEnded({ person: ada.email, chatId: "chat-ada", turnId: "a1", outcome: "stopped", steps: 1, at: T0 + 1 });
     expect(h.rows("SELECT outcome FROM turn_ends WHERE turn_id = 'a1'")).toEqual([{ outcome: "step_limit" }]);
     await expect(ledger.turnEnded({ person: ada.email, chatId: "chat-ada", turnId: "a9", outcome: "done" as never, steps: 1, at: T0 })).rejects.toThrow(/^TURN_END_INVALID/);
+  });
+
+  it("Ada's dashboard counts her two turns at the step cap and her one stopped turn, never Bo's", async () => {
+    const { ledger } = await wrenLedger();
+    const range = rangeOf(7, T0 + 1000);
+    if (!("from" in range)) throw new Error("range");
+    const counts = { person: ada.email, items: 0, delivered: 0, failed: 0, open: 0, retried: 0, accepted: 0, edited: 0, rejected: 0, stopped: 0 };
+    const view = await personDashboard({ chats: async () => ({ ok: true, chats: [] }), compactions: async () => [], items: async () => ({ ok: true, items: [] }), counts: async () => counts, ledger }, ada.email, range);
+    if (!view.ok) throw new Error(view.code);
+    expect(view.rollup.turns).toEqual({ stepLimit: 2, stopped: 1 });
+    expect(renderDashboard(view)).toContain(`<p id="turns">2 chat turns ended at the ${MAX_STEPS_PER_TURN}-step cap; 1 stopped by the person</p>`);
+    const tenant = await ledger.dashboard(range, []);
+    expect(tenant.turns).toEqual({ stepLimit: 3, stopped: 2 });
   });
 });

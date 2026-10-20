@@ -43,6 +43,13 @@ describe("[M18.3] reasoning effort per route", () => {
     // The table the adapter reads names the chat route alone: another route's effort is a later, measured change.
     expect(REASONING_EFFORT).toEqual({ chat: "low" });
   });
+
+  it("the job route's request has no reasoning_effort key at all, for either member", async () => {
+    for (const person of [ada.email]) {
+      const { fake } = await call("job", person, { t: T0 }, []);
+      expect(Object.keys(fake.requests[0]?.inputs ?? {})).not.toContain("reasoning_effort");
+    }
+  });
 });
 
 describe("[M18.3] the clock of a model call", () => {
@@ -78,6 +85,24 @@ describe("[M18.3] the clock of a model call", () => {
     const h = new ObjectHarness("ledger-clock", (ctx, env) => new Ledger(ctx as DurableObjectState, env as Env), { TENANT_ID: "solo-sam", QYVR_ENV: "test" });
     await h.instance.record(rows[0] as ModelCallRow);
     expect(await h.instance.modelCalls({ person: ada.email })).toEqual([expect.objectContaining({ startedAt: 10_000, firstTokenAt: 11_500, finishedAt: 14_000 })]);
+  });
+
+  it("a refused call never ran, so its row has no times; a failed call has start and finish but no first token", async () => {
+    const clock = { t: 5_000 };
+    const rows: ModelCallRow[] = [];
+    const down = async () => { clock.t += 40; throw new Error("binding down"); };
+    const ai = { run: down, gateway: () => ({ run: down }) } as unknown as Ai;
+    const who = { tenant: "solo-sam", person: ada.email, runId: "run-fail", route: "chat" as const };
+    const base = { wait: async () => {}, now: () => clock.t };
+    await (await createStreamFn({ ...base, ai, ledger: { record: async (r) => void rows.push(r) } }, who)(modelFor("chat"), hello, {})).result();
+    const refusing = { record: async (r: ModelCallRow) => void rows.push(r), admit: async () => ({ ok: false as const, code: "BUDGET_PERSON_EXHAUSTED" as const, reason: "spent" }) };
+    await (await createStreamFn({ ...base, ai, ledger: refusing }, { ...who, runId: "run-refused" })(modelFor("chat"), hello, {})).result();
+    // The failed primary went to the hedge (M22.1), which failed too: each attempt timed on its own.
+    expect(rows).toEqual([
+      expect.objectContaining({ attempt: 1, status: "failed", code: "MODEL_CALL_FAILED", startedAt: 5_000, firstTokenAt: null, finishedAt: 5_040 }),
+      expect.objectContaining({ attempt: 2, status: "failed", code: "MODEL_CALL_FAILED", startedAt: 5_040, firstTokenAt: null, finishedAt: 5_080 }),
+      expect.objectContaining({ status: "refused", code: "BUDGET_PERSON_EXHAUSTED", startedAt: null, firstTokenAt: null, finishedAt: null }),
+    ]);
   });
 });
 

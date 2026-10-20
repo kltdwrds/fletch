@@ -2,8 +2,11 @@
 // below them; a child closed while it runs returns nothing; Bo cannot close Ada's. A child that asks for no new tool call
 // for SUBAGENT_STALL_STEPS steps in a row is ended with SUBAGENT_NO_PROGRESS, and one that keeps making new calls is not.
 import { describe, expect, it } from "vitest";
+import { ownTask } from "../../packages/agent/src/chat/gate.ts";
+import { EffectBuffer } from "../../packages/agent/src/chat/tools.ts";
 import { SUBAGENT_CLOSED } from "../../packages/agent/src/subagents/host.ts";
 import { SUBAGENT_STALL_STEPS } from "../../packages/agent/src/subagents/run.ts";
+import { subagentsNamespace } from "../../packages/agent/src/subagents/tools.ts";
 import { ada, subagentWorld, type SubAgentWorld, verdict } from "./support/subagent-world.ts";
 
 const load = { toolCall: { id: "l1", name: "tool_search", arguments: { load: ["subagents"] } } };
@@ -79,6 +82,28 @@ describe("[M25.4] subagents_close", () => {
     expect(await w.chat.instance.host.close(ada.email, [row?.id as string])).toEqual({ ok: true, closed: [], settled: [row?.id] });
     expect(w.rows()).toMatchObject([{ status: "done", code: null, result: "Notes: Thursday.", verdict: "pass" }]);
   });
+
+  it("Bo cannot close Ada's sub-agent, an unknown id is refused before anything closes, and a colleague's request cannot close at all (two members)", async () => {
+    const w = subagentWorld({ script: [load, delegate([{ role: "worker", brief: "Read the notes." }]), { text: "Started." }] });
+    await w.say("Delegate a read.");
+    const [row] = w.rows();
+    const host = w.chat.instance.host;
+    expect(await host.close(other.email, [row?.id as string])).toMatchObject({ ok: false, code: "SUBAGENT_NOT_YOURS" });
+    expect(await host.close(ada.email, [row?.id as string, "nope.1"])).toMatchObject({ ok: false, code: "SUBAGENT_UNKNOWN" });
+    expect(w.rows()).toMatchObject([{ status: "queued", code: null }]);
+
+    const view = { open: () => 0, status: () => [], close: (p: string, ids: string[]) => host.close(p, ids) };
+    const run = async (context: Parameters<typeof subagentsNamespace>[1]["context"], person: string) => {
+      const spec = subagentsNamespace(view, { effects: new EffectBuffer(), context, latched: () => false, person }).tools.find((t) => t.name === "subagents_close");
+      const out = await spec?.execute("x1", { ids: [row?.id as string] } as never);
+      return out?.content.map((c) => ("text" in c ? c.text : "")).join("");
+    };
+    expect(await run({ counterpart: { kind: "person", id: other.email }, origin: other.email, hops: 0 }, ada.email)).toContain("SUBAGENT_OWN_TASK_ONLY");
+    expect(await run(ownTask(other.email), other.email)).toContain("SUBAGENT_NOT_YOURS");
+    expect(w.rows()).toMatchObject([{ status: "queued", code: null }]);
+    expect(await run(ownTask(ada.email), ada.email)).toContain(`closed ${row?.id}`);
+    expect(w.rows()).toMatchObject([{ status: "failed", code: SUBAGENT_CLOSED }]);
+  });
 });
 
 describe("[M25.4] the no-progress kill rule", () => {
@@ -111,3 +136,6 @@ describe("[M25.4] the no-progress kill rule", () => {
     expect(w.rows()).toMatchObject([{ status: "done", verdict: "pass" }]);
   });
 });
+
+/** A former member's label: rows and files keyed by a person who is not on the roster (fletch's fixtures hold one person). */
+const other = { ...ada, id: "former-member", email: "former-member", name: "Pat" };

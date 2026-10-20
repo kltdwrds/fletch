@@ -62,6 +62,18 @@ describe("[M15.5] a chat's earlier turns are drawn on open and reconnect, to its
     expect(drawn(w.connect(main, ada.email))).toEqual(expected);
   });
 
+  it("Bo's socket on Ada's chat is refused with a code and never reads the transcript", async () => {
+    const w = world([{ text: "Hello Ada." }]);
+    const main = w.chatFor("chat-ada-main");
+    await main.instance.send({ person: ada.email, text: "Private to Ada." });
+    const read = vi.fn(() => main.instance.history());
+    expect(connectFrame(null, main.instance.owner(), read)).toEqual({ ok: false, code: "NO_SESSION" });
+    // Planted: a connect step that read before admitting would hand Bo Ada's turns; this one never calls it.
+    expect(read).not.toHaveBeenCalled();
+    expect(connectFrame(ada.email, main.instance.owner(), read)).toMatchObject({ ok: true });
+    expect(read).toHaveBeenCalledOnce();
+  });
+
   it("only the person's words and the agent's are drawn: injected inputs, tool results and undelivered sends are not", async () => {
     const w = world([{ text: "Done." }]);
     const main = w.chatFor("chat-ada-main");

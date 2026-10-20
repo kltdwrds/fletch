@@ -1,10 +1,10 @@
 // M1.2: the chat surface through the agent script's routes, the `Person`'s chats and the `Chat`
-// engine, each over the object harness, with the two solo-sam members Sam Solo and Bo Wren. The
+// engine, each over the object harness, with the two solo-sam members Sam Solo and Pat. The
 // Agents SDK hosts (`objects/chat.ts`, `objects/person.ts`) are thin over these and run live on
 // staging (test/m1/chat.live.test.ts); the decisions they make are the ones tested here.
 import { describe, expect, it } from "vitest";
 import { ChatEngine, type EngineCtx } from "../../packages/agent/src/chat/engine.ts";
-import { admit, parseClientFrame } from "../../packages/agent/src/chat/protocol.ts";
+import { admit, ownerOnly, parseClientFrame } from "../../packages/agent/src/chat/protocol.ts";
 import { propsOf } from "../../packages/agent/src/http/identity.ts";
 import { type Directory, route } from "../../packages/agent/src/http/routes.ts";
 import { Ledger } from "../../packages/agent/src/objects/ledger.ts";
@@ -50,9 +50,37 @@ function world(env: Partial<Env> = {}) {
 
 describe("[M1.2] chat surface", () => {
 
+  it("frames go only to the owner's connections", () => {
+    const conns = [{ state: { person: ada.email }, id: "a" }, { state: {  }, id: "b" }, { state: null, id: "c" }];
+    expect(ownerOnly(conns, ada.email).map((c) => c.id)).toEqual(["a"]);
+    expect(ownerOnly(conns, null)).toEqual([]);
+  });
+
   it("a connection without a person or to an unclaimed chat is refused with its code", () => {
     expect(admit(null, ada.email)).toBe("NO_SESSION");
     expect(admit(ada.email, null)).toBe("CHAT_UNCLAIMED");
+  });
+
+  it("every route but /health needs the dispatcher's person, for this script's tenant", async () => {
+    const w = world();
+    expect((await w.call("/health")).status).toBe(200);
+    for (const [path, init] of [["/", {}], ["/chats", { method: "POST" }], ["/ledger/calls", {}]] as const) {
+      const res = await w.call(path, undefined, init);
+      expect([path, res.status, await res.json()]).toEqual([path, 401, { code: "NO_SESSION" }]);
+    }
+    const other = await w.call("/chats", ada.email, { method: "POST" }, "other-tenant");
+    expect([other.status, await other.json()]).toEqual([403, { code: "TENANT_MISMATCH" }]);
+    const page = await w.call("/", ada.email);
+    expect(page.headers.get("content-type")).toMatch(/^text\/html/);
+    expect(await page.text()).toContain("/chats/");
+  });
+
+  it("a socket route needs a chat the person owns, then an upgrade", async () => {
+    const w = world();
+    const { chatId } = (await (await w.call("/chats", ada.email, { method: "POST" })).json()) as { chatId: string };
+    expect(await (await w.call(`/chats/${chatId}/ws`, ada.email)).json()).toEqual({ code: "WEBSOCKET_REQUIRED" });
+    expect(await (await w.call("/chats/not-an-id/ws", ada.email, w.upgrade)).json()).toEqual({ code: "CHAT_NOT_FOUND" });
+    expect(w.forwarded).toHaveLength(0);
   });
 
   it("the stream sample route exists in staging only", async () => {
@@ -81,5 +109,9 @@ describe("[M1.2] chat socket frames", () => {
       if (!parsed.ok) expect([parsed.code, parsed.reason.length > 0]).toEqual(["FRAME_UNPARSEABLE", true]);
     }
     expect(parseClientFrame(new ArrayBuffer(4))).toMatchObject({ ok: false, reason: "binary frames are not accepted" });
+  });
+
+  it("a frame cannot name its sender: the person field is ignored", () => {
+    expect(parseClientFrame(JSON.stringify({ type: "send", text: "Hi", person: ada.email }))).toEqual({ ok: true, frame: { type: "send", text: "Hi" } });
   });
 });

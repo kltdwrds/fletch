@@ -7,6 +7,7 @@ import { JOB_READ_TOOLS, readOnlyForJob } from "../../packages/agent/src/jobs/jo
 import { certifySilence } from "../../packages/agent/src/jobs/silence.ts";
 import type { ToolSpec } from "../../packages/agent/src/tools/registry.ts";
 import { type FakeStep, report } from "../support/fake-model.ts";
+import { ada, authorityWorld } from "./support/authority-world.ts";
 import { jobWorld, PAGE } from "./support/job-world.ts";
 
 const steps = [{ kind: "model" as const }, { kind: "notify" as const }];
@@ -178,3 +179,49 @@ describe("[M25.2] certified silence", () => {
     expect(certifySilence(claim({ evidence: ["gate"], dependencies: [] }), [], false)).toMatchObject({ ok: false });
   });
 });
+
+describe("[M25.2] exactly one terminal tool", () => {
+  for (const [name, step, code] of [
+    ["none: a bare text answer", { text: "Nothing new, I think." }, "JOB_TERMINAL_MISSING"],
+    ["two in one answer", { toolCalls: [{ id: "a", name: "report", arguments: { text: "x" } }, { id: "b", name: "nothing_to_report", arguments: claim() }] }, "JOB_TERMINAL_MULTIPLE"],
+    ["one beside another call", { toolCalls: [{ id: "r1", name: "page_read", arguments: { url: PAGE } }, { id: "b", name: "report", arguments: { text: "x" } }] }, "JOB_TERMINAL_NOT_ALONE"],
+  ] as const) {
+    it(`a run that ends with ${name} is a failed run with ${code}, and nothing is delivered`, async () => {
+      const w = jobWorld({ script: [step as FakeStep] });
+      w.claimChat();
+      await w.define({ steps });
+      await w.tick();
+      expect(w.runs()).toMatchObject([{ signal: "failed", code }]);
+      // The model's text is not delivered; the person is told the run failed, once, with the code (M25.6).
+      expect(w.notices().map((n) => n.text)).toEqual([expect.stringMatching(new RegExp(`^Test job did not finish: ${code} `))]);
+      expect(w.outbox().map((o) => o.text)).toEqual(w.notices().map((n) => n.text));
+    });
+  }
+});
+
+describe("[M25.2] two members", () => {
+  it("Bo's job cannot read Ada's memory: its memory_search is Bo's own store, and her fact never reaches the model", async () => {
+    const w = authorityWorld({ jobs: true, script: [] });
+    const ctx = (p: string) => ({ requester: p, setting: { scope: "personal" as const }, source: "chat:test", dedupe: crypto.randomUUID() });
+    await w.host(ada.email).memory.memoryWrite({ target: "daily", text: "The vault code is heron-42." }, ctx(ada.email));
+    await w.host(other.email).memory.memoryWrite({ target: "daily", text: "Bo parks on level two." }, ctx(other.email));
+    const chat = ((await w.host(other.email).chats.open(w.clock.now)) as { chatId: string }).chatId;
+    const id = "bo-digest";
+    const def = { id, title: "Digest", chat, owner: { kind: "chat" as const, id: chat }, stop: { kind: "turned_off" as const }, timing: { schedule: { kind: "interval" as const, every: 30 }, zone: "UTC" }, gate: null, noGateReason: "A digest.", steps, ceilingTokens: 20_000, instructions: "Search memory for the vault code." };
+    await w.jobOf(other.email, id).instance.define({ owner: other.email, by: other.email, def });
+    const before = w.fake.requests.length;
+    w.fake.enqueue(
+      { toolCall: { id: "m1", name: "memory_search", arguments: { queries: ["vault code", "heron"] } } },
+      { toolCall: { id: "m2", name: "memory_get", arguments: { path: `memory/${new Date(w.clock.now).toISOString().slice(0, 10)}.md` } } },
+      report("No vault code found."),
+    );
+    await w.fireJob(other.email, id);
+    const seen = JSON.stringify(w.fake.requests.slice(before).map((r) => r.inputs.messages));
+    expect(seen).not.toContain("heron-42");
+    expect(seen).toContain("Bo parks on level two.");
+    expect(w.jobOf(other.email, id).instance.store.runs()).toMatchObject([{ signal: "notify" }]);
+  });
+});
+
+/** A former member's label: rows and files keyed by a person who is not on the roster (fletch's fixtures hold one person). */
+const other = { ...ada, id: "former-member", email: "former-member", name: "Pat" };

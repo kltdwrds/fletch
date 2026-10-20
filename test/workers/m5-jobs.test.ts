@@ -1,8 +1,8 @@
 // M5.1: the Job engine through the object harness, the real Ledger, Chat engine, egress module and
 // adapter, with the store's rows backdated by the clock the test owns and every alarm fired
-// explicitly. Fixture people are Sam Solo and Bo Wren of solo-sam.
+// explicitly. Fixture people are Sam Solo and Pat of solo-sam.
 import { describe, expect, it } from "vitest";
-import { AUTO_DISABLE_AFTER, BACKOFF_AFTER, RUN_MAX_ATTEMPTS } from "../../packages/agent/src/jobs/engine.ts";
+import { AUTO_DISABLE_AFTER, BACKOFF_AFTER, PROBE_MS, RUN_MAX_ATTEMPTS } from "../../packages/agent/src/jobs/engine.ts";
 import type { StepHandler } from "../../packages/agent/src/jobs/steps.ts";
 import { ada, jobWorld, PAGE, watchBody } from "./support/job-world.ts";
 
@@ -140,6 +140,33 @@ describe("[M5.1] job gates and runs", () => {
     expect((await w.ledger().modelCalls()).map((c) => c.status)).toEqual(["http_error", "http_error", "http_error"]);
   });
 
+  it("blocked sets a probe time and does not run until run now, which only the owner may say", async () => {
+    const w = jobWorld();
+    w.claimChat();
+    await w.register(watchBody());
+    await w.tick();
+    w.page.status = 429;
+    await w.tick();
+    expect(w.runs().at(-1)).toMatchObject({ signal: "blocked", code: "GATE_RATE_LIMITED" });
+    expect(w.runs().at(-1)!.nextProbe).toBe(w.clock.now + PROBE_MS);
+    expect(w.status()).toMatchObject({ status: "blocked", nextProbe: w.clock.now + PROBE_MS });
+    expect(w.notices()[0]!.text).toContain("stays paused until you say");
+    w.page.status = 200;
+    const hits = w.page.hits;
+    for (let i = 0; i < 24; i++) await w.tick(); // a day of probes
+    expect(w.page.hits).toBe(hits);
+    expect(w.runs()).toHaveLength(1);
+    expect(await w.engine().runNow(other.email)).toMatchObject({ ok: false, code: "JOB_NOT_OWNER" });
+    const now = await w.engine().runNow(ada.email);
+    expect(now).toMatchObject({ ok: true });
+    await w.settle();
+    expect(w.runs()).toHaveLength(2);
+    expect(w.runs()[1]).toMatchObject({ manual: true, signal: "notify" });
+    expect(w.status()!.status).toBe("active");
+    // A run the person asked for always answers, even with no change.
+    expect(w.notices().at(-1)!.text).toContain("no change since the last check");
+  });
+
   it("a three-step run forced to evict between steps completes each step exactly once", async () => {
     const { calls, steps } = counted(["a", "b", "c"]);
     const w = jobWorld({ steps });
@@ -182,6 +209,40 @@ describe("[M5.1] job gates and runs", () => {
     expect(w.runs()[0]!.signal).toBe("notify");
   });
 
+  it("an approval-wait step completes on the owner's decision, and times out without one", async () => {
+    const { steps } = counted(["compose", "unused"]);
+    const w = jobWorld({ steps });
+    w.claimChat();
+    await w.define({ timing: { schedule: { kind: "daily", at: "09:00" }, zone: "Europe/London" }, steps: [{ kind: "fixture:compose" }, { kind: "approval", prompt: "Send it?", timeoutMinutes: 60 }, { kind: "notify" }] });
+    await w.tick();
+    const run = w.engine().store.activeRun()!;
+    expect(run).toMatchObject({ phase: "awaiting_approval", step: 1 });
+    expect(await w.engine().resolveApproval({ runId: run.runId, step: 1, approve: true, by: other.email })).toMatchObject({ ok: false, code: "JOB_NOT_OWNER" });
+    expect(w.outbox()).toHaveLength(0);
+    expect(await w.engine().resolveApproval({ runId: run.runId, step: 1, approve: true, by: ada.email })).toEqual({ ok: true });
+    await w.settle();
+    expect(w.runs()[0]).toMatchObject({ signal: "notify" });
+    expect(w.notices()[0]!.text).toBe("compose done");
+    // The next day's run waits, nobody decides, and the timeout ends it as failed.
+    await w.tick();
+    expect(w.engine().store.activeRun()!.phase).toBe("awaiting_approval");
+    await w.tick();
+    expect(w.runs()[1]).toMatchObject({ signal: "failed", code: "APPROVAL_TIMEOUT" });
+  });
+
+  it("an agent-registered job is disabled until its owner enables it", async () => {
+    const w = jobWorld();
+    w.claimChat();
+    expect(await w.register(watchBody(), "qyvr:agent")).toMatchObject({ ok: true, status: "needs_enable" });
+    expect(w.job.alarmAt).toBeNull();
+    await w.engine().alarm();
+    expect(w.page.hits).toBe(0);
+    expect(await w.engine().enable(other.email)).toMatchObject({ ok: false, code: "JOB_NOT_OWNER" });
+    expect(await w.engine().enable(ada.email)).toEqual({ ok: true });
+    await w.tick();
+    expect(w.page.hits).toBe(1);
+  });
+
   it("a body in R2 is reconciled by hash: an edit applies at the next alarm, a broken edit needs attention and the person is told", async () => {
     const w = jobWorld();
     w.claimChat();
@@ -221,4 +282,18 @@ describe("[M5.1] job gates and runs", () => {
     expect(w.runs()).toHaveLength(1);
     expect(w.runs()[0]!.scheduledFor).toBe(Math.floor(w.clock.now / 600_000) * 600_000);
   });
+
+  it("delivers only into the owner's own chat: a chat owned by another member refuses the notice", async () => {
+    const w = jobWorld();
+    w.claimChat("chat-ada", other.email);
+    await w.register(watchBody());
+    await w.tick();
+    w.page.body = '{"title":"v2"}';
+    await w.tick();
+    expect(w.notices()).toHaveLength(0);
+    expect(w.outbox()[0]).toMatchObject({ state: "pending", lastCode: "CHAT_NOT_OWNER" });
+  });
 });
+
+/** A former member's label: rows and files keyed by a person who is not on the roster (fletch's fixtures hold one person). */
+const other = { ...ada, id: "former-member", email: "former-member", name: "Pat" };

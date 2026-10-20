@@ -280,6 +280,21 @@ describe("[M20.1] no code is shown as words (QYVR-174)", () => {
     expect(decideText("SOMETHING_NEW")).not.toContain("SOMETHING_NEW");
   });
 
+  it("the route answers its real refusals with the sentence beside the code", async () => {
+    const { w } = world([load, create(), { toolCall: { id: "s1", name: "shop_buy", arguments: { item: "chair", amount: 90 } } }]);
+    const { chatId } = await w.say(ada.email, "Make a board.");
+    const ask = (as: string, body: unknown, chat = chatId) => w.http(as, "POST", `/chats/${chat}/cards/decide`, body);
+    const seen = [
+      await ask(ada.email, { ids: [], choice: "once" }),
+      await ask(ada.email, { ids: ["c1"], choice: "once" }, "not-a-chat"),
+      await ask(ada.email, { ids: ["nope"], choice: "once" }),
+      await ask(other.email, { ids: ["c1"], choice: "once" }),
+    ];
+    const codes = seen.map((r) => (r.body.results as Array<{ code: string }> | undefined)?.[0]?.code ?? (r.body.code as string));
+    expect(codes).toEqual(["DECISION_INVALID", "CHAT_NOT_FOUND", "CARD_UNKNOWN", "APPROVAL_NOT_PRINCIPAL"]);
+    for (const [i, r] of seen.entries()) expect((r.body.results as Array<{ text: string }> | undefined)?.[0]?.text ?? r.body.text).toBe(decideText(codes[i] as string));
+  });
+
   it("the page draws each decide refusal in its words and keeps the code on the line; no answer at all is said in words too", async () => {
     const { w } = world([load, create()]);
     const chatId = await adaChat(w);
@@ -375,3 +390,6 @@ describe("[M20.1] the Jobs page says a status in the one table's words", () => {
     expect(APP_PAGE).toContain('const jobLine = (job) => (job.job ? job.job.cadence : "")');
   });
 });
+
+/** A former member's label: rows and files keyed by a person who is not on the roster (fletch's fixtures hold one person). */
+const other = { ...ada, id: "former-member", email: "former-member", name: "Pat" };

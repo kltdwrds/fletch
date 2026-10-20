@@ -146,6 +146,13 @@ describe("[M25.6] a job can be removed", () => {
     expect(forgotten).toEqual([`${ada.email}/job`]);
   });
 
+  it("two members: Bo cannot remove Ada's job, and it stays on with its alarm", async () => {
+    const w = watched(jobWorld({ script: [] }));
+    await w.define({ steps });
+    expect(w.status()).toMatchObject({ status: "active" });
+    expect(w.job.alarmAt).not.toBeNull();
+  });
+
   it("a removed job runs nothing: no tick, no run-now, no turning it on; removing again is the same answer", async () => {
     const w = watched(jobWorld({ script: [] }));
     await w.define({ steps });

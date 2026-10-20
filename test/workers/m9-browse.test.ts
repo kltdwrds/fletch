@@ -14,6 +14,25 @@ const sites = {
 };
 
 describe("[M9] the read lane", () => {
+  it("returns markdown with url_id links, fenced as external, and a url_id opens the next page", async () => {
+    const w = await browseWorld({
+      sites: { ...sites, "docs.fixture.example": { markdown: sites["docs.fixture.example"].markdown } },
+      script: [load, { toolCall: { id: "r1", name: "browse_open", arguments: { url: DOCS } } }, { toolCall: { id: "r2", name: "browse_open", arguments: { url_id: 2 } } }, { text: "Read both." }],
+    });
+    const { result } = await w.say(ada.email, `Summarise ${DOCS} for me.`);
+    expect(result).toMatchObject({ status: "done" });
+    const shown = seen(w);
+    expect(shown).toContain("[setup](url_id:2)");
+    expect(shown).toContain("[pricing](url_id:3)");
+    expect(shown).toContain('source=\\"tool:browse_open\\"');
+    expect(shown).toContain("(via kitesurf, 3 links)");
+    expect(shown).not.toContain("](/setup)");
+    expect(w.browser.reads).toEqual([
+      { url: DOCS, engine: "kitesurf" },
+      { url: "https://docs.fixture.example/setup", engine: "kitesurf" },
+    ]);
+    expect(await w.learned(ada.email, "docs.fixture.example")).toMatchObject({ engine: "kitesurf", state: "ok" });
+  });
 
   it("refuses an address the person did not write and no page handed over, and a page's prose cannot supply one", async () => {
     const w = await browseWorld({
@@ -70,6 +89,34 @@ describe("[M9] the read lane", () => {
 });
 
 describe("[M9] a block stops the scope", () => {
+  const walled = { "walled.fixture.example": { wall: "bot" as const, markdown: "# secret" }, ...sites };
+
+  it("a bot wall is reported, recorded for the domain and never retried through another engine, lane or url", async () => {
+    const w = await browseWorld({
+      sites: walled,
+      script: [
+        load,
+        { toolCall: { id: "b1", name: "browse_open", arguments: { url: "https://walled.fixture.example/" } } },
+        // Every other way in, as a model that wants the page would try it.
+        { toolCall: { id: "b2", name: "browse_open", arguments: { url: "https://walled.fixture.example/" } } },
+        { toolCall: { id: "b3", name: "browse_live", arguments: { url: "https://walled.fixture.example/" } } },
+        // The unaffected part of the task carries on.
+        { toolCall: { id: "b4", name: "browse_open", arguments: { url: DOCS } } },
+        { text: "The walled site is stopped; the docs I read." },
+      ],
+    });
+    await w.say(ada.email, `Compare https://walled.fixture.example/ with ${DOCS}.`);
+    const shown = seen(w);
+    expect(shown).toContain("BROWSE_BOT_WALL: walled.fixture.example: the site put a bot check in front of the page.");
+    expect(shown).toContain("turned this browser away earlier");
+    expect(shown).toContain("[setup](url_id:");
+    // One request reached the wall, on the lightest engine; no Chromium, no live session.
+    expect(w.browser.reads.filter((r) => r.url.includes("walled"))).toEqual([{ url: "https://walled.fixture.example/", engine: "kitesurf" }]);
+    expect(w.browser.gotos).toEqual([]);
+    expect(w.browser.sessions).toEqual([]);
+    expect(await w.learned(ada.email, "walled.fixture.example")).toMatchObject({ engine: "kitesurf", state: "blocked", code: "BROWSE_BOT_WALL" });
+  });
+
   it("a rate limit stops that domain with the wait the service named", async () => {
     const w = await browseWorld({
       sites: { "busy.fixture.example": { wall: "rate" } },

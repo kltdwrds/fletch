@@ -5,13 +5,16 @@
 import { describe, expect, it } from "vitest";
 import { egressFor } from "../../packages/agent/src/connectors/egress.ts";
 import { githubNamespace } from "../../packages/agent/src/connectors/github.ts";
+import { hackerNewsNamespace } from "../../packages/agent/src/connectors/hackernews.ts";
 import { plan } from "../../packages/agent/src/egress/policy.ts";
 import { rulesFor } from "../../packages/agent/src/vault/hosts.ts";
+import { unwrapDataKey } from "@qyvr/host-cloudflare";
 import { FIXTURE_REPO, seededToken, vendors } from "../support/vendors/index.ts";
 import { asPerson, containsKey, keysFor, recordingKeys, testMasterKey, vaultHarness } from "./support/vault-harness.ts";
 import people from "../fixtures/people.json" with { type: "json" };
 
 const soloSam = people.companies[0]!.id;
+const otherTenant = "other-tenant";
 const ada = people.people.find((p) => p.id === "sam-solo")!;
 const GITHUB = { ref: "cred://github", hosts: ["api.github.com"] };
 
@@ -92,6 +95,16 @@ describe("[M3.2] egress module", () => {
     expect(JSON.stringify(s.harness.rows("SELECT * FROM egress_audit"))).not.toContain(s.token);
   });
 
+  it("Hacker News, the control, goes through the same module with no credential and no audit row", async () => {
+    const s = setup();
+    const hn = hackerNewsNamespace(egressFor(s.vault, ada.email));
+    const text = await run(hn as never, "hn_top", { limit: 2 });
+    expect(text).toContain("9001: A fictional story about ledgers (120 points by fixture-author-a)");
+    expect(s.net.requests.map((r) => r.url)).toEqual(["https://hacker-news.firebaseio.com/v0/topstories.json", "https://hacker-news.firebaseio.com/v0/item/9001.json", "https://hacker-news.firebaseio.com/v0/item/9002.json"]);
+    expect(s.net.requests.every((r) => !("authorization" in r.headers))).toBe(true);
+    expect(s.harness.rows("SELECT * FROM egress_audit")).toEqual([]);
+  });
+
   it("a vendor that echoes the token gets it redacted from the body and headers before the caller sees them", async () => {
     const s = setup({ hostile: true });
     await s.vault.capture({ ...GITHUB, value: s.token }, asPerson(ada.email));
@@ -109,6 +122,32 @@ describe("[M3.2] egress module", () => {
 });
 
 describe("[M3.2] vault keys", () => {
+  it("a blob wrapped for solo-sam is refused when presented as other-tenant, by its tenant field and by the AEAD", async () => {
+    const master = testMasterKey();
+    const raw = crypto.getRandomValues(new Uint8Array(32));
+    const wrapped = await keysFor(soloSam, master).wrap(raw);
+    if (!wrapped.ok) throw new Error(wrapped.code);
+    expect(wrapped.blob.split(".")[1]).toBe(soloSam);
+    expect(await keysFor(otherTenant, master).unwrap(wrapped.blob)).toMatchObject({ ok: false, code: "KEY_TENANT_MISMATCH" });
+    // Relabelled for other-tenant, the blob reaches decryption, and the tenant AAD refuses it.
+    const relabelled = wrapped.blob.replace(`.${soloSam}.`, `.${otherTenant}.`);
+    expect(await keysFor(otherTenant, master).unwrap(relabelled)).toMatchObject({ ok: false, code: "KEY_UNWRAP_FAILED" });
+    const back = await keysFor(soloSam, master).unwrap(wrapped.blob);
+    expect(back.ok && [...back.key]).toEqual([...raw]);
+  });
+
+  it("the AAD is the guard: the relabelled blob opens for other-tenant only if the tenant check and AAD are bypassed together", async () => {
+    // unwrapDataKey with the tenant the blob was made for opens it; the tenant the caller's props
+    // name is what a real call passes, so a foreign caller can never supply the original tenant.
+    const master = testMasterKey();
+    const raw = crypto.getRandomValues(new Uint8Array(32));
+    const wrapped = await keysFor(soloSam, master).wrap(raw);
+    if (!wrapped.ok) throw new Error(wrapped.code);
+    const { importMaster } = await import("@qyvr/host-cloudflare");
+    const key = (await importMaster(master))!;
+    expect(await unwrapDataKey(key, soloSam, wrapped.blob)).toMatchObject({ ok: true });
+    expect(await unwrapDataKey(key, otherTenant, wrapped.blob.replace(`.${soloSam}.`, `.${otherTenant}.`))).toMatchObject({ ok: false, code: "KEY_UNWRAP_FAILED" });
+  });
 
   it("refuses with stable codes when props name no tenant or the master key is missing", async () => {
     const raw = new Uint8Array(32);
@@ -143,5 +182,20 @@ describe("[M3.2] vault keys", () => {
     expect(containsKey(`blob ${hex}`, key)).toBe(true);
     expect(containsKey(btoa(String.fromCharCode(...key)), key)).toBe(true);
     expect(containsKey(new Uint8Array(64), key)).toBe(false);
+  });
+
+  it("a vault whose stored blob was wrapped for another tenant stays locked and resolves nothing", async () => {
+    const master = testMasterKey();
+    const token = seededToken();
+    const net = vendors({ githubToken: token });
+    const w = vaultHarness({ tenant: soloSam, keys: keysFor(soloSam, master), fetch: net, name: "shared-db" });
+    await w.vault.capture({ ...GITHUB, value: token }, asPerson(ada.email));
+    // The same storage presented to other-tenant's key binding: the blob does not open.
+    const t = vaultHarness({ tenant: otherTenant, keys: keysFor(otherTenant, master), fetch: net, name: "other-tenant-copy" });
+    const blob = w.harness.rows("SELECT blob FROM vault_key")[0]!.blob as string;
+    expect(t.vault).toBeDefined(); // builds the instance and its schema
+    t.harness.db.exec(`INSERT INTO vault_key (id, blob, created_at) VALUES (1, '${blob}', 0)`);
+    expect(await t.vault.capture({ ...GITHUB, value: token }, asPerson(ada.email))).toMatchObject({ ok: false, code: "VAULT_LOCKED" });
+    expect(net.requests).toEqual([]);
   });
 });

@@ -76,6 +76,30 @@ async function adaPage(w: World) {
 const toolStep = (name: string, text: string): FakeStep => ({ checkpoint: name, step: { toolCall: { name: "send_to_user", arguments: { text } } } });
 
 describe("[M24.2] the page steers a running turn: queued sends and Stop", () => {
+  it("a send while a tool turn runs is drawn as sent, never refused, and the reply that takes it up is drawn; the next request carries it fenced; Bo gets nothing", async () => {
+    const w = world([toolStep("tool", "Looking now."), { text: "About ZEBRA-7: yes, I have it noted." }]);
+    const { p } = await adaPage(w);
+    await p.type("check my notes");
+    await w.fake.reached("tool");
+    expect(p.busy()).toBe(true);
+    await p.type("also remember ZEBRA-7");
+    await settle();
+    // Taken, not refused: drawn as sent while the first turn still runs, with no "Not sent" note.
+    expect(p.bubbles()).toEqual([["m you", "check my notes"], ["m you", "also remember ZEBRA-7"]]);
+    w.fake.release("tool");
+    await settle();
+    expect(p.busy()).toBe(false);
+    expect(p.bubbles().filter(([c]) => c?.includes("note"))).toEqual([]);
+    expect(p.bubbles()).toContainEqual(["m agent", "About ZEBRA-7: yes, I have it noted."]);
+    // One turn, two model calls: the second request holds the queued message, as data, after the first step's work.
+    expect(w.fake.requests).toHaveLength(2);
+    expect(JSON.stringify(w.fake.requests[1]?.inputs.messages)).toContain("also remember ZEBRA-7");
+    expect(JSON.stringify(w.fake.requests[0]?.inputs.messages)).not.toContain("ZEBRA-7");
+    // A reload draws both of the person's messages and both replies.
+    const again = await adaPage(w);
+    const drawn = again.p.bubbles();
+    for (const b of [["m you", "check my notes"], ["m you", "also remember ZEBRA-7"], ["m agent", "Looking now."], ["m agent", "About ZEBRA-7: yes, I have it noted."]]) expect(drawn).toContainEqual(b);
+  });
 
   it("Stop shows only while a turn is shown working; a click says it is stopping, and the turn ends at its next step boundary with no further model call", async () => {
     // Step one's message is committed and sent; step two is in flight when Stop is clicked, so what it proposes is never sent.
@@ -126,6 +150,20 @@ describe("[M24.2] the page steers a running turn: queued sends and Stop", () => 
 
 // M29.1 took Compact out of the person's app: the route stays for operators, and the Chat still decides there.
 describe("[M24.2] compaction is asked for through the route, where the Chat decides", () => {
+  it("Ada's manual compaction runs and is recorded; Bo's is refused 403 CHAT_NOT_OWNER with no model call and no record", async () => {
+    const w = world([{ text: "one" }, { text: "two" }, { text: "Ada asked two things; both answered." }]);
+    await w.chat.instance.send({ person: ada.email, text: "first question" });
+    await w.chat.instance.send({ person: ada.email, text: "second question" });
+    const refused = (await w.compactRoute(other.email)) as Response;
+    expect([refused.status, ((await refused.json()) as { code: string }).code]).toEqual([403, "CHAT_NOT_OWNER"]);
+    expect(w.chat.instance.compactionsFor(ada.email)).toEqual([]);
+    expect(w.fake.requests).toHaveLength(2);
+    const done = (await w.compactRoute(ada.email)) as Response;
+    expect([done.status, ((await done.json()) as { ok: boolean }).ok]).toEqual([200, true]);
+    const records = w.chat.instance.compactionsFor(ada.email) ?? [];
+    expect(records.map((r) => r.trigger)).toEqual(["manual"]);
+    expect(w.fake.requests).toHaveLength(3);
+  });
 
   it("a compaction the Chat cannot run is refused with its code, never as done", async () => {
     const w = world([{ text: "only one" }]);
@@ -136,3 +174,6 @@ describe("[M24.2] compaction is asked for through the route, where the Chat deci
     expect(w.chat.instance.compactionsFor(ada.email)?.filter((r) => r.trigger === "manual" && (r as { status?: string }).status !== "failed")).toEqual([]);
   });
 });
+
+/** A former member's label: rows and files keyed by a person who is not on the roster (fletch's fixtures hold one person). */
+const other = { ...ada, id: "former-member", email: "former-member", name: "Pat" };

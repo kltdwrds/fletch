@@ -8,6 +8,7 @@
 import { describe, expect, it } from "vitest";
 import { serve } from "../../packages/agent/src/http/serve.ts";
 import { LINK_TTL_MS } from "../../packages/agent/src/files/links.ts";
+import { homeKey } from "../../packages/agent/src/memory/home.ts";
 import { render as renderMarkdown, type RenderResult } from "../../packages/agent/src/render/render.ts";
 import { RENDER_WORDS } from "../../packages/agent/src/render/tools.ts";
 import type { FakeStep } from "../support/fake-model.ts";
@@ -15,7 +16,7 @@ import { ada, authorityWorld, T0, TENANT } from "./support/authority-world.ts";
 
 const DOCX_BYTES = [0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x06, 0x00, 0x08, 0x00, 0x77, 0x72, 0x65, 0x6e];
 const DOCX = btoa(String.fromCharCode(...DOCX_BYTES));
-const BRIEF = `# Henley handover\n\n${ada.name} hands the Henley file to the next shift.`;
+const BRIEF = `# Henley handover\n\n${ada.name} hands the Henley file to Pat.`;
 const DOCX_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 /** The Renderer as `renderer.ts` runs it, over a pandoc port that answers from `answer`; every request recorded. */
@@ -44,6 +45,24 @@ async function publicGet(w: ReturnType<typeof authorityWorld>, path: string) {
 }
 
 describe("[M24.3] render_document", () => {
+  it("renders Markdown to docx on the Renderer and saves a Library item whose bytes are in R2 under Ada's home prefix with their content type", async () => {
+    const p = okPandoc();
+    const w = authorityWorld({ script: [load, renderStep("docx"), { text: "Made it." }], render: p.render });
+    await w.say(ada.email, "Make the Henley brief a Word file.");
+    expect(p.asked).toEqual([{ text: BRIEF, from: "markdown-raw_html-raw_attribute", to: "docx", standalone: true, sandbox: true }]);
+    const key = homeKey(ada.email, "files/documents/henley-brief.docx");
+    expect([...(w.r2.bytes(key) ?? [])]).toEqual(DOCX_BYTES);
+    expect((await w.r2.get(key))?.httpMetadata).toEqual({ contentType: DOCX_TYPE });
+    const lib = await w.http(ada.email, "GET", "/app/library");
+    expect((lib.body.files as { files: unknown[] }).files).toMatchObject([{ path: "documents/henley-brief.docx", size: DOCX_BYTES.length, mediaType: DOCX_TYPE, writer: `agent:${ada.email}` }]);
+    // The tool told the agent in words where it is, with a link for Ada alone.
+    expect(w.transcriptOf(ada.email).join("\n")).toMatch(/SAVED: documents\/henley-brief\.docx \(docx, 14 bytes\) is in the person's Library\. Download link for the person only, valid 5 minutes: \/app\/file\/raw\?path=documents%2Fhenley-brief\.docx&exp=\d+&sig=[0-9a-f]{64}&download=1/);
+    // A binary document is never read as text: file reads refuse it with a code, and the raw route serves nothing without a signed link.
+    expect(await w.host(ada.email).files.read({ path: "documents/henley-brief.docx" }, ada.email)).toMatchObject({ ok: false, code: "FILES_BINARY" });
+    expect(await w.http(ada.email, "GET", "/app/file/raw?path=documents%2Fhenley-brief.docx")).toMatchObject({ status: 403, body: { code: "LINK_REQUIRED" } });
+    // Bo's Library does not list it.
+    expect(((await w.http(other.email, "GET", "/app/library")).body.files as { files: unknown[] }).files).toEqual([]);
+  });
 
   it("renders html as a text Library item the M23.4 viewer reads, and odt as bytes", async () => {
     const p = okPandoc();
@@ -106,6 +125,14 @@ describe("[M24.3] signed download links", () => {
       url.replace(/&sig=[0-9a-f]+/, ""),
     ];
     for (const v of variants) expect(await w.http(ada.email, "GET", v), v).toMatchObject({ status: 403, body: { code: "LINK_INVALID" } });
+  });
+
+  it("Bo cannot download Ada's item, even with Ada's own link, nor get a link to it", async () => {
+    const { w, url } = await saved();
+    expect(await w.http(other.email, "GET", url)).toMatchObject({ status: 403, body: { code: "LINK_INVALID" } });
+    expect(await w.http(other.email, "GET", "/app/file/link?path=documents%2Fhenley-brief.docx")).toMatchObject({ status: 404, body: { code: "FILES_NOT_FOUND" } });
+    // Bo's own object never holds Ada's row, and Ada's object refuses a requester who is not Ada.
+    expect(await w.host(ada.email).links.linked({ path: "documents/henley-brief.docx", exp: "1", sig: "0".repeat(64) }, other.email)).toMatchObject({ ok: false, code: "FILES_NOT_OWNER" });
   });
 });
 
@@ -206,3 +233,6 @@ describe("[M24.3] public share links", () => {
     expect(await r.json()).toMatchObject({ code: "SHARE_CHANGED" });
   });
 });
+
+/** A former member's label: rows and files keyed by a person who is not on the roster (fletch's fixtures hold one person). */
+const other = { ...ada, id: "former-member", email: "former-member", name: "Pat" };

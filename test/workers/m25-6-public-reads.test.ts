@@ -72,4 +72,12 @@ describe("[M25.6] a credential still needs its registered host", () => {
     expect(await w.egress(ada.email, `https://${SHOP_API}/orders`, "cred://shop-api")).toMatchObject({ ok: true });
     expect(w.requests.map((r) => r.authorization)).toEqual([null, `Bearer ${w.token}`]);
   });
+
+  it("two members: Bo's job cannot reach Ada's credentialed host with her credential, and the vendor sees none of it", async () => {
+    const w = vaultWorld();
+    await seedShop(w, "standing");
+    expect(await w.vault().egress({ url: `https://${SHOP_API}/orders`, method: "GET", headers: [["authorization", "Bearer cred://shop-api"]] }, { person: "former-member", purpose: "job:bo-watch" })).toMatchObject({ ok: false, code: "EGRESS_CRED_UNKNOWN" });
+    expect(w.requests).toEqual([]);
+    expect(JSON.stringify(w.vault().audit())).not.toContain(w.token);
+  });
 });

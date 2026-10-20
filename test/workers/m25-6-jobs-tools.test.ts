@@ -98,6 +98,14 @@ describe("[M25.6] remove a job", () => {
     expect(said(w, ada.email)).toContain("(no jobs)");
   });
 
+  it("two members: Bo cannot remove Ada's job, even approving his own card", async () => {
+    const w = authorityWorld({ jobs: true, script: [] });
+    const { id } = await made(w);
+    w.fake.enqueue(load, remove(id), { text: "Tried." });
+    expect(w.jobOf(ada.email, id).instance.status()?.status).toBe("needs_enable");
+    expect(w.jobIds(ada.email)).toEqual([id]);
+  });
+
   it("the same job asked for again after removal is made again, not found as existing", async () => {
     const w = authorityWorld({ jobs: true, script: [] });
     const { chat, id } = await made(w);
@@ -154,4 +162,16 @@ describe("[M25.6] the cap counts only live jobs", () => {
     await w.say(ada.email, "Watch one more.", chat);
     expect(w.jobIds(ada.email)).toHaveLength(MAX_JOBS + 1);
   });
+
+  it("two members: Ada's full list does not stop Bo", async () => {
+    const w = authorityWorld({ jobs: true, script: [] });
+    await fill(w);
+    const chat = await open(w, other.email);
+    w.fake.enqueue(load, one, { text: "Set." });
+    await w.say(other.email, "Watch one more.", chat);
+    expect(w.jobIds(other.email)).toHaveLength(1);
+  });
 });
+
+/** A former member's label: rows and files keyed by a person who is not on the roster (fletch's fixtures hold one person). */
+const other = { ...ada, id: "former-member", email: "former-member", name: "Pat" };

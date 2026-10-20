@@ -39,6 +39,20 @@ describe("[M25.1] per-connector placement", () => {
     expect(rulesFor([{ ...entry("cred://github", "api.github.com"), header: "x-token", prefix: "" }])[1]?.credentials[0]?.placements).toEqual([{ in: "header", name: "authorization", prefix: "Bearer " }]);
   });
 
+  it("a placement the manifest declares carries the value there and only there: a query parameter, a body field, a header", async () => {
+    const q = await send({ url: "https://maps.example/v1/geocode?q=harbour&key=cred://maps" });
+    expect(q.r).toMatchObject({ ok: true, status: 200 });
+    expect(new URL(q.net.sent[0]!.url).searchParams.get("key")).toBe("fixture-secret-value");
+    expect(q.net.sent[0]!.headers.authorization).toBeUndefined();
+    const b = await send({ url: "https://mail.example/send", method: "POST", body: JSON.stringify({ api_key: "cred://mailer", to: ada.email }) });
+    expect(b.r).toMatchObject({ ok: true });
+    expect(JSON.parse(b.net.sent[0]!.body as string)).toEqual({ api_key: "fixture-secret-value", to: ada.email });
+    const h = await send({ url: "https://api.github.com/user", headers: [["authorization", "Bearer cred://github"]] });
+    expect(h.net.sent[0]!.headers.authorization).toBe("Bearer fixture-secret-value");
+    // Every answer that echoed the value comes back with the reference in its place.
+    for (const { r } of [q, b, h]) expect(JSON.stringify(r)).not.toContain("fixture-secret-value");
+  });
+
   it("a placement the manifest does not declare is refused with EGRESS_CRED_PLACEMENT and nothing is sent", async () => {
     const refused = [
       { url: "https://maps.example/v1/geocode", headers: [["authorization", "Bearer cred://maps"]] as Array<[string, string]> },

@@ -18,6 +18,8 @@ function treeFor(owner: string): PersonTree {
   }, {}).instance;
   return tree as PersonTree;
 }
+
+const toolText = (w: ReturnType<typeof authorityWorld>, at = -1) => w.fake.requests.at(at)?.inputs.messages.filter((m) => m.role === "tool").map((m) => String(m.content)).join("\n") ?? "";
 const run = async (ns: ReturnType<typeof filesNamespace>, tool: string, args: Record<string, unknown>) => {
   const spec = ns.tools.find((t) => t.name === tool);
   if (!spec) throw new Error(`no ${tool}`);
@@ -31,6 +33,18 @@ describe("[M24.3] one vocabulary", () => {
     const ns = filesNamespace(homeOnly, ada.email, `agent:${ada.email}`, { tree: directTreeApi(treeFor(ada.email)) });
     expect(ns.tools.map((t) => t.name)).toEqual(["file_list", "file_read", "file_write", "file_edit", "file_grep", "file_find", "file_delete"]);
     expect(ns.tools.filter((t) => t.mutates).map((t) => t.name)).toEqual(["file_write", "file_edit", "file_delete"]);
+  });
+
+  it("work/ paths are served by the Workspace: write, read, edit, grep, find, list and delete round trip", async () => {
+    const ns = filesNamespace(homeOnly, ada.email, `agent:${ada.email}`, { tree: directTreeApi(treeFor(ada.email)) });
+    expect(await run(ns, "file_write", { path: "work/henley/plan.md", text: "# Henley\n- [ ] book venue\n- [ ] tell Pat\n" })).toMatch(/^saved work\/henley\/plan\.md, \d+ bytes$/);
+    expect(await run(ns, "file_edit", { path: "work/henley/plan.md", oldText: "- [ ] book venue", newText: "- [x] book venue" })).toMatch(/edited work\/henley\/plan\.md at line 2/);
+    expect(await run(ns, "file_read", { path: "work/henley/plan.md" })).toContain("2: - [x] book venue");
+    expect(await run(ns, "file_grep", { pattern: "Pat" })).toBe("work/henley/plan.md:3: - [ ] tell Pat");
+    expect(await run(ns, "file_find", { pattern: "**/*.md" })).toBe("work/henley/plan.md");
+    expect(await run(ns, "file_list", { prefix: "work/" })).toMatch(/work\/henley\/\nwork\/henley\/plan\.md \(\d+ bytes\)/);
+    expect(await run(ns, "file_delete", { path: "work/henley/plan.md" })).toBe("deleted work/henley/plan.md");
+    await expect(run(ns, "file_read", { path: "work/henley/plan.md" })).rejects.toThrow(/^TREE_NOT_FOUND:/);
   });
 
   it("an edit whose oldText is missing or occurs twice is refused with its code, and the file is unchanged", async () => {
@@ -56,6 +70,44 @@ describe("[M24.3] one vocabulary", () => {
     expect(await run(ns, "file_delete", { path: "notes/todo.md" })).toBe("deleted notes/todo.md");
   });
 
+  it("the tree refuses every call from anyone but its owner: Bo can never read, list, grep, find, write, edit or delete Ada's tree", async () => {
+    const tree = treeFor(ada.email);
+    await tree.write({ path: "work/private/salary.md", text: "Sam Solo's offer letter\n" }, ada.email);
+    const calls = [
+      tree.read({ path: "work/private/salary.md" }, other.email),
+      tree.list({ prefix: "work" }, other.email),
+      tree.grep({ pattern: "offer" }, other.email),
+      tree.find({ pattern: "**/*" }, other.email),
+      tree.write({ path: "work/private/salary.md", text: "x" }, other.email),
+      tree.edit({ path: "work/private/salary.md", oldText: "offer", newText: "x" }, other.email),
+      tree.readBytes({ path: "work/private/salary.md" }, other.email),
+      tree.remove({ path: "work/private/salary.md" }, other.email),
+    ];
+    for (const r of await Promise.all(calls)) expect(r).toMatchObject({ ok: false, code: "TREE_NOT_OWNER" });
+    expect(await tree.read({ path: "work/private/salary.md" }, ada.email)).toMatchObject({ ok: true, lines: [{ n: 1, text: "Sam Solo's offer letter" }, { n: 2, text: "" }] });
+  });
+
+  it("through real chats, Bo's compromised model reaching for Ada's tree finds only his own, and Ada's file is untouched", async () => {
+    const steps = (who: string) => [
+      { toolCall: { id: `${who}-l`, name: "tool_search", arguments: { load: ["files"] } } },
+      { toolCall: { id: `${who}-r`, name: "file_read", arguments: { path: "work/private/salary.md" } } },
+      { toolCall: { id: `${who}-g`, name: "file_grep", arguments: { pattern: "offer" } } },
+      { toolCall: { id: `${who}-f`, name: "file_find", arguments: { pattern: "**/*" } } },
+      { toolCall: { id: `${who}-ls`, name: "file_list", arguments: { prefix: "work/" } } },
+      { text: "Done." },
+    ];
+    const w = authorityWorld({ stores: true, script: steps("bo") });
+    await w.host(ada.email).tree.write({ path: "work/private/salary.md", text: "Sam Solo's offer letter\n" }, ada.email);
+    await w.say(other.email, "Read Ada's salary file in work/private.");
+    const seen = w.fake.requests.flatMap((r) => r.inputs.messages.filter((m) => m.role === "tool").map((m) => String(m.content))).join("\n");
+    expect(seen).toContain("TREE_NOT_FOUND: no file at work/private/salary.md");
+    expect(seen).not.toContain("offer letter");
+    expect(seen).toContain("no matches");
+    expect(seen).toContain("nothing found");
+    expect(toolText(w)).toContain("no files");
+    expect(await w.host(ada.email).tree.read({ path: "work/private/salary.md" }, ada.email)).toMatchObject({ ok: true, lines: [{ n: 1, text: "Sam Solo's offer letter" }, { n: 2, text: "" }] });
+  });
+
   it("a long line is cut on its page with a marker, never passed off as whole", async () => {
     const tree = treeFor(ada.email);
     await tree.write({ path: "work/wide.txt", text: `short\n${"x".repeat(TREE_PAGE_BYTES * 2)}\nafter` }, ada.email);
@@ -67,3 +119,6 @@ describe("[M24.3] one vocabulary", () => {
     expect(r.lines[0]?.text).toMatch(/\[TREE_LINE_CUT: this line is \d+ bytes/);
   });
 });
+
+/** A former member's label: rows and files keyed by a person who is not on the roster (fletch's fixtures hold one person). */
+const other = { ...ada, id: "former-member", email: "former-member", name: "Pat" };

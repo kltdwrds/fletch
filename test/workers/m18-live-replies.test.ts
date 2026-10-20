@@ -4,7 +4,7 @@
 // before the chat took it (a refused send looked sent and vanished on reload), a turn that ended on a
 // card came back without it, and the page's socket had no bound on a connect and no proof it answered.
 // Two members wherever frames or history are read: Bo's socket on Ada's chat gets none of it.
-import { describe, expect, it, } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { ChatEngine, type EngineCtx } from "../../packages/agent/src/chat/engine.ts";
 import { connectFrame, ownerOnly } from "../../packages/agent/src/chat/protocol.ts";
 import { answerFrame } from "../../packages/agent/src/chat/socket.ts";
@@ -14,7 +14,7 @@ import { ANSWER_TIMEOUT_MS, OPEN_TIMEOUT_MS, RECONNECT_DELAYS_MS, RECONNECT_SCRI
 import { Ledger } from "../../packages/agent/src/objects/ledger.ts";
 import { FakeModel, type FakeStep } from "../support/fake-model.ts";
 import { harnessNamespace, ObjectHarness } from "../support/object-harness.ts";
-import { ada, } from "./support/authority-world.ts";
+import { ada, authorityWorld } from "./support/authority-world.ts";
 
 const T0 = Date.UTC(2026, 9, 15, 4, 34, 0);
 type Frame = Record<string, unknown>;
@@ -65,6 +65,32 @@ const snapshot = (r: ReturnType<typeof connectFrame>) => (r.ok && r.frame.type =
 const send = (text: string, id?: string) => JSON.stringify({ type: "send", text, ...(id ? { id } : {}) });
 
 describe("[M18.1] the chat says a turn started and is running, to its owner only (QYVR-164)", () => {
+  it("Ada's turn is announced the moment her message is stored, and a reconnect mid-turn says it is running; Bo's socket gets none of it", async () => {
+    const w = world([{ checkpoint: "slow-model", step: { text: "Your Tuesday is free." } }]);
+    const adaSocket = w.socketOf(ada.email);
+    // The send goes through the socket's production answer, as `onMessage` hands it over.
+    const answered = answerFrame(ada.email, send("Is my Tuesday free?", "send-1"), w.chat.instance);
+    await w.fake.reached("slow-model");
+
+    // The model call is still running (minutes, on staging): the page already knows the message is in.
+    const started = adaSocket.frames.find((f) => f.type === "turn_started");
+    expect(started).toMatchObject({ type: "turn_started", id: "send-1", text: "Is my Tuesday free?" });
+    const during = snapshot(w.resync(ada.email));
+    expect(during?.running).toEqual({ turn: started?.turn, since: T0 });
+    expect(during?.entries).toEqual([{ kind: "you", text: "Is my Tuesday free?", at: T0, id: "send-1", mid: "m1" }]);
+
+    w.fake.release("slow-model");
+    expect(await answered).toBeNull();
+    const kinds = adaSocket.frames.map((f) => f.type);
+    expect(kinds.indexOf("turn_started")).toBeLessThan(kinds.indexOf("delta"));
+    expect(adaSocket.frames.at(-1)).toEqual({ type: "turn_done", turn: started?.turn, chars: "Your Tuesday is free.".length });
+    // A finished turn is never running: the next re-sync says so.
+    const after = snapshot(w.resync(ada.email));
+    expect(after?.running).toBeNull();
+    expect(after?.entries.map((e) => e.kind)).toEqual(["you", "agent"]);
+    const read = vi.fn(() => w.chat.instance.history());
+    expect(read).not.toHaveBeenCalled();
+  });
 
   it("every person-turn path keeps the marker history draws the person's words by, the refused-at-admission turn included", async () => {
     const w = world([{ text: "Hello Ada." }]);
@@ -97,6 +123,28 @@ describe("[M18.1] the chat says a turn started and is running, to its owner only
     await answerFrame(ada.email, send("Hello.", "send-1"), w.chat.instance);
     expect(await answerFrame(ada.email, JSON.stringify({ type: "sync" }), w.chat.instance)).toEqual({ type: "history", ...w.chat.instance.history() });
     expect(await answerFrame(ada.email, send("Hello.", "not an id!"), w.chat.instance)).toMatchObject({ type: "error", code: "FRAME_UNPARSEABLE", reason: expect.stringContaining("id") });
+  });
+});
+
+describe("[M18.1] a reload draws every persisted turn, the latest one and its card included (QYVR-151)", () => {
+  it("Ada's three turns, the last ending on an approval card, are drawn alike by a reload and after the object restarts; Bo reads none", async () => {
+    const w = authorityWorld({ script: [{ text: "Your Tuesday is free." }, { text: "Wednesday too." }, { toolCall: { id: "m1", name: "mail_send", arguments: {  } } }] });
+    const { chatId } = await w.say(ada.email, "Is my Tuesday free?");
+    await w.say(ada.email, "And Wednesday?", chatId);
+    const last = await w.say(ada.email, "Mail Cal the report.", chatId);
+    expect(last.result).toMatchObject({ status: "done", awaiting: true });
+    const chat = w.chats.harness(chatId);
+    const draw = () => {
+      const r = connectFrame(ada.email, chat.instance.owner(), () => chat.instance.history());
+      return r.ok && r.frame.type === "history" ? r.frame.entries.map((e) => (e.kind === "card" ? ["card", e.card.state, e.card.title] : [e.kind, "text" in e ? e.text : ""])) : null;
+    };
+    const drawn = draw();
+    expect(drawn?.filter((e) => e[0] === "you").map((e) => e[1])).toEqual(["Is my Tuesday free?", "And Wednesday?", "Mail Cal the report."]);
+    expect(drawn?.at(-1)).toEqual(["card", "pending", expect.any(String)]);
+    chat.evict();
+    expect(draw()).toEqual(drawn);
+    const read = vi.fn(() => chat.instance.history());
+    expect(read).not.toHaveBeenCalled();
   });
 });
 

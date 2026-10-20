@@ -3,9 +3,13 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { Company } from "../../packages/agent/src/objects/company.ts";
 import { Ledger } from "../../packages/agent/src/objects/ledger.ts";
+import { Person } from "../../packages/agent/src/objects/person.ts";
+import { Vault } from "../../packages/agent/src/objects/vault.ts";
 import { OBJECT_MIGRATIONS, type ObjectKind } from "../../packages/agent/src/migrations/catalog.ts";
 import { migrate, migrationStatus, type Migration } from "../../packages/agent/src/migrations/engine.ts";
+import { type Probe, sweepTenant } from "../../packages/agent/src/migrations/sweep.ts";
 import { ObjectHarness } from "../support/object-harness.ts";
 import { ada } from "./support/authority-world.ts";
 
@@ -20,6 +24,7 @@ function dormant<T extends object>(name: string, kind: ObjectKind, make: (ctx: u
   seed?.(h);
   return h;
 }
+const names = <T extends object>(h: ObjectHarness<T>, kind: ObjectKind) => h.rows("SELECT name FROM migrations WHERE name LIKE ? ORDER BY name", `${kind}.%`).map((r) => String(r.name));
 const columnsOf = <T extends object>(h: ObjectHarness<T>) => Object.fromEntries(h.rows("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE '%_fts%' AND name != 'sqlite_sequence' ORDER BY name").map((t) => [t.name, h.rows(`SELECT name FROM pragma_table_info('${t.name}') ORDER BY name`).map((c) => c.name)]));
 
 describe("[M25.3] named migrations", () => {
@@ -90,6 +95,60 @@ describe("[M25.3] named migrations", () => {
   });
 });
 
+describe("[M25.3] the dormant sweep", () => {
+  it("wakes every object of a tenant with its two members, migrates each from the older release, and keeps their data apart", async () => {
+    const env = { TENANT_ID: "solo-sam", QYVR_ENV: "test" } as Record<string, unknown>;
+    const person = (email: string) => dormant<Person>(`person-${email}`, "person", (ctx, e) => new Person(ctx as never, e as never), env, (h) => {
+      h.db.prepare("INSERT INTO profile (email, role, enrolled_by, at) VALUES (?, 'member', NULL, 1)").run(email);
+    });
+    const people = new Map([[ada.email, person(ada.email)], [other.email, person(other.email)]]);
+    const company = dormant("company", "company", (ctx, e) => new Company(ctx as never, e as never), env);
+    const ledger = dormant("ledger", "ledger", (ctx, e) => new Ledger(ctx as never, e as never), env);
+    const vault = dormant("vault", "vault", (ctx, e) => new Vault(ctx as never, e as never), env);
+    for (const h of [company, ledger, vault, ...people.values()]) expect(h.rows("SELECT name FROM sqlite_master WHERE name = 'migrations'")).toEqual([]);
+
+    const report = await sweepTenant({
+      members: async () => [ada.email, other.email],
+      company: () => (company.instance as Company).migrationProbe(),
+      ledger: () => (ledger.instance as Ledger).migrationProbe(),
+      vault: () => (vault.instance as Vault).migrationProbe(),
+      person: async (email) => (await (people.get(email) as ObjectHarness<Person>).instance.platformCall({ op: "probe" })) as never,
+      chat: async () => { throw new Error("no chats in this tenant"); },
+      job: async () => { throw new Error("no jobs in this tenant"); },
+    });
+    expect(report.failed).toEqual([]);
+    expect(report).toMatchObject({ ok: true, woken: 5, migrated: 5, behind: [], failed: [] });
+    expect(report.applied).toBe(OBJECT_MIGRATIONS.company.length + OBJECT_MIGRATIONS.ledger.length + OBJECT_MIGRATIONS.vault.length + 2 * OBJECT_MIGRATIONS.person.length);
+    expect(names(ledger, "ledger")).toEqual(OBJECT_MIGRATIONS.ledger.map((m) => m.name).toSorted());
+    for (const [email, h] of people) {
+      expect(names(h, "person")).toEqual(OBJECT_MIGRATIONS.person.map((m) => m.name).toSorted());
+      expect(h.rows("SELECT email FROM profile").map((r) => r.email)).toEqual([email]);
+    }
+    // a second sweep finds nothing left to migrate
+    const again = await sweepTenant({
+      members: async () => [ada.email],
+      company: () => (company.instance as Company).migrationProbe(),
+      ledger: () => (ledger.instance as Ledger).migrationProbe(),
+      vault: () => (vault.instance as Vault).migrationProbe(),
+      person: async (email) => (await (people.get(email) as ObjectHarness<Person>).instance.platformCall({ op: "probe" })) as never,
+      chat: async () => { throw new Error("none"); },
+      job: async () => { throw new Error("none"); },
+    });
+    expect(again).toMatchObject({ ok: true, migrated: 0, applied: 0 });
+  });
+
+  it("an object behind or silent is reported, never counted as migrated", async () => {
+    const probe = (o: string, behind: string[] = []): Probe => ({ object: o, applied: 0, behind });
+    const base = { members: async () => [ada.email, other.email], company: async () => probe("company"), ledger: async () => probe("ledger"), vault: async () => probe("vault"), chat: async () => probe("chat"), job: async () => probe("job") };
+    const behind = await sweepTenant({ ...base, person: async (e) => ({ ...probe("person", e === other.email ? ["person.skill-seen"] : []), chats: [], jobs: [] }) });
+    expect(behind).toMatchObject({ ok: false, code: "MIGRATION_BEHIND", behind: [{ object: `person:${other.email}`, names: ["person.skill-seen"] }] });
+    const silent = await sweepTenant({ ...base, person: async (e) => { if (e === ada.email) throw new Error("EVICTED"); return { ...probe("person"), chats: ["c1"], jobs: [] }; }, chat: async () => { throw new Error("chat would not wake"); } });
+    expect(silent).toMatchObject({ ok: false, code: "MIGRATION_SWEEP_FAILED" });
+    expect(silent.failed.map((f) => f.object)).toEqual([`person:${ada.email}`, "chat:c1"]);
+    expect(silent.woken).toBe(4);
+  });
+});
+
 function sourceFiles(dir: string, out: Record<string, string> = {}): Record<string, string> {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     const p = join(dir, e.name);
@@ -110,3 +169,6 @@ function lazySchemaSites(files: Record<string, string> = sourceFiles(SRC)): stri
 function unlistedSchemas(files: Record<string, string> = sourceFiles(SRC), catalog = readFileSync(join(SRC, "migrations/catalog.ts"), "utf8")): string[] {
   return Object.entries(files).filter(([f, text]) => /export const (SCHEMA|MEMORY_SCHEMA)\s*=/.test(text) && !catalog.includes(`/${f.replace(/\.ts$/, "")}.ts"`) && !catalog.includes(`"../${f}"`)).map(([f]) => f);
 }
+
+/** A former member's label: rows and files keyed by a person who is not on the roster (fletch's fixtures hold one person). */
+const other = { ...ada, id: "former-member", email: "former-member", name: "Pat" };

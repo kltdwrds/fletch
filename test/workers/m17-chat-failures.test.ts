@@ -71,6 +71,15 @@ describe("[M17.1] a failed turn is a history entry (QYVR-156)", () => {
     expect(chat.rows("SELECT status, code, reason FROM turns WHERE status = 'failed'")).toEqual([{ status: "failed", code: "MODEL_HTTP_400", reason: expect.stringContaining("bad request") }]);
   });
 
+  it("Bo's socket on Ada's chat is refused and is sent none of her failures", async () => {
+    const w = world([{ status: 400, message: "Ada's private failure" }]);
+    const chat = w.chatFor("chat-ada");
+    await chat.instance.send({ person: ada.email, text: "Draft my resignation letter." });
+    expect(w.resync(chat, other.email)).toEqual({ ok: false, code: "CHAT_NOT_OWNER" });
+    expect(JSON.stringify(w.resync(chat, other.email))).not.toMatch(/resignation|private failure/);
+    expect(entries(w.resync(chat, ada.email))?.map((e) => e.kind)).toEqual(["you", "failed"]);
+  });
+
   it("the page draws a failure in words, from the live frame and from history, never the raw code alone", () => {
     expect(APP_PAGE).toContain('f.type === "turn_failed") { endThinking(); reply = null; add("note", f.text); }');
     expect(APP_PAGE).toContain('h.kind === "note" || h.kind === "failed" ? "note"');
@@ -128,6 +137,21 @@ describe("[M17.1] an exhausted budget fails every turn attempt at once, in words
     expect(w.fake.requests).toHaveLength(0);
   });
 
+  it("the company's allowance stops Ada and Bo alike, and each reads what ran out, when it resets and who raises it", async () => {
+    const w = world([{ text: "never reached" }]);
+    await w.ledger().setBudgets({ tenantDailyMicros: 75 });
+    await w.spend(ada.email, 500);
+    for (const [person, name] of [[ada.email, "chat-ada"], [other.email, "chat-bo"]] as const) {
+      const chat = w.chatFor(name);
+      const socket = chat.connect();
+      expect(await chat.instance.send({ person, text: "Hello" })).toMatchObject({ status: "failed", code: "BUDGET_TENANT_EXHAUSTED" });
+      const [frame] = failedFrames(socket.frames as Frame[]);
+      expect(frame?.code).toBe("BUDGET_TENANT_EXHAUSTED");
+      expect(frame?.text).toBe(failureText("BUDGET_TENANT_EXHAUSTED"));
+    }
+    expect(w.fake.requests).toHaveLength(0);
+  });
+
   it("the words say what ran out, when it resets and who can raise it, and carry no code", () => {
     const own = failureText("BUDGET_PERSON_EXHAUSTED");
     const company = failureText("BUDGET_TENANT_EXHAUSTED");
@@ -154,3 +178,6 @@ describe("[M17.1] an exhausted budget fails every turn attempt at once, in words
     expect(w.fake.requests).toHaveLength(1);
   });
 });
+
+/** A former member's label: rows and files keyed by a person who is not on the roster (fletch's fixtures hold one person). */
+const other = { ...ada, id: "former-member", email: "former-member", name: "Pat" };

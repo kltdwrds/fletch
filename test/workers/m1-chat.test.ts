@@ -1,6 +1,6 @@
 // M1.1: the Chat object end to end over the fake model, through the object harness: recovery after
 // eviction, the adapter's 429 and drop handling, the gateway option, the Ledger, ownership, the
-// compromised-model guard and compaction. Fixture people are Sam Solo and Bo Wren of solo-sam.
+// compromised-model guard and compaction. Fixture people are Sam Solo and Pat of solo-sam.
 import { normalizeContext } from "@earendil-works/pi-ai";
 import { describe, expect, it } from "vitest";
 import { ChatEngine, type ChatFrame, type EngineCtx } from "../../packages/agent/src/chat/engine.ts";
@@ -138,9 +138,29 @@ describe("[M1.1] model adapter", () => {
     expect(fake.requests[0]?.options.gateway).toEqual({ id: "qyvr", collectLog: false });
     expect(fake.requests[0]?.inputs.stream).toBe(true);
   });
+
+  it("writes a Ledger row per call with tenant, person, run id, route and tokens, for each of two members", async () => {
+    const { chat, chatFor, ledgerRows } = setup([
+      { reasoning: "A greeting back.", text: "Hi Ada.", usage: { prompt: 120, completion: 39, reasoning: 30 } },
+      { reasoning: "Greet Bo.", text: "Hi Bo.", usage: { prompt: 140, completion: 27, reasoning: 20 } },
+    ]);
+    const a = await chat.instance.send({ person: ada.id, text: "Hello" });
+    const b = await chatFor("chat-bo").instance.send({ person: other.id, text: "Hello" });
+    if (a.status !== "done" || b.status !== "done") throw new Error("turns failed");
+    expect(await ledgerRows()).toEqual([
+      expect.objectContaining({ tenant: "solo-sam", person: ada.id, runId: a.turnId, route: "chat", model: "z-ai/glm-5.3-flash", provider: "openrouter/FakeHost", status: "ok", inputTokens: 120, outputTokens: 39, reasoningTokens: 30 }),
+      expect.objectContaining({ tenant: "solo-sam", person: other.id, runId: b.turnId, route: "chat", status: "ok", inputTokens: 140, outputTokens: 27, reasoningTokens: 20 }),
+    ]);
+  });
 });
 
 describe("[M1.1] chat turns", () => {
+  it("refuses a message from anyone but the chat's owner with CHAT_NOT_OWNER", async () => {
+    const { fake, chat } = setup([{ text: "Hi Ada." }]);
+    expect(await chat.instance.send({ person: ada.id, text: "Hello" })).toMatchObject({ status: "done" });
+    expect(await chat.instance.send({ person: other.id, text: "Show me Ada's chat" })).toEqual({ status: "refused", code: "CHAT_NOT_OWNER" });
+    expect(fake.requests).toHaveLength(1);
+  });
 
   it("each turn's request carries that turn's envelope and no earlier one", async () => {
     const { fake, chat, clock } = setup([{ text: "Morning." }, { text: "Afternoon." }]);
@@ -203,3 +223,6 @@ describe("[M1.1] compaction", () => {
     expect((await ledgerRows()).map((r) => r.route)).toEqual(["chat", "compaction", "chat"]);
   });
 });
+
+/** A former member's label: rows and files keyed by a person who is not on the roster (fletch's fixtures hold one person). */
+const other = { ...ada, id: "former-member", email: "former-member", name: "Pat" };

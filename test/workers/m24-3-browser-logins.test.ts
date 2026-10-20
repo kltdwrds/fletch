@@ -8,8 +8,11 @@ import { describe, expect, it } from "vitest";
 import { browseNamespace } from "../../packages/agent/src/browse/tools.ts";
 import { bindingPort, captureState, restoreState } from "../../packages/agent/src/browse/binding.ts";
 import { UrlTable } from "../../packages/agent/src/browse/urls.ts";
-import { BrowserStateVault, browserRef, RESTORE } from "../../packages/agent/src/vault/browser-state.ts";
+import { MemoryService } from "../../packages/agent/src/memory/service.ts";
+import { PersonMemory } from "../../packages/agent/src/memory/store.ts";
+import { BrowserStateVault, browserRef, forgetConfirmed, RESTORE } from "../../packages/agent/src/vault/browser-state.ts";
 import { ObjectHarness } from "../support/object-harness.ts";
+import { asBucket, FakeR2 } from "./support/fake-r2.ts";
 import { FakeCdpBrowser } from "./support/fake-cdp-browser.ts";
 import { asPerson, keysFor, testMasterKey } from "./support/vault-harness.ts";
 import { ada, T0, TENANT } from "./support/authority-world.ts";
@@ -68,6 +71,18 @@ describe("[M24.3] saved browser logins", () => {
     expect(JSON.stringify(jar)).not.toContain(OTHER_COOKIE.value);
   });
 
+  it("Bo's agent can never restore Ada's login: nothing is found for Bo, and he cannot grant himself Ada's saved login", async () => {
+    const w = world();
+    const s1 = await w.signedIn();
+    await w.v().saveBrowserState({ session: s1, url: `https://${SITE}/home` }, { person: ada.email });
+    const ref = await browserRef(SITE);
+    await w.grant(ada.email, ref);
+    const { sessionId } = await w.browser.binding.acquire();
+    expect(await w.v().restoreBrowserState({ session: sessionId, url: SPAWN }, { person: "former-member" })).toEqual({ ok: true, restored: false, site: SITE });
+    expect(w.browser.sessions.get(sessionId)?.cookies).toEqual([]);
+    expect(w.browser.methods(sessionId)).toEqual([]);
+  });
+
   it("a saved login never leaves as a request credential or a fill, and no one can write a browser- reference", async () => {
     const w = world();
     const s1 = await w.signedIn();
@@ -81,6 +96,27 @@ describe("[M24.3] saved browser logins", () => {
     expect(await w.v().issueGrant({ ref, hosts: [SITE], methods: ["GET"] }, asPerson(ada.email))).toMatchObject({ ok: false, code: "VAULT_GRANT_INVALID" });
     expect(await w.v().issueGrant({ ref, hosts: [OTHER], methods: [RESTORE] }, asPerson(ada.email))).toMatchObject({ ok: false, code: "VAULT_GRANT_INVALID" });
     expect(await w.v().capture({ ref: "cred://browser-0011223344556677", value: "x", hosts: [SITE] }, asPerson(ada.email))).toMatchObject({ ok: false, code: "VAULT_REF_INVALID" });
+  });
+
+  it("the forget path removes the sealed login: Ada's plan names the site, her confirmation executes it, and the row and its grants are gone", async () => {
+    const w = world();
+    const s1 = await w.signedIn();
+    await w.v().saveBrowserState({ session: s1, url: `https://${SITE}/home` }, { person: ada.email });
+    await w.grant(ada.email, await browserRef(SITE));
+    const r2 = new FakeR2();
+    const mh = new ObjectHarness(`person-${ada.email}`, (ctx) => new MemoryService(new PersonMemory((ctx as DurableObjectState).storage, asBucket(r2), ada.email, () => T0), { search: async () => ({ ok: true, hits: [] }), get: async () => null, append: async () => ({ ok: false }) } as never), {});
+    const vault = () => ({ forgetBrowserStates: async (p: string, sites?: string[]) => w.v().forgetBrowserStates(p, sites) });
+    // Bo's confirmation of Ada's plan is refused by her memory, and nothing leaves the Vault.
+    const plan = await mh.instance.forgetPlan({ sites: [SITE] }, ada.email);
+    expect(plan).toMatchObject({ ok: true, claims: [], lines: [], sites: [SITE] });
+    const planId = (plan as { planId: string }).planId;
+    expect(w.h.rows("SELECT ref FROM secrets")).toHaveLength(1);
+    expect(await forgetConfirmed(mh.instance, vault, ada.email, planId, ada.email)).toMatchObject({ ok: true, sites: [SITE], logins: { ok: true, forgotten: [SITE] } });
+    expect(w.h.rows("SELECT ref FROM secrets")).toEqual([]);
+    expect(w.h.rows("SELECT nonce FROM credential_grants")).toEqual([]);
+    expect(w.h.rows("SELECT site FROM browser_states")).toEqual([]);
+    const { sessionId } = await w.browser.binding.acquire();
+    expect(await w.v().restoreBrowserState({ session: sessionId, url: SPAWN }, { person: ada.email })).toEqual({ ok: true, restored: false, site: SITE });
   });
 });
 

@@ -9,10 +9,11 @@ import { zipSync } from "fflate";
 import { describe, expect, it } from "vitest";
 import { describeForModel, type IngestDeps, ingestAttachment, type IngestResult } from "../../packages/agent/src/files/ingest.ts";
 import { ZIP_MAX_ENTRIES } from "../../packages/agent/src/files/convert/zip.ts";
-import { captionImage, } from "../../packages/agent/src/model/caption.ts";
+import type { Admission, ModelCallRow } from "../../packages/agent/src/ledger/types.ts";
+import { captionImage, CAPTION_CEILING } from "../../packages/agent/src/model/caption.ts";
 import { acceptsImages, modelFor } from "../../packages/agent/src/model/routes.ts";
 import { toWire } from "../../packages/agent/src/model/wire.ts";
-import { renderToMarkdown } from "../../packages/agent/src/render/reverse.ts";
+import { parseReverseInput, readMarkdownResponse, renderToMarkdown } from "../../packages/agent/src/render/reverse.ts";
 import { FIXTURES } from "../fixtures/files/build.ts";
 import { FakeModel, type FakeStep } from "../support/fake-model.ts";
 import { ada, authorityWorld } from "./support/authority-world.ts";
@@ -55,6 +56,13 @@ describe("[M24.3] fixtures", () => {
 });
 
 describe("[M24.3] conversions in the Worker", () => {
+  it("a PDF becomes Markdown, one section per page, at work/uploads/<id>/<name>.md", async () => {
+    const { deps, text } = world();
+    const r = await ingest(deps(ada.email), ada.email, "henley.pdf", "application/pdf");
+    expect(r).toEqual({ ok: true, kind: "document", treePath: "work/uploads/att-1/henley.pdf.md", pages: 1 });
+    const md = await text(ada.email, "work/uploads/att-1/henley.pdf.md");
+    expect(md).toMatch(/^# henley\.pdf\n\n## Page 1\n\nHenley handover, page one: Sam Solo hands the file to Pat\.\n\n## Page 2\n\nPage two: Pat confirms receipt for Solo Sam\.\n$/);
+  });
 
   it("a PDF with pages and no text layer is refused with INGEST_PDF_NO_TEXT, and a broken one with INGEST_PDF_INVALID", async () => {
     const { deps } = world();
@@ -71,6 +79,27 @@ describe("[M24.3] conversions in the Worker", () => {
     );
   });
 
+  it("a pptx becomes one section per slide in the presentation's order", async () => {
+    const { deps, text } = world();
+    expect(await ingest(deps(ada.email), ada.email, "offsite.pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation")).toMatchObject({ ok: true, kind: "document" });
+    expect(await text(ada.email, "work/uploads/att-1/offsite.pptx.md")).toBe("# offsite.pptx\n\n## Slide 1\n\nHenley offsite\n\nSam Solo & Pat\n\n## Slide 2\n\nAgenda\n\nBudget review for Solo Sam\n");
+  });
+
+  it("an ods becomes tables with repeats expanded only where they hold text, and an odp one section per page", async () => {
+    const { deps, text } = world();
+    expect(await ingest(deps(ada.email), ada.email, "rota.ods", "application/vnd.oasis.opendocument.spreadsheet")).toMatchObject({ ok: true, kind: "document" });
+    expect(await text(ada.email, "work/uploads/att-1/rota.ods.md")).toBe("# rota.ods\n\n## Sheet: Rota\n\n| Day | Who |\n| --- | --- |\n| Monday | Sam Solo |\n| Bo | Bo |\n| Bo | Bo |\n| Bo | Bo |\n");
+    expect(await ingest(deps(ada.email), ada.email, "welcome.odp", "application/vnd.oasis.opendocument.presentation")).toMatchObject({ ok: true, kind: "document" });
+    expect(await text(ada.email, "work/uploads/att-1/welcome.odp.md")).toBe("# welcome.odp\n\n## Slide 1: Welcome\n\nWelcome to Solo Sam\n\nSam Solo presents\n\n## Slide 2: Next\n\nPat closes\n");
+  });
+
+  it("a zip is unpacked into the tree under its own folder, every file readable there", async () => {
+    const { deps, text } = world();
+    expect(await ingest(deps(ada.email), ada.email, "bundle.zip", "application/zip")).toEqual({ ok: true, kind: "archive", treePath: "work/uploads/att-1/bundle", pages: 0, entries: 3 });
+    expect(await text(ada.email, "work/uploads/att-1/bundle/notes/plan.md")).toBe("# Plan\n\nSam Solo and Pat meet on Monday.\n");
+    expect(await text(ada.email, "work/uploads/att-1/bundle/notes/sub/budget.csv")).toBe("item,cost\nvenue,1250\n");
+  });
+
   it("a zip that climbs out, holds too many entries or unpacks too large is refused with its code, and nothing of it is written", async () => {
     const { w, deps } = world();
     const z = (files: Record<string, Uint8Array>) => zipSync(files);
@@ -85,6 +114,43 @@ describe("[M24.3] conversions in the Worker", () => {
     ];
     for (const [name, bytes, code] of planted) expect(await ingest(deps(ada.email), ada.email, name, "application/zip", bytes), name).toMatchObject({ ok: false, code });
     expect(await w.host(ada.email).tree.list({ prefix: "work" }, ada.email)).toEqual({ ok: true, entries: [], truncated: false });
+  });
+});
+
+describe("[M24.3] conversions on the Renderer's reverse direction", () => {
+  const long = Array.from({ length: 500 }, (_, i) => `Line ${i + 1} of the Henley minutes by Pat.`).join("\n");
+
+  it("docx, odt, epub and rtf ask pandoc for markdown from their own reader, sandboxed, and the answer is paged into the tree", async () => {
+    for (const [name, from, mime] of [["handover.docx", "docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"], ["minutes.odt", "odt", "application/vnd.oasis.opendocument.text"], ["guide.epub", "epub", "application/epub+zip"], ["letter.rtf", "rtf", "application/rtf"]] as const) {
+      const { asked, deps, text, w } = world({ markdown: long });
+      const r = await ingest(deps(ada.email), ada.email, name, mime);
+      expect(r, name).toMatchObject({ ok: true, kind: "document", treePath: `work/uploads/att-1/${name}.md` });
+      expect(asked, name).toEqual([
+        { text: from === "rtf" ? new TextDecoder().decode(fixture(name)) : b64(fixture(name)), from, to: "markdown", standalone: false, sandbox: true, ...(from === "docx" ? { "track-changes": "accept" } : {}) },
+      ]);
+      expect(await text(ada.email, `work/uploads/att-1/${name}.md`)).toBe(`# ${name}\n\n${long}\n`);
+      if (!r.ok) throw new Error(r.code);
+      expect(r.pages).toBe(3);
+      const page2 = await w.host(ada.email).tree.read({ path: r.treePath, from: 201 }, ada.email);
+      expect(page2).toMatchObject({ ok: true, kind: "text", next: 401, lines: expect.arrayContaining([{ n: 201, text: "Line 199 of the Henley minutes by Pat." }]) });
+    }
+  });
+
+  it("the reverse direction refuses an unread format, a bad body and an answer that is not markdown, each with its code", async () => {
+    expect(parseReverseInput({ from: "pdf", to: "markdown", base64: "AAAA" })).toMatchObject({ ok: false, code: "RENDER_FORMAT_REFUSED" });
+    expect(parseReverseInput({ from: "docx", to: "html", base64: "AAAA" })).toMatchObject({ ok: false, code: "RENDER_FORMAT_REFUSED" });
+    expect(parseReverseInput({ from: "docx", to: "markdown", base64: "not base64!" })).toMatchObject({ ok: false, code: "RENDER_INPUT_INVALID" });
+    expect(parseReverseInput({ from: "docx", to: "markdown", base64: "A".repeat(24 * 1024 * 1024) })).toMatchObject({ ok: false, code: "RENDER_TOO_LARGE" });
+    expect(await readMarkdownResponse(answer({ error: "Unknown reader" }), "docx")).toMatchObject({ ok: false, code: "RENDER_FAILED" });
+    expect(await readMarkdownResponse(answer({ output: "  \n" }), "docx")).toMatchObject({ ok: false, code: "RENDER_OUTPUT_INVALID" });
+    expect(await readMarkdownResponse(answer({ output: "UEsDBA==", base64: true }), "docx")).toMatchObject({ ok: false, code: "RENDER_OUTPUT_INVALID" });
+    expect(await readMarkdownResponse(new Response("boom", { status: 500 }), "odt")).toMatchObject({ ok: false, code: "RENDER_FAILED" });
+    const dead = { fetch: async () => Promise.reject(new Error("connection refused")) };
+    expect(await renderToMarkdown({ from: "docx", to: "markdown", base64: b64(fixture("handover.docx")) }, dead, async () => {})).toMatchObject({ ok: false, code: "RENDER_UNAVAILABLE" });
+    const { deps } = world();
+    const failing: IngestDeps = { ...deps(ada.email), renderer: { toMarkdown: async () => ({ ok: false, code: "RENDER_FAILED", reason: "pandoc fell over" }) } };
+    const r = await ingest(failing, ada.email, "handover.docx", "application/octet-stream");
+    expect(r).toEqual({ ok: false, code: "RENDER_FAILED", reason: "pandoc fell over" });
   });
 });
 
@@ -125,6 +191,25 @@ describe("[M24.3] images", () => {
     expect(wire.messages[4]?.content).toEqual([{ type: "text", text: "The image returned by tool call a:" }, { type: "image_url", image_url: { url: "data:image/jpeg;base64,REVG" } }]);
   });
 
+  it("where the model cannot be shown the image, the caption step runs through the adapter under its ceiling with a Ledger row, and writes caption_text", async () => {
+    const rows: ModelCallRow[] = [];
+    const admissions: Admission[] = [];
+    const fake = new FakeModel([{ text: "A single grey pixel; no text." }]);
+    const adapter = { ai: fake.binding as unknown as Ai, ledger: { record: async (r: ModelCallRow) => void rows.push(r), admit: async (a: Admission) => { admissions.push(a); return { ok: true as const }; } }, wait: async () => {}, now: () => 1 };
+    const { deps, text, w } = world({ imageInput: false, caption: (img) => captionImage(adapter, { tenant: "solo-sam", person: img.owner, attachmentId: img.attachmentId }, img) });
+    const r = await ingest(deps(ada.email), ada.email, "pixel.png", "image/png");
+    expect(r).toEqual({ ok: true, kind: "image", treePath: "work/uploads/att-1/pixel.png", pages: 1, captionText: "A single grey pixel; no text." });
+    expect(await text(ada.email, "work/uploads/att-1/pixel.png.caption.md")).toBe("A single grey pixel; no text.");
+    expect(fake.requests).toHaveLength(1);
+    expect(fake.requests[0]?.model).toBe("@cf/zai-org/glm-5.3-flash");
+    expect(JSON.stringify(fake.requests[0]?.inputs.messages)).toContain(`data:image/png;base64,${b64(fixture("pixel.png"))}`);
+    expect(fake.requests[0]?.inputs.max_tokens).toBe(1024);
+    expect(admissions).toEqual([{ person: ada.email, runId: "caption:att-1", model: "@cf/zai-org/glm-5.3-flash", ceiling: CAPTION_CEILING }]);
+    expect(rows).toMatchObject([{ person: ada.email, runId: "caption:att-1", route: "caption", status: "ok" }]);
+    // file_read then gives the words, never the pixels, to a model that cannot take them.
+    expect(await w.host(ada.email).tree.read({ path: "work/uploads/att-1/pixel.png", images: false }, ada.email)).toMatchObject({ ok: true, kind: "image", base64: null, caption: "A single grey pixel; no text." });
+  });
+
   it("a compromised caption model that answers with a tool call writes no caption and the failure is said with its code", async () => {
     const fake = new FakeModel([], { kind: "compromised", hostile: { name: "file_write", arguments: { path: "work/x.md", text: "planted" } } });
     const adapter = { ai: fake.binding as unknown as Ai, ledger: { record: async () => {} }, wait: async () => {}, now: () => 1 };
@@ -137,6 +222,13 @@ describe("[M24.3] images", () => {
 });
 
 describe("[M24.3] owner and the line the model sees", () => {
+  it("an ingest into Ada's tree on Bo's behalf is refused by the tree with TREE_NOT_OWNER, and nothing is written", async () => {
+    const { w, deps } = world();
+    for (const name of ["henley.pdf", "pixel.png", "bundle.zip"] as const) {
+      expect(await ingest(deps(ada.email), other.email, name, "")).toMatchObject({ ok: false, code: "TREE_NOT_OWNER" });
+    }
+    expect(await w.host(ada.email).tree.list({}, ada.email)).toEqual({ ok: true, entries: [], truncated: false });
+  });
 
   it("describeForModel gives one line per attachment: what it is, where it sits, how to read it, or the failure in words with its code", () => {
     const lines = (
@@ -162,8 +254,8 @@ describe("[M24.3] owner and the line the model sees", () => {
 
   it("text is stored as itself, an unknown type is refused in words, and a caption call is refused over its byte cap", async () => {
     const { deps, text } = world();
-    expect(await ingest(deps(ada.email), ada.email, "notes.md", "text/markdown", new TextEncoder().encode("# Notes\nBo Wren\n"))).toEqual({ ok: true, kind: "text", treePath: "work/uploads/att-1/notes.md", pages: 1 });
-    expect(await text(ada.email, "work/uploads/att-1/notes.md")).toBe("# Notes\nBo Wren\n");
+    expect(await ingest(deps(ada.email), ada.email, "notes.md", "text/markdown", new TextEncoder().encode("# Notes\nPat\n"))).toEqual({ ok: true, kind: "text", treePath: "work/uploads/att-1/notes.md", pages: 1 });
+    expect(await text(ada.email, "work/uploads/att-1/notes.md")).toBe("# Notes\nPat\n");
     expect(await ingest(deps(ada.email), ada.email, "tool.exe", "application/x-msdownload", new Uint8Array([0x4d, 0x5a]))).toMatchObject({ ok: false, code: "INGEST_TYPE_UNSUPPORTED" });
     const fake = new FakeModel([]);
     const adapter = { ai: fake.binding as unknown as Ai, ledger: { record: async () => {} }, wait: async () => {}, now: () => 1 };
@@ -171,3 +263,6 @@ describe("[M24.3] owner and the line the model sees", () => {
     expect(fake.requests).toHaveLength(0);
   });
 });
+
+/** A former member's label: rows and files keyed by a person who is not on the roster (fletch's fixtures hold one person). */
+const other = { ...ada, id: "former-member", email: "former-member", name: "Pat" };

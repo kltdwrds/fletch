@@ -3,7 +3,7 @@
 // page, and the job's result comes back into the chat it was asked for in, through the owner's
 // delivery. Every run is real: the chat engine with its gate and cards, the owner's `Person`
 // authority and job index, the `Job` engine on the world's clock, the real Ledger, the fake model.
-// Fixture people are Sam Solo and Bo Wren of solo-sam; the clock is the test's.
+// Fixture people are Sam Solo and Pat of solo-sam; the clock is the test's.
 import { describe, expect, it } from "vitest";
 import { JobEngine, type JobDeps } from "../../packages/agent/src/jobs/engine.ts";
 import { deliveredNotices } from "../../packages/agent/src/jobs/notices.ts";

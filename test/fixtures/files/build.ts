@@ -1,6 +1,6 @@
 // Builds the M24.3 conversion fixtures deterministically: one small file of each type the model reads
-// (PDF, docx, xlsx, pptx, odt, ods, odp, epub, rtf, zip, png), fictional content only (Ada and Bo Wren
-// of Solo Sam, from test/fixtures/people.json). `node test/fixtures/files/build.ts` writes them beside
+// (PDF, docx, xlsx, pptx, odt, ods, odp, epub, rtf, zip, png), fictional content only (Sam Solo of Solo Sam,
+// from test/fixtures/people.json, and a colleague named only "Pat"). `node test/fixtures/files/build.ts` writes them beside
 // this file; the hermetic tests read those files and hold them equal to what this module builds.
 import { writeFileSync } from "node:fs";
 import { zipSync } from "fflate";
@@ -13,7 +13,7 @@ const zip = (files: Record<string, string | Uint8Array>, stored: string[] = []):
 /** A two-page PDF with a text layer, its xref offsets computed. */
 export function pdf(): Uint8Array {
   const page = (text: string) => `BT /F1 12 Tf 72 720 Td (${text}) Tj ET`;
-  const streams = [page("Henley handover, page one: Sam Solo hands the file to Bo Wren."), page("Page two: Bo Wren confirms receipt for Solo Sam.")];
+  const streams = [page("Henley handover, page one: Sam Solo hands the file to Pat."), page("Page two: Pat confirms receipt for Solo Sam.")];
   const objects = [
     "<< /Type /Catalog /Pages 2 0 R >>",
     "<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >>",
@@ -43,7 +43,7 @@ export function docx(): Uint8Array {
   return zip({
     "[Content_Types].xml": CT('<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'),
     "_rels/.rels": RELS("word/document.xml", OFFICE_DOC),
-    "word/document.xml": '<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Sam Solo hands the Henley file to Bo Wren.</w:t></w:r></w:p></w:body></w:document>',
+    "word/document.xml": '<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Sam Solo hands the Henley file to Pat.</w:t></w:r></w:p></w:body></w:document>',
   });
 }
 
@@ -71,7 +71,7 @@ export function pptx(): Uint8Array {
     "_rels/.rels": RELS("ppt/presentation.xml", OFFICE_DOC),
     "ppt/presentation.xml": `<?xml version="1.0" encoding="UTF-8"?><p:presentation xmlns:p="${P}" xmlns:r="${R}"><p:sldIdLst><p:sldId id="256" r:id="rId2"/><p:sldId id="257" r:id="rId1"/></p:sldIdLst></p:presentation>`,
     "ppt/_rels/presentation.xml.rels": `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${R}/slide" Target="slides/slide1.xml"/><Relationship Id="rId2" Type="${R}/slide" Target="slides/slide2.xml"/></Relationships>`,
-    "ppt/slides/slide2.xml": slide(["Henley offsite", "Sam Solo &amp; Bo Wren"]),
+    "ppt/slides/slide2.xml": slide(["Henley offsite", "Sam Solo &amp; Pat"]),
     "ppt/slides/slide1.xml": slide(["Agenda", "Budget review for Solo Sam"]),
   });
 }
@@ -81,7 +81,7 @@ const ODF_NS = 'xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" 
 const odf = (mime: string, body: string) =>
   zip({ mimetype: mime, "META-INF/manifest.xml": ODF_MANIFEST(mime), "content.xml": `<?xml version="1.0" encoding="UTF-8"?><office:document-content ${ODF_NS}><office:body>${body}</office:body></office:document-content>` }, ["mimetype"]);
 
-export const odt = () => odf("application/vnd.oasis.opendocument.text", "<office:text><text:p>Bo Wren drafts the Henley minutes for Solo Sam.</text:p></office:text>");
+export const odt = () => odf("application/vnd.oasis.opendocument.text", "<office:text><text:p>Pat drafts the Henley minutes for Solo Sam.</text:p></office:text>");
 export const ods = () =>
   odf(
     "application/vnd.oasis.opendocument.spreadsheet",
@@ -90,7 +90,7 @@ export const ods = () =>
 export const odp = () =>
   odf(
     "application/vnd.oasis.opendocument.presentation",
-    '<office:presentation><draw:page draw:name="Welcome"><draw:frame><draw:text-box><text:p>Welcome to Solo Sam</text:p><text:p><text:span>Sam Solo</text:span> presents</text:p></draw:text-box></draw:frame></draw:page><draw:page draw:name="Next"><draw:frame><draw:text-box><text:p>Bo Wren closes</text:p></draw:text-box></draw:frame></draw:page></office:presentation>',
+    '<office:presentation><draw:page draw:name="Welcome"><draw:frame><draw:text-box><text:p>Welcome to Solo Sam</text:p><text:p><text:span>Sam Solo</text:span> presents</text:p></draw:text-box></draw:frame></draw:page><draw:page draw:name="Next"><draw:frame><draw:text-box><text:p>Pat closes</text:p></draw:text-box></draw:frame></draw:page></office:presentation>',
   );
 
 export function epub(): Uint8Array {
@@ -99,16 +99,16 @@ export function epub(): Uint8Array {
       mimetype: "application/epub+zip",
       "META-INF/container.xml": '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>',
       "content.opf": '<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">solo-sam-guide</dc:identifier><dc:title>Solo Sam guide</dc:title><dc:language>en</dc:language></metadata><manifest><item id="c1" href="c1.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="c1"/></spine></package>',
-      "c1.xhtml": '<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>One</title></head><body><p>Sam Solo welcomes Bo Wren.</p></body></html>',
+      "c1.xhtml": '<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>One</title></head><body><p>Sam Solo welcomes Pat.</p></body></html>',
     },
     ["mimetype"],
   );
 }
 
-export const rtf = (): Uint8Array => enc.encode("{\\rtf1\\ansi{\\fonttbl\\f0\\fswiss Helvetica;}\\f0\\pard Sam Solo writes to Bo Wren about the Henley file.\\par}\n");
+export const rtf = (): Uint8Array => enc.encode("{\\rtf1\\ansi{\\fonttbl\\f0\\fswiss Helvetica;}\\f0\\pard Sam Solo writes to Pat about the Henley file.\\par}\n");
 
 /** A zip holding a note and a nested folder: what an archive upload unpacks to. */
-export const archive = (): Uint8Array => zip({ "notes/plan.md": "# Plan\n\nSam Solo and Bo Wren meet on Monday.\n", "notes/sub/budget.csv": "item,cost\nvenue,1250\n", "readme.txt": "Solo Sam bundle\n" });
+export const archive = (): Uint8Array => zip({ "notes/plan.md": "# Plan\n\nSam Solo and Pat meet on Monday.\n", "notes/sub/budget.csv": "item,cost\nvenue,1250\n", "readme.txt": "Solo Sam bundle\n" });
 
 /** A 1x1 PNG, the smallest real image. */
 export const png = (): Uint8Array =>
