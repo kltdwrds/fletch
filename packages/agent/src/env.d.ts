@@ -5,6 +5,8 @@
 interface Env {
   /** 32 random bytes, base64url: wraps the tenant's data key (`hostOf(env).keys`). */
   MASTER_KEY?: string;
+  /** The token in the `/login?setup=` link that creates the first passkey: a Worker secret, never config. */
+  SETUP_TOKEN?: string;
   /** Code Mode's Worker Loader (M25.5). */
   LOADER?: WorkerLoader;
   /** Cloudflare Images (M24.4): HEIC to JPEG. */

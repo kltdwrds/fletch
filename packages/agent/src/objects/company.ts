@@ -37,12 +37,20 @@ import { COMPANY_LOOPS, type CompanyLoop, type LoopModel, LoopRun, LoopSettings 
 import { legFor } from "../memory/semantic.ts";
 import { migrateObject, probeObject } from "../migrations/catalog.ts";
 import { available, hostOf } from "../host.ts";
+import { type LoginCall, type LoginResultOf, runLoginCall } from "@qyvr/host-cloudflare";
 
 export class Company extends DurableObject<Env> {
   private readonly schema = migrateObject(this.ctx, "company");
 
   /** The sweep's wake (M25.3): what this wake applied and what is still behind. */
   async migrationProbe() { return probeObject(this.ctx.storage, this.schema); }
+
+  /**
+   * The self-host login's storage (F1, R3): passkeys, sessions and recovery codes are rows here, reached by the host's
+   * identity through one call. A Durable Object RPC method is reachable only by code holding the namespace binding (the
+   * host), and no HTTP route forwards to it.
+   */
+  async loginCall<C extends LoginCall>(call: C): Promise<LoginResultOf<C>> { return runLoginCall(this.ctx.storage, Date.now, call); }
   private membersInstance?: CompanyMembers;
   private authorityInstance?: CompanyAuthority;
   private teamsInstance?: CompanyTeams;

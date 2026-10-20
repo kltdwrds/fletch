@@ -39,6 +39,7 @@ import { SCHEMA as PROFILE } from "../person/profile.ts";
 import { SCHEMA as SKILL_SEEN } from "../skills/seen.ts";
 import { SCHEMA as SUBAGENT_STORE } from "../subagents/store.ts";
 import { SCHEMA as SUBAGENT_TRANSCRIPT } from "../subagents/run.ts";
+import { PASSKEY_SCHEMA } from "@qyvr/host-cloudflare";
 import { addColumns, type Migration, migrateInConstructor, migrationStatus, schema } from "./engine.ts";
 
 const B = "m25.2";
@@ -101,6 +102,8 @@ export const COMPANY_MIGRATIONS: readonly Migration[] = [
       else sql.exec("DELETE FROM settings WHERE key = 'budgets'");
     },
   },
+  // Passkeys, sessions and recovery codes of the self-host login (F1); `runLoginCall` also ensures them, idempotently.
+  schema("f1-passkeys", "f1", PASSKEY_SCHEMA),
 ];
 
 export const CHAT_MIGRATIONS: readonly Migration[] = [
