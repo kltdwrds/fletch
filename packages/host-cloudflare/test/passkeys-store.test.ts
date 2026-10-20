@@ -130,4 +130,31 @@ describe("[F1] passkey stores", () => {
     run({ op: "remove", id: "k1" });
     expect(run({ op: "byId", id: "k1" })).toBeNull();
   });
+  it("add binds the public key as an ArrayBuffer copy (the SqlStorage binding type) and byId returns a Uint8Array", () => {
+    const { sql, clock } = setup();
+    const seen: unknown[] = [];
+    const exec = sql.sql.exec.bind(sql.sql);
+    const spy = {
+      sql: {
+        exec: (q: string, ...b: unknown[]) => {
+          seen.push(...b);
+          return exec(q, ...(b as never[]));
+        },
+      },
+      transactionSync: sql.transactionSync,
+    } as unknown as typeof sql;
+    const key = new Uint8Array([5, 6, 7]);
+    const passkeys = new PasskeyStore(spy, clock.now);
+    passkeys.add({ id: "k1", email: "sam@solo-sam.example", publicKey: key.subarray(1), counter: 0, transports: [] });
+    const bound = seen.find((v) => v instanceof ArrayBuffer) as ArrayBuffer | undefined;
+    expect(bound && Array.from(new Uint8Array(bound))).toEqual([6, 7]);
+    const back = passkeys.byId("k1")?.publicKey;
+    expect(back).toBeInstanceOf(Uint8Array);
+    expect(Array.from(back ?? [])).toEqual([6, 7]);
+  });
+
+  it("runLoginCall refuses an op it does not know with LOGIN_CALL_UNKNOWN_OP", () => {
+    const { sql, clock } = setup();
+    expect(() => runLoginCall(sql, clock.now, { op: "drop" } as unknown as LoginCall)).toThrow(/LOGIN_CALL_UNKNOWN_OP/);
+  });
 });

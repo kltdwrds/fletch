@@ -24,9 +24,30 @@ describe("[F1] singleAccountHost", () => {
     }
   });
 
-  it("refuses identity with IDENTITY_UNAVAILABLE until the passkey login lands", async () => {
+  it("identity is the passkey login: no cookie is SESSION_MISSING without touching the Company", async () => {
     const verdict = await singleAccountHost(env()).identity.verify(new Request("https://x.example/"), async () => null);
-    expect(verdict).toMatchObject({ ok: false, code: "IDENTITY_UNAVAILABLE", status: 503 });
+    expect(verdict).toMatchObject({ ok: false, code: "SESSION_MISSING", status: 401 });
+  });
+
+  it("the login storage is an RPC to the Company named by TENANT_ID", async () => {
+    const calls: unknown[] = [];
+    const named: string[] = [];
+    const COMPANY = {
+      idFromName: (n: string) => {
+        named.push(n);
+        return `id:${n}`;
+      },
+      get: (id: string) => ({
+        loginCall: async (c: { op: string }) => {
+          calls.push([id, c.op]);
+          return c.op === "count" ? 0 : null;
+        },
+      }),
+    } as unknown as DurableObjectNamespace;
+    const page = await singleAccountHost(env({ COMPANY })).identity.routes(new Request("https://x.example/login"), new URL("https://x.example/login"));
+    expect(await page?.text()).toContain("Create passkey");
+    expect(named).toEqual(["solo-sam"]);
+    expect(calls).toEqual([["id:solo-sam", "count"]]);
   });
 
   it("wraps keys only with a master key", async () => {

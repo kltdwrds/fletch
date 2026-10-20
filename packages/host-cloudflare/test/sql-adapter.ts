@@ -10,7 +10,8 @@ export function memorySql(): Sql {
     if (!bindings.length && query.split(";").filter((s) => s.trim()).length > 1) db.exec(query);
     else {
       const stmt = db.prepare(query);
-      const args = bindings as never[];
+      // A Durable Object binds an ArrayBuffer as a BLOB; node:sqlite binds it as NULL, so pass its bytes.
+      const args = bindings.map((b) => (b instanceof ArrayBuffer ? new Uint8Array(b) : b)) as never[];
       if (stmt.columns().length) rows = stmt.all(...args).map((r: Record<string, unknown>) => ({ ...r }));
       else stmt.run(...args);
     }

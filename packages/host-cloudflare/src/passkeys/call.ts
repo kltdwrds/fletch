@@ -68,5 +68,8 @@ export function runLoginCall(storage: Sql, now: () => number, call: LoginCall): 
       return new RecoveryStore(storage, now).issue(call.email);
     case "redeemRecovery":
       return new RecoveryStore(storage, now).redeem(call.email, call.code);
+    default:
+      // A caller across the RPC boundary is not held to the type: name what arrived.
+      throw new Error(`LOGIN_CALL_UNKNOWN_OP: ${String((call as { op?: unknown }).op)}`);
   }
 }

@@ -56,7 +56,8 @@ export class PasskeyStore {
       "INSERT INTO passkeys(id, email, public_key, counter, transports, at) VALUES(?, ?, ?, ?, ?, ?)",
       c.id,
       normalizeEmail(c.email),
-      c.publicKey,
+      // SqlStorage binds an ArrayBuffer as a BLOB; a copy, so a view over a larger buffer stores only its bytes.
+      c.publicKey.slice().buffer,
       c.counter,
       JSON.stringify(c.transports),
       this.now(),
