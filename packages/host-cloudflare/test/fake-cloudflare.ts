@@ -10,6 +10,8 @@ export interface FakeAccount {
   /** Whether the token is a user token (verified at /user/tokens/verify) or an account token. */
   kind: "user" | "account" | "invalid";
   scopes: Set<Scope>;
+  /** Scopes held for reads only: GETs succeed and creates answer 403, as for a token with Read but not Edit. */
+  readOnly: Set<Scope>;
   buckets: Set<string>;
   indexes: Map<string, { dimensions: number; metric: string }>;
   /** Deployed scripts and the names of their secrets. */
@@ -34,6 +36,7 @@ export function fakeAccount(over: Partial<FakeAccount> = {}): FakeAccount {
     accountId: "0123456789abcdef0123456789abcdef",
     kind: "user",
     scopes: new Set(ALL_SCOPES),
+    readOnly: new Set(),
     buckets: new Set(),
     indexes: new Map(),
     scripts: new Map(),
@@ -78,7 +81,7 @@ export function fakeCloudflare(account: FakeAccount = fakeAccount()) {
     }
     if (rest === "/r2/buckets" && method === "GET") return has("R2") ? ok({ buckets: [...account.buckets].map((name) => ({ name })) }) : denied();
     if (rest === "/r2/buckets" && method === "POST") {
-      if (!has("R2")) return denied();
+      if (!has("R2") || account.readOnly.has("R2")) return denied();
       account.buckets.add((body as { name: string }).name);
       return ok({ name: (body as { name: string }).name });
     }
@@ -89,7 +92,7 @@ export function fakeCloudflare(account: FakeAccount = fakeAccount()) {
     }
     if (rest === "/vectorize/v2/indexes" && method === "GET") return has("Vectorize") ? ok([...account.indexes].map(([name, config]) => ({ name, config }))) : denied();
     if (rest === "/vectorize/v2/indexes" && method === "POST") {
-      if (!has("Vectorize")) return denied();
+      if (!has("Vectorize") || account.readOnly.has("Vectorize")) return denied();
       const b = body as { name: string; config: { dimensions: number; metric: string } };
       account.indexes.set(b.name, b.config);
       return ok({ name: b.name, config: b.config });

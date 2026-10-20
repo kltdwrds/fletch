@@ -3,7 +3,7 @@
 // and sets the MASTER_KEY and SETUP_TOKEN Worker secrets only when the script lacks them, so a second run with
 // the same inputs creates nothing, rotates nothing and returns the same URL. The setup link (`/login?setup=`)
 // is printed only by the run that minted the token; the token cannot be read back later.
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -14,6 +14,7 @@ import {
   mintMasterKey,
   mintSetupToken,
   putSecret,
+  statusOf,
   tokenScopes,
   workersDevUrl,
 } from "@qyvr/host-cloudflare";
@@ -47,6 +48,8 @@ const ACCOUNT_ID = /^[0-9a-f]{32}$/;
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const TEMPLATE = join(HERE, "template", "wrangler.jsonc");
+/** The first line of every wrangler.jsonc this tool writes; a file without it is the owner's own and is never overwritten. */
+export const CONFIG_HEADER = "// Written by create-fletch for this deploy. Secrets (MASTER_KEY, SETUP_TOKEN) are Worker secrets, never here.\n";
 export const AGENT_MAIN = join(HERE, "..", "..", "agent", "src", "index.ts");
 
 /** JSON with `//` and `/* *\/` comments, as wrangler.jsonc is written. Strings are kept whole. */
@@ -72,8 +75,11 @@ export function parseJsonc(text: string): unknown {
 
 /** The deploy's config: the template with this deploy's names, and the paid-plan bindings when asked for. */
 export function renderConfig(opts: InitOptions, main: string): Record<string, unknown> {
+  // One pass with function replacers: a value is inserted as typed (`$&` and `$1` mean nothing) and a value
+  // that itself contains a placeholder is not substituted again.
+  const values: Record<string, string> = { NAME: opts.name, MAIN: main, ACCOUNT_ID: opts.accountId, OWNER_EMAIL: opts.ownerEmail };
   const fill = (v: unknown): unknown => {
-    if (typeof v === "string") return v.replaceAll("__NAME__", opts.name).replace("__MAIN__", main).replace("__ACCOUNT_ID__", opts.accountId).replace("__OWNER_EMAIL__", opts.ownerEmail);
+    if (typeof v === "string") return v.replace(/__(NAME|MAIN|ACCOUNT_ID|OWNER_EMAIL)__/g, (_m, key: string) => values[key] as string);
     if (Array.isArray(v)) return v.map(fill);
     if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fill(x)]));
     return v;
@@ -85,6 +91,10 @@ export function renderConfig(opts: InitOptions, main: string): Record<string, un
   }
   return config;
 }
+
+/** wrangler's output when Cloudflare refuses the deploy for the token: HTTP 403 or API code 10000 (Authentication error). */
+const DENIED = /\b403\b|\[code: 10000\]|Authentication error/;
+const scopeReason = (scope: string, accountId: string) => `the API token can read but not change ${scope.replace(" (Edit)", "")}: give it the ${scope} permission for account ${accountId} and run again`;
 
 const refuse = (code: string, reason: string): InitResult => ({ ok: false, code, reason });
 
@@ -105,6 +115,13 @@ export async function init(input: InitOptions, deps: InitDeps = {}): Promise<Ini
   const cf = new CloudflareApi(opts.token, deps.fetch ? { fetch: deps.fetch } : {});
   const { accountId, name } = opts;
   const scrub = (text: string) => text.replaceAll(opts.token, "[token]");
+  const configPath = join(opts.cwd, "wrangler.jsonc");
+  if (existsSync(configPath) && !readFileSync(configPath, "utf8").startsWith(CONFIG_HEADER.split("\n")[0] as string)) {
+    return refuse("INIT_CONFIG_EXISTS", `${configPath} exists and was not written by create-fletch; move it aside or run in another directory (--dir) so it is not overwritten`);
+  }
+  // The scope probes prove read access only. Creating a bucket or an index, and the deploy, can still be
+  // refused with 403 for a token that holds "Read" without "Edit"; that is mapped to the scope of the step.
+  let step: { scope: string } | null = null;
 
   try {
     const scopes = await tokenScopes(cf, accountId);
@@ -115,18 +132,21 @@ export async function init(input: InitOptions, deps: InitDeps = {}): Promise<Ini
     const url = await workersDevUrl(cf, accountId, name);
     if (!url) return refuse("WORKERS_DEV_SUBDOMAIN_MISSING", "the account has no workers.dev subdomain yet; open Workers & Pages in the Cloudflare dashboard once to choose one, then run again");
 
-    const configPath = join(opts.cwd, "wrangler.jsonc");
     const main = relative(opts.cwd, deps.agentMain ?? AGENT_MAIN).split(sep).join("/");
-    const header = "// Written by create-fletch for this deploy. Secrets (MASTER_KEY, SETUP_TOKEN) are Worker secrets, never here.\n";
-    writeFileSync(configPath, `${header}${JSON.stringify(renderConfig(opts, main), null, 2)}\n`);
+    writeFileSync(configPath, `${CONFIG_HEADER}${JSON.stringify(renderConfig(opts, main), null, 2)}\n`);
     log(`Wrote ${configPath}`);
 
+    step = { scope: "R2" };
     log(`R2 bucket ${await ensureBucket(cf, accountId, `${name}-agent`)}: ready.`);
+    step = { scope: "Vectorize" };
     log(`Vectorize index ${await ensureVectorIndex(cf, accountId, `${name}-memory`)}: ready.`);
 
+    step = { scope: "Workers Scripts" };
     const deployed = await deploy(configPath, { CLOUDFLARE_API_TOKEN: opts.token, CLOUDFLARE_ACCOUNT_ID: accountId });
+    if (!deployed.ok && DENIED.test(deployed.output)) return refuse("TOKEN_SCOPE_MISSING", scopeReason("Workers Scripts (Edit)", accountId));
     if (!deployed.ok) return refuse("DEPLOY_FAILED", `wrangler deploy failed: ${scrub(deployed.output.trim().split("\n").slice(-20).join("\n")) || "no output"}`);
 
+    step = { scope: "Workers Scripts" };
     const present = new Set(await listSecrets(cf, accountId, name));
     if (!present.has("MASTER_KEY")) {
       await putSecret(cf, accountId, name, "MASTER_KEY", mintMasterKey());
@@ -153,6 +173,9 @@ export async function init(input: InitOptions, deps: InitDeps = {}): Promise<Ini
   } catch (error) {
     const message = scrub(String((error as Error)?.message ?? error));
     if (message.startsWith("MEMORY_INDEX_SHAPE")) return refuse("MEMORY_INDEX_SHAPE", message.replace(/^MEMORY_INDEX_SHAPE:\s*/, ""));
-    return refuse("CLOUDFLARE_API_ERROR", message);
+    const status = statusOf(error);
+    if (status === 403 && step) return refuse("TOKEN_SCOPE_MISSING", scopeReason(`${step.scope} (Edit)`, accountId));
+    // Only a failed Cloudflare API call carries an HTTP status; a file-system or network error does not.
+    return refuse(status === undefined ? "INIT_FAILED" : "CLOUDFLARE_API_ERROR", message);
   }
 }

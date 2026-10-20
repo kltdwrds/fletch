@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,11 +15,11 @@ afterEach(() => {
 });
 
 /** A fake `wrangler deploy`: reads the written config and deploys its script into the fake account. */
-function fakeWrangler(account: FakeAccount, fail = false) {
+function fakeWrangler(account: FakeAccount, fail: boolean | string = false) {
   const runs: { configPath: string; env: Record<string, string> }[] = [];
   const deploy: DeployRunner = async (configPath, env) => {
     runs.push({ configPath, env });
-    if (fail) return { ok: false, output: "✘ [ERROR] A request to the Cloudflare API failed." };
+    if (fail) return { ok: false, output: typeof fail === "string" ? fail : "✘ [ERROR] A request to the Cloudflare API failed." };
     const config = parseJsonc(readFileSync(configPath, "utf8")) as { name: string };
     if (!account.scripts.has(config.name)) account.scripts.set(config.name, new Map());
     return { ok: true, output: `Uploaded ${config.name}` };
@@ -27,7 +27,7 @@ function fakeWrangler(account: FakeAccount, fail = false) {
   return { deploy, runs };
 }
 
-function setup(account = fakeAccount(), opts: Partial<InitOptions> = {}, failDeploy = false) {
+function setup(account = fakeAccount(), opts: Partial<InitOptions> = {}, failDeploy: boolean | string = false) {
   const cwd = mkdtempSync(join(tmpdir(), "create-fletch-"));
   dirs.push(cwd);
   const cf = fakeCloudflare(account);
@@ -159,6 +159,64 @@ describe("[F1] create-fletch init", () => {
     expect(r).toMatchObject({ ok: false, code: "DEPLOY_FAILED" });
     expect(r.ok === false && r.reason).toContain("A request to the Cloudflare API failed");
     expect(secretPuts(s)).toHaveLength(0);
+  });
+
+  it.each([
+    ["R2", "R2"],
+    ["Vectorize", "Vectorize"],
+  ] as const)("a token that reads but cannot create %s (403 on the create) refuses with TOKEN_SCOPE_MISSING naming it", async (scope, word) => {
+    const s = setup(fakeAccount({ readOnly: new Set([scope]) }));
+    const r = await s.run();
+    expect(r).toMatchObject({ ok: false, code: "TOKEN_SCOPE_MISSING" });
+    expect(r.ok === false && r.reason).toContain(word);
+    expect(s.wrangler.runs).toHaveLength(0);
+  });
+
+  it("a deploy refused with 403 maps to TOKEN_SCOPE_MISSING naming Workers Scripts, and sets no secret", async () => {
+    const s = setup(fakeAccount(), {}, "✘ [ERROR] A request to the Cloudflare API (/accounts/x/workers/scripts/sam) failed.\n  Authentication error [code: 10000]");
+    const r = await s.run();
+    expect(r).toMatchObject({ ok: false, code: "TOKEN_SCOPE_MISSING" });
+    expect(r.ok === false && r.reason).toContain("Workers Scripts");
+    expect(secretPuts(s)).toHaveLength(0);
+  });
+
+  it("refuses with INIT_CONFIG_EXISTS, before any call, over a wrangler.jsonc create-fletch did not write", async () => {
+    const s = setup();
+    writeFileSync(join(s.cwd, "wrangler.jsonc"), '{ "name": "mine" }\n');
+    expect(await s.run()).toMatchObject({ ok: false, code: "INIT_CONFIG_EXISTS" });
+    expect(s.cf.calls).toHaveLength(0);
+    expect(s.wrangler.runs).toHaveLength(0);
+    expect(readFileSync(join(s.cwd, "wrangler.jsonc"), "utf8")).toBe('{ "name": "mine" }\n');
+  });
+
+  it("overwrites a wrangler.jsonc that carries create-fletch's header (the second run)", async () => {
+    const s = setup();
+    await s.run();
+    expect(await s.run()).toEqual({ ok: true, url: URL_ });
+  });
+
+  it("fills the template with literal values: $& and $1 in the email or the path stay as typed", async () => {
+    const email = ["sam+$&$1", "solo-sam.example"].join("@");
+    const s = setup(fakeAccount(), { ownerEmail: email });
+    const options: InitOptions = { accountId: ACCOUNT, token: "test-token", name: "sam", ownerEmail: email, paid: false, cwd: s.cwd };
+    const r = await init(options, { fetch: s.cf.fetch, deploy: s.wrangler.deploy, log: () => {}, agentMain: `${s.cwd}/co$&ck/agent/src/index.ts` });
+    expect(r).toEqual({ ok: true, url: URL_ });
+    expect(s.config().vars.OWNER_EMAIL).toBe(email);
+    expect(s.config().main).toBe("co$&ck/agent/src/index.ts");
+  });
+
+  it("an error with no HTTP status (a missing directory) is INIT_FAILED, not CLOUDFLARE_API_ERROR", async () => {
+    const s = setup(fakeAccount(), { cwd: "/nonexistent-create-fletch-dir/x" });
+    const r = await s.run();
+    expect(r).toMatchObject({ ok: false, code: "INIT_FAILED" });
+    expect(r.ok === false && r.reason).toMatch(/ENOENT/);
+  });
+
+  it("a Cloudflare API error with a status other than 403 stays CLOUDFLARE_API_ERROR", async () => {
+    const s = setup(fakeAccount({ subdomain: null }));
+    const bad = (async () => Response.json({ success: false, errors: [{ code: 7003, message: "boom" }] }, { status: 500 })) as typeof globalThis.fetch;
+    const r = await init({ accountId: ACCOUNT, token: "test-token", name: "sam", ownerEmail: "sam@solo-sam.example", paid: false, cwd: s.cwd }, { fetch: bad, deploy: s.wrangler.deploy, log: () => {} });
+    expect(r).toMatchObject({ ok: false, code: "CLOUDFLARE_API_ERROR" });
   });
 
   it("a memory index of another shape refuses with MEMORY_INDEX_SHAPE before the deploy", async () => {
