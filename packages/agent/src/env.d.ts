@@ -1,5 +1,5 @@
 // What a deploy's Env holds beyond `wrangler.jsonc` (worker-configuration.d.ts is generated from it):
-// the master key, a Worker secret `fletch init` sets and config never holds, and the two paid-plan
+// the master key, a Worker secret create-fletch sets and config never holds, and the two paid-plan
 // bindings a deploy may add. Each is optional so a config without it still types; the agent refuses
 // the feature it backs with a code (`code/egress.ts`, `attachments/wiring.ts`, `@qyvr/host-cloudflare`'s keys).
 interface Env {

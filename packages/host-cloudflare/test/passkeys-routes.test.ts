@@ -321,7 +321,10 @@ describe("[F1] first-run setup and session hygiene", () => {
       const r = await h.post(path, { body: { setup: SETUP, challengeId: "x", credential: { id: "x" } } });
       expect(r.res.status, path).toBe(503);
       expect(r.body, path).toMatchObject({ ok: false, code: "LOGIN_SETUP_UNAVAILABLE" });
-      expect(String(r.body.reason)).toMatch(/npm create fletch|wrangler secret put SETUP_TOKEN/);
+      // The commands it names exist today: create-fletch runs from a checkout (no `npm create fletch` yet).
+      expect(String(r.body.reason)).toContain("pnpm --dir <checkout> create-fletch");
+      expect(String(r.body.reason)).toContain("wrangler secret put SETUP_TOKEN");
+      expect(String(r.body.reason)).not.toMatch(/npm create fletch|fletch init/);
     }
   });
 
@@ -330,6 +333,8 @@ describe("[F1] first-run setup and session hygiene", () => {
     const unset = harness(fakeVerifier, null);
     const missing = await (await h.send("GET", "/login")).text();
     expect(missing).toContain("setup link");
+    expect(missing).toContain("pnpm --dir &lt;checkout&gt; create-fletch");
+    expect(missing).not.toMatch(/npm create fletch|fletch init/);
     expect(missing).not.toContain("Create passkey");
     expect(await (await h.send("GET", "/login?setup=wrong")).text()).toBe(missing);
     expect(await (await unset.send("GET", "/login")).text()).toBe(missing);

@@ -20,7 +20,8 @@ const host = singleAccountHost(env); // env: TENANT_ID, TENANT_SHAPE, OWNER_EMAI
   `mintMasterKey`, `mintSetupToken`. Every write is guarded by a read, so running it twice writes nothing twice.
   The `fletch` repository's `create-fletch` is built on these.
 
-The code imports `cloudflare:workers` and the Workers runtime types; use it from a Worker, and install
+The code imports nothing from `cloudflare:workers`: it is plain TypeScript over WebCrypto and `fetch`, and it
+names Workers runtime types (`DurableObjectNamespace`, `SqlStorage`) in its signatures, so install
 `@cloudflare/workers-types` for the types.
 
 Apache-2.0. Source and issues: <https://github.com/qyvr-ai/fletch/tree/main/packages/host-cloudflare>.

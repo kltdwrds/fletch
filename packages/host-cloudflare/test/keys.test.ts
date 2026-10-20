@@ -29,7 +29,7 @@ describe("[F1] secretKeyService", () => {
 
   it("fails every call with KEY_SERVICE_UNAVAILABLE when the secret is undefined", async () => {
     const keys = secretKeyService(undefined, "solo-sam");
-    expect(await keys.wrap(raw())).toMatchObject({ ok: false, code: "KEY_SERVICE_UNAVAILABLE" });
+    expect(await keys.wrap(raw())).toEqual({ ok: false, code: "KEY_SERVICE_UNAVAILABLE", reason: "MASTER_KEY is not set; rerun create-fletch" });
     expect(await keys.unwrap("qk1.solo-sam.aa.bb")).toMatchObject({ ok: false, code: "KEY_SERVICE_UNAVAILABLE" });
   });
 

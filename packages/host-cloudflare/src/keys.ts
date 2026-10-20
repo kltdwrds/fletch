@@ -27,7 +27,7 @@ export function fromB64u(text: string): Uint8Array | null {
   }
 }
 
-/** The master key from its secret: 32 random bytes, base64url, as `pnpm platform up` sets it. */
+/** The master key from its secret: 32 random bytes, base64url, as create-fletch sets the `MASTER_KEY` Worker secret. */
 export async function importMaster(secret: string | undefined): Promise<CryptoKey | null> {
   const raw = secret ? fromB64u(secret.trim()) : null;
   if (raw?.byteLength !== 32) return null;
@@ -60,7 +60,7 @@ export function keyService(master: () => Promise<CryptoKey | null>, tenant: unkn
   const ready = async (): Promise<{ ok: true; master: CryptoKey; tenant: string } | KeyFailure> => {
     if (typeof tenant !== "string" || !TENANT_ID.test(tenant)) return fail("KEY_NO_TENANT", "the binding's props name no tenant");
     const key = await master();
-    return key ? { ok: true, master: key, tenant } : fail("KEY_SERVICE_UNAVAILABLE", "the platform master key is not configured");
+    return key ? { ok: true, master: key, tenant } : fail("KEY_SERVICE_UNAVAILABLE", "MASTER_KEY is not set; rerun create-fletch");
   };
   return {
     async wrap(raw) {

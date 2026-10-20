@@ -27,7 +27,7 @@ Whatever the result, the agent already behaves correctly: `LOADER?` and `IMAGES?
 - **WebAuthn uses `@simplewebauthn/server` 14.0.3.** It bundles under `nodejs_compat`, so there is no hand-rolled fallback.
 - **First registration requires a one-time `SETUP_TOKEN` minted by `init`.** A public `workers.dev` URL would otherwise hand ownership to the first visitor.
 - **`@noble/hashes` 2.4.0 provides synchronous SHA-256 in the stores.**
-- **`create-fletch` deploys from a fletch checkout.** The `wrangler.jsonc` it writes sets `main` to the checkout's `packages/agent/src/index.ts` (a path relative to the written file), and `wrangler deploy` runs as a child process with the wrangler `create-fletch` depends on. Publishing the agent as a package for `npm create fletch` is Task 12.
+- **`create-fletch` deploys from a fletch checkout.** The `wrangler.jsonc` it writes sets `main` to the checkout's `packages/agent/src/index.ts` (a path relative to the written file), and `wrangler deploy` runs as a child process with the wrangler `create-fletch` depends on. Publishing the agent as a package, so `npm create fletch` works without a checkout, is a follow-up; it is not scheduled in this plan.
 - **`init` sets two Worker secrets, each only when missing:** `MASTER_KEY` and `SETUP_TOKEN` (both 32 random bytes, base64url). A fresh account gets two secret puts, a second run none. The setup link is printed only by the run that minted `SETUP_TOKEN`.
 - **`tokenScopes(cf, accountId)` takes the account id**, which the per-scope probes and the account-token verify endpoint need.
 
