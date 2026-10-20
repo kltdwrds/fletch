@@ -11,6 +11,8 @@ export interface Api {
 
 const statusOf = (error: unknown): number | undefined => (error as { status?: number } | null)?.status;
 
+// Pagination: nothing in the provisioning code this was copied from documents a cursor for the R2 bucket list, so it
+// reads the first page only (Cloudflare's default is 20 buckets; DECISIONS.md notes it).
 export async function listAccount(api: Api, accountId: string): Promise<Listing> {
   const base = `/accounts/${accountId}`;
   const workers = await api.call<{ id: string }[]>("GET", `${base}/workers/scripts`);

@@ -35,7 +35,7 @@ The tag `v0.1.0` follows a passing run. See `docs/DECISIONS.md`.
 
 The run leaves objects in the bucket `<name>-agent` (the agent keeps MEMORY.md there), and R2's API cannot empty a bucket,
 so the cleanup reports the bucket by name. Delete it by hand: Dashboard, R2, the bucket, delete its objects, then delete the
-bucket. `node scripts/live-sweep.ts` (same two variables) removes every other `fletch-ci-` leftover.
+bucket. `pnpm live-sweep` (same two variables) removes every other `fletch-ci-` leftover.
 
 ## Set up your own fletch (about ten minutes)
 

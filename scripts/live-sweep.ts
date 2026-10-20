@@ -1,10 +1,12 @@
 // Deletes every `fletch-ci-` Worker, `<name>-agent` bucket and `<name>-memory` index in the throwaway account. A cancelled,
 // crashed or timed-out live run skips its own cleanup, so the live workflow runs this last, always.
 //
-//   CF_LIVE_ACCOUNT_ID=... CF_LIVE_TOKEN=... node scripts/live-sweep.ts
+//   CF_LIVE_ACCOUNT_ID=... CF_LIVE_TOKEN=... pnpm live-sweep [--report-only]
 //
 // It never touches a name outside `fletch-ci-` (test/live/lib.ts, checked again before each DELETE). A bucket that
-// still holds objects cannot be deleted through the API and is reported by name; exit 1 then, so the run shows it.
+// still holds objects cannot be deleted through the API and is reported by name; exit 1 then, so the run shows it,
+// unless --report-only (the workflow's last step, after the test already failed on the same bucket): print, exit 0.
+// The package is run with --conditions=development because @qyvr/host-cloudflare's dist is built only for publishing.
 import { CloudflareApi } from "@qyvr/host-cloudflare";
 import { sweep } from "../test/live/sweep.ts";
 
@@ -17,5 +19,5 @@ if (!/^[0-9a-f]{32}$/.test(accountId) || !token) {
 const out = await sweep(new CloudflareApi(token), accountId, console.log, (t) => t.replaceAll(token, "[token]"));
 if (out.leaked.length) {
   console.error(`live-sweep: left behind, delete by hand:\n${out.leaked.join("\n")}`);
-  process.exit(1);
+  process.exit(process.argv.includes("--report-only") ? 0 : 1);
 }

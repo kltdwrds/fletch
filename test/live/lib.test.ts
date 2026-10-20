@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { spawnSync } from "node:child_process";
+import { join } from "node:path";
+import { repoRoot } from "../support/temp-repo.ts";
 import { CI_PREFIX, isCiName, parseSetupLink, planCleanup, runIdFrom, workerNameFor } from "./lib.ts";
 
 const ACCOUNT = "0123456789abcdef0123456789abcdef";
@@ -127,5 +130,15 @@ describe("[F1] live test: the sweep", () => {
     expect(out.leaked).toHaveLength(1);
     expect(out.leaked[0]).toMatch(/^bucket fletch-ci-1-agent: .*\[token\].*Dashboard, R2/);
     expect(out.leaked[0]).not.toContain("tok-1");
+  });
+});
+
+describe("[F1] live test: the sweep script starts", () => {
+  it("with no environment it prints its usage and exits 2, with no network call and no module error", () => {
+    const res = spawnSync(process.execPath, ["--conditions=development", join(repoRoot, "scripts/live-sweep.ts")], { cwd: repoRoot, env: { PATH: process.env.PATH }, encoding: "utf8" });
+    const out = `${res.stdout}${res.stderr}`;
+    expect(out).not.toMatch(/ERR_MODULE_NOT_FOUND/);
+    expect(out).toMatch(/live-sweep: set CF_LIVE_ACCOUNT_ID/);
+    expect(res.status).toBe(2);
   });
 });
