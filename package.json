@@ -9,6 +9,7 @@
   "scripts": {
     "prepare": "simple-git-hooks",
     "accept": "node scripts/accept.ts",
+    "dev": "node --conditions=development scripts/dev.ts",
     "create-fletch": "node --conditions=development packages/create-fletch/src/index.ts",
     "live-sweep": "node --conditions=development scripts/live-sweep.ts",
     "ds": "node scripts/ds-tokens.ts",
