@@ -2,6 +2,8 @@
 .claude/handoff/
 .claude/worktrees/
 .dev.vars
+# the config `pnpm dev` writes beside the agent (scripts/dev.ts)
+packages/agent/wrangler.dev.jsonc
 .env
 .platform/
 .wrangler/
