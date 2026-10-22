@@ -1,3 +1,4 @@
+// Holds decision D-0004: the paid-plan bindings (LOADER, IMAGES) are added only with --paid.
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";

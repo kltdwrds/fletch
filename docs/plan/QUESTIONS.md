@@ -1,7 +1,7 @@
 # Questions for Kyle
 
 Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommended answer:**, and once given
-**Answered (Kyle, <date>):**. A decision an answer settles is copied into `docs/DECISIONS.md` in the same commit.
+**Answered (Kyle, <date>):**. An answer that settles a decision updates its record in `docs/decisions/` in the same commit.
 
 ## BLOCKED (open)
 
@@ -19,7 +19,7 @@ the free-plan spike (Q2).
 ### Q2 (F1), 2026-10-22: Run the free-plan spike for Code Mode and Images
 
 **Blocks:** nothing yet; it decides whether `create-fletch` adds `LOADER` and `IMAGES` by default or only with
-`--paid` (`docs/DECISIONS.md`).
+`--paid` (D-0004).
 
 **Recommended answer:** run it on the Q1 account (`docs/runbooks/free-plan-spike.md`) and paste the table.
 

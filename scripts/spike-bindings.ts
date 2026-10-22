@@ -6,7 +6,7 @@
 // `images` (IMAGES), GETs it, prints a table (deploy accepted y/n with the error text; call ok y/n), and
 // deletes every Worker it created in a `finally`. If the combined deploy is refused, each binding is
 // deployed alone so the table says which one the plan refuses. Credentials are read from the environment
-// only and are never printed or written to the generated files. Record the table in docs/DECISIONS.md.
+// only and are never printed or written to the generated files. Record the table in docs/runbooks/free-plan-spike.md.
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";

@@ -1,3 +1,4 @@
+// Holds decision D-0001: a missing capability is refused with its HOST_<FEATURE>_UNAVAILABLE code and a reason.
 import { describe, expect, it } from "vitest";
 import { type Host, type HostFailureCode, unavailable } from "../src/index.ts";
 
