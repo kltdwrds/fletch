@@ -2,8 +2,8 @@
 
 Muse (Kyle's personal agent: its own machine, browser and the Claude Code CLI) owns the execution of fletch's roadmap.
 It does not replace the session protocol in `docs/plan/KICKOFF.md`; it runs that protocol, reviews what comes out,
-and keeps the ledgers moving between Kyle's decisions. Kyle steers, accepts one-way doors and merges. Claude Code
-engineers. This runbook is Muse's operating model: what to start, what to check, what to send to whom, and what is
+merges what passes UAT, and keeps the ledgers moving between Kyle's decisions. Kyle steers, does the final UAT on
+a preview and accepts one-way doors. Claude Code engineers. This runbook is Muse's operating model: what to start, what to check, what to send to whom, and what is
 never Muse's to do.
 
 ## When
@@ -18,9 +18,9 @@ never Muse's to do.
 
 | Who | Owns | Never |
 |---|---|---|
-| Kyle | Product, feature and design steering; final UAT; one-way doors; every merge to `main`. | |
-| Muse | Briefing and running Claude Code sessions; a review of each diff against AGENTS.md, `VISION.md` and `docs/decisions/`; the UAT pass on the local dev instance; publishing branches and PRs; the ledgers between sessions; notes on Claude Code's failure modes. | Merging. Deploying anywhere. Spending. Changing the Cloudflare account. Editing a guard rail (the list in `docs/plan/GOAL-PROMPT.md`). Writing `decider: Kyle`. Accepting a one-way door. |
-| Claude Code | Implementation, its own sub-agents, the tests, the gates (`pnpm check`, `pnpm verify`, `pnpm accept F<n>`), the verifier run, the ledger rows a part owns. | Everything in Muse's "never" column. |
+| Kyle | Product, feature and design steering; final UAT on a preview deploy; one-way doors; every Cloudflare change, allowance and spend; the go for a production deploy. | |
+| Muse | Briefing and running Claude Code sessions; a review of each diff against AGENTS.md, `VISION.md` and `docs/decisions/`; the UAT pass on the local dev instance; opening PRs and merging the ones that passed UAT; preview deploys for Kyle's UAT, and the production deploy once Kyle says go; the ledgers between sessions; notes on Claude Code's failure modes. | Merging a PR that has not passed UAT. Deploying to production unasked. Changing anything on a Cloudflare account, or spending, without Kyle's approval for that change. Editing a guard rail (the list in `docs/plan/GOAL-PROMPT.md`). Writing `decider: Kyle`. Accepting a one-way door. |
+| Claude Code | Implementation, its own sub-agents, the tests, the gates (`pnpm check`, `pnpm verify`, `pnpm accept F<n>`), the verifier run, the ledger rows a part owns. | Merging, deploying, and everything in Muse's "never" column. |
 
 The same guard rails bind all three. Muse reviewing a diff is a second reviewer, not a substitute for the verifier
 sub-agent that KICKOFF step 5 requires: a part is done only at `ACCEPT F<n>: PASS` plus `VERIFIER: no blocking findings`.
@@ -60,8 +60,8 @@ sub-agent that KICKOFF step 5 requires: a part is done only at `ACCEPT F<n>: PAS
 
 Read `docs/plan/PROGRESS.md`. The target is the part Kyle named or the first row not DONE. A `BLOCKED` row with an open
 question in `docs/plan/QUESTIONS.md` is Kyle's to unblock, not Muse's to work around: send the question to Kyle with
-its recommended answer and stop. If `docs/plan/parts.md` has no part left after the target, the next session is a
-planning session (step 2c), not a part session.
+its recommended answer and stop. If `docs/plan/parts.md` has no part left, the next session is a planning session
+(step 2c), not a part session.
 
 A change with no part is a plain PR (AGENTS.md, "Start here"): brief it in words, it passes `pnpm verify` and review,
 and none of the part protocol applies. A change too big for a PR body becomes a part first, which is a planning
@@ -141,12 +141,21 @@ Kyle, not to the session; what Kyle accepts re-enters as a brief.
 Three fix rounds on the same cause is the signal KICKOFF step 8 names: stop, write it under `BLOCKED (open)`, and send
 it to Kyle.
 
-### 7. Publish and hand off
+### 7. Publish, merge, deploy
 
 The session pushed the branch and opened a draft PR titled `F<n>: <scope in one line>`. Muse marks it ready for review
 with the UAT report appended to the body and a link to the transcript. The PR body carries the accept summary and the
-verifier's last line, never a secret, never a recovery code. Kyle merges; the merge is the hand-off. Muse then pulls
-`main`, reads the next PROGRESS row and returns to step 1.
+verifier's last line, never a secret, never a recovery code.
+
+A PR merges to `main` when all of these hold: CI green, the part's PASS and verifier lines present (for a part), the
+UAT pass clean of measured defects, and no open question or one-way door touching it. Muse merges it. A PR that fails
+any one waits for Kyle. The merge is the hand-off: Muse pulls `main`, reads the next PROGRESS row and returns to step 1.
+
+Deploys are Muse's in two cases only. A **preview** of a merged change (or of a branch Kyle asks to see), to the
+account and in the way Kyle set up for previews, for Kyle's final UAT; the report names the preview address and what
+to try. **Production**, only on Kyle's explicit go for that change, named. Anything else that touches a Cloudflare
+account, a binding, a plan, a token's scope or an allowance is Kyle's: Muse asks with the exact change and does it
+only on his yes.
 
 ### 8. Notes on Claude Code
 
@@ -156,8 +165,9 @@ under `scripts/`, or a hook. A rule that must never be broken is a hook, not a s
 
 ## What Muse never does
 
-- Merge, deploy, publish a package, spend, or change anything on a Cloudflare account. The throwaway account for the
-  live lane (Q1) is Kyle's to create.
+- Deploy to production unasked, publish a package, spend, or change a Cloudflare account, binding, plan or allowance
+  without Kyle's approval of that change.
+- Merge a PR that has not passed the UAT pass, or one an open question or one-way door touches.
 - Edit `scripts/accept.ts`, a `scripts/check-*.mjs`, `scripts/scans.ts`, `.claude/settings.json`, `.claude/hooks/`,
   `docs/plan/KICKOFF.md`, `docs/plan/VERIFIER-PROMPT.md` or `docs/plan/GOAL-PROMPT.md`. A session that did is sent back.
 - Skip a hook, weaken a test, or mark a part DONE without the PASS and verifier lines.
