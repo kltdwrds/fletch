@@ -114,6 +114,7 @@ function directory(env: Env): Directory {
     app: {
       chats: async (person, call) => (await getAgentByName(env.PERSON, person)).chatsCall(person, call),
       chatLast: async (person, chatId) => (await getAgentByName(env.CHAT, chatId)).lastAt(person),
+      chatSearch: async (person, chatId, query) => (await getAgentByName(env.CHAT, chatId)).search(person, query),
       cards: async (person, chatId) => ((await (await getAgentByName(env.PERSON, person)).ownsChat(chatId)) ? (await getAgentByName(env.CHAT, chatId)).cardsFor(person) : null),
       jobIds: async (person) => (await getAgentByName(env.PERSON, person)).jobIds(person),
       job: (person, id) => env.JOB.get(env.JOB.idFromName(jobName(person, id))) as unknown as AppJob,

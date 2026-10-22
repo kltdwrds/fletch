@@ -1,19 +1,18 @@
 // The Connectors, Permissions and Search pages' reads (M23.5). Every answer is for the session's person alone:
 // the Vault lists a person's own credentials and the company's, the `Company` names the connectors this member's
-// agent is entitled to, the `Person` lists its own grants and chats and searches its own memory, so nothing in a
-// request names another person and whose rows these are is the owning store's answer. No answer carries a
+// agent is entitled to, the `Person` lists its own grants and chats and searches its own memory, and each `Chat`
+// searches its own thread for its owner (`search-route.ts`, F2), so nothing in a request names another person and whose rows these are is the owning store's answer. No answer carries a
 // credential value or a reference: a connector is a host, a label and a kind in words. The writes are not here:
 // Revoke is `/api/grants/<id>/revoke`, which the engine's own route and the `Person` decide.
-import type { ChatEntry } from "../person/chats.ts";
 import type { Grant } from "../grants/types.ts";
 import type { CredentialInfo } from "../vault/core.ts";
-import { AVAILABLE_CONNECTORS, BUILTIN_PAGES, CONNECTORS_TEXT, engineRow, GATE_DEFAULTS, type PermissionRow, SEARCH_TEXT, standingNotes } from "./app/permission-words.ts";
+import { AVAILABLE_CONNECTORS, BUILTIN_PAGES, CONNECTORS_TEXT, engineRow, GATE_DEFAULTS, type PermissionRow, standingNotes } from "./app/permission-words.ts";
+import { type SearchReads, searchRoute } from "./search-route.ts";
 
 type Refusal = { ok: false; code: string; reason?: string };
 
 /** The reads this module needs, as `AppDirectory` carries them. */
-export interface ConnectorReads {
-  chats(person: string, call: { op: "view" }): Promise<{ ok: true; chats?: ChatEntry[] } | Refusal>;
+export interface ConnectorReads extends SearchReads {
   /** The person's credentials and the company's: references, labels, hosts; never a value. */
   credentials(person: string): Promise<CredentialInfo[]>;
   /** The company connectors this member's agent may use, and who connected each. */
@@ -21,8 +20,6 @@ export interface ConnectorReads {
   /** The person's own grants; null for anyone else. */
   grants(person: string): Promise<Grant[] | null>;
   names(): Promise<Array<{ email: string; name?: string }>>;
-  memorySearch(person: string, input: { queries: string[]; maxResults?: number }): Promise<{ ok: true; hits: Array<{ citation: string; text: string }>; more: number } | Refusal>;
-  memoryLineSource(person: string, input: { citation: string }): Promise<{ ok: true; source: string | null } | Refusal>;
   now(): number;
 }
 
@@ -104,33 +101,6 @@ export async function connectorRoutes(request: Request, url: URL, person: string
     return json({ ok: true, defaults: GATE_DEFAULTS, standing, connectors: count });
   }
 
-  if (url.pathname === "/app/search") {
-    const q = (url.searchParams.get("q") ?? "").trim().slice(0, 80);
-    const listed = await part(() => dir.chats(person, { op: "view" }));
-    if (failed(listed) || !("chats" in listed)) return json({ ok: false, code: (listed as Refusal).code ?? "APP_READ_FAILED" }, 500);
-    const mine = (listed.chats ?? []).filter((c) => !c.archived).sort((a, b) => b.openedAt - a.openedAt);
-    const entry = (c: ChatEntry, line?: string) => ({ chatId: c.id, title: c.title, at: c.openedAt, main: c.kind === "main", ...(line ? { line } : {}) });
-    if (!q) return json({ ok: true, q, recents: mine.slice(0, 8).map((c) => entry(c)) });
-    const needle = q.toLowerCase();
-    const results = new Map(mine.filter((c) => c.title.toLowerCase().includes(needle)).map((c) => [c.id, entry(c)]));
-    const found = await part(() => dir.memorySearch(person, { queries: [q], maxResults: 8 }));
-    let memory: { ok: boolean; code?: string; unplaced?: number };
-    if (failed(found)) memory = { ok: false, code: (found as Refusal).code };
-    else {
-      let unplaced = 0;
-      const hits = (found as { hits: Array<{ citation: string; text: string }> }).hits;
-      // A memory line opens the chat it was learned in, when that chat is the person's own.
-      const sources = await Promise.all(hits.map((h) => part(() => dir.memoryLineSource(person, { citation: h.citation }))));
-      hits.forEach((h, i) => {
-        const s = sources[i];
-        const chatId = s && !failed(s) ? /^chat:(.+)$/.exec((s as { source: string | null }).source ?? "")?.[1] : undefined;
-        const chat = chatId ? mine.find((c) => c.id === chatId) : undefined;
-        if (!chat) unplaced++;
-        else if (!results.has(chat.id)) results.set(chat.id, entry(chat, h.text.slice(0, 120)));
-      });
-      memory = { ok: true, unplaced };
-    }
-    return json({ ok: true, q, results: [...results.values()], memory, words: SEARCH_TEXT.none });
-  }
+  if (url.pathname === "/app/search") return searchRoute(url, person, dir);
   return null;
 }

@@ -21,6 +21,8 @@ export interface ChatEntry {
   kind: ChatKind;
   title: string;
   openedAt: number;
+  /** When a page last connected to it (M17.1); null when none has. Search's recents follow it (F2). */
+  connectedAt: number | null;
   archived: boolean;
 }
 
@@ -99,9 +101,9 @@ export class PersonChats {
 
   entries(): ChatEntry[] {
     return this.sql
-      .exec<{ id: string; kind: string; title: string; opened_at: number; archived_at: number | null }>("SELECT id, kind, title, opened_at, archived_at FROM chats ORDER BY kind = 'main' DESC, opened_at, rowid")
+      .exec<{ id: string; kind: string; title: string; opened_at: number; connected_at: number | null; archived_at: number | null }>("SELECT id, kind, title, opened_at, connected_at, archived_at FROM chats ORDER BY kind = 'main' DESC, opened_at, rowid")
       .toArray()
-      .map((r) => ({ id: r.id, kind: r.kind as ChatKind, title: r.title, openedAt: r.opened_at, archived: r.archived_at !== null }));
+      .map((r) => ({ id: r.id, kind: r.kind as ChatKind, title: r.title, openedAt: r.opened_at, connectedAt: r.connected_at, archived: r.archived_at !== null }));
   }
 
   private entry(chatId: string): ChatEntry | undefined {

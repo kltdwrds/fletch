@@ -9,6 +9,7 @@
 import { Type } from "@earendil-works/pi-ai";
 import { SkillCatalog } from "../../../packages/agent/src/skills/catalog.ts";
 import { seedPlatformDocs } from "../../support/platform-docs.ts";
+import { searchChat } from "../../../packages/agent/src/chat/search.ts";
 import { ChatEngine, type ChatView, type EngineCtx, type EngineHooks } from "../../../packages/agent/src/chat/engine.ts";
 import type { ColleagueRequest } from "../../../packages/agent/src/colleagues/tools.ts";
 import type { ApprovalAdapter, CapabilityAdapter, WorkspaceAdapter } from "../../../packages/agent/src/workspace/adapters.ts";
@@ -418,6 +419,8 @@ export function authorityWorld(o: WorldOptions = {}) {
     chats: (p, call) => runChatsCall(host(p).chats, p, p, call, clock.now),
     cards: async (p, chatId) => (host(p).chats.owns(chatId) ? chats.harness(chatId).instance.cardsFor(p) : null),
     chatLast: async (p, chatId) => chats.harness(chatId).instance.lastAt(p),
+    // Each chat searched by its own `Chat` for its owner (F2), as `index.ts` wires it to the object's `search`.
+    chatSearch: async (p, chatId, query) => searchChat(chats.harness(chatId).instance, p, query),
     // The Jobs page's reads and actions (M14.2, M15.7): the person's index, then the `Job` named for them.
     jobIds: async (p) => host(p).jobs.list(),
     job: (p, id) => jobOf(p, id).instance as never,
