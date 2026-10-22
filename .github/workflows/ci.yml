@@ -48,6 +48,9 @@ jobs:
             range="$PR_BASE..$PR_HEAD"
           elif [ "$PUSH_BEFORE" = "0000000000000000000000000000000000000000" ]; then
             range="$PUSH_HEAD"
+          elif ! git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null; then
+            # A force-push leaves the old head out of the clone: check what the branch adds to main instead.
+            range="origin/main..$PUSH_HEAD"
           else
             range="$PUSH_BEFORE..$PUSH_HEAD"
           fi
