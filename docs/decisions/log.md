@@ -16,5 +16,6 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
 - 2026-10-22 The file-size cap is a ratchet against `origin/main` (ported from qyvr): a file already over 600 lines may
   not grow. Rejected: the flat cap, which blocks unrelated PRs when a file drifts over.
 - 2026-10-22 Muse owns execution: it runs the KICKOFF protocol through Claude Code, reviews and UATs the result and
-  publishes the PR (`docs/runbooks/muse-execution.md`); Kyle steers, accepts one-way doors and merges. Rejected: Muse
+  merges the PR and deploys previews (`docs/runbooks/muse-execution.md`); Kyle steers, does final UAT, accepts one-way
+  doors, every Cloudflare change and the production go. Rejected: Muse
   as a second implementer, which would put two writers on one branch.
