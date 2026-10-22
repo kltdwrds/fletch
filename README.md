@@ -12,9 +12,12 @@ Apache-2.0. Contributions need a DCO sign-off (`git commit -s`).
 
 ```
 pnpm install
-pnpm check
+pnpm verify
 pnpm accept F1
 ```
+
+`pnpm check` is the fast gate (lint, the harness checks and scans, typecheck) that the pre-push hook runs;
+`pnpm verify` adds the tests and is what CI runs. Working on fletch, with an agent or without: start at `AGENTS.md`.
 
 `pnpm accept <F<n>|F<n>.<p>>` runs lint, the hermetic tests, the agent's dry-run bundle, the secret and privacy
 scans, the harness checks and typecheck, in that order, and ends with one `ACCEPT <id>: PASS` or
@@ -168,7 +171,7 @@ wrangler bundles (`WRANGLER_BUILD_CONDITIONS`, in `pnpm accept` and in create-fl
 `pnpm check` needs no build. If you run a workspace script with plain `node` and see a missing `dist/`, pass
 `--conditions=development` or run `pnpm -r --filter "./packages/host*" build`.
 
-Releases: add a changeset (`pnpm changeset`); every merge to `main` runs `pnpm check`, then the release workflow
+Releases: add a changeset (`pnpm changeset`); every merge to `main` runs `pnpm verify`, then the release workflow
 builds the two primitives and publishes the versions the changesets name (`pnpm release`). Until the repository
 has an `NPM_TOKEN` secret the workflow warns and skips publishing; nothing has been published yet.
 
