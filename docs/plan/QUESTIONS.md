@@ -16,6 +16,20 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
+### Q4 (F2), 2026-10-22: A stored search index per chat
+
+**Blocks:** nothing. F2 derives the index at query time (F2, Ruling 1): each `Chat` scans its own `messages` table
+for its owner, and `/app/search` fans out to every live chat as `/app/chats` already does, so F2 binds no storage
+schema. This question decides whether a later part adds an FTS5 table to each `Chat` object, a storage schema and so a
+one-way door (D-0007), and when.
+
+**Recommended answer:** not yet. Measure F2 on a preview with Kyle's real history (the time of one `/app/search` with
+a query, the number of live chats). Add the stored index only when a search exceeds a second or the owner passes about
+200 live chats; then it is a `chat.search-index` migration (an FTS5 external-content table over `messages`, written in
+the same transaction as `appendMessage`) under a `proposed` record for Kyle to accept, and F2's substring matching gives
+way to the tokeniser's. The alternative, building the FTS5 table in F2, spends a one-way door before the scan has been
+measured slow.
+
 ### Q2 (F1), 2026-10-22: Run the free-plan spike for Code Mode and Images
 
 **Blocks:** nothing yet; it decides whether `create-fletch` adds `LOADER` and `IMAGES` by default or only with
