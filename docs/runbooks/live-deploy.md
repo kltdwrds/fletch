@@ -31,3 +31,18 @@ memory round trip and the last-passkey rule, timed, then deleted. `test/live/f1-
    ```
 
    A bucket that still holds objects is reported by name; delete it by hand as in step 1.
+
+## What it checks, and what it leaves
+
+`/health` lists seven objects; `/app/chats` is `401 SESSION_MISSING`; `/login?setup=` is the register page; a software
+ES256 passkey registers with the setup token and yields a recovery code; a chat remembers "my favourite colour is
+teal" and answers it in a new chat; deleting the only passkey is refused with `LOGIN_LAST_PASSKEY`; a second passkey is
+added and one deleted; the recovery code signs in once and then fails with `RECOVERY_CODE_SPENT`. The time is printed,
+not asserted, and the free plan counts as verified only once a run passes on a free-plan account.
+
+The teal round trip writes the home store into `<name>-agent`, and R2's REST API cannot list or empty a bucket without
+S3 credentials, so the run's own non-empty bucket is a warned manual cleanup and the run passes; any other leftover
+fails it (`triageLeaks` in `test/live/lib.ts`). The cleanup and the sweep delete only `fletch-ci-` names, checked again
+before each DELETE, and never print the setup token or a recovery code. The sweep reads the first page of buckets
+only (20): keep the throwaway account small, or run it again after deleting some.
+

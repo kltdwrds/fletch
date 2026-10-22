@@ -12,18 +12,20 @@ qyvr-co's plan-v2 KICKOFF.
 2. `docs/plan/parts.md`: the target's Scope, Acceptance, Not in scope and its **Read** line, which names every other
    document the part needs. Read those and nothing else unless a scope line sends you there.
 3. `docs/plan/QUESTIONS.md`: if a question under `BLOCKED (open)` names the target, stop.
-4. `docs/DECISIONS.md`: the decisions taken and the open spikes. A taken decision binds the part; if the scope
-   contradicts one, that is a question, not a choice.
+4. `docs/decisions/README.md`: the index of decision records and how one becomes binding. An accepted record binds
+   the part; if the scope contradicts one, that is a question and a proposed superseding record, not a choice. Run
+   `node scripts/check-decisions.mjs` at the start: a record past its review date is the part's first question.
 5. `VISION.md`, when the part adds or changes something the owner sees.
 
 `docs/plan/VERIFIER-PROMPT.md` is what you give the verifier, unchanged.
 
 ## Rules
 
-- **Do not settle one-way doors.** A reversible implementation choice is yours: one line under "Decisions taken"
-  in `docs/DECISIONS.md` with its reason. Anything irreversible, anything that spends money, a security boundary, a
-  published package's contract or a storage schema goes to `docs/plan/QUESTIONS.md` with your recommended answer;
-  carry on only with what it does not touch.
+- **Do not settle one-way doors.** A reversible implementation choice is yours: a dated line with its reason in
+  `docs/decisions/log.md`, or a record with `decider: agent` when others will rely on it. Anything irreversible,
+  anything that spends money, a security boundary, a published package's contract or a storage schema is a
+  `proposed` record plus a question in `docs/plan/QUESTIONS.md` with your recommended answer; carry on only with what
+  it does not touch. Never write `decider: Kyle` yourself.
 - **Do not edit the plan's guard rails.** `scripts/accept.ts`, `.claude/settings.json`, this file and
   `docs/plan/VERIFIER-PROMPT.md` change only when the part's scope names them. A part may split itself in
   `docs/plan/parts.md` (below) and add its own rows to the ledgers; nothing else in `docs/plan/`.
@@ -42,7 +44,7 @@ qyvr-co's plan-v2 KICKOFF.
 
 1. State the part id and restate its Scope and Not in scope in your own words before touching code. If it will
    not fit one session, split it first: replace its section in `docs/plan/parts.md` with `F<n>.1`, `F<n>.2`, … (each
-   with its own Scope, Acceptance and Not in scope), log the split in `docs/DECISIONS.md`, and do exactly one.
+   with its own Scope, Acceptance and Not in scope), log the split in `docs/decisions/log.md`, and do exactly one.
 2. Work on a branch named for the part (or the branch the session was given). Write the acceptance tests first,
    tagged `[F<n>]` in their top-level `describe`, then the implementation.
 3. Commit small and conventional, naming the part (`feat(agent): F3 …`), signed off (`git commit -s`). Show
@@ -65,13 +67,14 @@ qyvr-co's plan-v2 KICKOFF.
 
 Each question in `docs/plan/QUESTIONS.md` is `### Q<n> (F<n>), <date>: <title>`, then **Blocks:** (what it stops),
 **Recommended answer:** (yours, with its reason) and, once given, **Answered (Kyle, <date>):**. A question that stops
-the target goes under `BLOCKED (open)`; Kyle moves it to Answered, and the loop resumes. A decision an answer settles
-is copied into `docs/DECISIONS.md` in the same commit, so the answer is never the only record.
+the target goes under `BLOCKED (open)`; Kyle moves it to Answered, and the loop resumes. When Kyle's answer settles a
+proposed record, he (or the session, quoting him) sets it to `accepted` with `decider: Kyle` in the same commit, so the
+answer is never the only record.
 
 ## Long sessions and compaction
 
 The handoff hook nudges before compaction; write the note with the handoff skill. After a compaction re-read
-`docs/plan/PROGRESS.md`, the target's section and `docs/DECISIONS.md` before continuing: the files, not the summary,
+`docs/plan/PROGRESS.md`, the target's section and `docs/decisions/README.md` before continuing: the files, not the summary,
 are the record.
 
 ## Cost

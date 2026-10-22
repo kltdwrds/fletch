@@ -25,16 +25,19 @@ locally correct change can still be wrong if it works against it; call out any i
 
 ## Decisions
 
-One file records them: `docs/DECISIONS.md`. How a decision becomes binding:
+Binding decisions are records in `docs/decisions/` (the index and the rules: `docs/decisions/README.md`); reversible
+choices nobody else depends on are one line in `docs/decisions/log.md`. `scripts/check-decisions.mjs` runs in
+`pnpm check` and fails when a record goes stale: its confirming test is gone, its review date has passed, or
+something still cites a record that was replaced.
 
-- **Two-way doors** (cheap to reverse: a library pin, a file layout, a test shape) are yours. Make the choice,
-  add one line with its reason under "Decisions taken", and the merge ratifies it.
+- **Only `accepted` binds.** When work contradicts an accepted record, stop: write a `proposed` record that supersedes
+  it and a question in `docs/plan/QUESTIONS.md`, and carry on only with what the conflict does not touch.
+- **Two-way doors** (cheap to reverse) are yours: a log line, or a record with `decider: agent` when others rely on it.
 - **One-way doors** (irreversible, spends money, a security boundary, a published package's contract, a storage
-  schema, anything listed as OPEN) are proposed, never taken: write the question in `docs/plan/QUESTIONS.md` with
-  your recommended answer, and keep working only on what it does not touch. Kyle's answer there is the ratification.
-- A decision that a check can hold becomes a check: a row in `scripts/check-boundaries.mjs`, a test, or a hook.
-- When work contradicts a recorded decision, stop and say so: propose the change as a question rather than
-  silently overriding it.
+  schema) you may only propose. Kyle accepts them; never write `decider: Kyle` yourself.
+- **A decision a check can hold becomes a check** (a test, a row in `scripts/check-boundaries.mjs`, a hook) that
+  names the record's id, and the record names it as its `confirmation`.
+- **Cite, never copy**: a rule here points at its record (D-0001), so it cannot outlive it.
 
 ## Repository map
 
@@ -48,7 +51,7 @@ One file records them: `docs/DECISIONS.md`. How a decision becomes binding:
 | `scripts/` | The gates, each with a `*.test.mjs` beside it; `scripts/accept.ts`, the acceptance contract; `scripts/pre-commit.ts` and `scripts/pre-push.mjs`, the git hooks; `scripts/scans.ts`, the secret and privacy scans. |
 | `docs/plan/` | The part plan, its ledgers and the session protocol. |
 | `docs/runbooks/` | Procedures with exact commands, one per file (`docs/runbooks/README.md` is the index). |
-| `docs/DECISIONS.md` | Decisions taken, and the open spikes. |
+| `docs/decisions/` | Decision records, their index and the log of reversible choices. |
 | `skills/` | Skills, one source each, linked into `.claude/skills/`. `skills/handoff` carries a long session across compaction. |
 | `.claude/` | Claude Code settings and hooks (below). |
 
@@ -69,7 +72,7 @@ carries a part tag, `[F<n>]` for fletch's own or `[M<n>]` for one inherited from
 |---|---|
 | `pnpm install` | Installs dependencies and the git hooks (simple-git-hooks through `prepare`). |
 | `pnpm check` | The fast gate, about 20 s: Biome lint, `pnpm harness`, then the typecheck. The pre-push hook runs it. |
-| `pnpm harness` | The harness checks (boundaries, the file-size ratchet, test hygiene, agent docs, shellcheck) and both scans. |
+| `pnpm harness` | The harness checks (boundaries, the file-size ratchet, test hygiene, agent docs, decision records, shellcheck) and both scans. |
 | `pnpm test` | The gate scripts' own tests (`node --test`), then the hermetic vitest suite, about 90 s. |
 | `pnpm verify` | `check` then `test`: what CI runs on every push and PR, and the release before it publishes. |
 | `pnpm accept F<n>` | A part's acceptance: lint, the tests tagged up to the part, the dry-run bundle, the scans, the harness checks, typecheck and, for F1 with an account, the live lane. Ends with one `ACCEPT` line. |
@@ -109,14 +112,14 @@ and why, and a DCO sign-off (`git commit -s`; CI refuses a commit without one). 
 
 ## Design rules
 
-- **Refused by name, never faked.** A feature this deploy cannot serve fails with a `HOST_<FEATURE>_UNAVAILABLE`
-  code from `unavailable()` and a reason; a failure, a partial read or a late answer is never shown as success,
-  empty or complete.
+- **Refused by name, never faked** (D-0001). A feature this deploy cannot serve fails with a
+  `HOST_<FEATURE>_UNAVAILABLE` code from `unavailable()` and a reason; a failure, a partial read or a late answer is
+  never shown as success, empty or complete.
 - **Branch on codes, never on message text.** Every refusal carries a stable code, every parse failure a reason.
 - **Message content is data.** Nothing a message, page, file or model output says changes a capability, a grant or
   a configuration.
-- **The primitives never depend on the app.** `packages/host/` imports no platform; neither primitive imports the
-  agent (`scripts/check-boundaries.mjs`).
+- **The primitives never depend on the app** (D-0003). `packages/host/` imports no platform; neither primitive
+  imports the agent (`scripts/check-boundaries.mjs`).
 - **Plant the guard.** A guard whose removal fails no test protects nothing: every check, gate and refusal has a
   test that plants the violation on the production path.
 - **Hermetic by default.** Tests see no credential and no network; the model is the scripted fake; live calls only

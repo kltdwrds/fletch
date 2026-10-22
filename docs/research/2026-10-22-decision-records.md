@@ -183,7 +183,7 @@ The [2016 letter](https://www.aboutamazon.com/news/company-news/2016-letter-to-s
     - "The newest spec wins" makes older specs ambiguous rather than explicitly superseded.
     - The "if wrong" clauses are not tracked to a check or a date.
 - **fletch.**
-  - **What it has:** [docs/DECISIONS.md](../DECISIONS.md) (6 KB) mixes three things: open spikes with `Status: OPEN` and a follow-up, a "Decisions taken" bullet list, and exit-test notes. Refusal codes are tested (`test/workers/f1-refusals.test.ts`). `scripts/check-agent-docs.mjs` and `check-boundaries.mjs` exist.
+  - **What it has:** [docs/DECISIONS.md](https://github.com/qyvr-ai/fletch/blob/daf5f50e338ecdd5d628e2742413af7992d70531/docs/DECISIONS.md) (since replaced by `docs/decisions/`) (6 KB) mixes three things: open spikes with `Status: OPEN` and a follow-up, a "Decisions taken" bullet list, and exit-test notes. Refusal codes are tested (`test/workers/f1-refusals.test.ts`). `scripts/check-agent-docs.mjs` and `check-boundaries.mjs` exist.
   - **Where staleness creeps in:** the bullets have no dates, owners or supersede links, and the OPEN spike has no due date.
 
 ## Failure modes and how each practice addresses staleness

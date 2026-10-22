@@ -48,13 +48,14 @@ const DUMP = ['harness', 'dump'].join('-');
 const isPlatformDoc = (file) => /^packages\/agent\/docs\/platform\/[^/]+\.md$/.test(file);
 const isRunbook = (file) => /^docs\/runbooks\/[^/]+\.md$/.test(file);
 const isPlan = (file) => /^docs\/plan\/[^/]+\.md$/.test(file);
+const isDecision = (file) => /^docs\/decisions\/[^/]+\.md$/.test(file);
 const base = (file) => path.posix.basename(file);
 
 export const inScope = (file) =>
-  base(file) === 'AGENTS.md' || base(file) === 'SKILL.md' || base(file) === 'VISION.md' || file === 'CONTRIBUTING.md' || isPlatformDoc(file) || isRunbook(file) || isPlan(file);
+  base(file) === 'AGENTS.md' || base(file) === 'SKILL.md' || base(file) === 'VISION.md' || file === 'CONTRIBUTING.md' || isPlatformDoc(file) || isRunbook(file) || isPlan(file) || isDecision(file);
 
 /** The files whose backticked paths and identifiers must exist: what an agent is told to do, not a plan or a ledger. */
-export const BINDING = (file) => inScope(file) && !isPlatformDoc(file) && (!isPlan(file) || file === 'docs/plan/KICKOFF.md' || file === 'docs/plan/VERIFIER-PROMPT.md');
+export const BINDING = (file) => inScope(file) && !isPlatformDoc(file) && !isDecision(file) && (!isPlan(file) || file === 'docs/plan/KICKOFF.md' || file === 'docs/plan/VERIFIER-PROMPT.md');
 
 /** The line budget of `file`, or null when it has none. */
 export function budgetOf(file) {
