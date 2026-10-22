@@ -13,3 +13,5 @@ worker-configuration.d.ts
 .eval-results/
 # a deploy config create-fletch writes when run at the checkout root (it holds the account id and owner)
 /wrangler.jsonc
+# the config `pnpm preview` deploys a slot from (scripts/preview.mjs)
+packages/agent/wrangler.preview.jsonc
