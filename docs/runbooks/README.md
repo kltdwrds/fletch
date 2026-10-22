@@ -6,4 +6,5 @@ typed into a command line that is kept; it comes from the environment or a repos
 
 - [live-deploy.md](live-deploy.md): the F1 exit test against a throwaway account, and its cleanup.
 - [release.md](release.md): publishing `@qyvr/host` and `@qyvr/host-cloudflare`.
+- [preview.md](preview.md): leasing a preview slot of fletch on Cloudflare, and making the pool and its token.
 - [free-plan-spike.md](free-plan-spike.md): whether the free plan accepts the Worker Loader and Images bindings.

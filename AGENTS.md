@@ -77,6 +77,7 @@ carries a part tag, `[F<n>]` for fletch's own or `[M<n>]` for one inherited from
 | `pnpm verify` | `check` then `test`: what CI runs on every push and PR, and the release before it publishes. |
 | `pnpm accept F<n>` | A part's acceptance: lint, the tests tagged up to the part, the dry-run bundle, the scans, the harness checks, typecheck and, for F1 with an account, the live lane. Ends with one `ACCEPT` line. |
 | `pnpm dev` | The agent Worker under `wrangler dev` on http://localhost:8787, with local Durable Objects and R2; prints the first-passkey link. Workers AI only with `--remote-ai` (`scripts/dev.ts`). |
+| `pnpm preview` | Leases a preview slot and deploys the working tree to it, from a laptop or a cloud session (`docs/runbooks/preview.md`). |
 | `pnpm create-fletch` | Sets up a deploy; see README.md and `docs/runbooks/`. |
 | `pnpm live-sweep` | Removes `fletch-ci-` leftovers from the throwaway account (`docs/runbooks/live-deploy.md`). |
 | `pnpm ds` | Compiles the design tokens; the pre-commit hook refuses a stale `tokens.ts` or `icons.ts`. |

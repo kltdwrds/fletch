@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { authMode, CLOUD_HOSTS, DEFAULT_TTL_HOURS, freeSlot, gcReason, origin, ownerTag, PREFIX, sha256Hex, slotPlan, tokenForm, wranglerEnv } from './preview-plan.mjs';
 import { agentDir, CONFIG, account, deploySlot, deprovision, drainBucket, INVENTORY, knownSubdomain, needInventory, provision, readJson, tailOf, wranglerRunner, writeWhole } from './preview-pool.mjs';
 
-/** The account the pool lives on (shared with qyvr.dev's production; docs/preview.md). An inventory names its own. */
+/** The account a new pool is made on unless `provision --account` names another (D-0008); an inventory names its own. */
 export const ACCOUNT_ID = '62b4c5143baaabf42b828a0d7a6b272e';
 /** The secrets a slot's Worker is given fresh with each new lease, and again when it is released. */
 export const SECRETS = ['MASTER_KEY', 'SETUP_TOKEN'];
@@ -28,7 +28,7 @@ const USAGE = `usage: pnpm preview <command>
   gc [--dry-run] [--slot n] [--force]   release every slot whose lease expired or whose branch merged; --force (Kyle's login) one live lease
   list                    every slot and its lease
   doctor                  which credential is in use, whether the network takes it, each slot, the hosts to allow
-  provision --slots N     (Kyle's login) make the pool's slots; idempotent
+  provision --slots N [--account id]   (Kyle's login) make the pool's slots, on this account for a new pool; idempotent
   deprovision [--slot n]  (Kyle's login) delete what the inventory records for one slot, or all
   token [--template id] [--group id] [--env-file path] [--admin-env NAME]   (Kyle's Mac) make or update the slot Workers' token`;
 
@@ -332,7 +332,7 @@ export function parseFlags(args) {
   const rest = [];
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
-    if (['--slot', '--slots', '--ttl', '--template', '--group', '--admin-env', '--env-file'].includes(a)) flags[a.slice(2)] = args[++i];
+    if (['--account', '--slot', '--slots', '--ttl', '--template', '--group', '--admin-env', '--env-file'].includes(a)) flags[a.slice(2)] = args[++i];
     else if (a.startsWith('--')) flags[a.slice(2)] = true;
     else rest.push(a);
   }
@@ -357,7 +357,8 @@ async function main(argv) {
   const readRaw = (config) => experimental_readRawConfig({ config }).rawConfig;
   const mode = authMode(process.env);
   const inv = readJson(path.join(root, INVENTORY));
-  const accountId = inv?.accountId ?? ACCOUNT_ID;
+  if (flags.account !== undefined && (command !== 'provision' || inv?.accountId || !/^[0-9a-f]{32}$/.test(flags.account))) throw new Error('preview: --account <32 hex> names the account of a new pool, on `provision` only; an inventory keeps its own');
+  const accountId = inv?.accountId ?? flags.account ?? ACCOUNT_ID;
   const env = wranglerEnv(process.env, mode, accountId);
   // getPlatformProxy (deprovision's bucket drain) runs in this process: on the login, it too must not see a token.
   if (mode === 'oauth') {

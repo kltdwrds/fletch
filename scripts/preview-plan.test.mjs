@@ -25,7 +25,8 @@ import {
 } from './preview-plan.mjs';
 
 // The pure half of `pnpm preview` (scripts/preview-plan.mjs): names, the slot config derived from the agent's real base
-// config, the inventory's deletion guard, the lease rules and the credential choice.
+// config, the inventory's deletion guard, the lease rules and the credential choice. The config tests hold D-0008: a
+// slot binds only its own bucket and index.
 const REPO = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { experimental_readRawConfig } = createRequire(path.join(REPO, 'package.json'))('wrangler');
 const BASE = experimental_readRawConfig({ config: path.join(REPO, 'packages', 'agent', 'wrangler.jsonc') }).rawConfig;

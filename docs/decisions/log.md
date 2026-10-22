@@ -15,3 +15,11 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   push and refused beside a cloud shell's credentials.
 - 2026-10-22 The file-size cap is a ratchet against `origin/main` (ported from qyvr): a file already over 600 lines may
   not grow. Rejected: the flat cap, which blocks unrelated PRs when a file drifts over.
+- 2026-10-22 A preview slot's lease lives in its own Durable Object (`PreviewLease`), never tombstoned, so a release
+  that deletes the agent's objects keeps the row that decides who may release. Rejected: an R2 object, whose
+  conditional writes the bucket wipe would have to step around.
+- 2026-10-22 A preview slot is wiped by its placeholder's deploy, whose config tombstones the agent's Durable Object
+  classes. Rejected: a per-lease `TENANT_ID`, which leaves the person-named objects reachable.
+- 2026-10-22 The `workers.dev` subdomain of the preview pool is never committed (it names the account's owner):
+  `FLETCH_PREVIEW_SUBDOMAIN`, or a git-ignored file `provision` writes. Rejected: custom domains under qyvr.dev, which
+  would hand any `.qyvr.dev` cookie to a slot a session deployed.

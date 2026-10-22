@@ -5,7 +5,7 @@ import { editorGroup, ensureToken, parseEnv, setEnv, shapeFromTemplate, slotWork
 
 // `pnpm preview token` against a fake Cloudflare: account tokens, permission groups, Worker settings that answer by what
 // the calling token's policy names, and account resource lists only the admin reaches. The fake's notion of a real
-// per-Worker key (`realKey`) is what the live check finds.
+// per-Worker key (`realKey`) is what the live check finds. These hold D-0008: the token names the slot Workers alone.
 const ACCT = 'a'.repeat(32);
 const SCOPE = 'com.cloudflare.edge.worker.script';
 const ADMIN = 'admin-secret-value';
