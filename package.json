@@ -15,9 +15,10 @@
     "ds": "node scripts/ds-tokens.ts",
     "lint": "biome lint .",
     "typecheck": "pnpm --dir packages/agent exec wrangler types --strict-vars=false && tsc -p tsconfig.json && tsc -p tsconfig.hosts.json && tsc -p packages/agent/tsconfig.json && tsc -p packages/create-fletch/tsconfig.json",
-    "boundaries": "node scripts/check-boundaries.mjs",
+    "harness": "node scripts/check-boundaries.mjs && node scripts/check-file-sizes.mjs && node scripts/check-test-hygiene.mjs && node scripts/check-agent-docs.mjs && node scripts/check-shell.mjs && node scripts/scans.ts secret && node scripts/scans.ts privacy",
     "test": "node --test scripts/*.test.mjs && QYVR_HERMETIC=1 vitest run",
-    "check": "pnpm typecheck && pnpm lint && pnpm boundaries && pnpm test",
+    "check": "pnpm lint && pnpm harness && pnpm typecheck",
+    "verify": "pnpm check && pnpm test",
     "release": "pnpm -r --filter \"./packages/host*\" build && changeset publish"
   },
   "devDependencies": {
@@ -40,6 +41,7 @@
     "wrangler": "4.149.0"
   },
   "simple-git-hooks": {
-    "pre-commit": "node scripts/pre-commit.ts"
+    "pre-commit": "node scripts/pre-commit.ts",
+    "pre-push": "if [ -f scripts/pre-push.mjs ]; then node scripts/pre-push.mjs; else pnpm run --if-present check; fi"
   }
 }

@@ -17,8 +17,8 @@ afterAll(() => {
 });
 
 /** Runs a harness check script from this repository against `cwd`, as accept's step 9 does. */
-function check(script: string, cwd: string) {
-  const res = spawnSync(process.execPath, [join(repoRoot, "scripts", script)], { cwd, encoding: "utf8" });
+function check(script: string, cwd: string, env: NodeJS.ProcessEnv = process.env) {
+  const res = spawnSync(process.execPath, [join(repoRoot, "scripts", script)], { cwd, env, encoding: "utf8" });
   return { status: res.status, out: `${res.stdout}${res.stderr}` };
 }
 
@@ -54,9 +54,13 @@ describe("[M0.2] harness checks", () => {
     expect(r.out).toMatch(/test\/m1\/chat\.test\.ts:3: focused-test/);
   });
 
-  it("file-size cap fails on a planted 601-line file under packages/", () => {
-    const dir = planted({ "packages/agent/src/big.ts": lines(601), "packages/agent/src/ok.ts": lines(600) });
-    const r = check("check-file-sizes.mjs", dir);
+  it("file-size ratchet fails on a planted 601-line file under packages/, against the base commit", () => {
+    const repo = tempRepo();
+    cleanups.push(repo.cleanup);
+    git(repo.dir, ["commit", "--quiet", "-m", "base"]);
+    repo.track("packages/agent/src/big.ts", lines(601));
+    repo.track("packages/agent/src/ok.ts", lines(600));
+    const r = check("check-file-sizes.mjs", repo.dir, { ...process.env, CHECK_FILE_SIZES_BASE: "HEAD" });
     expect(r.status).toBe(1);
     expect(r.out).toMatch(/packages\/agent\/src\/big\.ts: 601 lines; the cap is 600/);
     expect(r.out).not.toMatch(/ok\.ts/);

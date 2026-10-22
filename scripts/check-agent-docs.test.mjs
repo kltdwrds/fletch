@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { after, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { findViolations, inScope, violationsIn } from './check-agent-docs.mjs';
+import { BINDING, budgetOf, findViolations, inScope, violationsIn } from './check-agent-docs.mjs';
 
 const script = fileURLToPath(new URL('./check-agent-docs.mjs', import.meta.url));
 const dirs = [];
@@ -29,9 +29,32 @@ function repo(tree) {
 }
 
 describe('check-agent-docs', () => {
-  it('pins its scope', () => {
-    for (const f of ['CLAUDE.md', 'docs/runbooks/incident.md', 'skills/handoff/SKILL.md']) assert.ok(inScope(f), f);
-    for (const f of ['README.md', 'docs/plan-v2/KICKOFF.md', 'docs/runbooks/a/b.md']) assert.ok(!inScope(f), f);
+  it('pins its scope, and which files bind their paths and identifiers', () => {
+    for (const f of ['AGENTS.md', 'packages/host/AGENTS.md', 'VISION.md', 'CONTRIBUTING.md', 'docs/runbooks/incident.md', 'docs/plan/parts.md', 'skills/handoff/SKILL.md']) assert.ok(inScope(f), f);
+    for (const f of ['README.md', 'CLAUDE.md', 'docs/plan-v2/KICKOFF.md', 'docs/runbooks/a/b.md', 'docs/DECISIONS.md']) assert.ok(!inScope(f), f);
+    for (const f of ['AGENTS.md', 'docs/plan/KICKOFF.md', 'docs/plan/VERIFIER-PROMPT.md', 'docs/runbooks/a.md']) assert.ok(BINDING(f), f);
+    for (const f of ['docs/plan/parts.md', 'docs/plan/PROGRESS.md', 'packages/agent/docs/platform/files.md']) assert.ok(!BINDING(f), f);
+  });
+
+  it('pins the line budgets', () => {
+    assert.equal(budgetOf('AGENTS.md'), 200);
+    assert.equal(budgetOf('docs/plan/KICKOFF.md'), 200);
+    assert.equal(budgetOf('skills/x/SKILL.md'), 200);
+    assert.equal(budgetOf('packages/host/AGENTS.md'), 80);
+    assert.equal(budgetOf('docs/plan/parts.md'), null);
+    const long = (n) => `${'x\n'.repeat(n)}`;
+    assert.deepEqual(codes('packages/host/AGENTS.md', long(80)), []);
+    assert.deepEqual(codes('packages/host/AGENTS.md', long(81)), ['81 line-budget']);
+    assert.deepEqual(codes('AGENTS.md', long(201)), ['201 line-budget']);
+  });
+
+  it('fails a named path or identifier that does not exist, in binding files only', () => {
+    const named = { ...ctx, known: (p) => ['scripts/accept.ts', 'packages/host/src/host.ts', 'packages/host/src'].includes(p), isDir: (d) => ['scripts', 'packages', 'packages/host', 'packages/host/src', 'src'].includes(d), mentioned: (w) => ['hostOf', 'HOST_NOT_SET'].includes(w) };
+    const at = (file, text) => violationsIn(file, text, named).map((v) => `${v.line} ${v.code}`);
+    const text = 'Run `scripts/accept.ts` and `scripts/gone.ts`; see `src/host.ts`; not `origin/main`, `@qyvr/host` or `/api`.\n`hostOf` `HOST_NOT_SET` `renamedAway()` `JSON.stringify` `plain`\n';
+    assert.deepEqual(at('AGENTS.md', text), ['1 missing-path', '1 missing-path', '2 missing-identifier']);
+    assert.deepEqual(at('packages/host/AGENTS.md', text), ['1 missing-path', '2 missing-identifier']);
+    assert.deepEqual(at('docs/plan/parts.md', text), []);
   });
 
   it('fails a broken relative link and passes a resolving one', () => {
@@ -44,11 +67,11 @@ describe('check-agent-docs', () => {
   });
 
   it('fails a reference to the dump', () => {
-    assert.deepEqual(codes('CLAUDE.md', `see ~/x/${['harness', 'dump'].join('-')}/y\n`), ['1 dump-reference']);
+    assert.deepEqual(codes('AGENTS.md', `see ~/x/${['harness', 'dump'].join('-')}/y\n`), ['1 dump-reference']);
   });
 
   it('fails a secret-shaped string without printing it', () => {
-    const v = violationsIn('CLAUDE.md', `key ${'sk-ant-'}${'a'.repeat(30)}\n`, ctx);
+    const v = violationsIn('AGENTS.md', `key ${'sk-ant-'}${'a'.repeat(30)}\n`, ctx);
     assert.deepEqual(v.map((x) => x.code), ['secret-shape']);
     assert.ok(!JSON.stringify(v).includes('aaaa'));
   });
@@ -58,7 +81,7 @@ describe('check-agent-docs', () => {
     assert.deepEqual(codes('docs/runbooks/a.md', '# A\nno sections\n'), ['1 runbook-shape']);
     assert.deepEqual(codes('docs/runbooks/a.md', '# A\n## When\nx\n'), []);
     assert.deepEqual(codes('docs/runbooks/README.md', '# Runbooks\n'), []);
-    assert.deepEqual(codes('CLAUDE.md', 'no heading\n'), []);
+    assert.deepEqual(codes('AGENTS.md', 'no heading\n'), []);
   });
 
   it('the CLI exits 1 on a violation and 0 on a clean repository', () => {
@@ -66,9 +89,15 @@ describe('check-agent-docs', () => {
     const r = spawnSync('node', [script], { cwd: bad, encoding: 'utf8' });
     assert.equal(r.status, 1);
     assert.match(r.stderr, /unknown-script/);
-    const good = repo({ 'docs/runbooks/a.md': '# A\n## Steps\n```\npnpm accept M1\n```\n', 'CLAUDE.md': 'hi\n' });
+    const good = repo({ 'docs/runbooks/a.md': '# A\n## Steps\n```\npnpm accept M1\n```\n', 'AGENTS.md': 'Run `docs/runbooks/a.md`.\n' });
+    symlinkSync('AGENTS.md', path.join(good, 'CLAUDE.md'));
     assert.equal(spawnSync('node', [script], { cwd: good, encoding: 'utf8' }).status, 0);
     assert.deepEqual(findViolations(good), []);
+  });
+
+  it('fails an AGENTS.md without its CLAUDE.md link, a misnamed skill and a harness entry that is not a link', () => {
+    const dir = repo({ 'AGENTS.md': 'x\n', 'packages/p/AGENTS.md': 'x\n', 'packages/p/CLAUDE.md': 'a copy\n', 'skills/handoff/SKILL.md': '---\nname: other\n---\n', '.claude/skills/stray/SKILL.md': '---\nname: stray\n---\n' });
+    assert.deepEqual(findViolations(dir).map((v) => `${v.file} ${v.code}`), ['CLAUDE.md claude-link', 'packages/p/CLAUDE.md claude-link', 'skills/handoff/SKILL.md skill-name', '.claude/skills/stray harness-link']);
   });
 });
 
