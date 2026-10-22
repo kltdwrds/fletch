@@ -58,7 +58,8 @@ qyvr-co's plan-v2 KICKOFF.
 6. Update `docs/plan/PROGRESS.md`: `| F<n> | DONE | <commit> | <date> | <one line> |`, the line holding the accept
    tree hash, the test counts, the verifier result, the duration and `model: <model>`. Commit it and show the row.
 7. Push the branch and open a draft PR titled `F<n>: <scope in one line>`, its body the restated scope, the accept
-   summary and the verifier's last line. Never merge it yourself: Kyle merges, and that merge is the hand-off.
+   summary and the verifier's last line. Never merge it yourself: Muse merges it after its UAT pass, or Kyle does
+   (`docs/runbooks/muse-execution.md`), and that merge is the hand-off.
 8. If the final `pnpm accept` fails three times in a row on the same cause after the implementation is complete,
    stop: write what you learned under `BLOCKED (open)` in `docs/plan/QUESTIONS.md` and mark the row BLOCKED, rather
    than working around the acceptance.

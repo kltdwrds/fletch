@@ -8,3 +8,4 @@ typed into a command line that is kept; it comes from the environment or a repos
 - [release.md](release.md): publishing `@qyvr/host` and `@qyvr/host-cloudflare`.
 - [preview.md](preview.md): leasing a preview slot of fletch on Cloudflare, and making the pool and its token.
 - [free-plan-spike.md](free-plan-spike.md): whether the free plan accepts the Worker Loader and Images bindings.
+- [muse-execution.md](muse-execution.md): how Muse drives Claude Code sessions on the roadmap, reviews and publishes them.

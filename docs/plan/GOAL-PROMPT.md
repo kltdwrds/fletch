@@ -16,9 +16,9 @@ evaluator can read.
 ## Each session
 
 Run `claude` in the checkout on an up-to-date `main` and paste the `/goal` line above. It picks the next part from
-`docs/plan/PROGRESS.md`, works it on a branch and ends with a draft PR. Between sessions, Kyle reviews and merges
-the PR, reads `docs/plan/QUESTIONS.md`, answers under each blocked question and moves it to Answered, and commits.
-Kyle's merge is the gate; the evaluator's reading bounds the session, not the product.
+`docs/plan/PROGRESS.md`, works it on a branch and ends with a draft PR. Between sessions, Muse reviews, UATs and merges
+the PR (`docs/runbooks/muse-execution.md`); Kyle reads `docs/plan/QUESTIONS.md`, answers under each blocked question and
+moves it to Answered, and commits. The merge is the gate; the evaluator's reading bounds the session, not the product.
 
 For an attended machine, a loop that stops at the first blocked part:
 

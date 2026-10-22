@@ -23,3 +23,7 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
 - 2026-10-22 The `workers.dev` subdomain of the preview pool is never committed (it names the account's owner):
   `FLETCH_PREVIEW_SUBDOMAIN`, or a git-ignored file `provision` writes. Rejected: custom domains under qyvr.dev, which
   would hand any `.qyvr.dev` cookie to a slot a session deployed.
+- 2026-10-22 Muse owns execution: it runs the KICKOFF protocol through Claude Code, reviews and UATs the result and
+  merges the PR and deploys previews (`docs/runbooks/muse-execution.md`); Kyle steers, does final UAT, accepts one-way
+  doors, every Cloudflare change and the production go. Rejected: Muse
+  as a second implementer, which would put two writers on one branch.
