@@ -169,6 +169,7 @@ const HARNESS_CHECKS = [
   "scripts/check-file-sizes.mjs",
   "scripts/check-test-hygiene.mjs",
   "scripts/check-agent-docs.mjs",
+  "scripts/check-decisions.mjs",
   "scripts/check-shell.mjs",
 ];
 
@@ -286,7 +287,7 @@ function harnessStep(): StepOutcome {
 
 // --- the live lane --------------------------------------------------------------------------------
 
-/** The F1 exit test: a scripted deploy into a throwaway account (docs/DECISIONS.md, "F1 exit test"). */
+/** The F1 exit test: a scripted deploy into a throwaway account (docs/runbooks/live-deploy.md). */
 export const LIVE_FILE = "test/live/f1-deploy.live.test.ts";
 
 /** Whether the live lane runs: `QYVR_LIVE=1` and both account variables set (non-empty). */

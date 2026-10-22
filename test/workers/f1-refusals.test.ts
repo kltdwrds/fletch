@@ -1,7 +1,7 @@
 // F1: a host without mail, workspace, provisioning, members or render. Each object asks `hostOf(env)` and,
 // where the host refuses a feature, says so with the feature's code and reason: nothing is shown as sent,
 // requested, synced or read when it was not. The budget is null on such a host, so the Ledger writes its
-// row and reports to no one.
+// row and reports to no one. Holds decision D-0001 (docs/decisions/0001-refusals-carry-host-codes.md).
 import { describe, expect, it } from "vitest";
 import { unavailable } from "@qyvr/host";
 import { attachmentDeps, converterFor } from "../../packages/agent/src/attachments/wiring.ts";

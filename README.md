@@ -34,7 +34,7 @@ QYVR_LIVE=1 CF_LIVE_ACCOUNT_ID=... CF_LIVE_TOKEN=... pnpm vitest run test/live/f
 ```
 
 `pnpm accept F1` runs it as its `live` step under the same variables and otherwise prints `live: skipped (no account)`.
-The tag `v0.1.0` follows a passing run. See `docs/DECISIONS.md`.
+The tag `v0.1.0` follows a passing run. See `docs/runbooks/live-deploy.md`.
 
 The run leaves objects in the bucket `<name>-agent` (the agent keeps MEMORY.md there), and R2's API cannot empty a bucket,
 so the cleanup prints a warning naming that bucket; the run still passes. Any other leftover fails it. Delete the bucket
@@ -43,7 +43,7 @@ the bucket. `pnpm live-sweep` (same two variables) removes every other `fletch-c
 
 ## Set up your own fletch (aimed at ten minutes)
 
-You need a Cloudflare account (the free plan is the target; not yet verified (see docs/DECISIONS.md)), Node 24.19
+You need a Cloudflare account (the free plan is the target; not yet verified (see docs/runbooks/live-deploy.md)), Node 24.19
 or newer, and pnpm. Nobody has timed this path on a real account yet: the F1 exit test above measures it.
 
 1. **Make an API token.** Cloudflare dashboard, My Profile, API Tokens, Create Token. Give it these permissions on
@@ -145,7 +145,7 @@ later run drops your route: keep the route lines somewhere and re-add them (or d
 Code Mode (the Worker Loader binding) and HEIC-to-JPEG conversion (the Images binding) need the Workers Paid
 plan, so they are not in the base config. `--paid` adds the `LOADER` and `IMAGES` bindings. Without them, Code
 Mode refuses with `HOST_CODE_UNAVAILABLE` and a HEIC upload with `HOST_IMAGES_UNAVAILABLE`, each with its reason.
-Whether the free plan accepts those bindings is an open question; see docs/DECISIONS.md.
+Whether the free plan accepts those bindings is an open question; see docs/runbooks/free-plan-spike.md.
 
 ## What is not in this build, and why
 

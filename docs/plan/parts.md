@@ -9,7 +9,7 @@ Rules for every part:
   **Scope:**, **Acceptance:** (claims a test can prove, each naming its test file once written), **Not in scope:**
   (binding), and **Rulings:** where the plan session settled something up front, each written
   "Ruling: X — because Y — if wrong, Z".
-- **Splitting.** A session may split its part into `F<n>.1`, `F<n>.2`, … here, log the split in `docs/DECISIONS.md`,
+- **Splitting.** A session may split its part into `F<n>.1`, `F<n>.2`, … here, log the split in `docs/decisions/log.md`,
   and do exactly one.
 - **Tags.** Every new test file's top-level `describe` carries `[F<n>]` (or `[F<n>.<p>]`); accept selects the
   part's tests and every earlier one by it, and fails a part with no test of its own.
@@ -35,7 +35,7 @@ stayed in qyvr-co.
 
 ## F1 The self-host path
 
-**Read:** README.md ("Set up your own fletch", "What is not in this build"), `docs/DECISIONS.md`,
+**Read:** README.md ("Set up your own fletch", "What is not in this build"), `docs/decisions/README.md`,
 `docs/runbooks/live-deploy.md`.
 
 **Scope:** One owner on one account, set up in about ten minutes on the free plan: the host seam (`@qyvr/host`,

@@ -31,9 +31,10 @@ function repo(tree) {
 describe('check-agent-docs', () => {
   it('pins its scope, and which files bind their paths and identifiers', () => {
     for (const f of ['AGENTS.md', 'packages/host/AGENTS.md', 'VISION.md', 'CONTRIBUTING.md', 'docs/runbooks/incident.md', 'docs/plan/parts.md', 'skills/handoff/SKILL.md']) assert.ok(inScope(f), f);
-    for (const f of ['README.md', 'CLAUDE.md', 'docs/plan-v2/KICKOFF.md', 'docs/runbooks/a/b.md', 'docs/DECISIONS.md']) assert.ok(!inScope(f), f);
+    for (const f of ['README.md', 'CLAUDE.md', 'docs/plan-v2/KICKOFF.md', 'docs/runbooks/a/b.md', 'docs/decisions/a/b.md']) assert.ok(!inScope(f), f);
     for (const f of ['AGENTS.md', 'docs/plan/KICKOFF.md', 'docs/plan/VERIFIER-PROMPT.md', 'docs/runbooks/a.md']) assert.ok(BINDING(f), f);
-    for (const f of ['docs/plan/parts.md', 'docs/plan/PROGRESS.md', 'packages/agent/docs/platform/files.md']) assert.ok(!BINDING(f), f);
+    for (const f of ['docs/plan/parts.md', 'docs/plan/PROGRESS.md', 'packages/agent/docs/platform/files.md', 'docs/decisions/0001-a.md', 'docs/decisions/log.md']) assert.ok(!BINDING(f), f);
+    for (const f of ['docs/decisions/0001-a.md', 'docs/decisions/log.md']) assert.ok(inScope(f), f);
   });
 
   it('pins the line budgets', () => {

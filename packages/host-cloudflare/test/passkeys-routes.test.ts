@@ -1,3 +1,4 @@
+// Holds decision D-0002: the first passkey needs the one-time setup token, which grants nothing afterwards.
 import { describe, expect, it } from "vitest";
 import { type LoginCall, type LoginResultOf, runLoginCall } from "../src/passkeys/call.ts";
 import { passkeyIdentity, SESSION_COOKIE } from "../src/passkeys/identity.ts";
