@@ -36,6 +36,10 @@ if (!existsSync(join(bin, "pnpm"))) run(join(bin, "npm"), ["install", "-g", `pnp
 run(join(bin, "pnpm"), ["install", "--frozen-lockfile"], "pnpm install");
 // The browser tests (test/workers/*browser*, m29-*) launch the Chromium playwright-core pins, not the image's.
 run(join(bin, "pnpm"), ["exec", "playwright-core", "install", "chromium"], "playwright-core install chromium");
+// The file-size ratchet compares with the merge base of origin/main, which a single-branch clone's default refspec
+// leaves unset (AGENTS.md, gotcha 2). A failed fetch warns and the session goes on: the ratchet then says why it fails.
+const fetched = spawnSync("git", ["fetch", "--quiet", "origin", "+refs/heads/main:refs/remotes/origin/main"], { cwd: root, env, stdio: ["ignore", 2, 2] });
+if (fetched.status !== 0) console.error("session-start: could not fetch origin/main; the file-size ratchet needs it (AGENTS.md, gotcha 2)");
 
 if (process.env.CLAUDE_ENV_FILE) {
   appendFileSync(process.env.CLAUDE_ENV_FILE, `export PATH="${bin}:$PATH"\nexport PLAYWRIGHT_BROWSERS_PATH="${browsers}"\nunset PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD\n`);
