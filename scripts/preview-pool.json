@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "accountId": "62b4c5143baaabf42b828a0d7a6b272e",
+  "slots": [
+    {
+      "n": 1,
+      "name": "fletch-pv-1",
+      "resources": [
+        {
+          "created": true,
+          "kind": "r2",
+          "binding": "AGENT_BUCKET",
+          "name": "fletch-pv-1-agent"
+        },
+        {
+          "created": true,
+          "kind": "vectorize",
+          "binding": "MEMORY_INDEX",
+          "name": "fletch-pv-1-memory"
+        },
+        {
+          "created": true,
+          "kind": "worker",
+          "name": "fletch-pv-1",
+          "tag": "14a3bae1617849e39f0851f7c1578746"
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "name": "fletch-pv-2",
+      "resources": [
+        {
+          "created": true,
+          "kind": "r2",
+          "binding": "AGENT_BUCKET",
+          "name": "fletch-pv-2-agent"
+        },
+        {
+          "created": true,
+          "kind": "vectorize",
+          "binding": "MEMORY_INDEX",
+          "name": "fletch-pv-2-memory"
+        },
+        {
+          "created": true,
+          "kind": "worker",
+          "name": "fletch-pv-2",
+          "tag": "122055e2f1684aa5a327d04deb1012e7"
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "name": "fletch-pv-3",
+      "resources": [
+        {
+          "created": true,
+          "kind": "r2",
+          "binding": "AGENT_BUCKET",
+          "name": "fletch-pv-3-agent"
+        },
+        {
+          "created": true,
+          "kind": "vectorize",
+          "binding": "MEMORY_INDEX",
+          "name": "fletch-pv-3-memory"
+        },
+        {
+          "created": true,
+          "kind": "worker",
+          "name": "fletch-pv-3",
+          "tag": "55028736578b4953984cd6e9133d1afe"
+        }
+      ]
+    }
+  ]
+}
