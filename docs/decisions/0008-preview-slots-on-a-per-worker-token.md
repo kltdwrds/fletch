@@ -1,10 +1,10 @@
 ---
 id: D-0008
 title: Cloud sessions deploy to a fixed pool of preview slots with a token scoped to the slot Workers alone
-status: proposed
+status: accepted
 door: one-way
 decided: 2026-10-22
-decider: agent
+decider: Kyle
 confirmation: scripts/preview-token.test.mjs, scripts/preview-plan.test.mjs
 revisit-when: Cloudflare scopes bindings by token, or previews move to an account of their own (docs/plan/QUESTIONS.md, Q3)
 ---
@@ -41,9 +41,9 @@ pool has the same gap.
 
 ## Options
 
-- **Accept the gap** on the shared account: previews work today; production data is reachable from any cloud session
-  that holds the token.
-- **A Cloudflare account only for previews** (recommended, Q3): `provision --account` makes the pool there and the
+- **Accept the gap** on the shared account (chosen, Kyle, 2026-10-22, Q3): previews work today; production data is
+  reachable from any cloud session that holds the token.
+- **A Cloudflare account only for previews** (recommended, not chosen): `provision --account` makes the pool there and the
   inventory and token follow it; the gap then reaches only other previews. Costs the account's plan.
 - Rejected: widening `qyvr-preview-slots`, or account-wide Workers, R2 and Vectorize write: they can redeploy
   production (Kyle).

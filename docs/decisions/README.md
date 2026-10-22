@@ -59,5 +59,5 @@ After adding or changing a record, run `node scripts/check-decisions.mjs --write
 | [D-0005](0005-create-fletch-deploys-from-a-checkout.md) | create-fletch deploys the agent from a fletch checkout, not from a published package | accepted | two-way | 2026-10-20 | 2027-01-20 |
 | [D-0006](0006-one-plan-two-entry-points.md) | One plan with two entry points: roadmap work is an `F<n>` part, everything else a plain PR | accepted | two-way | 2026-10-22 | 2027-01-22 |
 | [D-0007](0007-decision-records.md) | Binding decisions are records with a status, a ratifier, a confirmation and a review date, checked in pnpm check | accepted | two-way | 2026-10-22 | 2027-01-22 |
-| [D-0008](0008-preview-slots-on-a-per-worker-token.md) | Cloud sessions deploy to a fixed pool of preview slots with a token scoped to the slot Workers alone | proposed | one-way | 2026-10-22 |  |
+| [D-0008](0008-preview-slots-on-a-per-worker-token.md) | Cloud sessions deploy to a fixed pool of preview slots with a token scoped to the slot Workers alone | accepted | one-way | 2026-10-22 |  |
 <!-- index:end -->

@@ -23,6 +23,8 @@ the free-plan spike (Q2).
 
 **Recommended answer:** run it on the Q1 account (`docs/runbooks/free-plan-spike.md`) and paste the table.
 
+## Answered
+
 ### Q3, 2026-10-22: Preview slots on the shared account reach production's data
 
 **Blocks:** accepting D-0008. `pnpm preview` works today on the shared account (`docs/runbooks/preview.md`).
@@ -35,4 +37,4 @@ anyone holding it can bind qyvr.dev production's buckets, databases or services 
 `pnpm preview provision` and `pnpm preview token` there (the inventory and the token name its account), and set the
 cloud environment's `CLOUDFLARE_ACCOUNT_ID` to it. The alternative is to accept the gap and D-0008 as it stands.
 
-## Answered
+**Answered (Kyle, 2026-10-22):** "accept the gap and keep previews on the shared account." D-0008 is accepted.
