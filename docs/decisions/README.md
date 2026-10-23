@@ -61,4 +61,5 @@ After adding or changing a record, run `node scripts/check-decisions.mjs --write
 | [D-0007](0007-decision-records.md) | Binding decisions are records with a status, a ratifier, a confirmation and a review date, checked in pnpm check | accepted | two-way | 2026-10-22 | 2027-01-22 |
 | [D-0008](0008-preview-slots-on-a-per-worker-token.md) | Cloud sessions deploy to a fixed pool of preview slots with a token scoped to the slot Workers alone | accepted | one-way | 2026-10-22 |  |
 | [D-0009](0009-page-grammar.md) | Every page is a path in one grammar module both the server and the page script read; anything else is a 404 page | accepted | two-way | 2026-10-23 |  |
+| [D-0010](0010-artifact-collection-address.md) | Stub for Kyle's artifact record - artifacts live at `/library/artifacts/<slug>`, a collection of the page grammar | proposed | two-way | 2026-10-23 |  |
 <!-- index:end -->
