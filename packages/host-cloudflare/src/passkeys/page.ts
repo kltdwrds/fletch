@@ -19,7 +19,8 @@ a{color:var(--accent)}
 label{display:block;margin:.75rem 0 .25rem}
 input{font:inherit;width:100%;min-height:44px;padding:.5rem;border:1px solid var(--line);border-radius:8px;background:transparent;color:inherit}
 form button{margin-top:1rem}
-code{display:block;font-size:1.25rem;letter-spacing:.05em;padding:1rem;border:1px dashed var(--line);border-radius:8px;text-align:center;margin:1rem 0;user-select:all}
+code{display:block;font-size:1.25rem;letter-spacing:.05em;padding:1rem;border:1px dashed var(--line);border-radius:8px;text-align:center;margin:1rem 0;user-select:all;cursor:copy}
+#copied{margin:-.5rem 0 1rem;min-height:1.5em}
 .error{color:var(--bad);margin-top:1rem}
 `;
 
@@ -87,7 +88,31 @@ const SCRIPT = `(() => {
     if (!window.PublicKeyCredential) throw new Error("this browser does not support passkeys");
     return state === "authenticate" ? signIn() : register();
   }));
-  $("done").addEventListener("click", () => location.assign("/"));
+  // The code is shown once: tapping it copies it, and a failed copy says so and selects it for a manual copy.
+  const code = $("code");
+  const copy = async () => {
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error("no clipboard");
+      await navigator.clipboard.writeText(code.textContent || "");
+      $("copied").textContent = "Copied. Keep it somewhere safe too.";
+    } catch {
+      getSelection().selectAllChildren(code);
+      $("copied").textContent = "Could not copy it here. The code is selected: copy it yourself.";
+    }
+  };
+  code.addEventListener("click", copy);
+  code.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    copy();
+  });
+  // Leaving loses the code for good, so the first click only arms the button; the second one leaves.
+  const done = $("done");
+  done.addEventListener("click", () => {
+    if (done.dataset.armed) return location.assign("/");
+    done.dataset.armed = "true";
+    done.textContent = "It is not shown again. Click again to leave";
+  });
   const toggle = $("show-recover");
   if (toggle) {
     toggle.addEventListener("click", (e) => {
@@ -150,8 +175,9 @@ ${recover}
 </section>
 <section id="saved" hidden>
 <h1>Your recovery code</h1>
-<p>Write this down and keep it somewhere safe. It is shown once, and it is the only way back in if you lose every passkey.</p>
-<code id="code"></code>
+<p>Write this down and keep it somewhere safe, or tap it to copy. It is shown once, and it is the only way back in if you lose every passkey.</p>
+<code id="code" tabindex="0" role="button"></code>
+<p id="copied" role="status"></p>
 <button id="done" type="button">I have written it down</button>
 </section>`,
   );
