@@ -53,3 +53,13 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   by every entry over it), and Settings' panes are only the panes the shell has, so the grammar's settings row lists
   them and `/settings/<anything else>` is the not-found page. Writes wait behind a pop of ours (`hist`), because a
   browser's `history.go` lands later. Rejected: a counter of pushes, which cannot tell a stray entry from its owner's.
+- 2026-10-23 F6: the Library's collections are `COLLECTIONS` in `pages.ts`, one row each, so D-0009's reserved
+  collection row is now the rule "a page only for a registered collection" and the artifact plan's `artifacts` is one
+  entry (D-0010). A collection id is its segments decoded one by one (`segmentsOf`, with a copy in the page script that
+  `test/workers/f6-library-address.test.ts` drives); a segment that is empty, `.`, `..`, a bad escape or decodes to a
+  slash is no page, so two addresses never name one file. Rejected: a regex-only check, which cannot decode.
+- 2026-10-23 F6: a fresh tab booted at a file address rebuilds `/library` beneath it (its entry marked
+  `{ page: "file" }`, so a reload does not rebuild twice), as Settings does, and the viewer's Back is always
+  `history.back()`. Rejected: Back as `go("/library")` when nothing is beneath, which pushes a second Library entry.
+  The store names files in `[A-Za-z0-9._-]`, so a space or `#` in a segment is shown round-tripping to the Person's
+  request and its `FILES_PATH_INVALID`, not to a stored file.
