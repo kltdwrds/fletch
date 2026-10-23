@@ -316,15 +316,15 @@ const COLS = ${JSON.stringify(COLUMNS)}, WIDTHS_KEY = ${JSON.stringify(WIDTHS_KE
 const INVITE = ${JSON.stringify(INVITE_TEXT)};
 const SETTINGS_ROWS = ${JSON.stringify(SETTINGS_MENU.map((r) => r.id))};
 const LOAD = { feed, goals, library };
-// What used to be a page and is now an overlay: Settings (on its nav on a phone, General wider) and its panes, and
-// the panel's tabs.
-const SETTINGS_OF = { settings: "", connectors: "connectors", connector: "connector", permissions: "permissions" };
+// What used to be a page and is now an overlay: Settings at its addresses (F5), and the panel's tabs.
+const SETTINGS_OF = { settings: "/settings", connectors: "/settings/connectors", permissions: "/settings/permissions" };
 const PANEL_OF = { approvals: "approvals", jobs: "upcoming" };
 let shown = "chat", panelClosed = false, scrolled = false;
+// Draws a view; the router calls it once the history is where the view is, so what it closes has no entry left.
 function show(view) {
-  closeOverlays(); closeInvite();
-  if (view in SETTINGS_OF) { openSettings(SETTINGS_OF[view]); return; }
-  if (PANEL_OF[view]) { openPanel(PANEL_OF[view]); return; }
+  if (view in SETTINGS_OF) { go(SETTINGS_OF[view]); return; }
+  if (PANEL_OF[view]) { closeOverlays(); closeInvite(); openPanel(PANEL_OF[view]); return; }
+  closeOverlays(true); closeInvite(true);
   shown = view; scrolled = false;
   $("app").dataset.view = view;
   for (const v of VIEWS) $(v).hidden = v !== view;
@@ -460,21 +460,21 @@ function openInvite() {
   settle(n);
   inviteOpen = true; pill.setAttribute("aria-expanded", "true");
   if (device() === "phone") { n.className = "qf-dlg qf-dlg--480"; n.removeAttribute("style"); openDialog(n, { form: "sheet", onClose: inviteClosed }); return; }
-  n.className = "qf-pop"; borrow(n, $("app")); n.hidden = false; $("invite-backdrop").hidden = false;
+  n.className = "qf-pop"; borrow(n, $("app")); n.hidden = false; $("invite-backdrop").hidden = false; ownLoose(closeInvite);
   if (pill.getBoundingClientRect && $("app").getBoundingClientRect) {
     const r = pill.getBoundingClientRect(), a = $("app").getBoundingClientRect();
     n.setAttribute("style", "top:" + Math.round(r.bottom - a.top + 8) + "px;right:" + Math.round(a.right - r.right) + "px");
   }
 }
-function closeInvite() {
+function closeInvite(keep) {
   if (!inviteOpen) return;
   const n = $("invite-pop");
-  if (isOpen(n)) { closeDialog(n); return; }
-  inviteOpen = false; $("head-invite").setAttribute("aria-expanded", "false");
+  if (isOpen(n)) { closeDialog(n, keep); return; }
+  dropLoose(closeInvite, keep); inviteOpen = false; $("head-invite").setAttribute("aria-expanded", "false");
   exit([n], [n], () => { n.hidden = true; n.removeAttribute("style"); giveBack(n); $("invite-backdrop").hidden = true; resetInvite(); });
 }
 $("head-invite").onclick = openInvite;
-$("invite-backdrop").onclick = closeInvite;
+$("invite-backdrop").onclick = () => closeInvite();
 $("invite-pop-copy").onclick = async () => {
   const link = inviteLink();
   let ok = false;
@@ -489,7 +489,8 @@ $("invite-pop-copy").onclick = async () => {
 if (document.addEventListener) document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeInvite(); });
 // Invite is a company's (spec section 4 cuts members from a standalone deploy, which has one owner).
 getJson("/me").then((me) => { canInvite = me.shape === "company" && (me.role === "admin" || me.role === "owner"); paint(); }, () => {});
-// A device change closes what was open (a sheet does not become a dialog mid-way) and draws the frame again.
+// A device change closes what was open (a sheet does not become a dialog mid-way), popping the entries it owned so
+// the history matches the screen (F5), and draws the frame again.
 const darkScheme = media("(prefers-color-scheme: dark)");
 function theme() { if (document.body) document.body.setAttribute("data-theme", modeTheme(!!(darkScheme && darkScheme.matches))); }
 function relayout() { closeOverlays(); closeInvite(); paint(); if (shown === "library") libRedraw(); }

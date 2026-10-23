@@ -238,8 +238,9 @@ export async function page(
     addEventListener: (type: string, f: (e: { key: string }) => void) => void (type === "keydown" && keys.push(f)),
   };
   // The address bar and the session history as a browser keeps them (F4): `path` (with any query and fragment) is the
-  // address the page boots at, `search` a query on `/`. A push or a replace moves the address; `back()` steps to the
-  // entry before and fires the page's `popstate` listeners, as a browser does, while a push or a replace fires none.
+  // address the page boots at, `search` a query on `/`. A push or a replace moves the address and sets the entry's
+  // `state` (F5: an overlay's entry carries its marker); `back()` and `go(-n)` step to an earlier entry and fire the
+  // page's `popstate` listeners, as a browser does, while a push or a replace fires none.
   const ORIGIN = "https://solo-sam.example";
   const at = new URL(layout.path ?? `/${layout.search ?? ""}`, ORIGIN);
   const location = { protocol: "https:", host: "solo-sam.example", pathname: at.pathname, search: at.search, hash: at.hash };
@@ -250,26 +251,37 @@ export async function page(
   };
   const popped: Array<() => void> = [];
   const entries = [address()];
+  const states: unknown[] = [null];
   let index = 0;
   const history = {
     entries,
+    states,
     get index() {
       return index;
     },
-    pushState(_s: unknown, _t: string, url: string) {
+    get state() {
+      return states[index] ?? null;
+    },
+    pushState(s: unknown, _t: string, url: string) {
       moveTo(url);
       entries.splice(index + 1, entries.length, address());
+      states.splice(index + 1, states.length, s ?? null);
       index = entries.length - 1;
     },
-    replaceState(_s: unknown, _t: string, url: string) {
+    replaceState(s: unknown, _t: string, url: string) {
       moveTo(url);
       entries[index] = address();
+      states[index] = s ?? null;
     },
-    back() {
-      if (index === 0) return;
-      index--;
+    go(n: number) {
+      const to = Math.max(0, Math.min(entries.length - 1, index + n));
+      if (to === index) return;
+      index = to;
       moveTo(entries[index] as string);
       for (const f of popped) f();
+    },
+    back() {
+      history.go(-1);
     },
   };
   const window = { addEventListener: (type: string, f: () => void) => void (type === "popstate" && popped.push(f)) };

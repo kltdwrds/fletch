@@ -95,7 +95,9 @@ describe("[M17.1] a fresh open restores what a reload restores (QYVR-151)", () =
   it("the page opens the list's last chat when the address names none, and keeps the open chat in the address", () => {
     expect(APP_PAGE).toContain("open(select || chatId || v.last || mainId);");
     // F4: home becomes the opened chat's own address, by a replace; a chat's address is read at boot from its path.
-    expect(APP_PAGE).toContain('if (location.pathname === "/" && !fileLink() && chatId) history.replaceState(null, "", chatPath(chatId));');
+    // F5: the replace waits behind a pop of an overlay's entry (`hist`), keeps the marker of an overlay opened before
+    // the list answered, and the router keeps it as the page drawn.
+    expect(APP_PAGE).toContain('if (location.pathname === "/" && !fileLink() && chatId) { drawnAt = chatPath(chatId); hist(() => history.replaceState(history.state, "", chatPath(chatId))); }');
     expect(APP_PAGE).toContain('chats(booted && booted.row.name === "chat" ? booted.id : null)');
   });
 });

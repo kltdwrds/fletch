@@ -49,3 +49,7 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
 - 2026-10-23 F4: the not-found page, and a grammar row reserved for a later part (Settings, the Library's collections),
   draw `#nowhere` with the path as text and a link home; the chat list still loads underneath so the link home opens
   the last chat at once. Settings' own entry points keep `show("settings")` until F5 gives them addresses.
+- 2026-10-23 F5: an overlay's history entry carries `{ layer, set }` (its owner's marker, and Settings' depth repeated
+  by every entry over it), and Settings' panes are only the panes the shell has, so the grammar's settings row lists
+  them and `/settings/<anything else>` is the not-found page. Writes wait behind a pop of ours (`hist`), because a
+  browser's `history.go` lands later. Rejected: a counter of pushes, which cannot tell a stray entry from its owner's.

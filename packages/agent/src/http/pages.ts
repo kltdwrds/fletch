@@ -2,9 +2,11 @@
 // serves `APP_PAGE` for a GET on exactly these paths (routes.ts) and the page with a 404 to a browser asking for any
 // other path; the page script gets the same rows as JSON (app/router.ts) and draws the view a row names. A pattern is
 // a regular expression's source, anchored, so the one table serves `RegExp` on both sides; its first group is the
-// row's id. A row with no `view` is reserved (Settings for F5, the Library's collections for F6): it is a page the
-// server serves, and the shell says it draws nothing there yet. A message's position is the fragment
-// (`/chats/<id>#<mid>`), which the server never sees. No API path is a page (`test/workers/f4-pages.test.ts`).
+// row's id. A row with no `view` is reserved (the Library's collections for F6): it is a page the server serves, and
+// the shell says it draws nothing there yet. Settings' addresses (F5) are its panes, each drawn over the page it was
+// opened from: `/settings`, `/settings/<pane>`, a nested pane under its parent's and a connector at
+// `/settings/connectors/<id>`. A message's position is the fragment (`/chats/<id>#<mid>`), which the server never
+// sees. No API path is a page (`test/workers/f4-pages.test.ts`).
 
 /** A chat's id as the Person mints it (routes.ts' `CHAT_ID`, the same shape). */
 const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
@@ -15,7 +17,7 @@ export interface PageRow {
   /** An anchored regular expression's source; the first group, when there is one, is the page's id. */
   pattern: string;
   /** The `#stage` view it draws, or null for a row reserved for a later part. */
-  view: "chat" | "feed" | "goals" | "library" | null;
+  view: "chat" | "feed" | "goals" | "library" | "settings" | null;
   /** A path that matches, for the tests and the docs. */
   example: string;
 }
@@ -27,7 +29,7 @@ export const PAGES: readonly PageRow[] = [
   { name: "goals", pattern: "^/goals$", view: "goals", example: "/goals" },
   { name: "library", pattern: "^/library$", view: "library", example: "/library" },
   { name: "collection", pattern: "^/library/([a-z][a-z0-9-]*/[^/]+(?:/[^/]+)*)$", view: null, example: "/library/files/notes/plan.md" },
-  { name: "settings", pattern: "^/settings(?:/[a-z][a-z0-9-]*)*$", view: null, example: "/settings" },
+  { name: "settings", pattern: "^/settings(?:/(?:general(?:/(?:company|loops))?|connectors(?:/[^/]+)?|permissions|devices|messaging|help))?$", view: "settings", example: "/settings/connectors" },
 ];
 
 const COMPILED = PAGES.map((p) => ({ row: p, re: new RegExp(p.pattern) }));

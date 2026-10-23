@@ -5,7 +5,9 @@
 // background under another view, a list re-read) writes the address. `/` is home: it draws the last chat and becomes
 // that chat's address by `replaceState`, never by a push, so one back leaves the app. A message's position is the
 // fragment, `/chats/<id>#<mid>`. A path that is no page draws the not-found page, which names it as text; a row
-// reserved for a later part (Settings, the Library's collections) says it draws nothing there yet.
+// reserved for a later part (the Library's collections) says it draws nothing there yet. Settings (F5) is drawn over
+// the page beneath it, which stays as it was: opening it pushes its addresses, closing it pops them (overlays.ts owns
+// the entries), and a reload at one draws it over home with the addresses above it rebuilt, so its Back still works.
 import { PAGES } from "../pages.ts";
 
 /** The router's words: the not-found page and the document's title. */
@@ -34,40 +36,76 @@ function pageAt(path) {
 const chatPath = (id, mid) => "/chats/" + encodeURIComponent(id) + (mid ? "#" + encodeURIComponent(mid) : "");
 // A Share link (\`/?file=\`) opens the Library, which opens its file, until the file has its own address (F6).
 const fileLink = () => !!new URLSearchParams(location.search).get("file");
+const isSet = (path) => { const p = pageAt(path.split(/[?#]/)[0]); return !!p && p.row.view === "settings"; };
+// The page beneath any overlay, as last drawn, and the Settings address on screen: a \`popstate\` that lands on either
+// draws nothing again.
+let drawnAt = null, setDrawnAt = null;
 // The one way the address changes: the person asked for \`path\`. The same address again is drawn, not pushed twice.
+// Leaving for a page (or opening Settings) closes what is open and pops its entries first; the write waits for them.
 function go(path, o) {
-  if (path !== location.pathname + location.search + location.hash) history[o && o.replace ? "replaceState" : "pushState"](null, "", path);
-  drawPage();
+  const replace = o && o.replace, within = isSet(path) && isOpen($("set-dialog"));
+  if (!within) { closeOverlays(); closeInvite(); }
+  hist(() => {
+    if (path === here()) return;
+    if (isSet(path) && !within) { setChain(path).forEach((a, i) => history.pushState({ layer: "settings", set: i + 1 }, "", a)); return; }
+    const st = within ? { layer: "settings", set: ((history.state && history.state.set) || 0) + (replace ? 0 : 1) } : null;
+    history[replace ? "replaceState" : "pushState"](st, "", path);
+  });
+  drawPage(false, path);
 }
 // A tab, the rail, or a line that sends the person to the chat: the open chat's address, or home before one is open.
 function toView(v) { go(v === "chat" ? (chatId ? chatPath(chatId) : "/") : VIEW_PATH[v]); }
-// Draws what the address names. At boot the chat is opened by the list's answer (\`chats\`), not here, so it opens once.
-function drawPage(boot) {
-  const path = location.pathname, p = pageAt(path);
-  const mid = location.hash ? decodeURIComponent(location.hash.slice(1)) : null;
+// Draws what the address (\`at\`, the current one unless \`go\` names it) names. At boot the chat is opened by the list's
+// answer (\`chats\`), not here, so it opens once.
+function drawPage(boot, at) {
+  at = at || here();
+  const h = at.indexOf("#"), path = (h < 0 ? at : at.slice(0, h)).split("?")[0], p = pageAt(path);
+  const mid = h >= 0 && h < at.length - 1 ? decodeURIComponent(at.slice(h + 1)) : null;
+  if (p && p.row.view === "settings") {
+    // Settings over the page beneath; at boot that is home, and the entries above the address are rebuilt over it.
+    if (drawnAt === null) {
+      show("chat"); drawnAt = "/";
+      // A reload keeps the entries and their states; a fresh tab rebuilds them over home.
+      if (!(history.state && history.state.layer === "settings")) {
+        history.replaceState(null, "", "/");
+        setChain(path).forEach((a, i) => history.pushState({ layer: "settings", set: i + 1 }, "", a));
+      }
+    }
+    setDrawnAt = path; setDraw(path); retitle(); return;
+  }
+  drawnAt = at; setDrawnAt = null;
   if (!p || !p.row.view) { show("nowhere"); $("nowhere-path").textContent = (p ? ROUTER.notYet : ROUTER.missing).replace("{path}", path); retitle(); return; }
   if (p.row.name === "home" && fileLink()) show("library");
   else show(p.row.view);
-  if (p.row.name === "home" && !fileLink() && chatId) history.replaceState(null, "", chatPath(chatId));
+  if (p.row.name === "home" && !fileLink() && chatId) { drawnAt = chatPath(chatId); hist(() => history.replaceState(null, "", chatPath(chatId))); }
   if (p.row.name === "chat") {
     if (mid) seekTo(p.id, mid);
     if (!boot && (p.id !== chatId || mid)) open(p.id);
   }
   retitle();
 }
-// The document's title names the page: the open chat's title on a chat, else the view's.
+// The document's title names the page: Settings while it is open, the open chat's title on a chat, else the view's.
 function retitle() {
   const c = shown === "chat" && listed.find((x) => x.id === chatId);
-  const name = shown === "chat" ? (c ? (c.kind === "main" ? CHATS.main : c.title) : "") : TITLE[shown];
+  const name = isOpen($("set-dialog")) ? SETTINGS.title : shown === "chat" ? (c ? (c.kind === "main" ? CHATS.main : c.title) : "") : TITLE[shown];
   document.title = name ? name + " · " + ROUTER.app : ROUTER.app;
 }
 $("nowhere-home").onclick = (e) => { if (e && e.preventDefault) e.preventDefault(); go("/"); };
-window.addEventListener("popstate", () => drawPage());
+// Back or forward. A pop of ours lands where the page beneath already is, so it draws nothing unless that page is not
+// the one on screen (Settings reloaded over home, then closed onto the page it was opened from). The person's back or
+// forward closes what sat above the entry it landed on (overlays.ts) and draws the address when it is not on screen.
+// Home is drawn again so it becomes the last chat's address.
+window.addEventListener("popstate", () => {
+  const ours = popLanded();
+  if (popWait) return;
+  if (isSet(location.pathname)) { if (!ours && (location.pathname !== setDrawnAt || !isOpen($("set-dialog")))) drawPage(); return; }
+  if ((here() !== drawnAt || location.pathname === "/") && !(ours && history.state && history.state.layer)) drawPage();
+});
 const booted = pageAt(location.pathname);
 drawPage(true);
 // Home becomes the chat the list opened, unless the person has gone elsewhere meanwhile.
 chats(booted && booted.row.name === "chat" ? booted.id : null).then(() => {
-  if (location.pathname === "/" && !fileLink() && chatId) history.replaceState(null, "", chatPath(chatId));
+  if (location.pathname === "/" && !fileLink() && chatId) { drawnAt = chatPath(chatId); hist(() => history.replaceState(history.state, "", chatPath(chatId))); }
   retitle();
 });
 if (pinnable()) loadPanel();`;
