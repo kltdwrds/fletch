@@ -85,11 +85,13 @@ async function firstSend(w: World, p: DraftPage, who: string, text: string) {
   const made = sideChats(w, who).filter((c) => !before.has(c.id));
   expect([p.creates().length - creates, made.length]).toEqual([1, 1]);
   const chat = (made[0] as { id: string }).id;
+  // Until the send goes the words stay in the composer (closed while the chat connects), so none is lost without a word.
+  expect([input(p).value, input(p).disabled]).toEqual([text, true]);
   const s = connectMade(w, p, chat);
   await settle();
   // The message as typed (the composer trims its ends, as it always has) went once the history was drawn.
   const sent = s.sent.map((d) => JSON.parse(d) as { type: string; text?: string; id?: string });
-  expect(sent.filter((f) => f.type === "send").map((f) => f.text)).toEqual([text.trim()]);
+  expect([sent.filter((f) => f.type === "send").map((f) => f.text), input(p).value]).toEqual([[text.trim()], ""]);
   return { chat, s, sendId: sent.find((f) => f.type === "send")?.id as string };
 }
 
@@ -266,6 +268,28 @@ describe("[F8] a new chat is a drafted placeholder at /chats/new", () => {
     await settle();
     const again = await pageAt(w, ada.email, "/");
     expect([sideChats(w, ada.email), again.byId("chats").children.filter((r) => r.dataset.chat).map((r) => r.dataset.chat), again.creates()]).toEqual([[], [main], []]);
+  });
+
+  it("leaving before the made chat's history is drawn sends nothing and keeps the words in the composer, never losing them without a word", async () => {
+    const w = world();
+    const main = ((await w.http(ada.email, "GET", "/app/chats")).body as { main: string }).main;
+    const p = await pageAt(w, ada.email, NEW);
+    await p.type("Sent too soon");
+    await settle();
+    expect([p.creates().length, address(p).startsWith("/chats/"), address(p) === NEW, input(p).value]).toEqual([1, true, false, "Sent too soon"]);
+    // Away to the main chat before the new chat's socket answered: the held send never goes, and its words are the
+    // placeholder's draft again, out of the main chat's composer.
+    await rowOf(p, main)?.children[0]?.onclick?.();
+    await settle();
+    const s = lastSocket(p);
+    p.open(s);
+    p.deliver(s, { type: "history", entries: [], running: null });
+    await settle();
+    expect([address(p), input(p).value, p.sockets.flatMap((x) => x.sent).filter((d) => d.includes("Sent too soon")), p.bubbles()]).toEqual([`/chats/${main}`, "", [], []]);
+    // The + again: the placeholder holds the same words, and nothing more was created.
+    await p.byId("new-chat").onclick?.();
+    await settle();
+    expect([address(p), input(p).value, p.creates().length]).toEqual([NEW, "Sent too soon", 1]);
   });
 
   it("a create the Person refuses keeps the draft in the composer and says so with its code; nothing is sent", async () => {

@@ -10,7 +10,7 @@
 // rebuilt beneath it, as Settings' entries are, so the viewer's Back (\`history.back()\`) lands on the list. Settings (F5) is drawn over
 // the page beneath it, which stays as it was: opening it pushes its addresses, closing it pops them (overlays.ts owns
 // the entries), and a reload at one draws it over home with the addresses above it rebuilt, so its Back still works.
-import { PAGES } from "../pages.ts";
+import { NEW_CHAT_PATH, PAGES } from "../pages.ts";
 
 /** The router's words: the not-found page and the document's title. */
 export const ROUTER_TEXT = {
@@ -75,7 +75,7 @@ function go(path, o) {
 }
 // A tab, the rail, or a line that sends the person to the chat: the open chat's address (the placeholder's while a
 // draft is the open chat, F8), or home before one is open.
-function toView(v) { go(v === "chat" ? (drafting ? "/chats/new" : chatId ? chatPath(chatId) : "/") : VIEW_PATH[v]); }
+function toView(v) { go(v === "chat" ? (drafting ? ${JSON.stringify(NEW_CHAT_PATH)} : chatId ? chatPath(chatId) : "/") : VIEW_PATH[v]); }
 // Draws what the address (\`at\`, the current one unless \`go\` names it) names. At boot the chat is opened by the list's
 // answer (\`chats\`), not here, so it opens once.
 function drawPage(boot, at) {

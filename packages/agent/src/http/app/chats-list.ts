@@ -1,6 +1,7 @@
 // The chats list (M23.1's list column and drawer, drawn on the system's ListRow at M27.3): its words, its rules,
 // the row menu's static items with inline rename, and the script that draws the list from the Person's answer.
 // The script runs inside the chat's (CHAT_SCRIPT interpolates it where it stood), so it shares the chat's scope.
+import { NEW_CHAT_PATH } from "../pages.ts";
 import { ic } from "./icons.ts";
 
 /**
@@ -190,7 +191,7 @@ async function restore(c) {
 }
 $("archived-btn").onclick = () => openMenu($("archived-btn"), [{ label: CHATS.showArchived, glyph: "archive", run: () => showArchived(true) }]);
 // New side chat is the placeholder's address (F8): pushed like any chat's, creating nothing until the first send.
-NEW_CHAT.onclick = () => go("/chats/new");
+NEW_CHAT.onclick = () => go(${JSON.stringify(NEW_CHAT_PATH)});
 // Inline rename (the canvas's row on TextField): the row's button gives its place to the form until it is saved
 // or cancelled; the name goes to the Person, which decides.
 $("rename").onclick = () => {

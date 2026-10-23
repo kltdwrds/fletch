@@ -373,7 +373,7 @@ function frame(e) {
     // page asks once for the history, which holds the whole of it.
     current = f.running ? f.running.turn : null; drawn = 0; working(!!f.running);
     // The first send from the placeholder goes now that the made chat's history is drawn (F8), under its bubble.
-    if (held) { const m = held; held = null; dispatch(m); }
+    if (held) { const m = held; held = null; if (dispatch(m)) tookOff(m); }
   }
   else if (f.type === "turn_started") {
     // A turn that goes on after a decision (M20.1) has no text: nothing the person typed starts it.
@@ -409,12 +409,18 @@ function frame(e) {
 function currentRow(id) {
   for (const r of $("chats").querySelectorAll("[data-chat]")) { const b = r.children[0]; if (id && r.dataset.chat === id) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); }
 }
-// Leaving the placeholder (F8) keeps its unsent text for the next time, out of the chat's composer.
-function leaveDraft() { if (!drafting) return; draft = input.value; input.value = ""; drafting = false; drawSend(); }
+// Leaving the placeholder (F8) keeps its unsent text for the next time, out of the chat's composer; so does leaving a
+// first send still held (its chat made, its history not yet drawn): it never goes, and its words are the draft again.
+function leaveDraft() {
+  if (held) { held = null; drafting = true; }
+  if (!drafting) return;
+  draft = input.value; input.value = ""; drafting = false; drawSend();
+}
 // The placeholder (F8): the chat view with no chat connected, the composer open with the draft and focused. Drawn
 // again while it is on screen, it only takes focus.
 function openDraft() {
   if (!drafting) {
+    leaveDraft();
     if (conn) conn.stop();
     endReply(); closeActions(); seeking = null;
     chatId = null; drafting = true; held = null; log.replaceChildren(); reply = thinking = null; lastAt = null; current = null; stopping = null; drawn = 0; pending.clear(); gone.clear(); working(false);
@@ -483,10 +489,13 @@ form.onsubmit = async (e) => {
   if (sent.length) frame.attachments = sent.map((s) => s.id);
   // A reply names the message it quotes; the chat reads the quote's text from its own history (M29.4).
   if (replying) { frame.quote = replying.mid; drawQuote(node, replying); }
-  const m = { id, shown, node, frame };
-  if (!(drafting ? await create(m, text) : dispatch(m))) return;
-  input.value = ""; staged = []; for (const s of sent) s.chip.remove(); drawStaged(); endReply();
+  const m = { id, shown, node, frame, sent };
+  if (drafting) { await create(m, text); return; }
+  if (dispatch(m)) tookOff(m);
 };
+// What a send that went leaves behind: the composer without its words, its files' chips and its quote. Until it
+// goes (a first send held for its chat's history, F8) the words stay, so a send that never goes is never lost.
+function tookOff(m) { input.value = ""; staged = staged.filter((s) => !m.sent.includes(s)); for (const s of m.sent) s.chip.remove(); drawStaged(); endReply(); }
 // A send goes over the socket under its bubble (drawn again where the history replaced the thread); one the socket
 // could not take is said so.
 function dispatch(m) {
@@ -499,16 +508,16 @@ function dispatch(m) {
 // The first send from the placeholder (F8): one create, titled from the prompt's own words (the Person keeps its own
 // default for a send with no words), then the chat connected under the bubble already drawn, the address replaced
 // with the chat's (Back belongs to where the person came from, never here) and the list drawn with its row; the
-// message goes once the chat's history is drawn. A refused create keeps the draft in the composer and says so.
+// message goes once the chat's history is drawn, and the composer keeps its words until then. A refused create keeps
+// the draft in the composer and says so.
 async function create(m, text) {
   const r = await post("/app/chats", text ? { title: promptTitle(text) } : {});
   const b = await r.json().catch(() => ({}));
-  if (!r.ok || !b.chatId) { m.node.remove(); regroup(); lineError(CHATS.notOpened, b.code || "HTTP_" + r.status); return false; }
+  if (!r.ok || !b.chatId) { m.node.remove(); regroup(); lineError(CHATS.notOpened, b.code || "HTTP_" + r.status); return; }
   drafting = false; draft = ""; chatId = b.chatId; held = m; $("conn").hidden = true;
   connect(chatId);
   go(chatPath(chatId), { replace: true });
   await chats(chatId, true);
-  return true;
 }
 // The person's actions (M18.1, Q33): coming back to the tab, focus or the network checks the socket
 // once; typing reconnects one that is down. Nothing checks it on a timer.
