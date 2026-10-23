@@ -15,6 +15,7 @@ import { CHATS_FILTER_FIELD, CHATS_FILTER_LIST } from "./chats-filter.ts";
 import { CHATS_MENU_MARKUP, CHATS_TEXT } from "./chats-list.ts";
 import { ICON_CSS, type IconName, ic, icActive } from "./icons.ts";
 import { OVERLAY_SCRIPT } from "./overlays.ts";
+import { ROUTER_TEXT } from "./router.ts";
 import { TOKENS_CSS } from "./tokens.ts";
 
 /** The routes: the tabs of the bar and the rail, in order. Settings, Connectors and Permissions are Settings' panes. */
@@ -309,24 +310,25 @@ ${OVERLAY_SCRIPT}`;
 
 export const SHELL_SCRIPT = `// One view at a time in #stage: a tab and a rail item say so with aria-current, and a view loads when it is shown.
 const VIEWS = ${JSON.stringify(APP_VIEWS)}, TABS = ${JSON.stringify(TAB_VIEWS)};
-const TITLE = ${JSON.stringify(TAB_TEXT)};
+const TITLE = ${JSON.stringify({ ...TAB_TEXT, nowhere: ROUTER_TEXT.notFound })};
 const SHELL = ${JSON.stringify(SHELL_TEXT)};
 const COLS = ${JSON.stringify(COLUMNS)}, WIDTHS_KEY = ${JSON.stringify(WIDTHS_KEY)};
 const INVITE = ${JSON.stringify(INVITE_TEXT)};
 const SETTINGS_ROWS = ${JSON.stringify(SETTINGS_MENU.map((r) => r.id))};
 const LOAD = { feed, goals, library };
-// What used to be a page and is now an overlay: Settings (on its nav on a phone, General wider) and its panes, and
-// the panel's tabs.
-const SETTINGS_OF = { settings: "", connectors: "connectors", connector: "connector", permissions: "permissions" };
+// What used to be a page and is now an overlay: Settings at its addresses (F5), and the panel's tabs.
+const SETTINGS_OF = { settings: "/settings", connectors: "/settings/connectors", permissions: "/settings/permissions" };
 const PANEL_OF = { approvals: "approvals", jobs: "upcoming" };
 let shown = "chat", panelClosed = false, scrolled = false;
+// Draws a view; the router calls it once the history is where the view is, so what it closes has no entry left.
 function show(view) {
-  closeOverlays(); closeInvite();
-  if (view in SETTINGS_OF) { openSettings(SETTINGS_OF[view]); return; }
-  if (PANEL_OF[view]) { openPanel(PANEL_OF[view]); return; }
+  if (view in SETTINGS_OF) { go(SETTINGS_OF[view]); return; }
+  if (PANEL_OF[view]) { closeOverlays(); closeInvite(); openPanel(PANEL_OF[view]); return; }
+  closeOverlays(true); closeInvite(true);
   shown = view; scrolled = false;
   $("app").dataset.view = view;
   for (const v of VIEWS) $(v).hidden = v !== view;
+  $("nowhere").hidden = view !== "nowhere";
   paint();
   if (LOAD[view]) LOAD[view]();
 }
@@ -354,7 +356,7 @@ function paint() {
   if (body) body.className = "qf-" + d;
 }
 $("stage").onscroll = () => { const s = $("stage").scrollTop > 8; if (s !== scrolled) { scrolled = s; paint(); } };
-for (const v of TABS) { $("to-" + v).onclick = () => show(v); $("rail-" + v).onclick = () => show(v); }
+for (const v of TABS) { $("to-" + v).onclick = () => toView(v); $("rail-" + v).onclick = () => toView(v); }
 // The count on the panel's Approvals tab and the dot on the drawer's button come from the route, which counts
 // only this person's cards; a chat with a card waiting wears the same dot in the list. A count that could not be
 // read says so; it is never drawn as nothing waiting.
@@ -435,7 +437,7 @@ $("open-agent").onclick = () => openPanel();
 $("close-sheet").onclick = closePanel;
 // The phone's More sheet (Search, Report an issue, Settings) and the rail's Settings menu (its rows above; Keyboard
 // shortcuts and Download apps are disabled stubs until they have objects).
-function report() { show("chat"); $("t").value = SHELL.reportLine; }
+function report() { toView("chat"); $("t").value = SHELL.reportLine; }
 $("to-more").onclick = () => { if (isOpen($("more-sheet"))) closeDialog($("more-sheet")); else { openDialog($("more-sheet"), { form: "sheet", onClose: paint }); paint(); } };
 $("more-search").onclick = () => { closeOverlays(); srchOpen(); };
 $("more-report").onclick = report;
@@ -458,21 +460,21 @@ function openInvite() {
   settle(n);
   inviteOpen = true; pill.setAttribute("aria-expanded", "true");
   if (device() === "phone") { n.className = "qf-dlg qf-dlg--480"; n.removeAttribute("style"); openDialog(n, { form: "sheet", onClose: inviteClosed }); return; }
-  n.className = "qf-pop"; borrow(n, $("app")); n.hidden = false; $("invite-backdrop").hidden = false;
+  n.className = "qf-pop"; borrow(n, $("app")); n.hidden = false; $("invite-backdrop").hidden = false; ownLoose(closeInvite);
   if (pill.getBoundingClientRect && $("app").getBoundingClientRect) {
     const r = pill.getBoundingClientRect(), a = $("app").getBoundingClientRect();
     n.setAttribute("style", "top:" + Math.round(r.bottom - a.top + 8) + "px;right:" + Math.round(a.right - r.right) + "px");
   }
 }
-function closeInvite() {
+function closeInvite(keep) {
   if (!inviteOpen) return;
   const n = $("invite-pop");
-  if (isOpen(n)) { closeDialog(n); return; }
-  inviteOpen = false; $("head-invite").setAttribute("aria-expanded", "false");
+  if (isOpen(n)) { closeDialog(n, keep); return; }
+  dropLoose(closeInvite, keep); inviteOpen = false; $("head-invite").setAttribute("aria-expanded", "false");
   exit([n], [n], () => { n.hidden = true; n.removeAttribute("style"); giveBack(n); $("invite-backdrop").hidden = true; resetInvite(); });
 }
 $("head-invite").onclick = openInvite;
-$("invite-backdrop").onclick = closeInvite;
+$("invite-backdrop").onclick = () => closeInvite();
 $("invite-pop-copy").onclick = async () => {
   const link = inviteLink();
   let ok = false;
@@ -487,16 +489,13 @@ $("invite-pop-copy").onclick = async () => {
 if (document.addEventListener) document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeInvite(); });
 // Invite is a company's (spec section 4 cuts members from a standalone deploy, which has one owner).
 getJson("/me").then((me) => { canInvite = me.shape === "company" && (me.role === "admin" || me.role === "owner"); paint(); }, () => {});
-// A device change closes what was open (a sheet does not become a dialog mid-way) and draws the frame again.
+// A device change closes what was open (a sheet does not become a dialog mid-way), popping the entries it owned so
+// the history matches the screen (F5), and draws the frame again.
 const darkScheme = media("(prefers-color-scheme: dark)");
 function theme() { if (document.body) document.body.setAttribute("data-theme", modeTheme(!!(darkScheme && darkScheme.matches))); }
 function relayout() { closeOverlays(); closeInvite(); paint(); if (shown === "library") libRedraw(); }
 for (const q of [atTablet, atDesktop]) if (q && q.addEventListener) q.addEventListener("change", relayout);
 if (darkScheme && darkScheme.addEventListener) darkScheme.addEventListener("change", theme);
 theme();
-show("chat");
-// A link made by the Library's Share opens the Library, which opens its file.
-if (new URLSearchParams(location.search).get("file")) show("library");
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
-chats(new URLSearchParams(location.search).get("chat"));
-if (pinnable()) loadPanel();`;
+// The first page is drawn by the router (router.ts), which runs next.`;

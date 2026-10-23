@@ -76,7 +76,8 @@ async function page(answers: Record<string, unknown>, clicks: string[]) {
   };
   const js = APP_PAGE.split("<script>")[1]?.split("</script>")[0] as string;
   const document = { getElementById: byId, createElement: () => new El() };
-  new Function("document", "fetch", "WebSocket", "location", "navigator", "URLSearchParams", "Intl", "Node", js)(document, fetch, Quiet, { protocol: "https:", host: "x.example", search: "" }, {}, URLSearchParams, Intl, El);
+  const history = { replaceState() {}, pushState() {} };
+  new Function("document", "fetch", "WebSocket", "location", "history", "window", "navigator", "URLSearchParams", "Intl", "Node", js)(document, fetch, Quiet, { protocol: "https:", host: "x.example", pathname: "/", search: "", hash: "" }, history, { addEventListener() {} }, {}, URLSearchParams, Intl, El);
   for (let i = 0; i < 10; i++) await new Promise((r) => setImmediate(r));
   for (const id of clicks) {
     await byId(id).onclick?.();

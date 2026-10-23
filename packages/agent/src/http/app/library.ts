@@ -2,7 +2,8 @@
 // LibraryGrid, FilesTable, artifact viewer and DocumentViewer): the person's own files, sorted into the picker's
 // sections by the kind each file's name says (All artifacts, Documents, Images, System files), as a grid of Cards
 // or a list, with a card menu (Rename, Pin, Delete) through the shell's overlay helper; a file opens in the
-// full-height viewer (title, More, Close) and a Markdown file in the read-only DocumentViewer with View source.
+// full-height viewer (title, More, Close) and a Markdown file in the read-only DocumentViewer with View source. A
+// file has its address (F6), `/library/files/<path>`: opening one goes there, Close is back, Copy link copies it.
 // Every read and write is a request the owning `Person` decides for the session's person alone, and a path outside
 // the person's home tree is refused there; the page only says the answer in words and never draws a code. What a
 // file says is data: it is set as text or built into nodes by the renderer below, never as markup.
@@ -248,7 +249,7 @@ const libLink = async (p, download) => (await getJson("/app/file/link?path=" + e
 // A link that could not be made leaves the node without one and answers its code, for the page to say.
 const libLinkInto = (node, attr, p, download) => libLink(p, download).then((u) => { node[attr] = u; return ""; }, (e) => { node.dataset.code = (e && e.code) || "LINK_UNAVAILABLE"; return node.dataset.code; });
 let libFiles = [], libRead = false, libSection = "all", libSort = "date", libView = "grid", libPicked = null, libPop = null;
-let libOpened = null, libText = "", libSrc = false, libLinked = false;
+let libOpened = null, libText = "", libSrc = false;
 function libAgo(at) {
   const s = (Date.now() - at) / 1000, d = new Date(at);
   if (s < 60) return LIB.justNow;
@@ -346,12 +347,12 @@ $("lib-pick").onclick = () => openLibPop($("lib-pick"), $("lib-pick-menu"));
 // Artifact options on a phone and Sort artifacts from 768 px (the canvas's two buttons) open the same sort and view menu.
 for (const id of ["lib-options", "lib-sort"]) $(id).onclick = () => openLibPop($(id), $("lib-options-menu"));
 if (document.addEventListener) document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeLibPop(); });
-for (const k of Object.keys(LIB_SECT)) $("lib-pick-" + k).onclick = () => { libSection = k; closeLibPop(); closeViewer(); drawLib(); };
+for (const k of Object.keys(LIB_SECT)) $("lib-pick-" + k).onclick = () => { libSection = k; closeLibPop(); libLeave(); drawLib(); };
 for (const [id, sort, view] of [["lib-sort-date", "date"], ["lib-sort-name", "name"], ["lib-view-grid", "", "grid"], ["lib-view-list", "", "list"]])
   $(id).onclick = () => { if (sort) libSort = sort; if (view) libView = view; closeLibPop(); drawLib(); };
 // The list column's search pill is the rail's Search.
 $("lib-search").onclick = () => { const b = $("rail-search"); if (b.click) b.click(); else if (b.onclick) b.onclick(); };
-$("lib-create").onclick = () => { show("chat"); $("t").value = LIB.createLine; };
+$("lib-create").onclick = () => { toView("chat"); $("t").value = LIB.createLine; };
 
 // ---- the lists: Recent and All grids of Cards (or their list), the Images grid, the System files table ----
 function libKebab(f, cls) {
@@ -458,11 +459,8 @@ async function library() {
   } catch (e) {
     libFiles = []; libRead = false; closeMenu();
     for (const id of ["lib-list", "lib-all", "lib-files"]) $(id).replaceChildren();
-    $("lib-empty").hidden = true; couldNot($("lib-note"), "your library", e); return;
+    $("lib-empty").hidden = true; couldNot($("lib-note"), "your library", e);
   }
-  // A link made by Copy link opens its file once, here, and a refusal is said where the viewer would be.
-  const linked = new URLSearchParams(location.search).get("file");
-  if (linked && !libLinked) { libLinked = true; libOpenFile(linked); }
 }
 
 // ---- the card menu, through the shell's helper: Rename, Pin, Delete (asked first on the ConfirmDialog) ----
@@ -516,7 +514,14 @@ function drawViewerBody() {
     const fr = el("iframe"); fr.setAttribute("sandbox", ""); fr.setAttribute("title", baseOf(libOpened)); fr.setAttribute("referrerpolicy", "no-referrer"); fr.srcdoc = libText; body.append(fr);
   } else { body.className = "lib-art"; const pre = el("pre", libText); pre.className = "lib-pre"; body.append(pre); }
 }
-async function libOpenFile(path) {
+// Opening a file is going to its address (F6), \`/library/files/<path>\`; the router draws it with \`libShow\`. Leaving
+// it is back to the entry beneath, the Library's list (rebuilt beneath a file booted in a fresh tab).
+function libOpenFile(path) { go(filePath(path)); }
+// A pop of an overlay's own (Delete's confirm) lands first: the step back waits behind it.
+function libLeave() { if (libOpened && isFile(here())) hist(() => history.back()); else closeViewer(); }
+// The viewer drawn on \`path\`, at its address: a file the Person refuses or cannot read is said here with its code.
+async function libShow(path) {
+  if (libOpened === path) return;
   closeMenu(); closeLibPop();
   const x = extOf(path), md = isMd(path);
   $("lib-list-view").hidden = true; $("viewer").hidden = false;
@@ -545,7 +550,7 @@ async function libOpenFile(path) {
     drawViewerBody();
   } catch (e) { if (libOpened === path) coded($("viewer-note"), libWords(e && e.code), e && e.code); }
 }
-$("viewer-back").onclick = closeViewer;
+$("viewer-back").onclick = libLeave;
 // More options: View source for a Markdown file, then Copy link, Pin, Copy (when the file is text), Download, Delete.
 $("viewer-more").onclick = () => {
   if (!libOpened) return;
@@ -557,7 +562,7 @@ $("viewer-more").onclick = () => {
 $("doc-source").onclick = () => { libSrc = !libSrc; $("doc-source").setAttribute("aria-checked", String(libSrc)); closeMenu(); drawViewerBody(); };
 $("viewer-share").onclick = async () => {
   if (!libOpened) return;
-  const link = location.protocol + "//" + location.host + "/?file=" + encodeURIComponent(libOpened);
+  const link = location.protocol + "//" + location.host + filePath(libOpened);
   closeMenu();
   try { await navigator.clipboard.writeText(link); coded($("viewer-note"), LIB.linkCopied, ""); }
   catch (e) { coded($("viewer-note"), LIB.linkIs + link, ""); }
@@ -575,4 +580,4 @@ $("viewer-pin").onclick = async () => {
   if (r.ok) { if (known) known.pinned = !known.pinned; $("viewer-pin-label").textContent = known && known.pinned ? LIB.unpin : LIB.pin; }
   else await libSay($("viewer-note"), r);
 };
-$("viewer-delete").onclick = () => { if (libOpened) libAskDelete(libOpened, closeViewer, $("viewer-note")); };`;
+$("viewer-delete").onclick = () => { if (libOpened) libAskDelete(libOpened, libLeave, $("viewer-note")); };`;

@@ -1,5 +1,9 @@
 // The overlay helper (M27.2, split from shell.ts at M29.6), part of every page's COMMON_SCRIPT: a borrowed node's way
-// home, the system's exit motion (design review 1, I3), the dialogs on their scrims, the one menu and the ConfirmDialog.
+// home, the system's exit motion (design review 1, I3), the dialogs on their scrims, the one menu and the ConfirmDialog,
+// and the history entries the overlays own (F5, rule 7 of the grammar in `../pages.ts`): an overlay without an address
+// pushes one entry at the same address when it opens, so back closes it and the page beneath stays; Settings owns the
+// entries of its addresses. A close by Escape, the scrim or its own control pops exactly the entries it owns, and only
+// when the entry on top carries its marker; a back the person pressed closes what sits above the entry it lands on.
 /** The forms a dialog takes on a phone (MobileDialog, BottomSheet), and `start`, the chats drawer's side sheet. */
 export const DIALOG_FORMS = ["center", "sheet", "full", "page", "start"] as const;
 
@@ -37,7 +41,49 @@ const settle = (node) => { const f = exits.get(node); if (f) f(); };
 // .qf-scrim2; the chats drawer (\`start\`) sits in a .qf-drawer-wrap over the phone's veil (.qf-drawer-scrim) or, from
 // 768, the overlay's click catcher (.qf-listscrim), so it moves as the drawer and the overlay do.
 const FORMS = ${JSON.stringify(DIALOG_FORMS)};
+// The history the overlays own. Every write goes through \`hist\`: while a pop of ours is on its way (a browser's
+// \`history.go\` lands later, with a \`popstate\`), a write waits for it, so a close then an open, or a close then a
+// navigation, never writes on the entry being left. An entry's state carries its owner's \`layer\` mark (Settings'
+// is "settings") and Settings' depth, \`set\`, which every entry over Settings repeats.
+const here = () => location.pathname + location.search + location.hash;
+let marks = 0, popWait = null;
+function hist(f) { if (popWait) popWait.push(f); else f(); }
+function own() {
+  const m = ++marks;
+  hist(() => history.pushState({ layer: m, set: (history.state && history.state.set) || 0 }, "", here()));
+  return m;
+}
+// Pops the entries of \`owned\` (bottom first, all closing at once): one each, Settings its depth. Guarded by the
+// marker: when the entry on top is not the topmost owner's, nothing is popped (it is not ours to pop).
+function unown(owned) {
+  if (!owned.length) return;
+  hist(() => {
+    const s = history.state || {}, top = owned[owned.length - 1].mark;
+    const n = owned.reduce((k, o) => k + (o.mark === "settings" ? s.set || 0 : 1), 0);
+    if (s.layer !== top || n < 1) return;
+    popWait = []; history.go(-n);
+  });
+}
+// The \`popstate\` of a pop of ours: the writes that waited run, and it is answered (true). Any other \`popstate\` is
+// the person's back or forward: what sits above the entry it landed on closes, without popping, and it is not (false).
+function popLanded() {
+  if (popWait) { const q = popWait; popWait = null; for (const f of q) hist(f); return true; }
+  const s = history.state, open = layers.map((l) => ({ mark: l.mark, shut: () => closeDialog(l.node, true) })).concat(loose);
+  const i = open.findIndex((o) => s && o.mark === s.layer);
+  for (const o of open.slice(i + 1).reverse()) o.shut(true);
+  return false;
+}
+// An overlay not on a scrim (the menu, the invite and message popovers) owns its entry here; \`shut(keep)\` closes it.
+let loose = [];
+function ownLoose(shut) { loose.push({ mark: own(), shut }); }
+function dropLoose(shut, keep) {
+  const i = loose.findIndex((o) => o.shut === shut);
+  if (i < 0) return;
+  const gone = loose.splice(i, 1);
+  if (!keep) unown(gone);
+}
 let layers = [];
+// \`o.mark\` names the entries the overlay already has (Settings' addresses); without one it pushes its own.
 function openDialog(node, o = {}) {
   const form = FORMS.includes(o.form) ? o.form : "center";
   closeMenu();
@@ -51,15 +97,19 @@ function openDialog(node, o = {}) {
   borrow(node, scrim);
   node.hidden = false; scrim.hidden = false;
   scrim.onclick = (e) => { if (!e || e.target === scrim || (veil && e.target === veil)) closeDialog(node); };
-  layers.push({ scrim, node, onClose: o.onClose });
+  layers.push({ scrim, node, onClose: o.onClose, mark: o.mark || own() });
   return node;
 }
-// Closes the overlay holding \`node\` and every one opened over it. Their exits run together; then, top first, each node
-// goes home and its scrim is hidden, so the borrow order of M29.1 holds.
-function closeDialog(node) {
+// Closes the overlay holding \`node\` and every one opened over it, and pops their entries unless \`keep\` (the history
+// has already moved). Their exits run together; then, top first, each node goes home and its scrim is hidden, so the
+// borrow order of M29.1 holds.
+function closeDialog(node, keep) {
   const i = layers.findIndex((l) => l.node === node);
   if (i < 0) return;
-  const closing = layers.splice(i).reverse();
+  // Off the stack before the pop, so a \`popstate\` that lands at once (and closes what is open) finds them gone.
+  const closing = layers.splice(i);
+  if (!keep) unown(closing);
+  closing.reverse();
   const scrims = closing.map((l) => l.scrim);
   const marks = closing.flatMap((l) => (l.scrim.dataset.form === "start" ? [l.scrim, l.node] : [l.scrim]));
   exit(scrims, marks, () => {
@@ -71,7 +121,12 @@ function closeDialog(node) {
   }, [...scrims, ...closing.map((l) => l.node)]);
 }
 const isOpen = (node) => layers.some((l) => l.node === node);
-function closeOverlays() { closeMenu(); if (layers.length) closeDialog(layers[0].node); }
+// Closes every overlay on a scrim and the menu, popping all their entries at once (\`keep\`: none).
+function closeOverlays(keep) {
+  const owned = layers.concat(loose.filter((o) => o.shut === menuShut));
+  closeMenu(true, true); if (layers.length) closeDialog(layers[0].node, true);
+  if (!keep) unown(owned);
+}
 // The one menu: \`items\` are the static nodes a module keeps (its ids stay bound) or { label, glyph, danger, run }.
 let menuFor = null, menuItems = [];
 function openMenu(anchor, items) {
@@ -80,7 +135,7 @@ function openMenu(anchor, items) {
   if (again) return;
   settle($("menu-layer"));
   const m = $("menu"), sheet = device() === "phone";
-  menuFor = anchor; anchor.setAttribute("aria-expanded", "true");
+  menuFor = anchor; anchor.setAttribute("aria-expanded", "true"); ownLoose(menuShut);
   for (const it of items) {
     let n = it;
     if (!(it instanceof Node)) {
@@ -104,7 +159,8 @@ function openMenu(anchor, items) {
   m.hidden = false;
 }
 // A menu leaves with its exit (Menu, ActionSheet), its items going home after it; Escape closes it at once, as Muse's does.
-function closeMenu(now) {
+function closeMenu(now, keep) {
+  dropLoose(menuShut, keep);
   if (menuFor) menuFor.setAttribute("aria-expanded", "false");
   const items = menuItems.reverse();
   menuItems = []; menuFor = null;
@@ -113,6 +169,7 @@ function closeMenu(now) {
   if (now || $("menu").hidden) return gone();
   exit([$("menu-layer")], [$("menu-layer"), $("menu")], gone);
 }
+function menuShut(keep) { closeMenu(true, keep); }
 // The backdrop closes with the exit: the click event is not \`now\`.
 $("menu-backdrop").onclick = () => closeMenu();
 // A question before something that cannot be undone (ConfirmDialog): Cancel, then the action, red unless it says not.

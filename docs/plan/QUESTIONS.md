@@ -16,6 +16,18 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
+### Q6 (F4), 2026-10-23: D-0010 is a stub until the artifact record lands
+
+**Blocks:** nothing. `docs/plan/parts.md` cites D-0010 (the artifact plan's record, "proposed on Kyle's thread") in the
+F4 to F7 preamble and in F4's and F6's rulings, but the record was never in this repository, so
+`node scripts/check-decisions.mjs` failed at 391af92 and with it every `pnpm check`. F4 added
+`docs/decisions/0010-artifact-collection-address.md`, a `proposed` stub that states only what the plan cites it for
+(`/library/artifacts/<slug>`, the id in segments) and binds nothing.
+
+**Recommended answer:** replace the stub with the record from the artifact thread, keeping the id D-0010, before F6
+starts (F6 must leave that collection free). The alternative, rewording the plan's citations, edits other parts' text
+and loses the link.
+
 ### Q4 (F2), 2026-10-22: A stored search index per chat
 
 **Blocks:** nothing. F2 derives the index at query time (F2, Ruling 1): each `Chat` scans its own `messages` table

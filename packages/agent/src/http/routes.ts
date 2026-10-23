@@ -18,6 +18,7 @@ import { PERSON_HEADER } from "./identity.ts";
 import { available, hostOf } from "../host.ts";
 import { unavailable } from "@qyvr/host";
 import { APP_PAGE, MANIFEST, SERVICE_WORKER } from "./page.ts";
+import { pageOf, wantsPage } from "./pages.ts";
 import { type VaultDirectory, vaultRoutes } from "./vault-routes.ts";
 import { type DeliveryDirectory, deliveryRoutes } from "./delivery-routes.ts";
 import { type AppDirectory, appRoutes } from "./app-routes.ts";
@@ -76,6 +77,8 @@ export interface Directory {
 }
 
 const json = (body: unknown, status = 200) => Response.json(body, { status });
+/** The page, on every path of the grammar (pages.ts) and, with a 404, to a browser on any other; the shell draws which. */
+const appPage = (status = 200) => new Response(APP_PAGE, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
 const CHAT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 export async function route(request: Request, env: Env, props: AgentProps | null, dir: Directory): Promise<Response> {
@@ -88,9 +91,7 @@ export async function route(request: Request, env: Env, props: AgentProps | null
   const person = props.person;
   if (!person) return json({ code: "NO_SESSION" }, 401);
 
-  if (url.pathname === "/" && request.method === "GET") {
-    return new Response(APP_PAGE, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
-  }
+  if (request.method === "GET" && pageOf(url.pathname)) return appPage();
   if (url.pathname === "/manifest.webmanifest" && request.method === "GET") {
     return new Response(MANIFEST, { headers: { "content-type": "application/manifest+json", "cache-control": "no-store" } });
   }
@@ -159,5 +160,6 @@ export async function route(request: Request, env: Env, props: AgentProps | null
     const runId = url.searchParams.get("run") ?? undefined;
     return json({ calls: await dir.ledger().modelCalls({ person, ...(runId ? { runId } : {}) }) });
   }
-  return json({ code: "NOT_FOUND" }, 404);
+  // A path nobody serves is never answered as home (D-0001): a browser gets the page, which names it as not found.
+  return wantsPage(request) ? appPage(404) : json({ code: "NOT_FOUND" }, 404);
 }

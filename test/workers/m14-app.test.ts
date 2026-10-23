@@ -72,7 +72,7 @@ class El {
 }
 
 /** Runs the shipped page script for `person` over the world's routes; returns what it did. */
-async function runPage(w: ReturnType<typeof authorityWorld>, person: string, search = "") {
+async function runPage(w: ReturnType<typeof authorityWorld>, person: string, path = "/") {
   const els = new Map<string, El>();
   const byId = (id: string) => {
     const e = els.get(id) ?? new El(id);
@@ -106,15 +106,16 @@ async function runPage(w: ReturnType<typeof authorityWorld>, person: string, sea
   }
   const js = APP_PAGE.split("<script>")[1]?.split("</script>")[0] as string;
   const document = { getElementById: byId, createElement: () => new El() };
-  const location = { protocol: "https:", host: "solo-sam.example", search, hash: "" };
-  // The address bar as a browser keeps it: the page names the open chat there (M17.1).
-  const history = {
-    replaceState: (_s: unknown, _t: string, url: string) => {
-      location.search = url.split("#")[0] as string;
-    },
+  const at = new URL(path, ORIGIN);
+  const location = { protocol: "https:", host: "solo-sam.example", pathname: at.pathname, search: at.search, hash: at.hash };
+  // The address bar as a browser keeps it: the page names the open chat there (M17.1, at its own path since F4).
+  const moveTo = (url: string) => {
+    const u = new URL(url, ORIGIN + location.pathname + location.search + location.hash);
+    Object.assign(location, { pathname: u.pathname, search: u.search, hash: u.hash });
   };
-  const run = new Function("document", "fetch", "WebSocket", "location", "history", "navigator", "URLSearchParams", "Intl", "Node", js);
-  run(document, fetch, FakeSocket, location, history, {}, URLSearchParams, Intl, El);
+  const history = { replaceState: (_s: unknown, _t: string, url: string) => moveTo(url), pushState: (_s: unknown, _t: string, url: string) => moveTo(url) };
+  const run = new Function("document", "fetch", "WebSocket", "location", "history", "window", "navigator", "URLSearchParams", "Intl", "Node", js);
+  run(document, fetch, FakeSocket, location, history, { addEventListener() {} }, {}, URLSearchParams, Intl, El);
   for (let i = 0; i < 50 && !sockets.length; i++) await new Promise((r) => setImmediate(r));
   return { els, byId, sockets, requests, location };
 }
@@ -142,12 +143,12 @@ describe("[M14.2] chat topology", () => {
     const side = ((await w.http(ada.email, "POST", "/app/chats", {})).body as { chatId: string }).chatId;
     // The page's socket to the new chat reached the route, which recorded it at Ada's Person.
     expect(w.host(ada.email).chats.connected(side, Date.now())).toBe(true);
-    const reload = await runPage(w, ada.email, `?chat=${side}`);
+    const reload = await runPage(w, ada.email, `/chats/${side}`);
     const fresh = await runPage(w, ada.email, "");
     expect(reload.sockets.map((s) => s.url)).toEqual([`wss://solo-sam.example/chats/${side}/ws`]);
     expect(fresh.sockets.map((s) => s.url)).toEqual(reload.sockets.map((s) => s.url));
     // The address names the chat the page opened, so the next reload reopens it.
-    expect(fresh.location.search).toBe(`?chat=${side}`);
+    expect(fresh.location.pathname).toBe(`/chats/${side}`);
   });
 
   it("a notice addressed to an archived side chat lands in the main chat", async () => {

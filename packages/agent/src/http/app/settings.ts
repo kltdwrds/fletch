@@ -118,14 +118,39 @@ function setPane(k) {
   $("set-frame").className = "qf-set is-pane";
   if (SET_LOAD[k]) SET_LOAD[k]();
 }
-// Opens on a pane when one is named; a phone with none named opens on the nav, a wider screen on General.
-function openSettings(pane) {
-  openDialog($("set-dialog"), { form: "sheet" });
-  if (pane || device() !== "phone") setPane(pane || "general");
+// Settings' addresses (F5, the grammar's settings row): \`/settings\` is the nav on a phone and General wider, a pane is
+// \`/settings/<pane>\`, a pane nested under one is under its address (\`/settings/general/company\`), and a connector's is
+// \`/settings/connectors/<id>\`. The router draws them (\`setDraw\`); a pane the person picks is a \`go\` to its address.
+function setAt(path) {
+  const seg = path.split("/").slice(2);
+  if (seg[0] === "connectors" && seg[1]) return { pane: "connector", id: decodeURIComponent(seg[1]) };
+  return { pane: seg[seg.length - 1] || "", id: null };
+}
+function setPath(k, id) {
+  if (k === "connector") return "/settings/connectors/" + encodeURIComponent(id);
+  return SET_NESTED[k] ? "/settings/" + SET_NESTED[k] + "/" + k : "/settings/" + k;
+}
+// The entries Settings opens with, so each pane's Back is \`history.back()\`: every address above the one asked for.
+// Wider than a phone \`/settings\` already draws General, so \`/settings/general\` is one step with it, never two.
+function setChain(path) {
+  const seg = path.split("/").slice(2), all = ["/settings"];
+  for (let i = 1; i <= seg.length; i++) all.push("/settings/" + seg.slice(0, i).join("/"));
+  if (device() === "phone") return all;
+  return all.filter((a, i) => !(a === "/settings/general" && i < all.length - 1) && !(a === "/settings" && all[i + 1] === "/settings/general" && i + 1 === all.length - 1));
+}
+// Draws the address: opens the dialog (its entries are the addresses the router pushed) and the pane it names; a
+// phone at \`/settings\` shows the nav, a wider screen General.
+function setDraw(path) {
+  if (!isOpen($("set-dialog"))) openDialog($("set-dialog"), { form: "sheet", mark: "settings", onClose: retitle });
+  const a = setAt(path);
+  if (a.pane === "connector") connectorId = a.id;
+  if (a.pane || device() !== "phone") setPane(a.pane || "general");
   else $("set-frame").className = "qf-set";
 }
-for (const k of SET_PANES) $("set-nav-" + k).onclick = () => setPane(k);
-$("set-back").onclick = () => { if (setNow in SET_NESTED) setPane(SET_NESTED[setNow]); else $("set-frame").className = "qf-set"; };
+// A pane the person picks: its address, unless it is the one on screen.
+function setGo(k, id) { if (k !== setNow || id !== undefined || $("set-frame").className !== "qf-set is-pane") go(setPath(k, id)); }
+for (const k of SET_PANES) $("set-nav-" + k).onclick = () => setGo(k);
+$("set-back").onclick = () => history.back();
 $("set-close").onclick = () => closeDialog($("set-dialog"));
 // Log out: the host's own /logout (a same-origin POST, so the browser sends this page's Origin) ends the session and
 // clears its cookie; then the page goes to sign-in. A logout that did not go through says so and stays.
@@ -221,19 +246,19 @@ async function devicesRow() {
     $("set-messaging-state").textContent = pushNow.mail ? SETTINGS.mailOn : SETTINGS.mailOff;
   } catch (e) { couldNot($("set-messaging-state"), "your devices", e); }
 }
-$("set-connectors").onclick = () => setPane("connectors");
-$("set-permissions").onclick = () => setPane("permissions");
-$("set-devices").onclick = () => setPane("devices");
-$("set-messaging").onclick = () => setPane("messaging");
-$("set-company").onclick = () => setPane("company");
-$("set-loops").onclick = () => setPane("loops");
+$("set-connectors").onclick = () => setGo("connectors");
+$("set-permissions").onclick = () => setGo("permissions");
+$("set-devices").onclick = () => setGo("devices");
+$("set-messaging").onclick = () => setGo("messaging");
+$("set-company").onclick = () => setGo("company");
+$("set-loops").onclick = () => setGo("loops");
 $("set-home").onclick = () => { $("set-note").textContent = SETTINGS.homeHow; };
 $("set-help").onclick = () => { $("set-note").textContent = SETTINGS.helpHow; };
 // Report an issue: the dialog over Settings; its submit is a line to the agent, which holds the person's context.
 // Nothing leaves the page until the person sends it from the chat.
 $("set-report").onclick = () => { $("report-text").value = ""; openDialog($("report"), { form: "center" }); };
 $("report-close").onclick = () => closeDialog($("report"));
-$("report-form").onsubmit = (e) => { e.preventDefault(); const text = $("report-text").value.trim(); show("chat"); $("t").value = SETTINGS.reportLine + text; };
+$("report-form").onsubmit = (e) => { e.preventDefault(); const text = $("report-text").value.trim(); toView("chat"); $("t").value = SETTINGS.reportLine + text; };
 async function delivery() {
   try {
     const d = await getJson("/delivery");

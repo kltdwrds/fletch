@@ -182,7 +182,7 @@ function openActions(d, form) {
   n.dataset.form = form;
   if (form === "sheet") { n.className = "qf-dlg qf-dlg--480"; n.removeAttribute("style"); openDialog(n, { form: "sheet", onClose: () => { actionsFor = null; } }); return; }
   settle(n);
-  n.className = "qf-pop msg-pop"; borrow(n, $("app")); n.hidden = false; $("msgpop-backdrop").hidden = false;
+  n.className = "qf-pop msg-pop"; borrow(n, $("app")); n.hidden = false; $("msgpop-backdrop").hidden = false; ownLoose(closeActions);
   // Anchored to the bubble: under it, or over it when it would not fit below, inside the frame's 16px gutters. The
   // popover's own size is its layout box: its enter animation is scaling it, which its client rect would carry.
   if (d.bubble.getBoundingClientRect && $("app").getBoundingClientRect) {
@@ -192,14 +192,14 @@ function openActions(d, form) {
     n.setAttribute("style", "left:" + Math.round(left) + "px;top:" + Math.round(below + p.height <= a.height - 16 || above < 16 ? below : above) + "px");
   }
 }
-function closeActions() {
+function closeActions(keep) {
   const n = $("msg-actions");
-  if (isOpen(n)) { closeDialog(n); return; }
+  if (isOpen(n)) { closeDialog(n, keep === true); return; }
   if (!actionsFor) return;
-  actionsFor = null;
+  actionsFor = null; dropLoose(closeActions, keep === true);
   exit([n], [n], () => { n.hidden = true; n.removeAttribute("style"); giveBack(n); $("msgpop-backdrop").hidden = true; });
 }
-$("msgpop-backdrop").onclick = closeActions;
+$("msgpop-backdrop").onclick = () => closeActions();
 $("msg-reply").onclick = () => { const d = actionsFor; closeActions(); if (d) replyTo(d.msg); };
 $("msg-copy-row").onclick = () => { const d = actionsFor; closeActions(); if (d) copyMsg(d.msg); };
 if (document.addEventListener) document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closePicker(); closeActions(); } });

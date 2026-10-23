@@ -157,7 +157,7 @@ $("conn-connect-form").onsubmit = async (e) => {
   const code = r ? ((/<strong>([A-Z0-9_]+)<\\/strong>/.exec(page) || [])[1] || "HTTP_" + r.status) : "NETWORK";
   coded($("conn-connect-result"), CONN.notSaved, code);
 };
-function showConnector(id) { connectorId = id; setPane("connector"); }
+function showConnector(id) { setGo("connector", id); }
 async function connectorPage() {
   $("connector-groups").replaceChildren(); $("connector-revoke").replaceChildren(); $("connector-mono").replaceChildren(); $("connector-name").textContent = ""; $("connector-blurb").textContent = "";
   coded($("connector-note"), CONN.reading, "");
@@ -235,4 +235,4 @@ async function permConnectors() {
 $("conn-available").onclick = () => { connTab = "available"; connDraw(); };
 $("conn-connected").onclick = () => { connTab = "connected"; connDraw(); };
 $("conn-search").oninput = connDraw;
-$("perm-to-connectors").onclick = () => setPane("connectors");`;
+$("perm-to-connectors").onclick = () => setGo("connectors");`;

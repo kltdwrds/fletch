@@ -16,6 +16,7 @@ import { MESSAGE_TEXT } from "../../packages/agent/src/http/app/message-actions.
 import { APP_PAGE } from "../../packages/agent/src/http/page.ts";
 import { ada, authorityWorld, T0 } from "./support/authority-world.ts";
 import { SETTLED } from "./support/motion.ts";
+import { servePages } from "./support/page-routes.ts";
 
 const swap = (html: string, from: string, to: string) => {
   expect(html).toContain(from);
@@ -86,14 +87,7 @@ async function viewer(o: ViewerOpts): Promise<{ pg: Page; close(): Promise<void>
       if (reply && open) ws.send(JSON.stringify(reply));
     });
   });
-  await ctx.route("**/*", async (r) => {
-    const url = new URL(r.request().url());
-    if (url.origin !== "https://solo-sam.example") return r.abort();
-    if (url.pathname === "/") return r.fulfill({ status: 200, contentType: "text/html", body: o.html ?? APP_PAGE });
-    const body = r.request().postData();
-    const a = await o.w.http(who, r.request().method(), url.pathname + url.search, body ? JSON.parse(body) : undefined);
-    return r.fulfill({ status: a.status, contentType: "application/json", body: JSON.stringify(a.body) });
-  });
+  await servePages(ctx, (m, p, b) => o.w.http(who, m, p, b), o.html ?? APP_PAGE);
   const pg = await ctx.newPage();
   if (o.heldClock) await pg.clock.install({ time: new Date(T0 + 2 * 3600_000) });
   else await pg.clock.setFixedTime(new Date(T0 + 2 * 3600_000));

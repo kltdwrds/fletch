@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { APP_PAGE } from "../../packages/agent/src/http/page.ts";
 import { ada, authorityWorld } from "./support/authority-world.ts";
 import { SETTLED } from "./support/motion.ts";
+import { servePages } from "./support/page-routes.ts";
 
 let browser: Browser;
 const w = authorityWorld({ script: [] });
@@ -31,14 +32,7 @@ async function on<T>(o: On, fn: (pg: Page) => Promise<T>): Promise<T> {
   const ctx = await browser.newContext({ viewport: { width: o.width, height: o.height }, colorScheme: "dark", serviceWorkers: "block", reducedMotion: o.reduce ? "reduce" : "no-preference", hasTouch: o.width < 768 });
   try {
     await ctx.routeWebSocket(/.*/, () => {});
-    await ctx.route("**/*", async (r) => {
-      const url = new URL(r.request().url());
-      if (url.origin !== "https://solo-sam.example") return r.abort();
-      if (url.pathname === "/") return r.fulfill({ status: 200, contentType: "text/html", body: o.html ?? APP_PAGE });
-      const body = r.request().postData();
-      const a = await w.http(o.who, r.request().method(), url.pathname + url.search, body ? JSON.parse(body) : undefined);
-      return r.fulfill({ status: a.status, contentType: "application/json", body: JSON.stringify(a.body) });
-    });
+    await servePages(ctx, (m, p, b) => w.http(o.who, m, p, b), o.html ?? APP_PAGE);
     const pg = await ctx.newPage();
     await pg.goto("https://solo-sam.example/");
     await pg.waitForFunction('document.querySelectorAll("#chats [data-chat]").length >= 1');

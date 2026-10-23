@@ -190,3 +190,214 @@ the enter motion and the other overlays' timings; a phone-only Done or Close but
   a short debounce behind a hook the tests can call.
 - Ruling: a result opens the chat at the message — because a snippet that opens the top of a long chat is half an
   answer — if wrong (the message no longer drawn), open the chat with a line saying the message was compacted away.
+
+## Next parts
+
+Written by the planning session of 2026-10-23 from a URL audit of the app at e275ead: the page is one document at
+`/`, the address holds only `?chat=` and `?file=`, nothing pushes history, so back leaves the app, reload loses the
+view, a shared file link can lose its file at boot, and a signed-out deep link ends at `/`. F4 to F7 give every
+surface an address under one grammar (ten rules, `packages/agent/src/http/pages.ts` once F4 lands), in the order a
+build can prove each on its own. The artifact plan's `/library/artifacts/<slug>` (D-0010, proposed on Kyle's thread)
+is a collection under the same grammar; its part comes after these and registers the collection itself.
+
+## F4 Addresses: the page grammar, the router and the chat's address
+
+**Read:** `docs/decisions/README.md`. The page-grammar record is this part's to write (`decider: agent`, two-way
+under "No backwards compatibility until fletch has users"); no one-way decision is needed. Then
+`packages/agent/src/http/serve.ts` and `packages/agent/src/http/routes.ts` (where `/` is served and an unknown path
+is answered), `packages/agent/src/http/page.ts` (the assembler and the service worker), the shell's boot and `show`
+in `packages/agent/src/http/app/shell.ts`, `open` in `packages/agent/src/http/app/chat.ts` (the only
+`history.replaceState`), `switchTo` in `packages/agent/src/http/app/chats-list.ts`, `seekTo` in
+`packages/agent/src/http/app/message-actions.ts`, `openFound` in `packages/agent/src/http/app/search.ts` and the
+drawer filter's row in `packages/agent/src/http/app/chats-filter.ts`, the notification address in
+`packages/agent/src/delivery/service.ts`, the harness `test/workers/support/page-harness.ts` (its `location` and
+`history`), and the two suites whose expectations change on purpose: `test/workers/m14-app.test.ts` (the `?chat=`
+reload) and `test/workers/m17-history-reopen.test.ts` (the `replaceState` string).
+
+**Scope:** One grammar, one router, and the chat and tab views on it.
+
+1. The grammar module `packages/agent/src/http/pages.ts`: the page patterns as data (`/`, `/chats/<uuid>`, `/feed`,
+   `/goals`, `/library`, and the collections `/library/<collection>/<id…>` and `/settings…` reserved for F5 and F6 as
+   rows without a drawing yet), exported to the server and emitted into the page script as JSON, as `APP_VIEWS` is.
+   The server serves `APP_PAGE` for a GET on exactly those paths. A browser GET (one accepting `text/html`) on any
+   other path under a session gets `APP_PAGE` with status 404, and the shell draws the not-found page: the path, in
+   words, and a link home; an API caller keeps the JSON 404 as today.
+2. The router, a new script module `packages/agent/src/http/app/router.ts`: `go(path, { replace })` pushes or replaces
+   the entry and draws; `popstate` draws from `location`; drawing a page calls what exists (`show`, `open`, `seekTo`).
+   Every navigation the shell makes goes through `go`: the tabs and the rail, `switchTo`, a new chat, `openFound` and
+   the drawer filter's row. The address changes only by `go`, from what the person did: a chat connected in the
+   background (the boot's `chats()` under another view) never writes the address, which is what lost `?file=`.
+3. The chat's address is `/chats/<uuid>`, a found message's `/chats/<uuid>#<mid>` (the fragment is the position,
+   the server never sees it); `/` draws the last chat and becomes `/chats/<id>` by `replaceState`; reload of
+   `/chats/<id>#<mid>` reopens the chat at the message; back returns to the previous chat or view. `?chat=` is
+   deleted from the boot and from `open`. The push notification's address becomes `/chats/<id>`.
+4. `/feed`, `/goals` and `/library` draw their views; reload keeps them. `document.title` names the page.
+5. The harness: `page-harness.ts` gets a `history` with `pushState`, `replaceState`, `back()` and a `popstate`
+   listener that update `location.pathname`, `search` and `hash`, and a `path` boot option beside `search`. The
+   Chromium tests' route handler answers every grammar path with `APP_PAGE` and the rest as JSON, in one shared
+   helper under `test/workers/support/` that the F5 and F7 browser tests reuse.
+
+**Acceptance:** `test/workers/f4-pages.test.ts` (the server, as `f1-login` calls `serve`): a GET on each grammar path
+with a session answers the page with 200 and `text/html`; a browser GET on `/nowhere` answers the page with 404,
+and an API GET on it the JSON code (the violation planted: a 200 or a redirect to `/` on the unknown path fails);
+`/library/` and `/chats/<id>/` are not pages; a page path is never claimed by an API sub-router and no API path is in
+the grammar, checked over the grammar and the route table in one test; a notification's address is `/chats/<id>`.
+`test/workers/f4-router.test.ts` (the page harness): booted at `/chats/<id>` the page connects to that chat; at
+`/chats/<id>#m3` it scrolls to the bubble with that `mid`; at `/` the address becomes `/chats/<last>` by
+`replaceState` and no entry is pushed; switching chats pushes `/chats/<other>` and `back()` reopens the first;
+`/feed`, `/goals` and `/library` draw their views and reload keeps them; booted at `/library` while the chats load,
+the address is still `/library` after `/app/chats` answers (the planted violation: the old `open()` rewriting the
+address fails it); a found message from the Search dialog and from the drawer filter lands at `/chats/<id>#<mid>`;
+`document.title` carries the chat's title; the not-found page names the path as text. The `[M14.2]` reload test and
+the `[M17.1]` string test are updated to the new address and green. The page-grammar record is written with this
+file as its confirmation and `node scripts/check-decisions.mjs` passes.
+
+**Not in scope:** Settings' addresses and the overlays on back (F5); the Library's file address and the end of
+`?file=` (F6; the parameter keeps working through this part, read at boot as today); the sign-in return (F7); the
+`artifacts` collection (the artifact plan); any change to the API paths, their duplicates (`POST /chats`) or the
+`/workshop/` links (a plain PR); the panel's tabs, which have no address; prettier ids.
+
+**Rulings:**
+
+- Ruling: pages are paths, not a hash and not a query — because D-0010 names a path and a path is what a person
+  pastes, a server logs and a notification opens — if wrong (a host that cannot serve the shell on every path), the
+  grammar module is the one place to change, and the service worker already passes every path through.
+- Ruling: the grammar is one data module both sides read — because the page script is a string the suite runs as
+  shipped, and a second copy of the patterns in the script would drift — if wrong, a generated `pages.json`.
+- Ruling: the server serves the shell for exactly the grammar's paths and a 404 page otherwise — because a path
+  nobody serves answered as home is a failure shown as success (D-0001) — if wrong, only the words of the page change.
+- Ruling: the fragment names the message — because it is a position inside a page, the server need not see it, and
+  `data-mid` already marks the bubble — if wrong, `?at=<mid>`, which the server would see and ignore.
+- Ruling: `/` stays home and is replaced, never pushed — because a person who typed the address should not need two
+  backs to leave — if wrong, push it.
+- Ruling: the split, if the session needs one, is F4.1 (items 1, 2, 5 and the chat's address) and F4.2 (items 3's
+  found message, item 4, the notification) — because F4.1 alone is a true page at every address it serves.
+
+## F5 Back closes what opened: overlays and Settings' addresses
+
+**Read:** F4's grammar (`packages/agent/src/http/pages.ts`) and router (`packages/agent/src/http/app/router.ts`). No
+one-way decision is needed. Then `packages/agent/src/http/app/overlays.ts` (the `layers` stack, `openDialog`,
+`closeDialog`, `closeOverlays`), the drawer and `relayout` in `packages/agent/src/http/app/shell.ts`, `openSettings`
+and the panes' own Back in `packages/agent/src/http/app/settings.ts` and `settings-panes.ts`, the connector page in
+`packages/agent/src/http/app/connectors.ts`, `srchOpen` in `packages/agent/src/http/app/search.ts`, the panel's
+phone sheet in `packages/agent/src/http/app/panel.ts`, and the F4 browser helper under `test/workers/support/`.
+
+**Scope:** Rule 7 of the grammar, on every overlay.
+
+1. An overlay without a path (the chats drawer as sheet or overlay, the Search dialog, the phone's panel sheet, the
+   More sheet, menus, the confirm dialog, the invite pop) pushes an entry at the same address when it opens; back
+   closes it and the page beneath stays as it was; Escape, the scrim and its own close control pop the entry they
+   own and never a page's; closing by any path leaves no stray entry, so one back after a close leaves the page.
+2. Settings has addresses: `/settings`, `/settings/connectors`, `/settings/connectors/<id>` (the id as the route
+   decodes it) and `/settings/permissions`. Opening Settings pushes `/settings` over the current page; a pane pushes
+   its address; the pane's own Back is `history.back()`; closing Settings returns to the page it opened over; a reload
+   at a Settings address draws that pane over home.
+3. A device change (`relayout`) still closes every overlay, and pops the entries it closes, so history matches the
+   screen.
+
+**Acceptance:** `test/workers/f5-back.test.ts` (the page harness with F4's history): opening the drawer, the Search
+dialog, a menu, the confirm dialog, the phone's panel sheet and the invite pop each push one entry at the same
+address and `back()` closes exactly that one; Escape and the scrim pop the entry and a following `back()` changes the
+page (the violation planted: a close that leaves its entry fails); `/settings/connectors` opens Settings on that pane
+over the page it was opened from, the pane's Back returns to `/settings`, closing returns to the page beneath; a
+reload at `/settings/permissions` draws that pane; a device change closes the open sheet and pops its entry.
+`test/workers/f5-back-browser.test.ts` (Chromium, the F4 helper): with a real history, open the drawer and the Search
+dialog from the rail, `page.goBack()` closes the dialog, a second closes the drawer, a third leaves `/chats/<id>` for
+the previous page, measured on `page.url()` and the nodes' `hidden`.
+
+**Not in scope:** addresses for the drawer, the search dialog or the panel's tabs (Ruling 1); the Library's file
+viewer (F6); search history or `?q=` in the address; the enter and exit motions, unchanged from F3.
+
+**Rulings:**
+
+- Ruling: an overlay without content of its own gets an entry, not an address — because back must close it on a
+  phone, where it fills the screen, but a drawer is not a place anyone links to — if wrong, `?panel=<tab>` and
+  `?drawer=1` on any page, never a path.
+- Ruling: Settings has addresses — because its panes hold content (a connector's page) a person returns to and a
+  notification may name — if wrong, Settings becomes an entry at the same address like the drawer.
+- Ruling: every pop is guarded by the entry's own state marker — because a stray entry makes back dead once, which is
+  the defect this part exists to remove — if wrong, only the marker's shape changes.
+
+## F6 The Library's file address
+
+**Read:** F4's grammar and router. No one-way decision is needed; D-0010 (proposed, Kyle's on the artifact thread)
+names `/library/artifacts/<slug>` and this part must leave that collection free and reachable. Then
+`packages/agent/src/http/app/library.ts` (`libOpenFile`, the viewer and its `#viewer-back`, the Copy link),
+`packages/agent/src/http/app-routes.ts` (`/app/file` and the link routes), `packages/agent/src/files/links.ts`,
+and the suites whose expectations change: `test/workers/m27-library.test.ts` and
+`test/workers/m24-3-documents.test.ts`.
+
+**Scope:** The Library's things have addresses, and `?file=` is gone.
+
+1. `/library/files/<path>` draws the viewer on that file, each path segment encoded with `encodeURIComponent` and
+   decoded one by one; an empty or `..` segment is not a page. Opening a file from the list pushes its address; the
+   viewer's Back is `history.back()`; reload keeps the file; a file the Person refuses or cannot read is said in the
+   viewer with its code at that address (the grammar matched; the object refused), never as the not-found page.
+2. Copy link emits `/library/files/<path>` and nothing reads `?file=` any more: the boot hook in `shell.ts` and the
+   read in `library.ts` are deleted.
+3. The grammar's collection rule: `/library/<collection>/<id…>` is a page only for a registered collection; `files`
+   is registered here and `artifacts` is the artifact plan's to register, so `/library/artifacts/x` is the not-found
+   page until then and `/library/other/x` always.
+
+**Acceptance:** `test/workers/f6-library-address.test.ts` (the page harness and `serve`): booted at
+`/library/files/notes/trip.md` the viewer opens that file; a segment with a space or a `#` round-trips through the
+address; opening a file from the list pushes its address and the viewer's Back returns to `/library`; Copy link
+emits the new address and the page's markup holds no `?file=` (the violation planted: the old link fails);
+`/library/files/../x` and `/library/other/x` are the not-found page with 404; `/library/artifacts/x` is the
+not-found page with 404 until a collection is registered (named in the test as the artifact plan's row); a refused
+file is said in the viewer with its code at its address. The `[M27.5]` and `[M24.3]` suites are updated where the
+link changed and green.
+
+**Not in scope:** the artifact collection and its drawing (the artifact plan, D-0010); a file's content in the
+address; the signed `/app/file/raw` links, unchanged; the Library's search, which launches the dialog (F3).
+
+**Rulings:**
+
+- Ruling: a file's id is its path in segments — because D-0010 puts an artifact's id in segments and two shapes under
+  one collection root would be two grammars — if wrong, `?path=` under `/library/files`, never a second root.
+- Ruling: a refused file at a matched address is said in the viewer, not as the not-found page — because the page
+  exists and the object refused; the code is the answer (D-0001) — if wrong, the words change, not the status.
+- Ruling: `artifacts` is registered by the artifact plan, not reserved here — because a page nobody draws is a lie,
+  and the collection rule makes registering it one row — if wrong, add the row here with the not-found drawing.
+
+## F7 The address survives sign-in
+
+**Read:** `docs/decisions/README.md` and the sign-in return record, which this part needs `accepted` by Kyle before
+it starts: a one-way door (a security boundary and the published `@qyvr/host-cloudflare` login contract). If the
+record is still `proposed`, stop with `BLOCKED: needs Kyle` and the question under `BLOCKED (open)`. Then
+`packages/agent/src/http/serve.ts` (the 302 to `/login`), `toLogin` in `packages/agent/src/http/app/shell.ts`,
+`packages/host-cloudflare/src/passkeys/routes.ts` and `page.ts` (`location.assign("/")` after each success),
+`packages/host-cloudflare/src/passkeys/identity.ts` (`PASSKEY_REQUIRED` after a recovery sign-in),
+`packages/host-cloudflare/test/passkeys-routes.test.ts`, `test/workers/f1-login-browser.test.ts` (the soft
+authenticator), and `docs/runbooks/release.md` for the changeset.
+
+**Scope:** Rule 10.
+
+1. A signed-out browser GET on a page path is sent to `/login?next=<path+search+hash>`; the shell's 401 redirect
+   carries the current address the same way.
+2. The login page, after a passkey registration, a passkey sign-in or a recovery sign-in followed by the passkey it
+   requires, goes to `next` when it is an absolute same-origin path not under `/login`, else to `/`. The guard is
+   in one function in the host package, tested with `//evil.example`, `https://evil.example/x`, `/login/recover`,
+   an empty value and a value with a scheme.
+3. A changeset for `@qyvr/host-cloudflare` (patch) and the record set to `accepted` quoting Kyle, in the same commit
+   that lands the guard.
+
+**Acceptance:** `test/workers/f7-signed-out-link.test.ts` (`serve`): a signed-out browser GET on `/chats/<id>#m3`
+answers 302 with `location` `/login?next=%2Fchats%2F<id>` (the fragment never reaches the server, so the test asserts
+it is absent); an API GET keeps the JSON 401; a signed-in request is unchanged. In
+`packages/host-cloudflare/test/passkeys-routes.test.ts`, tagged `[F7]`: the return-path guard answers `/` for each
+planted value above and the path for a plain one (the violation planted: a guard that passes `//evil.example`
+fails). `test/workers/f7-login-return-browser.test.ts` (Chromium with the soft authenticator, as `f1-login-browser`):
+a browser at `/feed` with no session lands on `/login?next=%2Ffeed`, signs in with a passkey and ends at `/feed`;
+after a recovery-code sign-in it is held at `/login` to add a passkey and then ends at `/feed`.
+
+**Not in scope:** any other change to the login page; remembering the address across a logout; a `next` that is not a
+path; the session cookie's attributes.
+
+**Rulings:**
+
+- Ruling: the return path is a query on `/login`, honoured by the host's page — because the host owns sign-in and the
+  page is the only thing that knows when it succeeded — if wrong (Kyle keeps the host's contract as is), the agent
+  sets a short-lived same-site cookie on the 302 that the shell reads once at boot and clears.
+- Ruling: only an absolute same-origin path not under `/login` is honoured — because `next` is the classic open
+  redirect and a loop into `/login` is a dead page — if wrong, only the list of refused shapes grows.
