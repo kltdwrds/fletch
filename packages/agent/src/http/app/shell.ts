@@ -11,6 +11,7 @@
 // and is never stored (the columns' widths are the viewer's own and stay in the browser); everything else the frame shows comes from the objects through the other modules. The
 // frame decides nothing: it shows a view, opens an overlay and asks the routes the questions it draws.
 
+import { CHATS_FILTER_FIELD, CHATS_FILTER_LIST } from "./chats-filter.ts";
 import { CHATS_MENU_MARKUP, CHATS_TEXT } from "./chats-list.ts";
 import { ICON_CSS, type IconName, ic, icActive } from "./icons.ts";
 import { OVERLAY_SCRIPT } from "./overlays.ts";
@@ -115,7 +116,6 @@ ${ICON_CSS}
 #open-chats { position: relative; }
 #conn { position: absolute; left: 16px; right: 16px; top: 80px; z-index: 19; margin: 0; text-align: center; font: 400 13px/18px var(--font-sans); color: var(--text-secondary); }
 .drawer-top { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
-.drawer-top .qf-search { flex: 1; cursor: pointer; }
 .drawer-sheet { display: flex; flex-direction: column; gap: 2px; width: 75%; height: 100%; padding: 12px; background: var(--bg-primary); box-shadow: var(--elevation-3); overflow: auto; }
 /* The chats drawer's layer (AppShell, Motion): the phone's veil under the sheet, or from 768 the overlay's click catcher. */
 .qf-drawer-wrap { position: fixed; inset: 0; z-index: 50; display: flex; align-items: stretch; justify-content: flex-start; }
@@ -213,10 +213,11 @@ export function shellMarkup(p: { chat: string; views: string; panel: string; set
   <button id="to-settings" class="qf-rail-item" aria-label="${SHELL_TEXT.settings}" aria-haspopup="menu" aria-expanded="false"><span>${ic("equals", "lg")}</span></button>
 </nav>
 <aside id="drawer" class="qf-listcol qf-listcol--chat" aria-label="${SHELL_TEXT.chats}">
-  <div class="drawer-top"><button id="chats-search" class="qf-search">${ic("search", "sm")}<span class="t-sub-m t-2">${SHELL_TEXT.search}</span></button><button id="archived-btn" class="qf-ibtn qf-ibtn--28" aria-haspopup="menu" aria-expanded="false" aria-label="${CHATS_TEXT.listOptions}">${ic("dots", "xs")}</button></div>
+  <div class="drawer-top">${CHATS_FILTER_FIELD}<button id="archived-btn" class="qf-ibtn qf-ibtn--28" aria-haspopup="menu" aria-expanded="false" aria-label="${CHATS_TEXT.listOptions}">${ic("dots", "xs")}</button></div>
   <button id="close-drawer" class="vh">${SHELL_TEXT.closeChats}</button>
   <div id="chats"><div class="qf-listhead">${CHATS_TEXT.side}<button id="new-chat" class="qf-ibtn qf-ibtn--28" aria-label="${SHELL_TEXT.newChat}">${ic("plus", "xs")}</button></div></div>
   <div id="archived" hidden></div>
+  ${CHATS_FILTER_LIST}
   <div class="qf-colresize">${separator("list-resize", SHELL_TEXT.resizeList, COLUMNS.list)}<span class="qf-colresize-line"></span></div>
 </aside>
 <aside id="lib-col" class="qf-listcol qf-listcol--lib" aria-label="${TAB_TEXT.library}" hidden><div id="lib-sections"></div></aside>
@@ -442,8 +443,6 @@ $("more-settings").onclick = () => show("settings");
 $("to-settings").onclick = () => openMenu($("to-settings"), SETTINGS_ROWS.map((id) => $(id)));
 $("settings-menu-report").onclick = () => { closeMenu(); report(); };
 $("settings-menu-open").onclick = () => { closeMenu(); show("settings"); };
-// Search opens over what is open (the drawer's pill keeps the drawer under it, as the canvas draws it).
-$("chats-search").onclick = () => srchOpen();
 // Invite, for an admin (B2): from 768 the system's popover hung under the pill, right-aligned; on a phone the same
 // node as a BottomSheet. Copy puts the company's address, where a member the admin has added signs in, on the
 // clipboard; a refused clipboard shows the link in a read-only field, selected, so the person copies it themself.

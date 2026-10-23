@@ -11,7 +11,7 @@
   --qf-dur-slow:.3s;         /* [duration-slow] sheet and drawer close, mobile push/pop, letter hover */
   --qf-dur-toast:.4s;        /* [duration-toast] toast in/out, segment pane cross-fade */
   --qf-dur-sheet-open:.5s;   /* [duration-sheet-open] sheet and drawer open */
-  --qf-dur-scrim-dialog:1s;  /* [duration-scrim-dialog] dialog scrim fade, both ways */
+  --qf-dur-scrim-dialog:1s;  /* [duration-scrim-dialog] dialog scrim fade in (the close runs at --qf-dur-fast, F3) */
   --qf-ease-in:cubic-bezier(.4,0,1,1);    /* [ease-in] exit: dialog close */
   --qf-ease-out:cubic-bezier(0,0,.2,1);   /* [ease-out] enter: dialog open */
   --qf-ease:cubic-bezier(.4,0,.2,1);      /* [ease-standard] default; also --ease-in-out; sheets, drawers, rail, accordion */
@@ -340,10 +340,11 @@ body{background:var(--bg-primary);color:var(--text-primary);font-family:var(--fo
 
 /* Dialog: centred squircle card, scrim 40% black (dark) */
 .qf-scrim2{position:fixed;inset:0;z-index:50;background:var(--fill-dialog-overlay);display:flex;align-items:center;justify-content:center;padding:16px;animation:qf-scrim-in var(--qf-dur-scrim-dialog) var(--qf-ease-css)}
-/* Dialog motion (I3, measured): the scrim fades over 1 s ease both ways; the card fades and scales from .95 in 150 ms,
-   ease-out on open and ease-in on close. Scrims animate background-color, not opacity, so the card keeps its own timing. */
+/* Dialog motion (I3, measured): the scrim fades in over 1 s ease; the card fades and scales from .95 in 150 ms, ease-out
+   on open and ease-in on close. The close runs the scrim's fade with the card's, both 150 ms, so the page is live again
+   within it (F3). Scrims animate background-color, not opacity, so the card keeps its own timing. */
 .qf-scrim2>.qf-dlg,.qf-scrim2>.qf-dialog{animation:qf-pop-in var(--qf-dur-fast) var(--qf-ease-out)}
-.qf-scrim2.is-closing{animation:qf-scrim-out var(--qf-dur-scrim-dialog) var(--qf-ease-css) forwards;pointer-events:none}
+.qf-scrim2.is-closing{animation:qf-scrim-out var(--qf-dur-fast) var(--qf-ease-css) forwards;pointer-events:none}
 .qf-scrim2.is-closing>.qf-dlg,.qf-scrim2.is-closing>.qf-dialog{animation:qf-pop-out var(--qf-dur-fast) var(--qf-ease-in) forwards}
 @keyframes qf-scrim-in{from{background-color:transparent}} @keyframes qf-scrim-out{to{background-color:transparent}}
 @keyframes qf-pop-in{from{opacity:0;transform:scale(var(--qf-scale-pop))}} @keyframes qf-pop-out{to{opacity:0;transform:scale(var(--qf-scale-pop))}}
@@ -771,7 +772,7 @@ html:active-view-transition-type(qf-push)::view-transition-new(root){animation:q
 /* Reduced motion (I3, matches muse-icons-motion §2c). Off: sheets and their veils, drawers, dialog cards, action sheets, toasts,
    the accordion (motion-safe above), message and stream fades, the overlay shadow, the segment slide and fade, the rail chip.
    View transitions run in 1 ms. Kept (inferred from Muse, whose classes carry no reduce variant): menu and popover enter/exit
-   and the 1 s dialog scrim fade. A closing dialog card hides at once. */
+   and the dialog scrim fade (1 s in, 150 ms out). A closing dialog card hides at once. */
 @media (prefers-reduced-motion:reduce){
   .qf-scrim2>.qf-dlg,.qf-scrim2>.qf-dialog,.qf-scrim2.is-closing>.qf-dlg,.qf-scrim2.is-closing>.qf-dialog,.qf-drawer,.qf-drawer-scrim,.qf-menu--sheet,.qf-backdrop.is-sheet,
   .qf-toast,.qf-msg-new,.qf-stream-chunk,.qf-listcol--over,.qf-fade-a,.qf-fade-b,.is-closing>.qf-drawer,.is-closing>.qf-drawer-scrim,.is-closing>.qf-backdrop.is-sheet{animation:none!important}

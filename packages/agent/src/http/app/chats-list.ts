@@ -24,6 +24,9 @@ export const CHATS_TEXT = {
   archive: "Archive",
   today: "Today",
   yesterday: "Yesterday",
+  justNow: "Just now",
+  minutes: "{n} min",
+  hours: "{n} h",
 };
 
 /**
@@ -107,6 +110,16 @@ function lastLabel(at) {
 function drawUnread() {
   // An unread row is the list's: the title at 600 and the accent dot at the row's end.
   for (const r of $("chats").querySelectorAll("[data-chat]")) { const b = r.children[0], on = waiting.get(r.dataset.chat) > 0, u = b.children[b.children.length - 1]; if (u) u.hidden = !on; b.className = "qf-listrow" + (on ? " qf-listrow--unread" : ""); }
+}
+// A search row's time (F3), one helper for the dialog and the drawer's filter: minutes, then hours, within the last
+// day; after that the list's own labels. A row with no readable time shows none.
+function foundWhen(at) {
+  if (typeof at !== "number") return "";
+  const ms = Date.now() - at;
+  if (ms < 60000) return CHATS.justNow;
+  if (ms < 3600000) return CHATS.minutes.replace("{n}", String(Math.floor(ms / 60000)));
+  if (ms < 86400000) return CHATS.hours.replace("{n}", String(Math.floor(ms / 3600000)));
+  return lastLabel(at);
 }
 async function chats(select) {
   let v;

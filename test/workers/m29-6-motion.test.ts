@@ -111,7 +111,8 @@ const ENTER: Record<string, Motion> = {
 };
 const EXIT: Record<string, { motion: Motion; closing: string[]; hideAfter: number; home: string }> = {
   "the panel sheet": { motion: { "#scrim": [["qf-scrim-out", 150]], "#panel-dialog": [["qf-sheet-out", 300]] }, closing: ["scrim"], hideAfter: 300, home: "overlays" },
-  "the Settings dialog": { motion: { "#scrim": [["qf-scrim-out", 1000]], "#set-dialog": [["qf-pop-out", 150]] }, closing: ["scrim"], hideAfter: 1000, home: "overlays" },
+  // F3: a dialog's scrim leaves with its card, both at --qf-dur-fast (it enters over 1 s, as above).
+  "the Settings dialog": { motion: { "#scrim": [["qf-scrim-out", 150]], "#set-dialog": [["qf-pop-out", 150]] }, closing: ["scrim"], hideAfter: 150, home: "overlays" },
   "the rail's Settings menu": { motion: { "#menu": [["qf-menu-out", 150]] }, closing: ["menu-layer", "menu"], hideAfter: 150, home: "menu-layer" },
   "the chats drawer": { motion: { "#scrim > .qf-drawer-scrim": [["qf-scrim-out", 150]], "#drawer": [["qf-drawer-out", 300]] }, closing: ["scrim", "drawer"], hideAfter: 300, home: "" },
 };

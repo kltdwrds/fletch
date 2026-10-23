@@ -359,7 +359,7 @@ function frame(e) {
       else if (fresh) { log.append(p.node); unsent(id, "LOST"); }
       else log.append(p.node);
     }
-    regroup();
+    regroup(); seekDrawn();
     fresh = false;
     // Whether a turn still runs is the chat's answer, so a finished turn is never shown as working. A turn
     // this page joined midway streamed part of its reply before the socket opened: when it ends, the
@@ -399,6 +399,8 @@ function frame(e) {
 function open(id) {
   if (conn) conn.stop();
   endReply(); closeActions();
+  // A message sought in another chat (F3) is not sought once the person has moved on.
+  if (seeking && seeking.chat !== id) seeking = null;
   chatId = id; log.replaceChildren(); reply = thinking = null; lastAt = null; current = null; stopping = null; drawn = 0; pending.clear(); gone.clear(); working(false);
   // The address names the open chat, so a reload reopens it; a fresh open gets it from the Person (M17.1).
   history.replaceState(null, "", "?chat=" + encodeURIComponent(id) + location.hash);
