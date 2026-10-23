@@ -34,6 +34,7 @@ import { verifyHandoff } from "../subagents/verifier.ts";
 import { migrateObject, probeObject } from "../migrations/catalog.ts";
 import { available, hostOf } from "../host.ts";
 import { modelConfig } from "../model/routes.ts";
+import { type ChatSearch, searchChat } from "../chat/search.ts";
 
 type ConnectionState = { person: string };
 
@@ -205,6 +206,11 @@ export class Chat extends Agent<Env> {
   /** When this chat last had something to show (M29.3, the list row's time), for its owner. */
   async lastAt(person: string) {
     return this.engine.lastAt(person);
+  }
+
+  /** What this chat's thread draws that holds `query` (F2), for its owner alone; anyone else is refused with a code. */
+  async search(person: string, query: string): Promise<ChatSearch> {
+    return searchChat(this.engine, person, query);
   }
 
   /** The link cards this chat showed its owner (M16.2): where a decision is theirs, with no choices. */

@@ -27,3 +27,12 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   merges the PR and deploys previews (`docs/runbooks/muse-execution.md`); Kyle steers, does final UAT, accepts one-way
   doors, every Cloudflare change and the production go. Rejected: Muse
   as a second implementer, which would put two writers on one branch.
+- 2026-10-22 F2 searches the entries `history()` draws, with no `LIKE` prefilter on `messages.body` (F2's first ruling
+  named one): the thread also draws mailbox messages and a tool's announced words, which `messages` does not hold, and
+  a `LIKE` over the JSON body misses escaped characters and non-ASCII case, so a prefilter could hide a match. Rejected:
+  the prefilter, until Q4 measures the scan slow.
+- 2026-10-22 `/app/search` caps a query's rows at 20 and keeps the recents at 8; a recent is ordered by its last
+  connection, or its opening when no page has connected to it; a row matched by title alone carries the chat's own
+  time (`lastAt`, the list row's), or its opening when it has none. Rejected: 20 recents, which the dialog never asked for.
+- 2026-10-22 `test/fixtures/people.json` holds a second fictional member (`pat-solo`), so a claim about two people is
+  tested with two members of the fixture. Rejected: a second identity made up inside a test.
