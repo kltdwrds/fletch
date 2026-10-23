@@ -35,7 +35,7 @@ function findRow(c) {
   const b = el("button"); b.className = "qf-listrow";
   const t = el("span", c.main ? CHATS.main : c.title); t.className = "qf-lbl";
   b.append(t, snipOf(c, c.main ? CHATS.main : SRCH_DLG.side));
-  b.onclick = () => { seekTo(c.chatId, c.mid); switchTo({ id: c.chatId, kind: c.main ? "main" : "side" }); };
+  b.onclick = () => switchTo({ id: c.chatId, kind: c.main ? "main" : "side", mid: c.mid });
   r.append(b);
   return r;
 }

@@ -233,7 +233,7 @@ $("set-help").onclick = () => { $("set-note").textContent = SETTINGS.helpHow; };
 // Nothing leaves the page until the person sends it from the chat.
 $("set-report").onclick = () => { $("report-text").value = ""; openDialog($("report"), { form: "center" }); };
 $("report-close").onclick = () => closeDialog($("report"));
-$("report-form").onsubmit = (e) => { e.preventDefault(); const text = $("report-text").value.trim(); show("chat"); $("t").value = SETTINGS.reportLine + text; };
+$("report-form").onsubmit = (e) => { e.preventDefault(); const text = $("report-text").value.trim(); toView("chat"); $("t").value = SETTINGS.reportLine + text; };
 async function delivery() {
   try {
     const d = await getJson("/delivery");

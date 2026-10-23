@@ -197,7 +197,7 @@ Written by the planning session of 2026-10-23 from a URL audit of the app at e27
 `/`, the address holds only `?chat=` and `?file=`, nothing pushes history, so back leaves the app, reload loses the
 view, a shared file link can lose its file at boot, and a signed-out deep link ends at `/`. F4 to F7 give every
 surface an address under one grammar (ten rules, `packages/agent/src/http/pages.ts` once F4 lands), in the order a
-build can prove each on its own. The artifact plan's `/library/artifacts/<slug>` (D-0010, proposed on Kyle's thread)
+build can prove each on its own. The artifact plan's `/library/artifacts/<slug>` (the artifact record, proposed on Kyle's thread and not yet in this repository)
 is a collection under the same grammar; its part comes after these and registers the collection itself.
 
 ## F4 Addresses: the page grammar, the router and the chat's address
@@ -259,7 +259,7 @@ file as its confirmation and `node scripts/check-decisions.mjs` passes.
 
 **Rulings:**
 
-- Ruling: pages are paths, not a hash and not a query — because D-0010 names a path and a path is what a person
+- Ruling: pages are paths, not a hash and not a query — because the artifact record names a path and a path is what a person
   pastes, a server logs and a notification opens — if wrong (a host that cannot serve the shell on every path), the
   grammar module is the one place to change, and the service worker already passes every path through.
 - Ruling: the grammar is one data module both sides read — because the page script is a string the suite runs as
@@ -320,7 +320,7 @@ viewer (F6); search history or `?q=` in the address; the enter and exit motions,
 
 ## F6 The Library's file address
 
-**Read:** F4's grammar and router. No one-way decision is needed; D-0010 (proposed, Kyle's on the artifact thread)
+**Read:** F4's grammar and router. No one-way decision is needed; the artifact record (proposed, Kyle's on the artifact thread)
 names `/library/artifacts/<slug>` and this part must leave that collection free and reachable. Then
 `packages/agent/src/http/app/library.ts` (`libOpenFile`, the viewer and its `#viewer-back`, the Copy link),
 `packages/agent/src/http/app-routes.ts` (`/app/file` and the link routes), `packages/agent/src/files/links.ts`,
@@ -348,12 +348,12 @@ not-found page with 404 until a collection is registered (named in the test as t
 file is said in the viewer with its code at its address. The `[M27.5]` and `[M24.3]` suites are updated where the
 link changed and green.
 
-**Not in scope:** the artifact collection and its drawing (the artifact plan, D-0010); a file's content in the
+**Not in scope:** the artifact collection and its drawing (the artifact plan and its record); a file's content in the
 address; the signed `/app/file/raw` links, unchanged; the Library's search, which launches the dialog (F3).
 
 **Rulings:**
 
-- Ruling: a file's id is its path in segments — because D-0010 puts an artifact's id in segments and two shapes under
+- Ruling: a file's id is its path in segments — because the artifact record puts an artifact's id in segments and two shapes under
   one collection root would be two grammars — if wrong, `?path=` under `/library/files`, never a second root.
 - Ruling: a refused file at a matched address is said in the viewer, not as the not-found page — because the page
   exists and the object refused; the code is the answer (D-0001) — if wrong, the words change, not the status.

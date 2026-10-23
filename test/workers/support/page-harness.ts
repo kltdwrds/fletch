@@ -163,7 +163,7 @@ export interface Overlays {
 /** Runs the shipped page script with its timers and ids in the test's hands; the chat is the production engine. */
 export async function page(
   chat: { onSend(data: string, socket: ScriptedSocket): void; fetch?: (path: string, init?: { method?: string; body?: string }) => Promise<Response | null> },
-  layout: { desktop?: boolean; tablet?: boolean; dark?: boolean; pushEndpoint?: string | null; clipboard?: string[]; search?: string } = {},
+  layout: { desktop?: boolean; tablet?: boolean; dark?: boolean; pushEndpoint?: string | null; clipboard?: string[]; search?: string; path?: string } = {},
   /** Rewrites the shipped script before it runs, so a test can plant a violation on the production path (M29.1). */
   plant: (js: string) => string = (js) => js,
 ) {
@@ -237,8 +237,42 @@ export async function page(
     createElement: (tag: string) => Object.assign(new El(), { tag }),
     addEventListener: (type: string, f: (e: { key: string }) => void) => void (type === "keydown" && keys.push(f)),
   };
-  const location = { protocol: "https:", host: "solo-sam.example", search: layout.search ?? "", hash: "" };
-  const history = { replaceState() {} };
+  // The address bar and the session history as a browser keeps them (F4): `path` (with any query and fragment) is the
+  // address the page boots at, `search` a query on `/`. A push or a replace moves the address; `back()` steps to the
+  // entry before and fires the page's `popstate` listeners, as a browser does, while a push or a replace fires none.
+  const ORIGIN = "https://solo-sam.example";
+  const at = new URL(layout.path ?? `/${layout.search ?? ""}`, ORIGIN);
+  const location = { protocol: "https:", host: "solo-sam.example", pathname: at.pathname, search: at.search, hash: at.hash };
+  const address = () => location.pathname + location.search + location.hash;
+  const moveTo = (url: string) => {
+    const u = new URL(url, ORIGIN + address());
+    Object.assign(location, { pathname: u.pathname, search: u.search, hash: u.hash });
+  };
+  const popped: Array<() => void> = [];
+  const entries = [address()];
+  let index = 0;
+  const history = {
+    entries,
+    get index() {
+      return index;
+    },
+    pushState(_s: unknown, _t: string, url: string) {
+      moveTo(url);
+      entries.splice(index + 1, entries.length, address());
+      index = entries.length - 1;
+    },
+    replaceState(_s: unknown, _t: string, url: string) {
+      moveTo(url);
+      entries[index] = address();
+    },
+    back() {
+      if (index === 0) return;
+      index--;
+      moveTo(entries[index] as string);
+      for (const f of popped) f();
+    },
+  };
+  const window = { addEventListener: (type: string, f: () => void) => void (type === "popstate" && popped.push(f)) };
   // A desktop is the page's 1024 px query matching, a tablet its 768 px one (M27.2, the system's buckets), and `dark`
   // the scheme's; a phone matches none (the pane tests state which).
   const matches = (q: string) => (q.includes("1024") ? !!layout.desktop : q.includes("768") ? !!(layout.desktop || layout.tablet) : q.includes("dark") ? !!layout.dark : false);
@@ -264,8 +298,8 @@ export async function page(
   // The Goals and Feed tabs' draw functions come back to the test (M26.5): no store answers them yet, so a test hands the
   // shipped script a sample-shaped answer the way their engine parts will. The overlay helper and the device come
   // back too (M27.2), with the route switch, so a test drives the production helper every module uses.
-  const draw = new Function("document", "fetch", "WebSocket", "location", "history", "navigator", "URLSearchParams", "Intl", "Node", "setTimeout", "clearTimeout", "crypto", "matchMedia", `${js}\n;return { goalsDraw, goalsLoad, feedDraw, openDialog, closeDialog, openMenu, closeMenu, confirmDialog, closeOverlays, device, show };`)(
-    document, fetch, PageSocket, location, history, navigator, URLSearchParams, Intl, El, t.schedule, t.cancel, crypto, matchMedia,
+  const draw = new Function("document", "fetch", "WebSocket", "location", "history", "window", "navigator", "URLSearchParams", "Intl", "Node", "setTimeout", "clearTimeout", "crypto", "matchMedia", `${js}\n;return { goalsDraw, goalsLoad, feedDraw, openDialog, closeDialog, openMenu, closeMenu, confirmDialog, closeOverlays, device, show };`)(
+    document, fetch, PageSocket, location, history, window, navigator, URLSearchParams, Intl, El, t.schedule, t.cancel, crypto, matchMedia,
   );
   for (let i = 0; i < 50 && !sockets.length; i++) await new Promise((r) => setImmediate(r));
   const log = byId("log");
@@ -277,6 +311,10 @@ export async function page(
     },
     t,
     held,
+    /** The address bar, the session history (`back()` fires `popstate`) and the document, whose `title` the page sets. */
+    location,
+    history,
+    document: document as typeof document & { title?: string },
     sockets,
     log,
     busy: () => !byId("busy").hidden,

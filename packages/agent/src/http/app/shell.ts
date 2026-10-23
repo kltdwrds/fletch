@@ -15,6 +15,7 @@ import { CHATS_FILTER_FIELD, CHATS_FILTER_LIST } from "./chats-filter.ts";
 import { CHATS_MENU_MARKUP, CHATS_TEXT } from "./chats-list.ts";
 import { ICON_CSS, type IconName, ic, icActive } from "./icons.ts";
 import { OVERLAY_SCRIPT } from "./overlays.ts";
+import { ROUTER_TEXT } from "./router.ts";
 import { TOKENS_CSS } from "./tokens.ts";
 
 /** The routes: the tabs of the bar and the rail, in order. Settings, Connectors and Permissions are Settings' panes. */
@@ -309,7 +310,7 @@ ${OVERLAY_SCRIPT}`;
 
 export const SHELL_SCRIPT = `// One view at a time in #stage: a tab and a rail item say so with aria-current, and a view loads when it is shown.
 const VIEWS = ${JSON.stringify(APP_VIEWS)}, TABS = ${JSON.stringify(TAB_VIEWS)};
-const TITLE = ${JSON.stringify(TAB_TEXT)};
+const TITLE = ${JSON.stringify({ ...TAB_TEXT, nowhere: ROUTER_TEXT.notFound })};
 const SHELL = ${JSON.stringify(SHELL_TEXT)};
 const COLS = ${JSON.stringify(COLUMNS)}, WIDTHS_KEY = ${JSON.stringify(WIDTHS_KEY)};
 const INVITE = ${JSON.stringify(INVITE_TEXT)};
@@ -327,6 +328,7 @@ function show(view) {
   shown = view; scrolled = false;
   $("app").dataset.view = view;
   for (const v of VIEWS) $(v).hidden = v !== view;
+  $("nowhere").hidden = view !== "nowhere";
   paint();
   if (LOAD[view]) LOAD[view]();
 }
@@ -354,7 +356,7 @@ function paint() {
   if (body) body.className = "qf-" + d;
 }
 $("stage").onscroll = () => { const s = $("stage").scrollTop > 8; if (s !== scrolled) { scrolled = s; paint(); } };
-for (const v of TABS) { $("to-" + v).onclick = () => show(v); $("rail-" + v).onclick = () => show(v); }
+for (const v of TABS) { $("to-" + v).onclick = () => toView(v); $("rail-" + v).onclick = () => toView(v); }
 // The count on the panel's Approvals tab and the dot on the drawer's button come from the route, which counts
 // only this person's cards; a chat with a card waiting wears the same dot in the list. A count that could not be
 // read says so; it is never drawn as nothing waiting.
@@ -435,7 +437,7 @@ $("open-agent").onclick = () => openPanel();
 $("close-sheet").onclick = closePanel;
 // The phone's More sheet (Search, Report an issue, Settings) and the rail's Settings menu (its rows above; Keyboard
 // shortcuts and Download apps are disabled stubs until they have objects).
-function report() { show("chat"); $("t").value = SHELL.reportLine; }
+function report() { toView("chat"); $("t").value = SHELL.reportLine; }
 $("to-more").onclick = () => { if (isOpen($("more-sheet"))) closeDialog($("more-sheet")); else { openDialog($("more-sheet"), { form: "sheet", onClose: paint }); paint(); } };
 $("more-search").onclick = () => { closeOverlays(); srchOpen(); };
 $("more-report").onclick = report;
@@ -494,9 +496,5 @@ function relayout() { closeOverlays(); closeInvite(); paint(); if (shown === "li
 for (const q of [atTablet, atDesktop]) if (q && q.addEventListener) q.addEventListener("change", relayout);
 if (darkScheme && darkScheme.addEventListener) darkScheme.addEventListener("change", theme);
 theme();
-show("chat");
-// A link made by the Library's Share opens the Library, which opens its file.
-if (new URLSearchParams(location.search).get("file")) show("library");
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
-chats(new URLSearchParams(location.search).get("chat"));
-if (pinnable()) loadPanel();`;
+// The first page is drawn by the router (router.ts), which runs next.`;

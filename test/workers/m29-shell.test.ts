@@ -13,6 +13,7 @@ import { APP_PAGE } from "../../packages/agent/src/http/page.ts";
 import { ada, authorityWorld } from "./support/authority-world.ts";
 import { SETTLED } from "./support/motion.ts";
 import { page } from "./support/page-harness.ts";
+import { servePages } from "./support/page-routes.ts";
 
 /** Swaps one exact piece of the shipped page, and fails when the piece is not there (a plant that missed proves nothing). */
 const swap = (html: string, from: string, to: string, all = false) => {
@@ -42,14 +43,7 @@ async function viewer(o: { who?: string; width: number; height?: number; scheme?
   const ctx = await browser.newContext({ viewport: { width: o.width, height: o.height ?? 900 }, colorScheme: o.scheme ?? "dark", serviceWorkers: "block" });
   await ctx.routeWebSocket(/.*/, () => {});
   if (o.blockStorage) await ctx.addInitScript('Object.defineProperty(window, "localStorage", { get() { throw new Error("SecurityError: storage is blocked"); } });');
-  await ctx.route("**/*", async (r) => {
-    const url = new URL(r.request().url());
-    if (url.origin !== "https://solo-sam.example") return r.abort();
-    if (url.pathname === "/") return r.fulfill({ status: 200, contentType: "text/html", body: o.html ?? APP_PAGE });
-    const body = r.request().postData();
-    const a = await w.http(o.who ?? ada.email, r.request().method(), url.pathname + url.search, body ? JSON.parse(body) : undefined);
-    return r.fulfill({ status: a.status, contentType: "application/json", body: JSON.stringify(a.body) });
-  });
+  await servePages(ctx, (m, p, b) => w.http(o.who ?? ada.email, m, p, b), o.html ?? APP_PAGE);
   const pg = await ctx.newPage();
   await load(pg);
   return { pg, close: () => ctx.close() };

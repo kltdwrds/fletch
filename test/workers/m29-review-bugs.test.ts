@@ -15,6 +15,7 @@ import { SETTINGS_MENU, SHELL_TEXT } from "../../packages/agent/src/http/app/she
 import { APP_PAGE } from "../../packages/agent/src/http/page.ts";
 import { ada, authorityWorld } from "./support/authority-world.ts";
 import { type El, page } from "./support/page-harness.ts";
+import { servePages } from "./support/page-routes.ts";
 
 const root = join(import.meta.dirname, "../..");
 const settle = async () => {
@@ -211,14 +212,7 @@ describe("[M29.1] icon buttons in a browser", () => {
   async function open(width: number, height: number) {
     const ctx = await browser.newContext({ viewport: { width, height }, serviceWorkers: "block" });
     await ctx.routeWebSocket(/.*/, () => {});
-    await ctx.route("**/*", async (r) => {
-      const url = new URL(r.request().url());
-      if (url.origin !== "https://solo-sam.example") return r.abort();
-      if (url.pathname === "/") return r.fulfill({ status: 200, contentType: "text/html", body: APP_PAGE });
-      const body = r.request().postData();
-      const a = await w.http(ada.email, r.request().method(), url.pathname + url.search, body ? JSON.parse(body) : undefined);
-      return r.fulfill({ status: a.status, contentType: "application/json", body: JSON.stringify(a.body) });
-    });
+    await servePages(ctx, (m, p, b) => w.http(ada.email, m, p, b), APP_PAGE);
     const pg = await ctx.newPage();
     await pg.goto("https://solo-sam.example/");
     await pg.waitForFunction('document.querySelectorAll("#chats [data-chat]").length === 3');

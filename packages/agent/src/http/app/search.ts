@@ -83,8 +83,9 @@ function snipOf(c, fallback) {
   const w = el("span", foundWhen(c.at)); w.className = "when"; s.append(w);
   return s;
 }
-// Opens a row's chat at its message: the chat connects, and once its history is drawn the bubble is in view.
-function openFound(c) { seekTo(c.chatId, c.mid); show("chat"); chats(c.chatId); }
+// Opens a row's chat at its message (F4: its address, \`/chats/<id>#<mid>\`): the chat connects, and once its history
+// is drawn the bubble is in view.
+function openFound(c) { go(chatPath(c.chatId, c.mid)); }
 function srchRow(c, i) {
   // A SearchDialog result: the chat's round tile, its title, then the line that matched (or the chat's kind) and when.
   const b = el("button"); b.className = "qf-result"; b.id = "search-opt-" + i; b.setAttribute("role", "option"); b.dataset.chat = c.chatId;

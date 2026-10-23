@@ -31,7 +31,7 @@ describe("[M14.1] push subscriptions", () => {
     expect(got.why).toBeNull();
     expect(got.headers).toMatchObject({ "content-encoding": "aes128gcm", ttl: "86400", urgency: "normal" });
     expect(got.headers.authorization).toContain(`k=${vapid}`);
-    expect(got.payload).toEqual({ title: "job:hn-watch", body: "Edition hn-watch:notice:0001 is out.", items: ["hn-watch:notice:0001"], url: `/?chat=${chat}` });
+    expect(got.payload).toEqual({ title: "job:hn-watch", body: "Edition hn-watch:notice:0001 is out.", items: ["hn-watch:notice:0001"], url: `/chats/${chat}` });
     // The chat has it too, once, as the record the next turn sees.
     expect(w.notices(ada.email).map((n) => n.id)).toEqual(["hn-watch:notice:0001"]);
     // Delivered again (an unknown outcome at the sender): nothing is shown or pushed twice.

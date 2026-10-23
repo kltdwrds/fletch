@@ -68,14 +68,16 @@ export const CHATS_SCRIPT = `// The chats list on ListRow (the canvas's list col
 // New side chat and the rename row are held by reference: a draw clears the list that holds the one, and a rename
 // that ends takes the other out of the page before it goes home, and the document finds neither while it is out.
 const NEW_CHAT = $("new-chat"), RENAME_FORM = $("rename-form");
-let menuChat = null, renaming = null;
+// The list as the Person last answered it, so the document's title can name the open chat (F4).
+let menuChat = null, renaming = null, listed = [];
 // Opening a chat from the list is SideChat's view transition where the browser has View Transitions: the 80 ms cross-fade
 // from 768, and on a phone the push into a side chat or the pop back to the main chat. Without them the chat swaps at once.
+// The chat's address is pushed (F4), at its message when the row is a found one (\`mid\`).
 function switchTo(c) {
-  const go = () => { show("chat"); open(c.id); };
-  if (typeof document.startViewTransition !== "function") return go();
+  const to = () => go(chatPath(c.id, c.mid));
+  if (typeof document.startViewTransition !== "function") return to();
   const type = device() === "phone" ? (c.kind === "main" ? "qf-pop" : "qf-push") : null;
-  try { document.startViewTransition(type ? { update: go, types: [type] } : go); } catch (e) { document.startViewTransition(go); }
+  try { document.startViewTransition(type ? { update: to, types: [type] } : to); } catch (e) { document.startViewTransition(to); }
 }
 function drawChat(c, into, archived) {
   const r = el("div"); r.className = "chatrow qf-rowwrap"; r.dataset.chat = c.id;
@@ -124,7 +126,7 @@ function foundWhen(at) {
 async function chats(select) {
   let v;
   try { v = await getJson("/app/chats"); } catch (e) { lineError("Could not read your chats just now. Reload the page to try again.", e && e.code); return; }
-  mainId = v.main; renaming = null;
+  mainId = v.main; renaming = null; listed = v.chats;
   $("conn").hidden = true;
   const bar = $("chats"); bar.replaceChildren();
   const live = v.chats.filter((c) => !c.archived);
@@ -136,6 +138,7 @@ async function chats(select) {
   // A fresh open draws the chat the person last had open, which their Person recorded; never a default
   // that differs from what a reload draws (QYVR-151).
   open(select || chatId || v.last || mainId);
+  retitle();
   refreshCount();
 }
 // The archived view: Back to the list, its heading, then each archived chat with Restore in its options.
@@ -153,7 +156,7 @@ async function restore(c) {
   if (r.ok) { showArchived(false); chats(chatId); } else await failedTo(lineError("", ""), "Restore", r);
 }
 $("archived-btn").onclick = () => openMenu($("archived-btn"), [{ label: CHATS.showArchived, glyph: "archive", run: () => showArchived(true) }]);
-NEW_CHAT.onclick = async () => { const r = await post("/app/chats", {}); const b = await r.json().catch(() => ({})); if (r.ok) { show("chat"); chats(b.chatId); } else lineError("The new chat did not open. Try again.", b.code); };
+NEW_CHAT.onclick = async () => { const r = await post("/app/chats", {}); const b = await r.json().catch(() => ({})); if (r.ok) { await chats(b.chatId); go(chatPath(b.chatId)); } else lineError("The new chat did not open. Try again.", b.code); };
 // Inline rename (the canvas's row on TextField): the row's button gives its place to the form until it is saved
 // or cancelled; the name goes to the Person, which decides.
 $("rename").onclick = () => {
@@ -183,6 +186,10 @@ $("archive").onclick = async () => {
   const c = menuChat; closeMenu();
   if (!c || c.id === mainId) return;
   const r = await post("/app/chats/" + c.id + "/archive", { archived: true });
-  if (r.ok) chats(c.id === chatId ? mainId : chatId); else await failedTo(lineError("", ""), "Archive", r);
+  // The open chat archived, the page draws the main chat in its place, at the main chat's address.
+  if (!r.ok) return void await failedTo(lineError("", ""), "Archive", r);
+  if (c.id !== chatId) return void chats(chatId);
+  await chats(mainId);
+  go(chatPath(mainId), { replace: true });
 };
 `;

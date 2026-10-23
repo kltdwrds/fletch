@@ -14,6 +14,7 @@ import type { DeliveryCounts } from "../ledger/rollup.ts";
 import { validZone } from "../jobs/schedule.ts";
 import { decide, type ItemKind, type PacingState } from "./pacing.ts";
 import { checkEndpoint, checkSubscription, encryptPayload, type PushSubscription } from "./webpush.ts";
+import { chatPath } from "../http/pages.ts";
 
 export const SCHEMA = `
 CREATE TABLE IF NOT EXISTS push_subscriptions (endpoint TEXT PRIMARY KEY, p256dh TEXT NOT NULL, auth TEXT NOT NULL, created_at INTEGER NOT NULL, last_status INTEGER, last_at INTEGER);
@@ -277,7 +278,7 @@ export class PersonDelivery {
       title: items.length === 1 ? first.source : `${items.length} updates`,
       body: first.text.split("\n")[0]?.slice(0, 160) ?? "",
       items: items.map((i) => i.id),
-      url: first.chat ? `/?chat=${encodeURIComponent(first.chat)}` : "/",
+      url: first.chat ? chatPath(first.chat) : "/",
     }));
     let delivered = false;
     let code: string | null = null;

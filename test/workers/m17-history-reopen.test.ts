@@ -94,7 +94,8 @@ describe("[M17.1] a fresh open restores what a reload restores (QYVR-151)", () =
 
   it("the page opens the list's last chat when the address names none, and keeps the open chat in the address", () => {
     expect(APP_PAGE).toContain("open(select || chatId || v.last || mainId);");
-    expect(APP_PAGE).toContain('history.replaceState(null, "", "?chat=" + encodeURIComponent(id) + location.hash);');
-    expect(APP_PAGE).toContain('chats(new URLSearchParams(location.search).get("chat"));');
+    // F4: home becomes the opened chat's own address, by a replace; a chat's address is read at boot from its path.
+    expect(APP_PAGE).toContain('if (location.pathname === "/" && !fileLink() && chatId) history.replaceState(null, "", chatPath(chatId));');
+    expect(APP_PAGE).toContain('chats(booted && booted.row.name === "chat" ? booted.id : null)');
   });
 });

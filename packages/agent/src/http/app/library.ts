@@ -351,7 +351,7 @@ for (const [id, sort, view] of [["lib-sort-date", "date"], ["lib-sort-name", "na
   $(id).onclick = () => { if (sort) libSort = sort; if (view) libView = view; closeLibPop(); drawLib(); };
 // The list column's search pill is the rail's Search.
 $("lib-search").onclick = () => { const b = $("rail-search"); if (b.click) b.click(); else if (b.onclick) b.onclick(); };
-$("lib-create").onclick = () => { show("chat"); $("t").value = LIB.createLine; };
+$("lib-create").onclick = () => { toView("chat"); $("t").value = LIB.createLine; };
 
 // ---- the lists: Recent and All grids of Cards (or their list), the Images grid, the System files table ----
 function libKebab(f, cls) {

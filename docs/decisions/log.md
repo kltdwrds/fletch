@@ -46,3 +46,10 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   changes the enter motion.
 - 2026-10-22 F3: Enter typed before a query's answer is drawn opens that answer's first row when it lands, never the
   rows still on screen from the previous query. Rejected: opening whatever is drawn, which can open a stale result.
+- 2026-10-23 F4: `docs/plan/parts.md` names the artifact plan's record in words, not as D-0010: that record is
+  proposed on Kyle's thread and not in this repository, so the citation failed `check-decisions` at 391af92 (and with
+  it every `pnpm check`). The id comes back when the record lands. Rejected: a placeholder D-0010 written here, which
+  would put words in a record that is Kyle's.
+- 2026-10-23 F4: the not-found page, and a grammar row reserved for a later part (Settings, the Library's collections),
+  draw `#nowhere` with the path as text and a link home; the chat list still loads underneath so the link home opens
+  the last chat at once. Settings' own entry points keep `show("settings")` until F5 gives them addresses.

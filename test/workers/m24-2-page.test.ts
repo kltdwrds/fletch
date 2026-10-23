@@ -63,7 +63,7 @@ async function adaPage(w: World) {
         void answerFrame(ada.email, data, w.chat.instance).then((reply) => reply && box.p?.deliver(s, reply));
       },
     },
-    { search: `?chat=${CHAT_ID}` },
+    { path: `/chats/${CHAT_ID}` },
   );
   box.p = p;
   const s0 = p.sockets[0] as ScriptedSocket;

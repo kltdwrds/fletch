@@ -402,8 +402,8 @@ function open(id) {
   // A message sought in another chat (F3) is not sought once the person has moved on.
   if (seeking && seeking.chat !== id) seeking = null;
   chatId = id; log.replaceChildren(); reply = thinking = null; lastAt = null; current = null; stopping = null; drawn = 0; pending.clear(); gone.clear(); working(false);
-  // The address names the open chat, so a reload reopens it; a fresh open gets it from the Person (M17.1).
-  history.replaceState(null, "", "?chat=" + encodeURIComponent(id) + location.hash);
+  // The address is the router's (F4): opening a chat never writes it, so a chat connected under another view leaves
+  // that view's address alone. A fresh open gets the chat from the Person (M17.1).
   for (const r of $("chats").querySelectorAll("[data-chat]")) { const b = r.children[0]; if (r.dataset.chat === id) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); }
   conn = keepConnected(
     () => new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/chats/" + id + "/ws"),

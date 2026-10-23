@@ -8,6 +8,7 @@ import { type DispatchProps, identify } from "./identity.ts";
 import { HOOK_PATH, webhook } from "./ingress-routes.ts";
 import { shareRoute } from "./share-routes.ts";
 import { platformLifecycle } from "./lifecycle-routes.ts";
+import { wantsPage } from "./pages.ts";
 import { type Directory, route } from "./routes.ts";
 import { log } from "../obs/log.ts";
 import { hostOf } from "../host.ts";
@@ -18,8 +19,6 @@ export interface ServeDeps {
 }
 
 const json = (body: unknown, status = 200) => Response.json(body, { status });
-/** A browser navigating to a page, as opposed to a script or API caller reading JSON. */
-const wantsPage = (request: Request) => request.method === "GET" && (request.headers.get("accept") ?? "").includes("text/html");
 
 export async function serve(request: Request, env: Env, props: DispatchProps | null, deps: ServeDeps): Promise<Response> {
   const url = new URL(request.url);
