@@ -2,7 +2,7 @@
 // `serve()` with the real `passkeyIdentity` over a harnessed Company (sessions and passkeys in its storage) and the
 // production WebAuthn verifier; the authenticator is Chromium's own virtual one (CDP `WebAuthn`). The path is the
 // owner's first visit: a signed-out visit to `/` lands on the sign-in page, the setup link creates the passkey and
-// shows the recovery code once, the app's Log out ends the session and returns to sign-in, the passkey signs in
+// shows the recovery code once (tap to copy, a confirmed leave), the app's Log out ends the session and returns to sign-in, the passkey signs in
 // again, and a session revoked under the open app sends its next API call to sign-in.
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
@@ -105,6 +105,33 @@ describe("[F1] the login page in a browser", () => {
       const code = (await pg.textContent("#code"))?.trim() ?? "";
       expect(code.length).toBeGreaterThanOrEqual(16);
       expect(await d.company.loginCall({ op: "count" })).toBe(1);
+
+      // Tapping the code copies it. A missing clipboard and a refused write each say so and select the code instead;
+      // the keyboard reaches the same copy.
+      const feedback = (text: string) => pg.locator("#copied", { hasText: text }).waitFor();
+      const clear = () => pg.evaluate('document.getElementById("copied").textContent = ""; getSelection().removeAllRanges()');
+      await pg.evaluate("Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true })");
+      await pg.click("#code");
+      await feedback("Could not copy it here.");
+      expect(await pg.evaluate("getSelection().toString().trim()")).toBe(code);
+      await clear();
+      await pg.evaluate("Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => Promise.reject(new Error('denied')) }, configurable: true })");
+      await pg.focus("#code");
+      await pg.keyboard.press("Enter");
+      await feedback("Could not copy it here.");
+      expect(await pg.textContent("#copied")).not.toContain("Copied");
+      await clear();
+      await pg.evaluate("delete navigator.clipboard");
+      await pg.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin: ORIGIN });
+      await pg.keyboard.press(" ");
+      await feedback("Copied.");
+      expect(await pg.evaluate("navigator.clipboard.readText()")).toBe(code);
+
+      // The first click on the done button only arms it, since the code is gone once the page is left; the second leaves.
+      await pg.click("#done");
+      await pg.locator("#done", { hasText: "It is not shown again. Click again to leave" }).waitFor();
+      expect(new URL(pg.url()).pathname).toBe("/login");
+      expect(await shown(pg, "saved")).toBe(true);
 
       // On to the app, which reads this owner's session.
       await pg.click("#done");
