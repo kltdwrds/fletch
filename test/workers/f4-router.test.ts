@@ -116,11 +116,10 @@ describe("[F4] the router and the chat's address", () => {
     p.history.back();
     await settle();
     expect([address(p), p.history.index, lastSocket(p).url, view(p)]).toEqual([`/chats/${first}`, 0, wsOf(first), "chat"]);
-    // A new chat is pushed at its own address.
+    // A new chat is pushed at its own address: the placeholder's (F8), which connects nothing until its first send.
     await p.byId("new-chat").onclick?.();
     await settle();
-    const made = socketChat(p);
-    expect([address(p), p.history.entries.length, made === first || made === second]).toEqual([`/chats/${made}`, 2, false]);
+    expect([address(p), p.history.entries.length, socketChat(p)]).toEqual(["/chats/new", 2, first]);
   });
 
   it("/feed, /goals and /library draw their views and a reload keeps them; a tab pushes its path and back() returns to the chat", async () => {

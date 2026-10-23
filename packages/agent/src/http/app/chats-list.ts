@@ -22,6 +22,7 @@ export const CHATS_TEXT = {
   cancelRename: "Cancel renaming this chat",
   saveRename: "Save this chat's new name",
   archive: "Archive",
+  notOpened: "The new chat did not open. Try again.",
   today: "Today",
   yesterday: "Yesterday",
   justNow: "Just now",
@@ -29,15 +30,34 @@ export const CHATS_TEXT = {
   hours: "{n} h",
 };
 
+/** How many characters of its first prompt name a chat (F8), before the cut and its ellipsis. */
+export const TITLE_FROM_PROMPT = 60;
+
 /**
- * The list's rules: the rows, their options and the archived view. New side chat stays in the head at every width.
- * A row is the system's ListRow (`.qf-rowwrap`): its time and kebab show on hover, on focus and while its menu is
- * open (the kebab's `aria-expanded`, the system's `.is-open`). On a phone, where nothing hovers, the kebab still
- * takes a tap at the row's end and opens the row's actions as a sheet.
+ * A chat's name from its first prompt (F8): the prompt's own words on one line, trimmed, and past the cap cut at the
+ * last word that fits (or at the cap when none does) with an ellipsis. The page script carries a copy (`CHATS_SCRIPT`),
+ * which `test/workers/f8-new-chat.test.ts` holds to this one.
+ */
+export function promptTitle(text: string): string {
+  const t = text.replace(/\s+/g, " ").trim();
+  if (t.length <= TITLE_FROM_PROMPT) return t;
+  const cut = t.slice(0, TITLE_FROM_PROMPT);
+  const at = cut.lastIndexOf(" ");
+  return `${(at > TITLE_FROM_PROMPT / 2 ? cut.slice(0, at) : cut).trimEnd()}…`;
+}
+
+/**
+ * The list's rules: the rows, their options and the archived view. New side chat stays in the head at every width,
+ * and shows the system's icon-button hover treatment on hover and on keyboard focus (F8: the glyph at the primary
+ * colour on the hover fill; the bundle's `.qf-ibtn:hover` and `.is-hover` carry the fill alone), with its tooltip the
+ * button's `title`. A row is the system's ListRow (`.qf-rowwrap`): its time and kebab show on hover, on focus and
+ * while its menu is open (the kebab's `aria-expanded`, the system's `.is-open`). On a phone, where nothing hovers,
+ * the kebab still takes a tap at the row's end and opens the row's actions as a sheet.
  */
 export const CHATS_CSS = `
 #chats, #archived { display: flex; flex-direction: column; gap: 1px; }
 #chats .qf-listhead { padding: 0 4px 0 10px; margin-top: 6px; }
+#new-chat:hover, #new-chat:focus-visible, #new-chat.is-hover { background: var(--fill-secondary-elevated-hover); color: var(--text-primary); }
 .qf-rowwrap:has(> .qf-row-end [aria-expanded="true"]) > .qf-row-end { opacity: 1; pointer-events: auto; }
 .qf-rowwrap:has(> .qf-row-end [aria-expanded="true"]) > .qf-listrow { padding-inline-end: 96px; background: var(--fill-highlight); }
 .drawer-sheet .qf-row-end .qf-ibtn { pointer-events: auto; }
@@ -68,8 +88,18 @@ export const CHATS_SCRIPT = `// The chats list on ListRow (the canvas's list col
 // New side chat and the rename row are held by reference: a draw clears the list that holds the one, and a rename
 // that ends takes the other out of the page before it goes home, and the document finds neither while it is out.
 const NEW_CHAT = $("new-chat"), RENAME_FORM = $("rename-form");
-// The list as the Person last answered it, so the document's title can name the open chat (F4).
-let menuChat = null, renaming = null, listed = [];
+// The list as the Person last answered it, so the document's title can name the open chat (F4), and the chat a fresh
+// open draws (\`last\`), which home opens when no chat is open (F8: home reached from the placeholder).
+let menuChat = null, renaming = null, listed = [], lastId = null;
+// A chat's name from its first prompt (F8; chats-list.ts' \`promptTitle\`, the one the test holds this to): its words on
+// one line, trimmed, and past the cap cut at the last word that fits with an ellipsis.
+const TITLE_FROM_PROMPT = ${TITLE_FROM_PROMPT};
+function promptTitle(text) {
+  const t = text.replace(/\\s+/g, " ").trim();
+  if (t.length <= TITLE_FROM_PROMPT) return t;
+  const cut = t.slice(0, TITLE_FROM_PROMPT), at = cut.lastIndexOf(" ");
+  return (at > TITLE_FROM_PROMPT / 2 ? cut.slice(0, at) : cut).trimEnd() + "…";
+}
 // Opening a chat from the list is SideChat's view transition where the browser has View Transitions: the 80 ms cross-fade
 // from 768, and on a phone the push into a side chat or the pop back to the main chat. Without them the chat swaps at once.
 // The chat's address is pushed (F4), at its message when the row is a found one (\`mid\`).
@@ -123,10 +153,13 @@ function foundWhen(at) {
   if (ms < 86400000) return CHATS.hours.replace("{n}", String(Math.floor(ms / 3600000)));
   return lastLabel(at);
 }
-async function chats(select) {
+// Reads the list and draws it, then opens \`select\` (or the open chat, or the one a fresh open draws). On the
+// placeholder (F8) nothing is opened, so the draft stays; \`quiet\` keeps the open chat as it is (the first send
+// connected it itself), marking its row current.
+async function chats(select, quiet) {
   let v;
   try { v = await getJson("/app/chats"); } catch (e) { lineError("Could not read your chats just now. Reload the page to try again.", e && e.code); return; }
-  mainId = v.main; renaming = null; listed = v.chats;
+  mainId = v.main; lastId = v.last; renaming = null; listed = v.chats;
   $("conn").hidden = true;
   const bar = $("chats"); bar.replaceChildren();
   const live = v.chats.filter((c) => !c.archived);
@@ -137,7 +170,7 @@ async function chats(select) {
   drawUnread();
   // A fresh open draws the chat the person last had open, which their Person recorded; never a default
   // that differs from what a reload draws (QYVR-151).
-  open(select || chatId || v.last || mainId);
+  if (drafting || quiet) currentRow(chatId); else open(select || chatId || v.last || mainId);
   retitle();
   refreshCount();
 }
@@ -156,7 +189,8 @@ async function restore(c) {
   if (r.ok) { showArchived(false); chats(chatId); } else await failedTo(lineError("", ""), "Restore", r);
 }
 $("archived-btn").onclick = () => openMenu($("archived-btn"), [{ label: CHATS.showArchived, glyph: "archive", run: () => showArchived(true) }]);
-NEW_CHAT.onclick = async () => { const r = await post("/app/chats", {}); const b = await r.json().catch(() => ({})); if (r.ok) { await chats(b.chatId); go(chatPath(b.chatId)); } else lineError("The new chat did not open. Try again.", b.code); };
+// New side chat is the placeholder's address (F8): pushed like any chat's, creating nothing until the first send.
+NEW_CHAT.onclick = () => go("/chats/new");
 // Inline rename (the canvas's row on TextField): the row's button gives its place to the form until it is saved
 // or cancelled; the name goes to the Person, which decides.
 $("rename").onclick = () => {

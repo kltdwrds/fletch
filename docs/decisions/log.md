@@ -63,3 +63,10 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   `history.back()`. Rejected: Back as `go("/library")` when nothing is beneath, which pushes a second Library entry.
   The store names files in `[A-Za-z0-9._-]`, so a space or `#` in a segment is shown round-tripping to the Person's
   request and its `FILES_PATH_INVALID`, not to a stored file.
+- 2026-10-23 F8: the chat made by the placeholder's first send is titled by the page in the one `POST /app/chats`
+  that makes it (`promptTitle`: the prompt's words on one line, cut at a word within 60 characters with an ellipsis),
+  so no rename follows and a rename always wins; a send with no words (attachments alone) keeps the Person's `New
+  chat`. The message itself waits in the page (`held`) until the made chat's history frame is drawn, so it goes under
+  the bubble already on screen instead of being marked lost by the fresh socket's history. Rejected: the `Chat`
+  naming itself on its first message, which crosses into the Person's store from the send path; and sending before
+  the history, which the page's own fresh-socket rule says is lost.

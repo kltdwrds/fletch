@@ -4,7 +4,8 @@
 // makes goes through `go`, from what the person did; nothing the page does on its own (a chat connected in the
 // background under another view, a list re-read) writes the address. `/` is home: it draws the last chat and becomes
 // that chat's address by `replaceState`, never by a push, so one back leaves the app. A message's position is the
-// fragment, `/chats/<id>#<mid>`. A path that is no page draws the not-found page, which names it as text. A Library
+// fragment, `/chats/<id>#<mid>`. A new chat is `/chats/new` (F8): the chat view as a placeholder, nothing made until
+// its first send, which replaces the address with the made chat's. A path that is no page draws the not-found page, which names it as text. A Library
 // file (F6) is `/library/files/<path>`, drawn as the Library with its viewer open; at boot in a fresh tab `/library` is
 // rebuilt beneath it, as Settings' entries are, so the viewer's Back (\`history.back()\`) lands on the list. Settings (F5) is drawn over
 // the page beneath it, which stays as it was: opening it pushes its addresses, closing it pops them (overlays.ts owns
@@ -72,8 +73,9 @@ function go(path, o) {
   });
   drawPage(false, path);
 }
-// A tab, the rail, or a line that sends the person to the chat: the open chat's address, or home before one is open.
-function toView(v) { go(v === "chat" ? (chatId ? chatPath(chatId) : "/") : VIEW_PATH[v]); }
+// A tab, the rail, or a line that sends the person to the chat: the open chat's address (the placeholder's while a
+// draft is the open chat, F8), or home before one is open.
+function toView(v) { go(v === "chat" ? (drafting ? "/chats/new" : chatId ? chatPath(chatId) : "/") : VIEW_PATH[v]); }
 // Draws what the address (\`at\`, the current one unless \`go\` names it) names. At boot the chat is opened by the list's
 // answer (\`chats\`), not here, so it opens once.
 function drawPage(boot, at) {
@@ -101,18 +103,24 @@ function drawPage(boot, at) {
   show(p.row.view);
   if (p.row.name === "files") libShow(p.id);
   else if (p.row.name === "library") closeViewer();
-  if (p.row.name === "home" && chatId) { drawnAt = chatPath(chatId); hist(() => history.replaceState(null, "", chatPath(chatId))); }
+  // Home is the open chat, or (reached from the placeholder, F8) the chat a fresh open draws, opened here.
+  if (p.row.name === "home") {
+    const id = chatId || lastId;
+    if (id && id !== chatId) open(id);
+    if (id) { drawnAt = chatPath(id); hist(() => history.replaceState(null, "", chatPath(id))); }
+  }
+  if (p.row.name === "new") openDraft();
   if (p.row.name === "chat") {
     if (mid) seekTo(p.id, mid);
     if (!boot && (p.id !== chatId || mid)) open(p.id);
   }
   retitle();
 }
-// The document's title names the page: Settings while it is open, the open chat's title on a chat, the open file's
-// name in the Library, else the view's.
+// The document's title names the page: Settings while it is open, the open chat's title on a chat (the action's
+// name on the placeholder, F8), the open file's name in the Library, else the view's.
 function retitle() {
   const c = shown === "chat" && listed.find((x) => x.id === chatId);
-  const name = isOpen($("set-dialog")) ? SETTINGS.title : shown === "chat" ? (c ? (c.kind === "main" ? CHATS.main : c.title) : "") : shown === "library" && libOpened ? baseOf(libOpened) : TITLE[shown];
+  const name = isOpen($("set-dialog")) ? SETTINGS.title : shown === "chat" ? (c ? (c.kind === "main" ? CHATS.main : c.title) : drafting ? SHELL.newChat : "") : shown === "library" && libOpened ? baseOf(libOpened) : TITLE[shown];
   document.title = name ? name + " · " + ROUTER.app : ROUTER.app;
 }
 $("nowhere-home").onclick = (e) => { if (e && e.preventDefault) e.preventDefault(); go("/"); };
@@ -128,7 +136,7 @@ window.addEventListener("popstate", () => {
 });
 const booted = pageAt(location.pathname);
 drawPage(true);
-// Home becomes the chat the list opened, unless the person has gone elsewhere meanwhile.
+// Home becomes the chat the list opened, unless the person has gone elsewhere meanwhile (the placeholder opens none).
 chats(booted && booted.row.name === "chat" ? booted.id : null).then(() => {
   if (location.pathname === "/" && chatId) { drawnAt = chatPath(chatId); hist(() => history.replaceState(history.state, "", chatPath(chatId))); }
   retitle();
