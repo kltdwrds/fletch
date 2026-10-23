@@ -139,6 +139,20 @@ describe("[F3] the Search dialog's rows", () => {
     scrolled.length = 0;
     p.deliver(s, { type: "history", ...w.chats.harness(chatId).instance.history() });
     expect(scrolled.at(-1)).toBe(p.log.children.at(-1));
+    // A result chosen, then another chat opened before its history came: the later visit to the first seeks nothing.
+    await p.byId("rail-search").onclick?.();
+    await query(p, "nine");
+    await results(p)[0]?.onclick?.();
+    await settle();
+    const mainRow = p.byId("chats").children.find((r) => r.dataset.chat && r.dataset.chat !== chatId) as El;
+    await mainRow.children[0]?.onclick?.();
+    const back = p.byId("chats").children.find((r) => r.dataset.chat === chatId) as El;
+    await back.children[0]?.onclick?.();
+    const s2 = p.sockets.at(-1) as NonNullable<Page["sockets"][0]>;
+    expect(s2.url).toBe(`wss://solo-sam.example/chats/${chatId}/ws`);
+    p.open(s2);
+    p.deliver(s2, { type: "history", ...w.chats.harness(chatId).instance.history() });
+    expect(p.log.children.filter((n) => n.className.split(" ").includes("is-found"))).toEqual([]);
   });
 
   it("Enter opens the first row; the arrow keys move the active row and Enter opens that one; an Enter before the answer opens its first row when it lands", async () => {
