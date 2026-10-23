@@ -330,7 +330,8 @@ describe("[M27.3] the Search dialog on SearchDialog", () => {
     expect([p.byId("search-heading").textContent, p.byId("search-clear").hidden]).toEqual([SEARCH_TEXT.recents, true]);
     const results = p.byId("search-list").children;
     expect(results.map((r) => [r.className, r.attrs.role, r.children[0]?.className, r.children[1]?.children[0]?.textContent])).toEqual([
-      ["qf-result", "option", "tile", "Trip planning"],
+      // F3: the first row is the active one, which Enter opens.
+      ["qf-result is-active", "option", "tile", "Trip planning"],
       ["qf-result", "option", "tile", SEARCH_TEXT.main],
     ]);
     expect(results[0]?.children[1]?.children[1]?.className).toBe("qf-snip");
@@ -394,14 +395,17 @@ describe("[M27.3] the Search dialog on SearchDialog", () => {
     expect(p.byId("search-list").children).toEqual([]);
   });
 
-  it("the drawer's pill opens Search over the drawer on a phone, as the canvas draws it; the More sheet's and the rail's open it too", async () => {
+  it("the drawer's head is its own search field (F3), not a launcher; the More sheet's Search and the rail's open the dialog", async () => {
     const w = authorityWorld();
     const p = await pageOf(w, ada.email);
     await p.byId("open-chats").onclick?.();
-    await p.byId("chats-search").onclick?.();
-    expect([p.byId("drawer").parent?.id, p.byId("search").parent?.className, p.byId("search").hidden]).toEqual(["scrim", "qf-scrim2 qf-scrim2--center", false]);
+    expect([APP_PAGE.includes('id="chats-search"'), p.byId("chats-q").parent?.parent?.id, p.byId("drawer").parent?.id]).toEqual([false, "drawer", "scrim"]);
     p.key("Escape");
-    expect([p.byId("search").hidden, p.byId("drawer").parent?.id]).toEqual([true, "scrim"]);
+    await p.byId("to-more").onclick?.();
+    await p.byId("more-search").onclick?.();
+    expect([p.byId("search").parent?.className, p.byId("search").hidden, p.byId("more-sheet").hidden]).toEqual(["qf-scrim2 qf-scrim2--center", false, true]);
+    p.key("Escape");
+    expect(p.byId("search").hidden).toBe(true);
     expect(APP_PAGE).toContain(".qf-scrim2:has(> #search) { align-items: flex-start; padding-top: 96px; }");
   });
 });

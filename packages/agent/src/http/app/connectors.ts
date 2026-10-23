@@ -29,7 +29,7 @@ export const CONNECTORS_CSS = `
 
 /** The Connectors pane: the search, Available and Connected · n, and the groups the script draws. */
 export const CONNECTORS_PANE = `<div id="connectors">
-  <label id="conn-search-field" class="qf-search">${ic("search", "sm")}<input id="conn-search" type="search" placeholder="${CONNECTORS_TEXT.search}" aria-label="${CONNECTORS_TEXT.search}"></label>
+  <label id="conn-search-field" class="qf-search">${ic("search", "sm")}<input id="conn-search" type="text" enterkeyhint="search" placeholder="${CONNECTORS_TEXT.search}" aria-label="${CONNECTORS_TEXT.search}"></label>
   <div id="conn-seg" class="qf-seg" role="group" aria-label="${CONNECTORS_TEXT.title}">
     <button id="conn-available" aria-pressed="true">${CONNECTORS_TEXT.available}</button>
     <button id="conn-connected" aria-pressed="false">${CONNECTORS_TEXT.connected}<span id="conn-count"></span></button>

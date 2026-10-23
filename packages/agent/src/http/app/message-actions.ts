@@ -42,6 +42,10 @@ export const MESSAGE_CSS = `/* Message actions (M29.4): the canvas's .msg .acts 
 #log > .m:hover .acts, #log > .m:focus-within .acts, #log > .m .acts.is-open, #log > .m .acts:has([aria-expanded="true"]) { opacity: 1; }
 #log > .m .msg-more { width: 28px; height: 28px; color: var(--text-secondary); }
 #log > .m .qf-quote { max-width: 85%; }
+/* A message opened from a search (F3) flashes once: its bubble's ring fades over three toast durations, not under reduced motion. */
+#log > .m.is-found .qf-bubble { animation: qf-found calc(var(--qf-dur-toast) * 3) var(--qf-ease-css); }
+@keyframes qf-found { from { box-shadow: 0 0 0 3px var(--accent); } }
+@media (prefers-reduced-motion: reduce) { #log > .m.is-found .qf-bubble { animation: none; } }
 #log > .m .reaction-pill { margin-top: -10px; padding: 2px 8px; border-radius: 9999px; background: var(--fill-primary); box-shadow: var(--elevation-1); font-size: 14px; }
 #log > .m .qf-react { position: absolute; bottom: 32px; left: 0; z-index: 55; }
 #log > .m.you .qf-react { left: auto; right: 0; }
@@ -87,6 +91,19 @@ export const MESSAGE_SCRIPT = `// Message actions (M29.4, the canvas's message):
 const MSG = ${JSON.stringify(MESSAGE_TEXT)}, REACTIONS = ${JSON.stringify(REACTIONS)};
 const whoWord = (who) => who === "you" ? MSG.yourself : MSG.agent;
 const byMid = (mid) => [...log.children].find((n) => n.dataset && n.dataset.mid === mid);
+// A chat opened at one of its messages (F3, a search result): once that chat's history is drawn, the bubble with the
+// mid is scrolled to the middle of the thread and flashes once. A message no longer drawn leaves the chat at its end.
+let seeking = null;
+function seekTo(chat, mid) { seeking = mid ? { chat, mid } : null; }
+function seekDrawn() {
+  const s = seeking;
+  if (!s || s.chat !== chatId) return;
+  seeking = null;
+  const d = byMid(s.mid);
+  if (!d) return;
+  d.scrollIntoView({ block: "center" });
+  cls(d, "is-found", true);
+}
 // The messages a turn drew live, named by the chat when it ended: each to the first unnamed bubble of its side and words.
 function nameLive(list) {
   for (const m of list) {

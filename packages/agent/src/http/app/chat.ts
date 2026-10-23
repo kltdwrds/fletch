@@ -359,7 +359,7 @@ function frame(e) {
       else if (fresh) { log.append(p.node); unsent(id, "LOST"); }
       else log.append(p.node);
     }
-    regroup();
+    regroup(); seekDrawn();
     fresh = false;
     // Whether a turn still runs is the chat's answer, so a finished turn is never shown as working. A turn
     // this page joined midway streamed part of its reply before the socket opened: when it ends, the

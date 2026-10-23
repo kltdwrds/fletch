@@ -36,3 +36,13 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   time (`lastAt`, the list row's), or its opening when it has none. Rejected: 20 recents, which the dialog never asked for.
 - 2026-10-22 `test/fixtures/people.json` holds a second fictional member (`pat-solo`), so a claim about two people is
   tested with two members of the fixture. Rejected: a second identity made up inside a test.
+- 2026-10-22 F3: a search row's time is "Just now", then minutes and hours within the last 24 hours, then the list's
+  own Yesterday, weekday and date labels (`foundWhen` beside `lastLabel`); hours by elapsed time, not the calendar day,
+  so a row's label never depends on when midnight fell. Rejected: the panel's `ago` (`5m`, `3h`, `2d`), which has no
+  Yesterday or date.
+- 2026-10-22 F3: the Search card gets the system's `qf-pop-out` at `--qf-dur-fast` on close, in parallel with its
+  scrim: measured, the bundle's `.qf-scrim2>.qf-dialog` rules never reached it (the scrim holds `#search`, not the
+  card), so the card had no exit and no enter. The enter stays as it was, as F3 says. Rejected: a pop-in too, which
+  changes the enter motion.
+- 2026-10-22 F3: Enter typed before a query's answer is drawn opens that answer's first row when it lands, never the
+  rows still on screen from the previous query. Rejected: opening whatever is drawn, which can open a stale result.

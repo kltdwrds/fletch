@@ -122,8 +122,9 @@ describe("[M27.2] the list column and the drawer", () => {
       expect(cols()).toEqual(["qf-listcol qf-listcol--chat", true, true]);
     }
     expect(block("lib-col", "aside")).toContain('class="qf-listcol qf-listcol--lib"');
-    // The column holds the search pill, the list's options (M27.3), the list host with New side chat and the archived view.
-    expect(ids(block("drawer", "aside"))).toEqual(["drawer", "chats-search", "archived-btn", "close-drawer", "chats", "new-chat", "archived", "list-resize"]);
+    // The column holds the search field (F3), the list's options (M27.3), the list host with New side chat, the archived view
+    // and the filtered list.
+    expect(ids(block("drawer", "aside"))).toEqual(["drawer", "chats-find", "chats-q", "chats-clear", "archived-btn", "close-drawer", "chats", "new-chat", "archived", "chats-found", "list-resize"]);
   });
 
   it("on a phone the same node is the 75 % drawer on the scrim, closed by the scrim or Escape and sent home", async () => {
