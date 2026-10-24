@@ -43,8 +43,8 @@ export function toolSearchSpec(sessionRef: () => ToolSession, onLoaded: (loaded:
   };
 }
 
-/** The `core` namespace of every chat: `send_to_user`, which queues its own delivery, and `tool_search`. */
-export function coreNamespace(effects: EffectBuffer, sessionRef: () => ToolSession, onLoaded: (loaded: ReadonlySet<string>) => void): Namespace {
+/** The `core` namespace of every chat: `send_to_user` and `react` (F10), which queue their own effects, and `tool_search`. */
+export function coreNamespace(effects: EffectBuffer, sessionRef: () => ToolSession, onLoaded: (loaded: ReadonlySet<string>) => void, react: ToolSpec): Namespace {
   const send = specsOf([sendToUserTool(effects) as unknown as AgentTool<never>], "action")[0] as ToolSpec;
-  return { name: "core", description: "this chat and the tool catalog", deferral: "eager", tools: [{ ...send, queues: "self" }, toolSearchSpec(sessionRef, onLoaded)] };
+  return { name: "core", description: "this chat and the tool catalog", deferral: "eager", tools: [{ ...send, queues: "self" }, react, toolSearchSpec(sessionRef, onLoaded)] };
 }

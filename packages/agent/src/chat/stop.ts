@@ -16,7 +16,7 @@ export const clip = (text: string) => (text.length > 80 ? `${text.slice(0, 79)}â
 
 /** One committed effect in words: what already happened, or was already handed on, before the stop. */
 export function effectWords(effect: Effect): string {
-  const e = effect as Effect & { tool?: string; text?: string; card?: { title?: string } };
+  const e = effect as Effect & { tool?: string; text?: string; card?: { title?: string }; emoji?: string };
   switch (e.kind) {
     case "deliver":
       return `sent you: "${clip(String(e.text ?? ""))}"`;
@@ -24,6 +24,8 @@ export function effectWords(effect: Effect): string {
       return `showed a link: ${e.card?.title ?? ""}`;
     case "delegate":
       return "started sub-agents";
+    case "react":
+      return `reacted ${e.emoji} to your message`;
     case "card":
       return `asked for your decision on ${label(String(e.tool))}`;
     case "refusal":

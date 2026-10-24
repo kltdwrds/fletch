@@ -75,7 +75,7 @@ export class Approvals {
   }
 
   /** Releases one committed gated effect. */
-  async release(turnId: string, e: Exclude<Effect, { kind: "deliver" | "delegate" | "link" }>): Promise<void> {
+  async release(turnId: string, e: Exclude<Effect, { kind: "deliver" | "delegate" | "link" | "react" }>): Promise<void> {
     const p = this.p;
     if (e.kind === "card") return this.addCard(turnId, e);
     if (e.kind === "refusal") {

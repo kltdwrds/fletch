@@ -14,6 +14,7 @@ import { createStreamFn } from "../model/adapter.ts";
 import { modelConfig, modelFor, type Route } from "../model/routes.ts";
 import { ToolRegistry, ToolSession } from "../tools/registry.ts";
 import { coreNamespace } from "../tools/search.ts";
+import { reactTool } from "./agent-reaction.ts";
 import { compact, type Compacted } from "./compact-turn.ts";
 import { type CompactionRecord, ChatStore } from "./store.ts";
 import { Approvals, type DecideResult, requestReply, type Tally } from "./approvals.ts";
@@ -464,6 +465,7 @@ export class ChatEngine {
       effects,
       () => session as ToolSession,
       (loaded) => this.store.transaction(() => this.store.setMeta(LOADED_NAMESPACES_KEY, JSON.stringify([...loaded]))),
+      reactTool(effects, () => this.history().entries),
     );
     const gateState = state ?? this.gateState("none");
     const namespaces = [core, ...chatNamespaces({ store: this.store, hooks: this.hooks, chatId: this.chatId(), now: () => this.now(), schedule: this.schedule, owner: () => this.owner(), pending: () => this.cards.simulatedPending(), queryView: (i) => this.queryView(person, i), card: (id) => this.cards.get(id) }, person, effects, context, gateState)];
@@ -518,7 +520,7 @@ export class ChatEngine {
             for (const r of step.toolResults) this.store.appendMessage(turnId, r);
             const tokens = step.message.usage.input + step.message.usage.output;
             // Once the person asked to stop, what this step proposed is not committed; the transcript says so.
-            if (!step.stopped) for (const e of step.effects) this.store.queue(turnId, e.kind === "deliver" || e.kind === "link" ? e : { ...e, tokens });
+            if (!step.stopped) for (const e of step.effects) this.store.queue(turnId, e.kind === "deliver" || e.kind === "link" || e.kind === "react" ? e : { ...e, tokens });
             this.store.recordStep(turnId, step.message.usage.input);
             if (step.steer) steered.push(...[this.mailbox.steer(turnId, this.now(), (m) => this.store.appendMessage(`mailbox:${turnId}`, m))].flatMap((m) => m ?? []));
             if (step.final) this.store.endTurn(turnId, "done", null, this.now());
@@ -562,7 +564,7 @@ export class ChatEngine {
   }
 
   /** Releases this chat's committed effects (`outbox.ts`). */
-  private flushOutbox = (session: ToolSession) => flushOutbox({ store: this.store, links: this.links, approvals: () => this.approvals(), broadcast: (f) => this.broadcast(f), subagents: this.hooks.subagents, owner: () => this.owner(), now: this.now }, session);
+  private flushOutbox = (session: ToolSession) => flushOutbox({ store: this.store, links: this.links, approvals: () => this.approvals(), broadcast: (f) => this.broadcast(f), subagents: this.hooks.subagents, owner: () => this.owner(), react: (mid, emoji) => this.messages.reactAsAgent(mid, emoji), now: this.now }, session);
 
   private broadcast(frame: ChatFrame): void {
     // A turn about to say it ended first names what it drew live (M29.4), so the page offers those messages' actions.

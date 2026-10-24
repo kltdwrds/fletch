@@ -89,7 +89,15 @@ export interface LinkEffect {
   id: string;
   card: LinkCard;
 }
-export type Effect = DeliverEffect | ActionEffect | CardEffect | RefusalEffect | JournalEffect | DelegateEffect | LinkEffect;
+/** The agent's reaction on one of the person's messages (F10): set after the barrier, once per id, never toggled. */
+export interface ReactEffect {
+  kind: "react";
+  /** The tool call id, so a redelivery after a crash carries the same id. */
+  id: string;
+  mid: string;
+  emoji: string;
+}
+export type Effect = DeliverEffect | ActionEffect | CardEffect | RefusalEffect | JournalEffect | DelegateEffect | LinkEffect | ReactEffect;
 
 /** Effects queued by the current step's tool calls, drained at the barrier. */
 export class EffectBuffer {

@@ -4,6 +4,7 @@
 // the quoted message's text, put before the reply in the model's input, fenced as data, and kept beside the reply so
 // history draws it above the reply's bubble and the person's own words stay the reply alone.
 import { fence } from "../context/fence.ts";
+import { agentReactionRefusal } from "./agent-reaction.ts";
 import type { ChatFrame } from "./frames.ts";
 import type { HistoryEntry } from "./history.ts";
 import { REACTIONS } from "./reactions.ts";
@@ -191,6 +192,18 @@ export class ChatMessageActions {
     const now = store.transaction(() => store.actions.toggle(mid, person, emoji, this.now()));
     this.broadcast({ type: "reaction", mid, by: "you", emoji: now });
     return { ok: true, mid, emoji: now };
+  }
+
+  /**
+   * The agent's committed reaction (F10), from the outbox: checked again against the history as it stands (the
+   * message may be gone since), then set, never toggled, so a replay of the row lands on the same state.
+   */
+  reactAsAgent(mid: string, emoji: string): void {
+    const target = agentReactionRefusal(this.entries(), mid, emoji);
+    if ("code" in target) return;
+    const store = this.store();
+    store.transaction(() => store.actions.set(mid, AGENT_REACTOR, emoji, this.now()));
+    this.broadcast({ type: "reaction", mid, by: "agent", emoji });
   }
 
   /**

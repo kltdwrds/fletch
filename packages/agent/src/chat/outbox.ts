@@ -15,6 +15,8 @@ export type OutboxDeps = {
   broadcast: (frame: ChatFrame) => void;
   subagents: EngineHooks["subagents"];
   owner: () => string | null;
+  /** Sets the agent's committed reaction (F10), or skips it when its message no longer takes one. */
+  react: (mid: string, emoji: string) => void;
   now: () => number;
 };
 
@@ -28,6 +30,7 @@ export async function flushOutbox(deps: OutboxDeps, _session: ToolSession): Prom
     const effect = JSON.parse(row.payload) as Effect;
     if (effect.kind === "deliver") deps.broadcast({ type: "message", turn: row.turn_id, id: effect.id, text: effect.text });
     else if (effect.kind === "link") deps.links.show(row.turn_id, effect.card);
+    else if (effect.kind === "react") deps.react(effect.mid, effect.emoji);
     else if (effect.kind === "delegate") await startSubagents(deps, row.turn_id, effect);
     else await deps.approvals().release(row.turn_id, effect);
     deps.store.markDelivered(row.id, deps.now());

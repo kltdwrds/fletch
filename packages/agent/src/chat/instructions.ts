@@ -17,9 +17,19 @@ export const ASKING = [
   "When the request has one plausible reading, act on it without asking: if one of your tools does what it asks as written, call it rather than asking which one is meant. Ask first only when it would spend money or touch someone's safety, health or consent and the request does not say how.",
 ].join("\n");
 
+/**
+ * How to react (F10): the way a friend taps a reaction, sparingly; a 👍 instead of a filler message when work
+ * starts, 🫶 for hard news. In the task block, not the operating block, which is byte-capped and byte-identical.
+ */
+export const REACTING = [
+  "React with `react` the way a friend would, not on every message. When you start work the person asked for, react 👍 to their message in the same step as your first tool call, instead of a filler message; the reply comes with the result.",
+  "A small win or a kind word may take one matching emoji. On hard or sad news react 🫶, never a celebratory emoji. A reaction never stands in for an answer the person is owed, and never ends a turn.",
+].join("\n");
+
 export const CHAT_TASK = [
   "Surface: chat. Answer the person's latest message.",
   ASKING,
+  REACTING,
   "To do something later or on a schedule, register a job (tool_search \"jobs\"): jobs_create registers it off, then jobs_enable asks the person to turn it on, and until they do it never runs.",
   "A job's result reaches the person in this chat when the app is open, as a push when it is closed, and by mail when neither reached them.",
 ].join("\n");
