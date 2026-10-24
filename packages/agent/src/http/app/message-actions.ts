@@ -109,8 +109,11 @@ function seekDrawn() {
   cls(d, "is-found", true);
 }
 // The messages a turn drew live, named by the chat when it ended: each to the first unnamed bubble of its side and words.
+// The person's, named when it was stored (F10), takes only the chat's time.
 function nameLive(list) {
   for (const m of list) {
+    const had = byMid(m.mid);
+    if (had) { if (had.msg) had.msg.at = m.at; continue; }
     const d = [...log.children].find((n) => n.bubble && !n.dataset.mid && sideOf(n) === (m.who === "you" ? "user" : "agent") && n.bubble.textContent === m.text);
     if (d) named(d, { mid: m.mid, text: m.text, at: m.at, kind: m.who === "you" ? "you" : "agent" });
   }
@@ -119,7 +122,8 @@ function named(d, h) {
   d.dataset.mid = h.mid;
   d.msg = { mid: h.mid, text: h.text, at: h.at, who: h.kind === "you" ? "you" : "agent", reaction: null };
   if (h.quote) drawQuote(d, h.quote);
-  if (h.reaction) setReaction(d, h.reaction);
+  d.reactions = {};
+  for (const r of h.reactions || []) setReaction(d, r.by, r.emoji);
   const more = el("button"); more.className = "qf-ibtn qf-only-phone msg-more"; more.setAttribute("aria-label", MSG.more); more.append(icon("dots", "xs"));
   more.onclick = () => openActions(d, "sheet");
   const acts = el("div"); acts.className = "acts qf-hide-phone";
@@ -142,12 +146,16 @@ function drawQuote(d, q) {
   const t = el("div", q.text); t.className = "q";
   box.append(top, t); d.insertBefore(box, d.bubble);
 }
-// The person's reaction on a message: the canvas's pill under the bubble, or none.
-function setReaction(d, emoji) {
-  if (d.msg) d.msg.reaction = emoji || null;
+// The reactions on a message, by who put them there (F10): one canvas pill under the bubble, the agent's emoji then
+// the person's, or none. The person's own alone marks the picker.
+function setReaction(d, by, emoji) {
+  if (!d.reactions) d.reactions = {};
+  if (emoji) d.reactions[by] = emoji; else delete d.reactions[by];
+  if (by === "you" && d.msg) d.msg.reaction = emoji || null;
   if (d.pill) { d.pill.remove(); d.pill = null; }
-  if (!emoji) return;
-  d.pill = el("span", emoji); d.pill.className = "reaction-pill";
+  const text = (d.reactions.agent || "") + (d.reactions.you || "");
+  if (!text) return;
+  d.pill = el("span", text); d.pill.className = "reaction-pill";
   if (d.bubble.nextSibling) d.insertBefore(d.pill, d.bubble.nextSibling); else d.append(d.pill);
 }
 function react(mid, emoji) {

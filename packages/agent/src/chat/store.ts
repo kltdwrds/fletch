@@ -1,8 +1,8 @@
 // The Chat object's SQLite: transcript, turns and the outbox. Every write that belongs to a step
 // happens inside the barrier's transaction, so a crash leaves either the whole step or none of it.
 import type { Message } from "@earendil-works/pi-ai";
-import { type FailedTurn, type HistoryEntry, type PlacedEntry, type TranscriptRow, TYPED_WITHOUT_ID, visibleHistory } from "./history.ts";
-import { MessageActions } from "./message-actions.ts";
+import { type FailedTurn, type HistoryEntry, type PlacedEntry, type Reaction, type TranscriptRow, TYPED_WITHOUT_ID, visibleHistory } from "./history.ts";
+import { AGENT_REACTOR, MessageActions } from "./message-actions.ts";
 import type { Effect } from "./tools.ts";
 import type { LinkCard } from "../workspace/surfaces.ts";
 import { CHAT_MIGRATIONS } from "../migrations/catalog.ts";
@@ -144,19 +144,26 @@ export class ChatStore {
   }
 
   /**
-   * The owner's reaction on each message, and on a reply its quote, drawn above it, with the reply's text the
-   * person's own words alone (M29.4). Another person's reaction is never drawn: the chat answers its owner.
+   * The reactions on each message, and on a reply its quote, drawn above it, with the reply's text the person's own
+   * words alone (M29.4). A reaction is drawn by who put it there: the agent's first, then the owner's (F10), so the
+   * pill reads the same on every reload. Anyone else's is never drawn: the chat answers its owner. Reactions never
+   * enter the transcript: the model reads the standing ones in each turn's envelope (`reactionsLead`).
    */
   private withActions(entries: HistoryEntry[]): HistoryEntry[] {
     const actions = this.actions;
     const owner = this.meta("owner");
-    const mine = owner ? actions.reactionsOf(owner) : new Map<string, string>();
+    const all = actions.reactionsByMessage();
+    const drawn = (mid: string): Reaction[] => {
+      const list = all.get(mid) ?? [];
+      const of = (person: string | undefined, by: Reaction["by"]) => list.filter((r) => person !== undefined && r.by === person).map((r) => ({ by, emoji: r.emoji }));
+      return [...of(AGENT_REACTOR, "agent"), ...of(owner, "you")];
+    };
     return entries.map((e) => {
       if (e.kind !== "you" && e.kind !== "agent") return e;
-      const reaction = mine.get(e.mid);
+      const reactions = drawn(e.mid);
       const q = e.kind === "you" && e.id ? actions.quoteOf(e.id) : undefined;
       const text = q && e.text.startsWith(q.lead) ? e.text.slice(q.lead.length) : e.text;
-      return { ...e, text, ...(reaction ? { reaction } : {}), ...(q ? { quote: { mid: q.quoted, who: q.who, text: q.text } } : {}) };
+      return { ...e, text, ...(reactions.length ? { reactions } : {}), ...(q ? { quote: { mid: q.quoted, who: q.who, text: q.text } } : {}) };
     });
   }
 

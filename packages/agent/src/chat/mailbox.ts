@@ -5,7 +5,8 @@
 // never stored twice. Queued rows reach the running turn at its next step boundary as one fenced
 // block (`steerMessage`) and go `completed`; a Stop leaves them `aborted`; a row queued when no turn
 // runs starts one, as a send did before. A delegation's handoff is an `internal_handoff` row in the
-// same order. The epoch advances at a compaction checkpoint and when the chat is reopened.
+// same order, and a reaction that answers the agent's pending question (F10) a `reaction` row. The epoch
+// advances at a compaction checkpoint and when the chat is reopened.
 import type { Message } from "@earendil-works/pi-ai";
 import { fence } from "../context/fence.ts";
 
@@ -28,7 +29,7 @@ CREATE TABLE IF NOT EXISTS mailbox (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS mailbox_message_id ON mailbox (message_id);`;
 
-export type MailKind = "user" | "internal_handoff";
+export type MailKind = "user" | "internal_handoff" | "reaction";
 export type MailState = "queued" | "completed" | "aborted";
 
 export interface MailRow {
@@ -36,7 +37,7 @@ export interface MailRow {
   messageId: string;
   epoch: number;
   kind: MailKind;
-  /** Who the row answers to: `owner` for the person's own words, `delegation:<grp>` for a handoff. */
+  /** Who the row answers to: `owner` for the person's own words, `delegation:<grp>` for a handoff, `reaction:<person>` for a reaction. */
   scope: string;
   person: string;
   text: string;
@@ -127,6 +128,11 @@ export class Mailbox {
     this.sql.exec("UPDATE mailbox SET state = 'completed', turn_id = ?, delivery = 'start', seq = ?, settled_at = ? WHERE ordinal = ?", turnId, seq, at, ordinal);
   }
 
+  /** The kind of the row that started `turnId`, if a mailbox row did. */
+  startedBy(turnId: string): MailKind | undefined {
+    return this.sql.exec<{ kind: MailKind }>("SELECT kind FROM mailbox WHERE turn_id = ? AND delivery = 'start'", turnId).toArray()[0]?.kind;
+  }
+
   /**
    * Takes every queued row into the running turn at its step boundary, inside the barrier's
    * transaction: one fenced block appended through `append`, each row `completed`. Null when none waits.
@@ -155,8 +161,11 @@ export class Mailbox {
   }
 }
 
-/** The block a running turn receives at its step boundary: the policy line, then each row fenced with its source. */
+/**
+ * The block a running turn receives at its step boundary: the policy line, then each row fenced with its source. A
+ * reaction's row is the harness's own signal with its parts fenced already (F10); a second fence would defang them.
+ */
 export function steerMessage(rows: MailRow[]): string {
-  const parts = rows.map((r) => (r.kind === "user" ? fence(`person:${r.person}`, r.text) : fence(r.scope, r.text)));
+  const parts = rows.map((r) => (r.kind === "user" ? fence(`person:${r.person}`, r.text) : r.kind === "reaction" ? r.text : fence(r.scope, r.text)));
   return [STEER_POLICY, ...parts].join("\n");
 }

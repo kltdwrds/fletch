@@ -353,7 +353,7 @@ describe("[M29.4] reactions", () => {
     // The Chat refuses anyone else's reaction on Ada's chat with a code, storing nothing.
     const ada$ = w.chats.harness(adaMain).instance;
     expect(await answerFrame("former-member", JSON.stringify({ type: "react", mid: "m2", emoji: "👍" }), ada$)).toEqual({ type: "refused", code: "CHAT_NOT_OWNER" });
-    expect(ada$.history().entries.filter((e) => "reaction" in e).map((e) => [(e as { mid: string }).mid, (e as { reaction: string }).reaction])).toEqual([["m1", "😢"], ["m2", "😂"]]);
+    expect(ada$.history().entries.flatMap((e) => ("reactions" in e && e.reactions ? [[e.mid, e.reactions]] : []))).toEqual([["m1", [{ by: "you", emoji: "😢" }]], ["m2", [{ by: "you", emoji: "😂" }]]]);
     expect(w.chats.harness(adaMain).rows("SELECT person FROM reactions").map((r) => r.person)).toEqual([ada.email, ada.email]);
   }, 180_000);
 
@@ -364,17 +364,6 @@ describe("[M29.4] reactions", () => {
     expect(await answerFrame(ada.email, JSON.stringify({ type: "react", mid: "m9", emoji: "👍" }), chat)).toEqual({ type: "refused", code: "MESSAGE_NOT_FOUND" });
     expect(await answerFrame(ada.email, JSON.stringify({ type: "react", mid: "<b>", emoji: "👍" }), chat)).toMatchObject({ type: "error", code: "FRAME_UNPARSEABLE" });
     expect(w.chats.harness(adaMain).rows("SELECT * FROM reactions")).toEqual([]);
-  });
-
-  it("the model never sees a reaction: Ada's next turn's input carries none", async () => {
-    const { w, adaMain } = await seeded([{ text: "Noted." }]);
-    const chat = w.chats.harness(adaMain).instance;
-    expect(chat.react(ada.email, "m2", "😮")).toEqual({ ok: true, mid: "m2", emoji: "😮" });
-    await w.say(ada.email, "What time again?", adaMain);
-    const input = JSON.stringify(w.fake.requests.at(-1)?.inputs.messages);
-    expect(input).toContain("What time again?");
-    expect(input).not.toContain("😮");
-    expect(w.chats.harness(adaMain).rows("SELECT body FROM messages").some((r) => String(r.body).includes("😮"))).toBe(false);
   });
 });
 

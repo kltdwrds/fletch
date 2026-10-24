@@ -43,7 +43,7 @@ describe("[M2.1] memory in the chat turn", () => {
     expect(prefix).toContain("## MEMORY.md\n# MEMORY.md");
     const names = ((fake.requests[0]?.inputs.tools ?? []) as Array<{ function: { name: string } }>).map((t) => t.function.name);
     // The checklist (M24.2) is the owner's own eager tool; `db_query` is deferred by name.
-    expect(names).toEqual(["send_to_user", "tool_search", "memory_search", "memory_get", "memory_explain", "memory_write", "todo_write"]);
+    expect(names).toEqual(["send_to_user", "react", "tool_search", "memory_search", "memory_get", "memory_explain", "memory_write", "todo_write"]);
   });
 
   it("a standing file changed between turns arrives as a fenced diff message, and the prefix stays byte-identical", async () => {

@@ -14,6 +14,7 @@ import { createStreamFn } from "../model/adapter.ts";
 import { modelConfig, modelFor, type Route } from "../model/routes.ts";
 import { ToolRegistry, ToolSession } from "../tools/registry.ts";
 import { coreNamespace } from "../tools/search.ts";
+import { reactTool } from "./agent-reaction.ts";
 import { compact, type Compacted } from "./compact-turn.ts";
 import { type CompactionRecord, ChatStore } from "./store.ts";
 import { Approvals, type DecideResult, requestReply, type Tally } from "./approvals.ts";
@@ -23,7 +24,8 @@ import type { ChatFrame, ClaimResult, SendResult, StopResult } from "./frames.ts
 import { LinkShelf } from "./links.ts";
 import { Background, markContinuation, RESUME_KEY, startContinuation } from "./resume.ts";
 import { ChatGate, type GateState, ownTask, type TurnContext } from "./gate.ts";
-import { type Effect, EffectBuffer } from "./tools.ts";
+import { EffectBuffer } from "./tools.ts";
+import { flushOutbox } from "./outbox.ts";
 import { type RequestInput, requestContext, requestText, type SendInput } from "./inputs.ts";
 import { MAX_STEPS_PER_TURN, runTurnLoop } from "./turn.ts";
 import { failureText } from "./failure-words.ts";
@@ -36,6 +38,7 @@ import { ChatMessageActions, type ReactResult } from "./message-actions.ts";
 import { Projections } from "./projection.ts";
 import { stopKey } from "./stop.ts";
 import { openTurn } from "./intake.ts";
+import { pendingQuestion, reactionRow } from "./reaction-input.ts";
 import { noteOpenTodos } from "./todo.ts";
 import type { TurnEndRow } from "../ledger/types.ts";
 import type { ViewResult } from "../views/select.ts";
@@ -192,7 +195,7 @@ export class ChatEngine {
       if (duplicate) return { status: "duplicate", id, ordinal: row.ordinal, state: row.state };
       const running = this.activeTurn ?? this.store.runningTurn()?.id;
       if (queue && running) {
-        this.broadcast({ type: "queued", turn: running, ordinal: row.ordinal, text: held.text, ...(input.clientId ? { id } : {}) });
+        this.broadcast({ type: "queued", turn: running, ordinal: row.ordinal, text: held.text, mid: `q${row.ordinal}`, ...(input.clientId ? { id } : {}) });
         return { status: "queued", id, ordinal: row.ordinal, turnId: running };
       }
       return await this.begin(row, false);
@@ -207,7 +210,9 @@ export class ChatEngine {
     if (opened.kind === "refused") return { status: "refused", code: opened.code };
     // Stored as running now, which marks the chat busy; a drain when it ends must not see it still opening.
     this.opening = false;
-    this.started(opened.turnId, this.store.actions.shown(row.messageId, row.text), clientIdOf(row));
+    // A reaction's turn names no words of the person's (F10): the page draws it as a continuation.
+    if (row.kind === "reaction") this.broadcast({ type: "turn_started", turn: opened.turnId });
+    else this.started(opened.turnId, this.store.actions.shown(row.messageId, row.text), opened.mid, clientIdOf(row));
     // The person's message is kept with its failure, so a re-sync draws both.
     if (opened.failed) return this.failTurn(opened.turnId, opened.failed.code, opened.failed.reason);
     await this.wakeup.arm(opened.at + RESUME_AFTER_MS);
@@ -220,8 +225,8 @@ export class ChatEngine {
     if (!next) return;
     this.opening = true;
     try {
-      if (next.kind === "user") await this.begin(next, true);
-      else await this.beginHandoff(next);
+      if (next.kind === "internal_handoff") await this.beginHandoff(next);
+      else await this.begin(next, true);
     } finally {
       this.opening = false;
     }
@@ -275,7 +280,7 @@ export class ChatEngine {
   }
 
   /** Tells the owner's sockets the person's message is stored and its turn runs (M18.1). */
-  private started = (turn: string, text: string, id?: string) => this.broadcast({ type: "turn_started", turn, text, ...(id ? { id } : {}) });
+  private started = (turn: string, text: string, mid: string, id?: string) => this.broadcast({ type: "turn_started", turn, text, mid, ...(id ? { id } : {}) });
 
   /**
    * Runs a colleague's request as a turn of this chat's owner's agent (M7.1). The request enters as
@@ -336,7 +341,17 @@ export class ChatEngine {
     return this.cards.list().map((c) => this.approvals().view(c));
   }
 
-  react(person: string, mid: string, emoji: string): ReactResult { return this.messages.react(person, mid, emoji); }
+  /** The person's reaction, stored and broadcast; on the agent's pending question also their answer (F10), taken in the background. */
+  react(person: string, mid: string, emoji: string): ReactResult {
+    const r = this.messages.react(person, mid, emoji);
+    const set = r.ok ? r.emoji : null;
+    const asked = set ? pendingQuestion(this.history().entries, this.store.turns(), mid, (t) => this.mailbox.startedBy(t)) : null;
+    if (set && asked) {
+      this.store.transaction(() => this.mailbox.accept(reactionRow(person, this.nameOf(person), set, asked, this.now())));
+      this.defer(this.drain()); // a turn running or opening takes the row at its next step boundary instead
+    }
+    return r;
+  }
 
   /** When the chat last had something to show (M29.3), for its owner alone; anyone else is refused. */
   lastAt(person: string): { ok: true; at: number | null } | { ok: false; code: "CHAT_NOT_OWNER" } {
@@ -463,6 +478,7 @@ export class ChatEngine {
       effects,
       () => session as ToolSession,
       (loaded) => this.store.transaction(() => this.store.setMeta(LOADED_NAMESPACES_KEY, JSON.stringify([...loaded]))),
+      reactTool(effects, () => this.history().entries),
     );
     const gateState = state ?? this.gateState("none");
     const namespaces = [core, ...chatNamespaces({ store: this.store, hooks: this.hooks, chatId: this.chatId(), now: () => this.now(), schedule: this.schedule, owner: () => this.owner(), pending: () => this.cards.simulatedPending(), queryView: (i) => this.queryView(person, i), card: (id) => this.cards.get(id) }, person, effects, context, gateState)];
@@ -517,7 +533,7 @@ export class ChatEngine {
             for (const r of step.toolResults) this.store.appendMessage(turnId, r);
             const tokens = step.message.usage.input + step.message.usage.output;
             // Once the person asked to stop, what this step proposed is not committed; the transcript says so.
-            if (!step.stopped) for (const e of step.effects) this.store.queue(turnId, e.kind === "deliver" || e.kind === "link" ? e : { ...e, tokens });
+            if (!step.stopped) for (const e of step.effects) this.store.queue(turnId, e.kind === "deliver" || e.kind === "link" || e.kind === "react" ? e : { ...e, tokens });
             this.store.recordStep(turnId, step.message.usage.input);
             if (step.steer) steered.push(...[this.mailbox.steer(turnId, this.now(), (m) => this.store.appendMessage(`mailbox:${turnId}`, m))].flatMap((m) => m ?? []));
             if (step.final) this.store.endTurn(turnId, "done", null, this.now());
@@ -560,29 +576,8 @@ export class ChatEngine {
     return { status: "failed", turnId, code, detail };
   }
 
-  /**
-   * Releases committed effects: deliveries go to the sockets; gated effects go through the approval
-   * flow, where an action runs only if the commit cites a grant. A crash before `markDelivered`
-   * releases again with the same id: journal rows, cards and grant uses are each once per id.
-   */
-  private async flushOutbox(_session: ToolSession): Promise<void> {
-    for (const row of this.store.undelivered()) {
-      const effect = JSON.parse(row.payload) as Effect;
-      if (effect.kind === "deliver") this.broadcast({ type: "message", turn: row.turn_id, id: effect.id, text: effect.text });
-      else if (effect.kind === "link") this.links.show(row.turn_id, effect.card);
-      else if (effect.kind === "delegate") await this.startSubagents(row.turn_id, effect);
-      else await this.approvals().release(row.turn_id, effect);
-      this.store.markDelivered(row.id, this.now());
-    }
-  }
-
-  /** Hands a committed delegation to the host; a refusal there (the caps, decided again) joins the transcript. */
-  private async startSubagents(turnId: string, effect: Extract<Effect, { kind: "delegate" }>): Promise<void> {
-    const owner = this.owner();
-    if (!this.hooks.subagents || !owner) return;
-    const r = await this.hooks.subagents.delegate({ grp: `${turnId.slice(0, 8)}-${effect.id.slice(0, 40)}`, turnId, person: owner, requests: effect.requests });
-    if (!r.ok) this.store.transaction(() => this.store.appendMessage(`subagents:${effect.id}`, { role: "user", content: `The delegation ${effect.id} did not start: ${r.code}: ${r.reason ?? ""}`, timestamp: this.now() }));
-  }
+  /** Releases this chat's committed effects (`outbox.ts`). */
+  private flushOutbox = (session: ToolSession) => flushOutbox({ store: this.store, links: this.links, approvals: () => this.approvals(), broadcast: (f) => this.broadcast(f), subagents: this.hooks.subagents, owner: () => this.owner(), react: (mid, emoji) => this.messages.reactAsAgent(mid, emoji), now: this.now }, session);
 
   private broadcast(frame: ChatFrame): void {
     // A turn about to say it ended first names what it drew live (M29.4), so the page offers those messages' actions.
