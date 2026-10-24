@@ -1,8 +1,9 @@
 // A reaction on the agent's pending question is the person's answer (F10): stored and drawn as any reaction, and
 // also a `reaction` mailbox row carrying a harness signal, which starts a turn or is steered into the running one
 // at its step boundary. The question is the `ASKING` contract's (`instructions.ts`): the agent's last drawn words
-// carry a `?` and its turn ended `done` with no code. A card last, or an `AWAITING_DECISION` turn, is a grant
-// pause, never answered by a reaction. Any other reaction is ambient and starts nothing.
+// carry a `?` and its turn ended `done` with no code. The reaction may be on an earlier phrasing of that question
+// (the agent re-asked it): any agent message carrying a `?` answers the pending question. A card last, or an
+// `AWAITING_DECISION` turn, is a grant pause, never answered by a reaction. Any other reaction is ambient and starts nothing.
 import { fence } from "../context/fence.ts";
 import type { HistoryEntry } from "./history.ts";
 import type { MailKind } from "./mailbox.ts";
@@ -17,13 +18,17 @@ export function askedLast(entries: HistoryEntry[]): AgentEntry | null {
 }
 
 /**
- * The question a reaction on `mid` answers, or null. With no turn running, the latest turn ended `done` with no
- * code. A running turn is one a reaction started on that same question (its words are not drawn yet), so a second
- * reaction is steered into it; any other running turn (a typed message, a handoff) is not waiting on the question.
+ * The question a reaction on `mid` answers, or null. The reaction may be on an earlier phrasing of the question
+ * (the agent re-asked it): any agent message carrying a `?` answers the pending question. With no turn running,
+ * the latest turn ended `done` with no code. A running turn is one a reaction started on that same question (its
+ * words are not drawn yet), so a second reaction is steered into it; any other running turn (a typed message, a
+ * handoff) is not waiting on the question.
  */
 export function pendingQuestion(entries: HistoryEntry[], turns: TurnRow[], mid: string, startedBy: (turnId: string) => MailKind | undefined): AgentEntry | null {
   const asked = askedLast(entries);
-  if (asked?.mid !== mid) return null;
+  if (!asked) return null;
+  const reacted = entries.find((e) => (e.kind === "you" || e.kind === "agent") && e.mid === mid);
+  if (reacted?.kind !== "agent" || !/\?/.test(reacted.text)) return null;
   const last = turns.at(-1);
   const ended = last?.status === "running" && startedBy(last.id) === "reaction" ? turns.at(-2) : last;
   return ended?.status === "done" && ended.code === null ? asked : null;

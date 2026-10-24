@@ -12,6 +12,7 @@ import type { LedgerSink } from "../ledger/types.ts";
 import type { Message } from "@earendil-works/pi-ai";
 import { createStreamFn } from "../model/adapter.ts";
 import { modelConfig, modelFor, type Route } from "../model/routes.ts";
+import { log } from "../obs/log.ts";
 import { ToolRegistry, ToolSession } from "../tools/registry.ts";
 import { coreNamespace } from "../tools/search.ts";
 import { reactTool } from "./agent-reaction.ts";
@@ -346,6 +347,8 @@ export class ChatEngine {
     const r = this.messages.react(person, mid, emoji);
     const set = r.ok ? r.emoji : null;
     const asked = set ? pendingQuestion(this.history().entries, this.store.turns(), mid, (t) => this.mailbox.startedBy(t)) : null;
+    // The decision is visible in Workers Logs: an answer starts a turn, anything else is ambient (no turn).
+    if (set) log("chat.reaction", { outcome: asked ? "answer" : "ambient", onPending: asked?.mid === mid, mid });
     if (set && asked) {
       this.store.transaction(() => this.mailbox.accept(reactionRow(person, this.nameOf(person), set, asked, this.now())));
       this.defer(this.drain()); // a turn running or opening takes the row at its next step boundary instead
