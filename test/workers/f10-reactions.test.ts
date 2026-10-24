@@ -240,7 +240,23 @@ describe("[F10] a reaction on a pending question is the person's answer", () => 
     expect(store.meta(URLS_KEY)).toBe(urls);
   });
 
-  it("ambient: a reaction on anything but the agent's last question starts nothing, and still reaches the next envelope", async () => {
+  it("an earlier phrasing answers: a reaction on the first question, after the agent re-asked it, starts a turn", async () => {
+    const REASK = "Still waiting — shall I book the 9am slot?";
+    const { w, adaMain, h, chat, store } = await opened([{ text: QUESTION }, { text: REASK }, { text: "Booked for 9." }], { browse });
+    await w.say(ada.email, "Book the dentist.", adaMain);
+    await w.say(ada.email, "Sup sup", adaMain);
+    expect(chat.react(ada.email, "m2", "👍")).toEqual({ ok: true, mid: "m2", emoji: "👍" });
+    await chat.settled();
+    expect(w.fake.requests).toHaveLength(3);
+    const asked = text(requestMessages(w, 2).filter((m) => m.role === "user").at(-1));
+    expect(asked).toContain(`${ada.name} reacted to your last message (m4)`);
+    expect(asked).toContain("👍");
+    expect(asked).toContain(REASK);
+    expect(mail(h).at(-1)).toEqual({ kind: "reaction", scope: `reaction:${ada.email}`, state: "completed", delivery: "start" });
+    expect(store.turns().map((t) => [t.status, t.code])).toEqual([["done", null], ["done", null], ["done", null]]);
+  });
+
+  it("ambient: with no pending question, reactions start nothing, and still reach the next envelope", async () => {
     const { w, adaMain, h, chat } = await opened([{ text: QUESTION }, { text: "Booked for 9." }, { text: "Noted." }], { browse });
     await w.say(ada.email, "Book the dentist.", adaMain);
     chat.react(ada.email, "m2", "👍");
@@ -308,6 +324,13 @@ describe("[F10] a reaction on a pending question is the person's answer", () => 
     const pending = (turns: TurnRow[]) => pendingQuestion([you, q], turns, "m2", (t) => kinds[t]);
     expect(pending([turn("t1", "done")])).toEqual(q);
     expect(pendingQuestion([you, q], [turn("t1", "done")], "m1", () => undefined)).toBeNull();
+    // An earlier phrasing of the question answers the pending one; an earlier statement does not.
+    const earlier = { kind: "agent", text: "Shall I book the 8am slot?", at: T0, mid: "m2" } as const;
+    const reasked = { ...q, mid: "m4" };
+    const asked = [you, earlier, { ...you, mid: "m3" }, reasked];
+    expect(pendingQuestion(asked, [turn("t1", "done")], "m2", () => undefined)).toEqual(reasked);
+    expect(pendingQuestion(asked, [turn("t1", "done")], "m3", () => undefined)).toBeNull();
+    expect(pendingQuestion([you, { ...earlier, text: "Booked for 8." }, { ...you, mid: "m3" }, reasked], [turn("t1", "done")], "m2", () => undefined)).toBeNull();
     expect(pending([turn("t1", "done", "AWAITING_DECISION")])).toBeNull();
     expect(pending([turn("t1", "failed", "TURN_STEP_LIMIT")])).toBeNull();
     expect(pending([turn("t1", "done"), turn("t2", "running")])).toEqual(q);
