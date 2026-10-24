@@ -1,8 +1,9 @@
-// Message actions (M29.4, design review 1's H1): a person's reaction to a message of their chat and the quote a
-// reply carries. Both are the Chat's, keyed on the message's id in the history (`mid`). A reaction is one per
-// message per person, toggled; it is drawn, and reaches the model only in the next turn's envelope (F10). A quote is
-// the quoted message's text, put before the reply in the model's input, fenced as data, and kept beside the reply so
-// history draws it above the reply's bubble and the person's own words stay the reply alone.
+// Message actions (M29.4, design review 1's H1): a reaction to a message of a chat and the quote a reply carries.
+// Both are the Chat's, keyed on the message's id in the history (`mid`). A reaction is one per message per reactor:
+// the person's toggled, the agent's (F10, under `AGENT_REACTOR`) set or replaced; it is drawn, and reaches the model
+// only in each turn's envelope (`reactionsLead`), never the transcript. A quote is the quoted message's text, put
+// before the reply in the model's input, fenced as data, and kept beside the reply so history draws it above the
+// reply's bubble and the person's own words stay the reply alone.
 import { fence } from "../context/fence.ts";
 import { agentReactionRefusal } from "./agent-reaction.ts";
 import type { ChatFrame } from "./frames.ts";

@@ -70,3 +70,11 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   the bubble already on screen instead of being marked lost by the fresh socket's history. Rejected: the `Chat`
   naming itself on its first message, which crosses into the Person's store from the send path; and sending before
   the history, which the page's own fresh-socket rule says is lost.
+- 2026-10-24 F10: three reactions rulings. The pending question is the agent's last drawn message carrying `?`,
+  its turn `done` with no code (or a running turn a reaction on it started, so a second reaction steers in) —
+  the `ASKING` contract makes `?` the agent's convention and the engine holds no other state; if UAT shows misses,
+  an explicit `awaiting_reply` marker on the turn replaces the test. The agent's reaction is set/replace, never
+  toggle, because the outbox replays an effect after a crash and must land on one state; a `remove` flag would
+  join the tool if one is needed. Reactions reach the model through the per-turn envelope (`chat:reactions`),
+  never the stored transcript, because they change after the fact and the envelope is the unpersisted, replayed
+  block. Rejected: per-message annotations in the transcript, and an unstored user message lost on replay.
