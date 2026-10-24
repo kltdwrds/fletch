@@ -51,9 +51,10 @@ export function promptTitle(text: string): string {
  * The list's rules: the rows, their options and the archived view. New side chat stays in the head at every width,
  * and shows the system's icon-button hover treatment on hover and on keyboard focus (F8: the glyph at the primary
  * colour on the hover fill; the bundle's `.qf-ibtn:hover` and `.is-hover` carry the fill alone), with its tooltip the
- * button's `title`. A row is the system's ListRow (`.qf-rowwrap`): its time and kebab show on hover, on focus and
- * while its menu is open (the kebab's `aria-expanded`, the system's `.is-open`). On a phone, where nothing hovers,
- * the kebab still takes a tap at the row's end and opens the row's actions as a sheet.
+ * button's `title`. A row is the system's ListRow (`.qf-rowwrap`): with a mouse its time and kebab show on hover, on
+ * focus and while its menu is open (the kebab's `aria-expanded`, the system's `.is-open`); without a hovering fine
+ * pointer they rest visible (F9). On a phone the kebab opens the row's actions as a sheet, and takes a tap even
+ * where it waits on a hover.
  */
 export const CHATS_CSS = `
 #chats, #archived { display: flex; flex-direction: column; gap: 1px; }
