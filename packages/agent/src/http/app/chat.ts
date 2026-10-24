@@ -392,7 +392,7 @@ function frame(e) {
   else if (f.type === "link") linkCard(f.card, log);
   else if (f.type === "notice") feedback(add("note", f.text), f.id);
   // The chat's answer to a reaction (M29.4): drawn only now, on the message it names.
-  else if (f.type === "reaction") { const d = byMid(f.mid); if (d) setReaction(d, f.emoji); }
+  else if (f.type === "reaction") { const d = byMid(f.mid); if (d) setReaction(d, f.by, f.emoji); }
   // A turn that ended names the messages it drew live, so their actions show without drawing the thread again.
   else if (f.type === "named") nameLive(f.messages);
   else if (f.type === "turn_done") { endThinking(); reply = null; }

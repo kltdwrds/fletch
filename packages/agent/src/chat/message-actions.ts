@@ -10,6 +10,9 @@ import { REACTIONS } from "./reactions.ts";
 
 export { REACTIONS };
 
+/** The reactor id the agent's own reactions are stored under (F10): no person's email can equal it. */
+export const AGENT_REACTOR = "agent";
+
 export const SCHEMA = `
 CREATE TABLE IF NOT EXISTS reactions (
   message_id TEXT NOT NULL,
@@ -86,13 +89,24 @@ export class MessageActions {
       this.sql.exec("DELETE FROM reactions WHERE message_id = ? AND person = ?", mid, person);
       return null;
     }
-    this.sql.exec("INSERT INTO reactions (message_id, person, emoji, at) VALUES (?, ?, ?, ?) ON CONFLICT(message_id, person) DO UPDATE SET emoji = excluded.emoji, at = excluded.at", mid, person, emoji, at);
+    this.set(mid, person, emoji, at);
     return emoji;
   }
 
-  /** The person's reactions, by message id. */
-  reactionsOf(person: string): Map<string, string> {
-    return new Map(this.sql.exec<{ message_id: string; emoji: string }>("SELECT message_id, emoji FROM reactions WHERE person = ?", person).toArray().map((r) => [r.message_id, r.emoji] as const));
+  /** Puts `emoji` on `mid` for `person`, replacing theirs: the same call again lands on the same state (F10, an outbox replay). */
+  set(mid: string, person: string, emoji: string, at: number): void {
+    this.sql.exec("INSERT INTO reactions (message_id, person, emoji, at) VALUES (?, ?, ?, ?) ON CONFLICT(message_id, person) DO UPDATE SET emoji = excluded.emoji, at = excluded.at", mid, person, emoji, at);
+  }
+
+  /** Every reaction, by message id, each with who put it there, in the order they were put. */
+  reactionsByMessage(): Map<string, Array<{ by: string; emoji: string }>> {
+    const out = new Map<string, Array<{ by: string; emoji: string }>>();
+    for (const r of this.sql.exec<{ message_id: string; person: string; emoji: string }>("SELECT message_id, person, emoji FROM reactions ORDER BY at, rowid").toArray()) {
+      const list = out.get(r.message_id) ?? [];
+      list.push({ by: r.person, emoji: r.emoji });
+      out.set(r.message_id, list);
+    }
+    return out;
   }
 
   /** Keeps the quote a send carried, under the send's own id, with the exact lead put before its text. */
@@ -143,7 +157,7 @@ export class ChatMessageActions {
     if (refused) return refused;
     const store = this.store();
     const now = store.transaction(() => store.actions.toggle(mid, person, emoji, this.now()));
-    this.broadcast({ type: "reaction", mid, emoji: now });
+    this.broadcast({ type: "reaction", mid, by: "you", emoji: now });
     return { ok: true, mid, emoji: now };
   }
 

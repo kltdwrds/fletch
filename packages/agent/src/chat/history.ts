@@ -24,14 +24,21 @@ import type { CardView } from "./cards.ts";
 import { failureText } from "./failure-words.ts";
 import type { QuoteWho } from "./message-actions.ts";
 
+/** One reaction drawn on a message (F10): who put it there, the owner (`you`) or their agent. */
+export interface Reaction {
+  by: "you" | "agent";
+  emoji: string;
+}
+
 export type HistoryEntry =
   /**
    * `mid` is the message's id in this chat (M29.4), which a reaction and a reply's quote name: `m<seq>` for a transcript
    * message, `m<seq>.<k>` for its k-th delivered `send_to_user`, `a<i>` for a tool's words, `q<ordinal>` for a mailbox
-   * message. `reaction` is the owner's own; `quote` is what the message replied to, drawn above it.
+   * message. `reactions` are the agent's and the owner's (F10), the agent's first, absent when none stands; `quote` is
+   * what the message replied to, drawn above it.
    */
-  | { kind: "you"; text: string; at: number; id?: string; mid: string; reaction?: string; quote?: { mid: string; who: QuoteWho; text: string } }
-  | { kind: "agent"; text: string; at: number; mid: string; reaction?: string }
+  | { kind: "you"; text: string; at: number; id?: string; mid: string; reactions?: Reaction[]; quote?: { mid: string; who: QuoteWho; text: string } }
+  | { kind: "agent"; text: string; at: number; mid: string; reactions?: Reaction[] }
   | { kind: "note" | "thinking"; text: string; at: number }
   | { kind: "failed"; text: string; at: number; turn: string; code: string; reason: string }
   /** A turn the person stopped (M24.2): said stopped, never done, with what it had already done in words. */

@@ -353,7 +353,7 @@ describe("[M29.4] reactions", () => {
     // The Chat refuses anyone else's reaction on Ada's chat with a code, storing nothing.
     const ada$ = w.chats.harness(adaMain).instance;
     expect(await answerFrame("former-member", JSON.stringify({ type: "react", mid: "m2", emoji: "👍" }), ada$)).toEqual({ type: "refused", code: "CHAT_NOT_OWNER" });
-    expect(ada$.history().entries.filter((e) => "reaction" in e).map((e) => [(e as { mid: string }).mid, (e as { reaction: string }).reaction])).toEqual([["m1", "😢"], ["m2", "😂"]]);
+    expect(ada$.history().entries.flatMap((e) => ("reactions" in e && e.reactions ? [[e.mid, e.reactions]] : []))).toEqual([["m1", [{ by: "you", emoji: "😢" }]], ["m2", [{ by: "you", emoji: "😂" }]]]);
     expect(w.chats.harness(adaMain).rows("SELECT person FROM reactions").map((r) => r.person)).toEqual([ada.email, ada.email]);
   }, 180_000);
 

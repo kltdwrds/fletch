@@ -454,7 +454,7 @@ describe("[M29.4] the message actions on the thread's objects", () => {
       running: null,
       entries: [
         { kind: "you", text: "Is the orchard walk on?", id: "a", mid: "m1", at: 1 },
-        { kind: "agent", text: "Yes, at nine.", mid: "m2", at: 2, reaction: "👍" },
+        { kind: "agent", text: "Yes, at nine.", mid: "m2", at: 2, reactions: [{ by: "you", emoji: "👍" }] },
         { kind: "note", text: "Not sent: the message was empty." },
       ],
     });
@@ -464,8 +464,8 @@ describe("[M29.4] the message actions on the thread's objects", () => {
     expect(actsOf(agent)).toEqual([MESSAGE_TEXT.react, MESSAGE_TEXT.reply, MESSAGE_TEXT.copyResponse, MESSAGE_TEXT.moreOptions]);
     expect([actsOf(note), pillOf(agent), pillOf(you)]).toEqual([null, "👍", null]);
     expect(buttons(you as El).find((b) => b.attrs["aria-label"] === MESSAGE_TEXT.more)).toBeTruthy();
-    p.deliver(p.s, { type: "reaction", mid: "m2", emoji: null });
-    p.deliver(p.s, { type: "reaction", mid: "m1", emoji: "😮" });
+    p.deliver(p.s, { type: "reaction", mid: "m2", by: "you", emoji: null });
+    p.deliver(p.s, { type: "reaction", mid: "m1", by: "you", emoji: "😮" });
     expect([pillOf(p.log.children[0]), pillOf(p.log.children[1])]).toEqual(["😮", null]);
     // Live words have no id until the turn names them; then they take the row like history's.
     p.deliver(p.s, { type: "message", text: "Boots, yes." });

@@ -40,8 +40,8 @@ export type ChatFrame =
   /** The turn ended stopped; `effects` are words for what it had already done. */
   | { type: "turn_stopped"; turn: string; text: string; effects: string[] }
   | { type: "notice"; id: string; source: string; text: string }
-  /** The owner's reaction on a message now (M29.4); null when they took it off. */
-  | { type: "reaction"; mid: string; emoji: string | null }
+  /** A reaction on a message now (M29.4), the owner's (`you`) or the agent's (F10); null when it was taken off. */
+  | { type: "reaction"; mid: string; by: "you" | "agent"; emoji: string | null }
   | { type: "card"; turn: string; card: CardView }
   | { type: "link"; turn: string; card: LinkCard }
   /** A turn ended: the ids of the messages it drew live, by side and words, so the page offers their actions (M29.4). */
