@@ -23,7 +23,8 @@ import type { ChatFrame, ClaimResult, SendResult, StopResult } from "./frames.ts
 import { LinkShelf } from "./links.ts";
 import { Background, markContinuation, RESUME_KEY, startContinuation } from "./resume.ts";
 import { ChatGate, type GateState, ownTask, type TurnContext } from "./gate.ts";
-import { type Effect, EffectBuffer } from "./tools.ts";
+import { EffectBuffer } from "./tools.ts";
+import { flushOutbox } from "./outbox.ts";
 import { type RequestInput, requestContext, requestText, type SendInput } from "./inputs.ts";
 import { MAX_STEPS_PER_TURN, runTurnLoop } from "./turn.ts";
 import { failureText } from "./failure-words.ts";
@@ -560,29 +561,8 @@ export class ChatEngine {
     return { status: "failed", turnId, code, detail };
   }
 
-  /**
-   * Releases committed effects: deliveries go to the sockets; gated effects go through the approval
-   * flow, where an action runs only if the commit cites a grant. A crash before `markDelivered`
-   * releases again with the same id: journal rows, cards and grant uses are each once per id.
-   */
-  private async flushOutbox(_session: ToolSession): Promise<void> {
-    for (const row of this.store.undelivered()) {
-      const effect = JSON.parse(row.payload) as Effect;
-      if (effect.kind === "deliver") this.broadcast({ type: "message", turn: row.turn_id, id: effect.id, text: effect.text });
-      else if (effect.kind === "link") this.links.show(row.turn_id, effect.card);
-      else if (effect.kind === "delegate") await this.startSubagents(row.turn_id, effect);
-      else await this.approvals().release(row.turn_id, effect);
-      this.store.markDelivered(row.id, this.now());
-    }
-  }
-
-  /** Hands a committed delegation to the host; a refusal there (the caps, decided again) joins the transcript. */
-  private async startSubagents(turnId: string, effect: Extract<Effect, { kind: "delegate" }>): Promise<void> {
-    const owner = this.owner();
-    if (!this.hooks.subagents || !owner) return;
-    const r = await this.hooks.subagents.delegate({ grp: `${turnId.slice(0, 8)}-${effect.id.slice(0, 40)}`, turnId, person: owner, requests: effect.requests });
-    if (!r.ok) this.store.transaction(() => this.store.appendMessage(`subagents:${effect.id}`, { role: "user", content: `The delegation ${effect.id} did not start: ${r.code}: ${r.reason ?? ""}`, timestamp: this.now() }));
-  }
+  /** Releases this chat's committed effects (`outbox.ts`). */
+  private flushOutbox = (session: ToolSession) => flushOutbox({ store: this.store, links: this.links, approvals: () => this.approvals(), broadcast: (f) => this.broadcast(f), subagents: this.hooks.subagents, owner: () => this.owner(), now: this.now }, session);
 
   private broadcast(frame: ChatFrame): void {
     // A turn about to say it ended first names what it drew live (M29.4), so the page offers those messages' actions.
