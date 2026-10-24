@@ -49,10 +49,12 @@ export async function openTurn(d: IntakeDeps, row: MailRow, queued: boolean): Pr
     if (row.timeZone) d.store.setMeta("timeZone", row.timeZone);
     d.store.startTurn(turnId, person, at);
     if (standing) noteStanding(d.store, turnId, standing, at);
-    seq = d.store.appendMessage(turnId, { role: "user", content: row.text, timestamp: at }, clientIdOf(row) ?? true);
+    // A reaction's row is harness text quoting the agent (F10): never drawn as the person's, never their addresses.
+    const typed = row.kind !== "reaction";
+    seq = d.store.appendMessage(turnId, { role: "user", content: row.text, timestamp: at }, typed && (clientIdOf(row) ?? true));
     d.mailbox.started(row.ordinal, turnId, seq, at);
     // The addresses the person wrote are the ones the browser may open without a page handing them over.
-    if (d.hooks.browse) new UrlTable({ get: () => d.store.meta(URLS_KEY) ?? null, set: (v) => d.store.setMeta(URLS_KEY, v) }).add(extractUrls(row.text));
+    if (typed && d.hooks.browse) new UrlTable({ get: () => d.store.meta(URLS_KEY) ?? null, set: (v) => d.store.setMeta(URLS_KEY, v) }).add(extractUrls(row.text));
   });
   // The history mid the transcript draws the message by (`visibleHistory`), so the page names its bubble at once (F10).
   return { kind: "started", turnId, at, mid: `m${seq}`, ...(failed ? { failed } : {}) };

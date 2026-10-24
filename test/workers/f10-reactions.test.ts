@@ -3,15 +3,20 @@
 // fenced as data and named by message id; the stable prefix stays byte-identical and the transcript never has them.
 // Step 4: the agent reacts with the `react` tool; the reaction is an effect, committed at the barrier, flushed as a
 // stored row under the agent reactor and a `reaction` frame, set and never toggled, on the person's messages only.
+// Step 5: a reaction on the agent's pending question is delivered as the person's input; any other is ambient.
 import type { Message } from "@earendil-works/pi-ai";
 import { describe, expect, it } from "vitest";
 import { agentReactionRefusal, singleEmoji } from "../../packages/agent/src/chat/agent-reaction.ts";
+import { type MailKind, STEER_POLICY } from "../../packages/agent/src/chat/mailbox.ts";
+import { askedLast, pendingQuestion } from "../../packages/agent/src/chat/reaction-input.ts";
+import { URLS_KEY } from "../../packages/agent/src/browse/urls.ts";
 import type { HistoryEntry } from "../../packages/agent/src/chat/history.ts";
 import { AGENT_REACTOR } from "../../packages/agent/src/chat/message-actions.ts";
 import { answerFrame } from "../../packages/agent/src/chat/socket.ts";
 import { effectWords } from "../../packages/agent/src/chat/stop.ts";
-import type { ChatStore } from "../../packages/agent/src/chat/store.ts";
+import type { ChatStore, TurnRow } from "../../packages/agent/src/chat/store.ts";
 import { ENVELOPE_HEADING } from "../../packages/agent/src/context/assemble.ts";
+import { FakeBrowser } from "../support/browser/fake-browser.ts";
 import type { FakeStep } from "../support/fake-model.ts";
 import { ada, authorityWorld, T0 } from "./support/authority-world.ts";
 
@@ -19,8 +24,8 @@ const ASK = "Is the orchard walk on?";
 const ANSWER = "Yes, Saturday at ten. Bring boots.";
 
 /** Ada's main chat before anything is said, with one socket on it collecting every frame. */
-async function opened(script: FakeStep[]) {
-  const w = authorityWorld({ script });
+async function opened(script: FakeStep[], more: Omit<Parameters<typeof authorityWorld>[0] & object, "script"> = {}) {
+  const w = authorityWorld({ script, ...more });
   const adaMain = (await w.http(ada.email, "GET", "/app/chats")).body.main as string;
   const h = w.chats.harness(adaMain);
   const socket = h.connect();
@@ -182,5 +187,114 @@ describe("[F10] the agent reacts", () => {
     expect(stopped.effects).toEqual(["reacted 👍 to your message"]);
     expect(h.instance.history().entries.find((e) => e.kind === "stopped")).toMatchObject({ effects: ["reacted 👍 to your message"] });
     expect(reactionRows(h)).toEqual([{ message_id: "m1", person: AGENT_REACTOR, emoji: "👍" }]);
+  });
+});
+
+// Step 5: a reaction on the agent's pending question is the person's answer: a `reaction` mailbox row carrying a
+// harness signal, which starts a turn (or is steered into the one it started). Any other reaction is ambient.
+const QUESTION = "Shall I book the 9am slot (https://example.test/x)?";
+const held = (name: string, step: FakeStep): FakeStep => ({ checkpoint: name, step });
+/** A browser, so the URL table a typed message feeds is really written (`openTurn`): the guard has something to break. */
+const browse = { port: new FakeBrowser({}), memory: () => ({ get: async () => null, record: async () => {} }) };
+const mail = (h: { rows(q: string): Record<string, unknown>[] }) => h.rows("SELECT kind, scope, state, delivery FROM mailbox ORDER BY ordinal");
+const lastAgentMid = (entries: HistoryEntry[]) => (entries.filter((e) => e.kind === "agent").at(-1) as { mid: string }).mid;
+
+describe("[F10] a reaction on a pending question is the person's answer", () => {
+  it("a 👍 on the agent's question starts a turn that reads the signal, draws no bubble and names no words", async () => {
+    const { w, adaMain, h, socket, chat, store } = await opened([{ text: QUESTION }, { text: "Booked for 9." }], { browse });
+    await w.say(ada.email, "Book the dentist.", adaMain);
+    const urls = store.meta(URLS_KEY);
+    expect(chat.react(ada.email, "m2", "👍")).toEqual({ ok: true, mid: "m2", emoji: "👍" });
+    await chat.settled();
+    expect(w.fake.requests).toHaveLength(2);
+    const asked = text(requestMessages(w, 1).filter((m) => m.role === "user").at(-1));
+    expect(asked).toContain(`${ada.name} reacted to your last message (m2)`);
+    expect(asked).toContain(`[BEGIN EXTERNAL CONTENT source="reaction:${ada.email}"]\n👍\n`);
+    expect(asked).toContain(`[BEGIN EXTERNAL CONTENT source="quote:agent"]\n${QUESTION}\n`);
+    expect(mail(h).at(-1)).toEqual({ kind: "reaction", scope: `reaction:${ada.email}`, state: "completed", delivery: "start" });
+    const entries = h.instance.history().entries;
+    expect(entries.filter((e) => e.kind === "you").map((e) => e.text)).toEqual(["Book the dentist."]);
+    expect(entries.at(-1)).toMatchObject({ kind: "agent", text: "Booked for 9." });
+    expect(store.turns().map((t) => [t.status, t.code])).toEqual([["done", null], ["done", null]]);
+    const starts = (socket.frames as Array<Record<string, unknown>>).filter((f) => f.type === "turn_started");
+    expect(starts).toHaveLength(2);
+    expect(starts[1]).toEqual({ type: "turn_started", turn: store.turns()[1]?.id });
+    // The agent's words quoted in the signal are not the person's: the browser's URL table never sees them.
+    expect(store.meta(URLS_KEY)).toBe(urls);
+  });
+
+  it("ambient: a reaction on anything but the agent's last question starts nothing, and still reaches the next envelope", async () => {
+    const { w, adaMain, h, chat } = await opened([{ text: QUESTION }, { text: "Booked for 9." }, { text: "Noted." }], { browse });
+    await w.say(ada.email, "Book the dentist.", adaMain);
+    chat.react(ada.email, "m2", "👍");
+    await chat.settled();
+    const booked = lastAgentMid(h.instance.history().entries);
+    expect(chat.react(ada.email, "m1", "🙏")).toMatchObject({ ok: true, emoji: "🙏" });
+    expect(chat.react(ada.email, booked, "❤️")).toMatchObject({ ok: true, emoji: "❤️" });
+    expect(chat.react(ada.email, "m2", "😮")).toMatchObject({ ok: true, emoji: "😮" });
+    await chat.settled();
+    expect(w.fake.requests).toHaveLength(2);
+    expect(mail(h).filter((r) => r.kind === "reaction")).toHaveLength(1);
+    await w.say(ada.email, "Thanks.", adaMain);
+    const env = envelopeOf(requestMessages(w));
+    for (const e of ["🙏", "❤️", "😮"]) expect(env).toContain(`reacted ${e}`);
+  });
+
+  it("not a decision: a reaction when the turn ended on an approval card changes nothing", async () => {
+    const buy: FakeStep = { toolCall: { name: "shop_buy", arguments: { item: "chair", amount: 90 } }, text: "Shall I buy the chair?" };
+    const { w, adaMain, h, chat, store } = await opened([buy]);
+    await w.say(ada.email, "Buy the chair.", adaMain);
+    const entries = h.instance.history().entries;
+    expect(entries.at(-1)?.kind).toBe("card");
+    expect(store.turns().at(-1)?.code).toBe("AWAITING_DECISION");
+    expect(chat.react(ada.email, lastAgentMid(entries), "👍")).toMatchObject({ ok: true, emoji: "👍" });
+    await chat.settled();
+    expect(w.fake.requests).toHaveLength(1);
+    expect(mail(h).filter((r) => r.kind === "reaction")).toEqual([]);
+    expect(store.turns()).toHaveLength(1);
+    expect(w.cardsOf(ada.email).map((c) => c.state)).toEqual(["pending"]);
+  });
+
+  it("a second reaction while the reaction's own turn runs is steered, and the same emoji again is the same row", async () => {
+    const { w, adaMain, h, chat, store } = await opened([{ text: QUESTION }, held("busy", { text: "Working." }), { text: "Done." }]);
+    await w.say(ada.email, "Book the dentist.", adaMain);
+    chat.react(ada.email, "m2", "👍");
+    await w.fake.reached("busy");
+    expect(chat.react(ada.email, "m2", "❤️")).toMatchObject({ ok: true, emoji: "❤️" });
+    // 👍 back on (it replaces ❤️), off, and on again: the 👍 row is the one already taken, never a second.
+    chat.react(ada.email, "m2", "👍");
+    expect(chat.react(ada.email, "m2", "👍")).toMatchObject({ ok: true, emoji: null });
+    chat.react(ada.email, "m2", "👍");
+    w.fake.release("busy");
+    await chat.settled();
+    expect(w.fake.requests).toHaveLength(3);
+    const steered = text(requestMessages(w, 2).filter((m) => m.role === "user").at(-1));
+    expect(steered).toContain(STEER_POLICY.slice(0, 60));
+    expect(steered).toContain(`[BEGIN EXTERNAL CONTENT source="reaction:${ada.email}"]\n❤️\n`);
+    // The signal's own fences stand as written: not fenced again, so nothing in it is defanged.
+    expect(steered).not.toContain("(BEGIN EXTERNAL CONTENT");
+    expect(mail(h).filter((r) => r.kind === "reaction").map((r) => [r.state, r.delivery])).toEqual([["completed", "start"], ["completed", "steer"]]);
+    expect(store.turns()).toHaveLength(2);
+  });
+
+  it("the pending question is the agent's last drawn words with a question mark, nothing after them but a note, its turn done with no code", () => {
+    const q = { kind: "agent", text: "Shall I?", at: T0, mid: "m2" } as const;
+    const you = { kind: "you", text: "Go", at: T0, mid: "m1" } as const;
+    expect(askedLast([you, q])).toEqual(q);
+    expect(askedLast([you, q, { kind: "note", text: "job ran", at: T0 }])).toEqual(q);
+    expect(askedLast([you, { ...q, text: "Booked." }])).toBeNull();
+    expect(askedLast([q, { ...you, mid: "m3" }])).toBeNull();
+    expect(askedLast([])).toBeNull();
+    // Only a turn that ended done with no code waits on it; a running turn only when a reaction on it started it.
+    const turn = (id: string, status: TurnRow["status"], code: string | null = null) => ({ id, person: ada.email, status, code, reason: null, steps: 1, input_tokens: 0, started_at: T0, ended_at: null }) as TurnRow;
+    const kinds: Record<string, MailKind> = { t2: "reaction", t3: "user" };
+    const pending = (turns: TurnRow[]) => pendingQuestion([you, q], turns, "m2", (t) => kinds[t]);
+    expect(pending([turn("t1", "done")])).toEqual(q);
+    expect(pendingQuestion([you, q], [turn("t1", "done")], "m1", () => undefined)).toBeNull();
+    expect(pending([turn("t1", "done", "AWAITING_DECISION")])).toBeNull();
+    expect(pending([turn("t1", "failed", "TURN_STEP_LIMIT")])).toBeNull();
+    expect(pending([turn("t1", "done"), turn("t2", "running")])).toEqual(q);
+    expect(pending([turn("t1", "done"), turn("t3", "running")])).toBeNull();
+    expect(pending([turn("t1", "done", "AWAITING_DECISION"), turn("t2", "running")])).toBeNull();
   });
 });

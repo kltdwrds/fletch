@@ -38,6 +38,7 @@ import { ChatMessageActions, type ReactResult } from "./message-actions.ts";
 import { Projections } from "./projection.ts";
 import { stopKey } from "./stop.ts";
 import { openTurn } from "./intake.ts";
+import { pendingQuestion, reactionRow } from "./reaction-input.ts";
 import { noteOpenTodos } from "./todo.ts";
 import type { TurnEndRow } from "../ledger/types.ts";
 import type { ViewResult } from "../views/select.ts";
@@ -209,7 +210,9 @@ export class ChatEngine {
     if (opened.kind === "refused") return { status: "refused", code: opened.code };
     // Stored as running now, which marks the chat busy; a drain when it ends must not see it still opening.
     this.opening = false;
-    this.started(opened.turnId, this.store.actions.shown(row.messageId, row.text), opened.mid, clientIdOf(row));
+    // A reaction's turn names no words of the person's (F10): the page draws it as a continuation.
+    if (row.kind === "reaction") this.broadcast({ type: "turn_started", turn: opened.turnId });
+    else this.started(opened.turnId, this.store.actions.shown(row.messageId, row.text), opened.mid, clientIdOf(row));
     // The person's message is kept with its failure, so a re-sync draws both.
     if (opened.failed) return this.failTurn(opened.turnId, opened.failed.code, opened.failed.reason);
     await this.wakeup.arm(opened.at + RESUME_AFTER_MS);
@@ -222,8 +225,8 @@ export class ChatEngine {
     if (!next) return;
     this.opening = true;
     try {
-      if (next.kind === "user") await this.begin(next, true);
-      else await this.beginHandoff(next);
+      if (next.kind === "internal_handoff") await this.beginHandoff(next);
+      else await this.begin(next, true);
     } finally {
       this.opening = false;
     }
@@ -338,7 +341,17 @@ export class ChatEngine {
     return this.cards.list().map((c) => this.approvals().view(c));
   }
 
-  react(person: string, mid: string, emoji: string): ReactResult { return this.messages.react(person, mid, emoji); }
+  /** The person's reaction, stored and broadcast; on the agent's pending question also their answer (F10), taken in the background. */
+  react(person: string, mid: string, emoji: string): ReactResult {
+    const r = this.messages.react(person, mid, emoji);
+    const set = r.ok ? r.emoji : null;
+    const asked = set ? pendingQuestion(this.history().entries, this.store.turns(), mid, (t) => this.mailbox.startedBy(t)) : null;
+    if (set && asked) {
+      this.store.transaction(() => this.mailbox.accept(reactionRow(person, this.nameOf(person), set, asked, this.now())));
+      this.defer(this.drain()); // a turn running or opening takes the row at its next step boundary instead
+    }
+    return r;
+  }
 
   /** When the chat last had something to show (M29.3), for its owner alone; anyone else is refused. */
   lastAt(person: string): { ok: true; at: number | null } | { ok: false; code: "CHAT_NOT_OWNER" } {
