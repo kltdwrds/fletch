@@ -105,8 +105,11 @@ function seekDrawn() {
   cls(d, "is-found", true);
 }
 // The messages a turn drew live, named by the chat when it ended: each to the first unnamed bubble of its side and words.
+// The person's, named when it was stored (F10), takes only the chat's time.
 function nameLive(list) {
   for (const m of list) {
+    const had = byMid(m.mid);
+    if (had) { if (had.msg) had.msg.at = m.at; continue; }
     const d = [...log.children].find((n) => n.bubble && !n.dataset.mid && sideOf(n) === (m.who === "you" ? "user" : "agent") && n.bubble.textContent === m.text);
     if (d) named(d, { mid: m.mid, text: m.text, at: m.at, kind: m.who === "you" ? "you" : "agent" });
   }

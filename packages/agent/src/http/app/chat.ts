@@ -233,12 +233,19 @@ function stoppedNote(s) {
   for (const e of s.effects || []) { const p = el("p", e); p.className = "effect"; n.append(p); }
   return n;
 }
-// A send the chat took (turn_started, queued, or a duplicate answered with the first): drawn as sent.
+// A send the chat took (turn_started, queued, or a duplicate answered with the first): drawn as sent, its bubble handed
+// back. One taken before (queued, then starting a turn of its own) is found by the page's id it keeps.
 function taken(id) {
   const p = id && (pending.get(id) || gone.get(id));
-  if (!p) return false;
-  p.node.className = "m you"; if (p.note) p.note.remove(); pending.delete(id); gone.delete(id); regroup();
-  return true;
+  if (!p) return (id && [...log.children].find((n) => n.dataset && n.dataset.sid === id)) || null;
+  p.node.className = "m you"; p.node.dataset.sid = id; if (p.note) p.note.remove(); pending.delete(id); gone.delete(id); regroup();
+  return p.node;
+}
+// The chat stored the person's message (F10): its bubble is named now, under the mid history draws it by, so a reaction
+// on it lands before the turn ends. A bubble named already (queued, now its own turn's) takes the new mid.
+function nameSent(d, mid) {
+  if (!d || !mid) return;
+  if (d.msg) { d.dataset.mid = mid; d.msg.mid = mid; } else named(d, { mid, text: words(d).textContent, at: Date.now(), kind: "you" });
 }
 function unsent(id, code) {
   const p = pending.get(id); if (!p) return;
@@ -355,7 +362,7 @@ function frame(e) {
       if (h.kind === "stopped") stoppedNote(h);
       else if (h.kind === "card") card(h.card, log, chatId);
       else if (h.kind === "link") linkCard(h.card, log);
-      else { const d = add(h.kind === "you" ? "you" : h.kind === "note" || h.kind === "failed" ? "note" : "agent", h.text); if (h.mid) named(d, h); if (h.id) stored.add(h.id); if (h.kind === "agent" && JOB_LINE.test(h.text)) jobButton(); }
+      else { const d = add(h.kind === "you" ? "you" : h.kind === "note" || h.kind === "failed" ? "note" : "agent", h.text); if (h.mid) named(d, h); if (h.id) { stored.add(h.id); d.dataset.sid = h.id; } if (h.kind === "agent" && JOB_LINE.test(h.text)) jobButton(); }
     }
     // A send this chat stored is drawn above; on a new socket, one it does not hold never arrived, and is said so.
     // A send still unanswered on the same socket stays drawn, faint, after what the chat holds.
@@ -377,11 +384,11 @@ function frame(e) {
   }
   else if (f.type === "turn_started") {
     // A turn that goes on after a decision (M20.1) has no text: nothing the person typed starts it.
-    if (!taken(f.id) && f.text) add("you", f.text, true);
+    nameSent(taken(f.id) || (f.text ? add("you", f.text, true) : null), f.mid);
     reply = null; endThinking(); current = f.turn; drawn = 0; working(true);
   }
   // A send while a turn runs is queued (M24.2): drawn as sent, and the reply that takes it up starts below it.
-  else if (f.type === "queued") { if (!taken(f.id) && f.text) add("you", f.text, true); reply = null; }
+  else if (f.type === "queued") { nameSent(taken(f.id) || (f.text ? add("you", f.text, true) : null), f.mid); reply = null; }
   else if (f.type === "duplicate") taken(f.id);
   else if (f.type === "turn_stopping") { if (f.turn === current) { stopping = current; $("stop").disabled = true; $("busy").textContent = STOP.stopping; } }
   else if (f.type === "turn_stopped") { endThinking(); reply = null; stoppedNote(f); }

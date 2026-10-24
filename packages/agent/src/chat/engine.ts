@@ -193,7 +193,7 @@ export class ChatEngine {
       if (duplicate) return { status: "duplicate", id, ordinal: row.ordinal, state: row.state };
       const running = this.activeTurn ?? this.store.runningTurn()?.id;
       if (queue && running) {
-        this.broadcast({ type: "queued", turn: running, ordinal: row.ordinal, text: held.text, ...(input.clientId ? { id } : {}) });
+        this.broadcast({ type: "queued", turn: running, ordinal: row.ordinal, text: held.text, mid: `q${row.ordinal}`, ...(input.clientId ? { id } : {}) });
         return { status: "queued", id, ordinal: row.ordinal, turnId: running };
       }
       return await this.begin(row, false);
@@ -208,7 +208,7 @@ export class ChatEngine {
     if (opened.kind === "refused") return { status: "refused", code: opened.code };
     // Stored as running now, which marks the chat busy; a drain when it ends must not see it still opening.
     this.opening = false;
-    this.started(opened.turnId, this.store.actions.shown(row.messageId, row.text), clientIdOf(row));
+    this.started(opened.turnId, this.store.actions.shown(row.messageId, row.text), opened.mid, clientIdOf(row));
     // The person's message is kept with its failure, so a re-sync draws both.
     if (opened.failed) return this.failTurn(opened.turnId, opened.failed.code, opened.failed.reason);
     await this.wakeup.arm(opened.at + RESUME_AFTER_MS);
@@ -276,7 +276,7 @@ export class ChatEngine {
   }
 
   /** Tells the owner's sockets the person's message is stored and its turn runs (M18.1). */
-  private started = (turn: string, text: string, id?: string) => this.broadcast({ type: "turn_started", turn, text, ...(id ? { id } : {}) });
+  private started = (turn: string, text: string, mid: string, id?: string) => this.broadcast({ type: "turn_started", turn, text, mid, ...(id ? { id } : {}) });
 
   /**
    * Runs a colleague's request as a turn of this chat's owner's agent (M7.1). The request enters as

@@ -24,7 +24,7 @@ export interface IntakeDeps {
   models?: ModelConfig;
 }
 
-export type Opened = { kind: "refused"; code: "MEMORY_UNAVAILABLE" } | { kind: "started"; turnId: string; at: number; failed?: { code: string; reason: string } };
+export type Opened = { kind: "refused"; code: "MEMORY_UNAVAILABLE" } | { kind: "started"; turnId: string; at: number; mid: string; failed?: { code: string; reason: string } };
 
 export async function openTurn(d: IntakeDeps, row: MailRow, queued: boolean): Promise<Opened> {
   const turnId = crypto.randomUUID();
@@ -44,14 +44,16 @@ export async function openTurn(d: IntakeDeps, row: MailRow, queued: boolean): Pr
     }
   }
   const at = d.now();
+  let seq = 0;
   d.store.transaction(() => {
     if (row.timeZone) d.store.setMeta("timeZone", row.timeZone);
     d.store.startTurn(turnId, person, at);
     if (standing) noteStanding(d.store, turnId, standing, at);
-    const seq = d.store.appendMessage(turnId, { role: "user", content: row.text, timestamp: at }, clientIdOf(row) ?? true);
+    seq = d.store.appendMessage(turnId, { role: "user", content: row.text, timestamp: at }, clientIdOf(row) ?? true);
     d.mailbox.started(row.ordinal, turnId, seq, at);
     // The addresses the person wrote are the ones the browser may open without a page handing them over.
     if (d.hooks.browse) new UrlTable({ get: () => d.store.meta(URLS_KEY) ?? null, set: (v) => d.store.setMeta(URLS_KEY, v) }).add(extractUrls(row.text));
   });
-  return { kind: "started", turnId, at, ...(failed ? { failed } : {}) };
+  // The history mid the transcript draws the message by (`visibleHistory`), so the page names its bubble at once (F10).
+  return { kind: "started", turnId, at, mid: `m${seq}`, ...(failed ? { failed } : {}) };
 }
