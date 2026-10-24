@@ -301,7 +301,7 @@ describe("[M29.4] the hover row from 768", () => {
 
   it("planted: a row that is always shown, and React on the person's own message, each fail the check", async () => {
     const { w } = await seeded();
-    const always = swap(APP_PAGE, "#log > .m .acts { position: relative; display: flex; opacity: 0;", "#log > .m .acts { position: relative; display: flex; opacity: 1;");
+    const always = swap(APP_PAGE, "#log > .m .acts { opacity: 0; }", "#log > .m .acts { opacity: 1; }");
     await on({ w, width: 1440, html: always }, async (pg) => expect(hoverRow(pg)).rejects.toThrow());
     const everyone = swap(APP_PAGE, 'if (d.msg.who === "agent") btn(MSG.react', "if (d.msg) btn(MSG.react");
     await on({ w, width: 1440, html: everyone }, async (pg) => expect(hoverRow(pg)).rejects.toThrow());

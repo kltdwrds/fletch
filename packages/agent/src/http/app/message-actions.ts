@@ -35,11 +35,15 @@ export const MESSAGE_TEXT = {
 /** How long a touch rests on a bubble before its actions open over it (M29.4, Muse's press-and-hold). */
 export const HOLD_MS = 500;
 
-export const MESSAGE_CSS = `/* Message actions (M29.4): the canvas's .msg .acts row shows on hover and focus only (and while its picker or menu
-   is open); the phone's ⋯ is under each bubble instead, and a touch held on a bubble selects nothing. */
-#log > .m .acts { position: relative; display: flex; opacity: 0; transition: opacity var(--qf-dur-none); }
+export const MESSAGE_CSS = `/* Message actions (M29.4): with a mouse, the canvas's .msg .acts row shows on hover and focus only (and while its
+   picker or menu is open); without a hovering fine pointer (F9) it rests visible from 768, where it is the only route
+   besides press-and-hold. The phone's ⋯ is under each bubble instead, and a touch held on a bubble selects nothing. */
+#log > .m .acts { position: relative; display: flex; transition: opacity var(--qf-dur-none); }
 #log > .m.you .acts { flex-direction: row-reverse; }
-#log > .m:hover .acts, #log > .m:focus-within .acts, #log > .m .acts.is-open, #log > .m .acts:has([aria-expanded="true"]) { opacity: 1; }
+@media (hover: hover) and (pointer: fine) {
+  #log > .m .acts { opacity: 0; }
+  #log > .m:hover .acts, #log > .m:focus-within .acts, #log > .m .acts.is-open, #log > .m .acts:has([aria-expanded="true"]) { opacity: 1; }
+}
 #log > .m .msg-more { width: 28px; height: 28px; color: var(--text-secondary); }
 #log > .m .qf-quote { max-width: 85%; }
 /* A message opened from a search (F3) flashes once: its bubble's ring fades over three toast durations, not under reduced motion. */

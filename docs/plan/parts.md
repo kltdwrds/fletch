@@ -469,6 +469,21 @@ reload; the main chat's creation, which is the Person's own; F7's sign-in return
   list must say which chat this is without a model call on the send path — if wrong (Kyle wants a summary), a
   later part renames it when the first reply completes, and this part's claim moves there.
 
+## F9 Hover/touch parity: nothing a person needs is reachable only through hover
+
+**Read:** Kyle's screenshots of Muse on desktop and mobile (2026-10-23) and the audit of the served CSS at `e3938557`: three control clusters were revealed only on hover, and the app CSS carried no `@media (hover …)` rule anywhere — message actions (`.acts`, `packages/agent/src/http/app/message-actions.ts`), a chat row's time and kebab (`.qf-row-end`, the bundle in `tokens.ts`), and a Library card's more button (`.cmore`, `library.ts`).
+
+**Scope:** a hover-revealed control rests visible wherever the pointer cannot hover finely, and is hidden at rest only under `@media (hover: hover) and (pointer: fine)` — capability, never form factor (`device()` is not consulted). The three clusters above, plus any other hover-gated reveal the sweep finds in the served CSS; hover *styles* (backgrounds) are not parity problems and do not move. On the phone layout the message actions stay behind the existing under-bubble ⋯ and press-and-hold routes.
+
+**Acceptance:** `test/workers/f9-hover-parity.test.ts`: the served CSS (page CSS and the bundle) holds no `:hover` reveal (`opacity`, `pointer-events`, `visibility`, `display`) outside the capability gate — planted ungated copies of all three old rules fail it; each cluster's rest state and gated reveals are asserted in the served-CSS style. Kyle's UAT by eye on staging: on a phone the row times and kebabs and the Library more-buttons rest visible; on desktop they reveal on hover as before.
+
+**Not in scope:** hover styles and motion; new touch gestures; the drawer's phone-kebab rule (it hides nothing); any change to what the controls do.
+
+**Rulings:**
+
+- Ruling: controls show by default and hide only inside the gate — because a hovering coarse pointer would otherwise be left with the control behind a hover — if wrong, they hide by default and show under `(hover: none)`. (Logged in `docs/decisions/log.md`, 2026-10-24.)
+- Ruling: the gate is capability, `@media (hover: hover) and (pointer: fine)` — because the same browser window can be either (Kyle's own shots were a phone frame inside a desktop browser) — if wrong, form factor decides and the frame case regresses.
+
 ## F10 Reactions, full circuit: the agent reacts, reactions reach the model, a reaction answers a question
 
 **Read:** `docs/briefs/reactions-plan-fable-2026-10-23.md` (the build plan), the spec and dump beside it in `docs/briefs/`, `packages/agent/src/chat/message-actions.ts`, `history.ts`, `frames.ts`, `mailbox.ts`, `intake.ts`, `engine.ts`, `context/assemble.ts`, `assemble-turn.ts`, `tools.ts`, `tools/search.ts`, `http/app/message-actions.ts`, `http/app/chat.ts`; `VISION.md` ("it asks before it acts": a reaction is never a grant decision).

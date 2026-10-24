@@ -145,9 +145,12 @@ export const LIBRARY_CSS = `
 .lib-src { flex: 1; display: flex; overflow: auto; background: var(--bg-primary); }
 .lib-src .qf-src:first-child { color: var(--text-tertiary); text-align: right; padding-right: 0; user-select: none; }
 #viewer-note:empty, #lib-note:empty { display: none; }
-@container qf (min-width: 768px) {
-  .cardwrap .cmore { opacity: 0; }
-  .cardwrap:hover .cmore, .cardwrap .cmore:focus-visible, .cardwrap .cmore[aria-expanded="true"] { opacity: 1; }
+/* A card's more button waits on a hover only for a hovering fine pointer (F9); on touch it rests visible. */
+@media (hover: hover) and (pointer: fine) {
+  @container qf (min-width: 768px) {
+    .cardwrap .cmore { opacity: 0; }
+    .cardwrap:hover .cmore, .cardwrap .cmore:focus-visible, .cardwrap .cmore[aria-expanded="true"] { opacity: 1; }
+  }
 }
 @container qf (max-width: 767px) {
   .qf-file .lib-sub { display: block; }

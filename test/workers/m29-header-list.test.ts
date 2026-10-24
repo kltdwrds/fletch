@@ -346,7 +346,7 @@ describe("[M29.3] a chat row's time and kebab", () => {
 
   it("planted: a row end that is always shown, and a kebab that opens a drawer at 1440, each fail the check", async () => {
     const s = await twoWithChats();
-    const always = swap(APP_PAGE, ".qf-row-end{position:absolute;inset-block:0;inset-inline-end:4px;display:flex;align-items:center;gap:2px;opacity:0;pointer-events:none}", ".qf-row-end{position:absolute;inset-block:0;inset-inline-end:4px;display:flex;align-items:center;gap:2px}");
+    const always = swap(APP_PAGE, ".qf-row-end{opacity:0;pointer-events:none}", ".qf-row-end{}");
     await on({ w: s.w, width: 1440, html: always }, async (pg) => {
       await pg.mouse.move(900, 500);
       const r = await readRow(pg, TRIP);

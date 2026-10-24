@@ -70,6 +70,11 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   the bubble already on screen instead of being marked lost by the fresh socket's history. Rejected: the `Chat`
   naming itself on its first message, which crosses into the Person's store from the send path; and sending before
   the history, which the page's own fresh-socket rule says is lost.
+- 2026-10-24 F9 hover parity: a hover-revealed control (message actions, a chat row's time and kebab, a Library
+  card's more button) is hidden at rest only under `(hover: hover) and (pointer: fine)` and shows by default, so it
+  rests visible under `(hover: none)` and also on a hovering coarse pointer. Rejected: hiding by default and showing
+  only under `(hover: none)`, which leaves a coarse hovering pointer with the control behind a hover. The served
+  CSS's own sweep test (`test/workers/f9-hover-parity.test.ts`) refuses any ungated `:hover` reveal.
 - 2026-10-24 F10: three reactions rulings. The pending question is the agent's last drawn message carrying `?`,
   its turn `done` with no code (or a running turn a reaction on it started, so a second reaction steers in) —
   the `ASKING` contract makes `?` the agent's convention and the engine holds no other state; if UAT shows misses,

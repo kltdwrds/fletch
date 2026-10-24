@@ -317,13 +317,18 @@ body{background:var(--bg-primary);color:var(--text-primary);font-family:var(--fo
 .qf-listscrim{position:absolute;inset:0;z-index:40;background:transparent} /* click catcher only: the overlay has no scrim (I3, measured) */
 @keyframes qf-shadow-in{from{box-shadow:none}} @keyframes qf-shadow-out{to{box-shadow:none}}
 
-/* Chat list rows (design review 1, C2): at rest only the label shows, the selected row too. On hover, focus or with its menu open the
-   row shows its last-message time and a 14px dots kebab at its end; the kebab opens a Menu from 768 up. */
+/* Chat list rows (design review 1, C2): with a mouse, at rest only the label shows, the selected row too; on hover, focus or with its
+   menu open the row shows its last-message time and a 14px dots kebab at its end; the kebab opens a Menu from 768 up. Without a
+   hovering fine pointer (F9) the time and kebab rest visible, in their resting style: nothing the row offers waits on a hover. */
 .qf-rowwrap{position:relative}
-.qf-row-end{position:absolute;inset-block:0;inset-inline-end:4px;display:flex;align-items:center;gap:2px;opacity:0;pointer-events:none}
+.qf-row-end{position:absolute;inset-block:0;inset-inline-end:4px;display:flex;align-items:center;gap:2px}
 .qf-row-time{font:400 13px/18px var(--font-sans);color:var(--text-tertiary);white-space:nowrap}
+@media not all and (hover:hover) and (pointer:fine){.qf-rowwrap:has(>.qf-row-end)>.qf-listrow{padding-inline-end:96px}} /* label truncates before the time (inferred) */
+@media (hover:hover) and (pointer:fine){
+.qf-row-end{opacity:0;pointer-events:none}
 .qf-rowwrap:hover>.qf-row-end,.qf-rowwrap:focus-within>.qf-row-end,.qf-rowwrap.is-open>.qf-row-end,.qf-rowwrap.is-hover>.qf-row-end{opacity:1;pointer-events:auto}
-.qf-rowwrap:hover>.qf-listrow,.qf-rowwrap:focus-within>.qf-listrow,.qf-rowwrap.is-open>.qf-listrow,.qf-rowwrap.is-hover>.qf-listrow{padding-inline-end:96px} /* label truncates before the time (inferred) */
+.qf-rowwrap:hover>.qf-listrow,.qf-rowwrap:focus-within>.qf-listrow,.qf-rowwrap.is-open>.qf-listrow,.qf-rowwrap.is-hover>.qf-listrow{padding-inline-end:96px}
+}
 .qf-rowwrap.is-hover>.qf-listrow,.qf-rowwrap.is-open>.qf-listrow{background:var(--fill-highlight)}
 
 /* PageHeader: sticky 60, content column with h1 34/40/600 and trailing actions */
