@@ -11,7 +11,7 @@ import { type MailKind, STEER_POLICY } from "../../packages/agent/src/chat/mailb
 import { askedLast, pendingQuestion } from "../../packages/agent/src/chat/reaction-input.ts";
 import { URLS_KEY } from "../../packages/agent/src/browse/urls.ts";
 import type { HistoryEntry } from "../../packages/agent/src/chat/history.ts";
-import { AGENT_REACTOR } from "../../packages/agent/src/chat/message-actions.ts";
+import { AGENT_REACTOR, ChatMessageActions } from "../../packages/agent/src/chat/message-actions.ts";
 import { answerFrame } from "../../packages/agent/src/chat/socket.ts";
 import { effectWords } from "../../packages/agent/src/chat/stop.ts";
 import type { ChatStore, TurnRow } from "../../packages/agent/src/chat/store.ts";
@@ -187,6 +187,23 @@ describe("[F10] the agent reacts", () => {
     expect(stopped.effects).toEqual(["reacted 👍 to your message"]);
     expect(h.instance.history().entries.find((e) => e.kind === "stopped")).toMatchObject({ effects: ["reacted 👍 to your message"] });
     expect(reactionRows(h)).toEqual([{ message_id: "m1", person: AGENT_REACTOR, emoji: "👍" }]);
+  });
+
+  it("the outbox checks a committed reaction again: on a message that no longer takes one it sets and says nothing", () => {
+    let entries: HistoryEntry[] = [{ kind: "you", text: ASK, at: T0, mid: "m1" }];
+    const set: string[][] = [];
+    const frames: unknown[] = [];
+    const store = { actions: { set: (mid: string, by: string, emoji: string) => void set.push([mid, by, emoji]) }, transaction: <T>(fn: () => T) => fn(), turn: () => undefined };
+    const actions = new ChatMessageActions(() => store as never, () => ada.email, () => entries, (f) => void frames.push(f), () => T0);
+    // Gone since the step was committed (compacted away), or now the agent's own: skipped, nothing stored or sent.
+    entries = [];
+    actions.reactAsAgent("m1", "👍");
+    entries = [{ kind: "agent", text: ANSWER, at: T0, mid: "m1" }];
+    actions.reactAsAgent("m1", "👍");
+    expect([set, frames]).toEqual([[], []]);
+    entries = [{ kind: "you", text: ASK, at: T0, mid: "m1" }];
+    actions.reactAsAgent("m1", "👍");
+    expect([set, frames]).toEqual([[["m1", AGENT_REACTOR, "👍"]], [{ type: "reaction", mid: "m1", by: "agent", emoji: "👍" }]]);
   });
 });
 
