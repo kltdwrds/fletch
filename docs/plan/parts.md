@@ -468,3 +468,19 @@ reload; the main chat's creation, which is the Person's own; F7's sign-in return
 - Ruling: the name comes from the first prompt's own words, set once when the first message lands — because the
   list must say which chat this is without a model call on the send path — if wrong (Kyle wants a summary), a
   later part renames it when the first reply completes, and this part's claim moves there.
+
+## F10 Reactions, full circuit: the agent reacts, reactions reach the model, a reaction answers a question
+
+**Read:** `docs/briefs/reactions-plan-fable-2026-10-23.md` (the build plan), the spec and dump beside it in `docs/briefs/`, `packages/agent/src/chat/message-actions.ts`, `history.ts`, `frames.ts`, `mailbox.ts`, `intake.ts`, `engine.ts`, `context/assemble.ts`, `assemble-turn.ts`, `tools.ts`, `tools/search.ts`, `http/app/message-actions.ts`, `http/app/chat.ts`; `VISION.md` ("it asks before it acts": a reaction is never a grant decision).
+
+**Scope:** (1) a `react` tool in the core namespace queues a `react` effect; the outbox stores it under the reactor `agent` and broadcasts `reaction` with `by: "agent"`; any single emoji grapheme, on the person's messages alone, set or replace. (2) Standing reactions ride each turn's envelope as a fenced `chat:reactions` block naming reactor, emoji and message id. (3) A reaction on the agent's last message when that message asked a question (and no turn runs, and the latest turn ended done without a card) becomes a `reaction` mailbox row carrying the harness signal, starting or steering a turn; it draws no bubble. Any other reaction is ambient. (4) History and the frame collect reactions by `by`; the page draws one pill with both; the person's bubble is named on `turn_started`/`queued` so a reaction lands live. (5) `CHAT_TASK` teaches when to react.
+
+**Acceptance:** `test/workers/f10-reactions.test.ts` and `test/workers/f10-reactions-page.test.ts` (claims T1–T5 of the plan: collected pill; envelope block fenced by mid with a byte-identical prefix and a clean transcript; live naming; the agent's 👍 before its words, stored, reloaded, replaced, refused by code for a bad emoji, its own message or an unknown id; the question case starts a turn reading the signal with no bubble and no URL-table write, the ambient case starts nothing, a card case starts nothing, the steer case, the duplicate case), each guard planted. Kyle's UAT on staging: react 👍 to a fletch question → it proceeds; ask for a job → 👍 lands on his message before the result.
+
+**Not in scope:** other people reacting (admission stays owner-only); removing an agent reaction; an explicit ask marker (follow-up if the `?` rule misfires); reaction notifications outside the chat; counts; custom emoji; F9's hover-reveal changes.
+
+**Rulings:**
+
+- Ruling: the pending question is the agent's last drawn message carrying `?` — because the ASKING contract makes that the agent's convention and the engine holds no other state — if wrong, an explicit `awaiting_reply` marker on the turn replaces the test.
+- Ruling: the agent's reaction is set/replace, never toggle — because the outbox replays an effect after a crash and must land on one state — if wrong, a `remove` flag joins the tool.
+- Ruling: reactions enter context through the envelope, never the stored transcript — because they change after the fact and the envelope is the per-turn, unpersisted, replayed block — if wrong, a harness message is appended at assembly and recorded for replay.
