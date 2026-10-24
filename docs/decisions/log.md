@@ -83,3 +83,8 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   join the tool if one is needed. Reactions reach the model through the per-turn envelope (`chat:reactions`),
   never the stored transcript, because they change after the fact and the envelope is the unpersisted, replayed
   block. Rejected: per-message annotations in the transcript, and an unstored user message lost on replay.
+- 2026-10-24 Reaction on an earlier question answers the pending one (Kyle's UAT call): the pending question
+  stays the agent's last drawn message carrying `?`, but the reaction may be on any earlier agent question
+  message — the agent re-asked it — and is delivered as the answer to the pending question; any other reaction
+  stays ambient. A `chat.reaction` log line records the decision (answer vs ambient) so Workers Logs shows it.
+  Confirming test: `test/workers/f10-reactions.test.ts` ("an earlier phrasing answers").
