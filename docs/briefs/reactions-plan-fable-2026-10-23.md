@@ -3,7 +3,7 @@
 Inputs: `reactions-dump-2026-10-23.md`, `reactions-spec-2026-10-23.md`, and the code on `main` at `aa122a3`
 (F8 merged). Planning only; nothing in the repository was changed. Proposed part id: **F10** (see §7 for why not F9).
 
-Line numbers below are against `aa122a3`.
+Line numbers below are against `aa122a3`. Re-checked at the build's base `daa2cee` (same code): the few that drifted are corrected in place.
 
 ## 0. What is being built, in my words
 
@@ -42,7 +42,7 @@ already does, so a later multi-person part extends a list rather than rewriting 
   (`history.ts:93-150`). The agent therefore needs a default target (the person's latest message) and the
   reactions block has to name `mid`s so the model can target others.
 - **A live `you` bubble has no `mid` until the turn ends** (`named` frame, `engine.ts:589`; client
-  `nameLive`, `http/app/message-actions.ts:99-104`). A `reaction` frame for the person's message arriving
+  `nameLive`, `http/app/message-actions.ts:108-120`). A `reaction` frame for the person's message arriving
   mid-turn (the ack) would find no bubble (`chat.ts:395`) and be dropped until reload. The person's message id
   is known at `openTurn` (`intake.ts:51`), so `turn_started` and `queued` can carry it.
 - **`engine.ts` is at the 600-line cap exactly** (`scripts/check-file-sizes.mjs:13`, `POLICY.maxLines: 600`).
@@ -52,8 +52,8 @@ already does, so a later multi-person part extends a list rather than rewriting 
 - **`openTurn` marks the row's text as the person's typed message and feeds its URLs to the browser's URL table**
   (`intake.ts:51-54`). A reaction row's text is harness text quoting the agent; it must do neither.
 - **Effects are the only way a tool touches the world** (`tools.ts:1-4`, `turn.ts:3-6`). `send_to_user` is the
-  model: `kind: "action"`, `queues: "self"` (`tools/search.ts:48-50`, `registry.ts:160-166`).
-- **Redelivery after a crash replays an outbox row with the same id** (`engine.ts:568-578`). A toggle is not
+  model: `kind: "action"`, `queues: "self"` (`tools/search.ts:46-50`, `tools/registry.ts:162-168`).
+- **Redelivery after a crash replays an outbox row with the same id** (`engine.ts:573-583`). A toggle is not
   idempotent; the agent's path must be set/replace, not toggle (§6).
 - **The envelope is the per-turn block that is never persisted** and is recorded by `projections.record` so a
   resumed step replays it (`context/assemble.ts:120-134`, `assemble-turn.ts:71`). That is where a block that
@@ -69,7 +69,7 @@ Each step is independently verifiable; each names its files and its tests (§3 g
 ### Step 0 — make room in `engine.ts` (no behaviour change)
 
 - **Touches:** `packages/agent/src/chat/engine.ts`, new `packages/agent/src/chat/outbox.ts`.
-- **Does:** move `flushOutbox` and `startSubagents` (`engine.ts:568-587`) into `outbox.ts` as
+- **Does:** move `flushOutbox` and `startSubagents` (`engine.ts:573-591`) into `outbox.ts` as
   `flushOutbox(deps, session)` taking `{ store, links, approvals, broadcast, subagents, owner, now }`. Frees about
   22 lines; the whole build adds about 12 to `engine.ts`. Any other extraction of similar size is acceptable;
   this one is the default because the build also adds a branch to it (step 5).
@@ -122,7 +122,7 @@ Each step is independently verifiable; each names its files and its tests (§3 g
 - **Touches:** new `chat/agent-reaction.ts` (`reactTool`, `agentReactionRefusal`, `singleEmoji`), `chat/tools.ts`
   (`ReactEffect` in the `Effect` union), `tools/search.ts` (`coreNamespace` takes the spec), `chat/stop.ts`
   (`effectWords` case), `chat/approvals.ts:78` (type exclusion), `chat/outbox.ts` (flush branch),
-  `chat/engine.ts` (`store.queue` branch at line 520 treats `react` like `deliver`/`link`; `toolSession` passes
+  `chat/engine.ts` (`store.queue` branch at line 519 treats `react` like `deliver`/`link`; `toolSession` passes
   `reactTool(effects, () => this.history().entries)`), `chat/instructions.ts` (`REACTING` lines in `CHAT_TASK`).
 - **Does:** see §6.
 - **Verify:** `[F10]` engine tests (§3, T4); `[M24.2]` stop tests still green (`effectWords` has a case).
@@ -300,7 +300,7 @@ Module: `packages/agent/src/chat/reaction-input.ts`.
   `CODE: reason` (the registry's convention, `tools/search.ts:27`), so the model reads the code.
 - **What is emitted:** `effects.push({ kind: "react", id: toolCallId, mid, emoji })`; result text
   `reacted ${emoji} to ${mid}; it shows once this step is committed`. `ReactEffect` joins `Effect` (`tools.ts:107`);
-  `store.queue` passes it untokened like `deliver`/`link` (`engine.ts:520`); `effectWords` gains the case;
+  `store.queue` passes it untokened like `deliver`/`link` (`engine.ts:519`); `effectWords` gains the case;
   `approvals.release`'s parameter excludes it (`approvals.ts:78`).
 - **Flush:** in `outbox.ts` (step 0), `effect.kind === "react"` → `messages.reactAsAgent(mid, emoji)`:
   re-check `agentReactionRefusal` against current entries (the message could have been compacted away — then
@@ -419,12 +419,12 @@ question starts or steers a turn as a `reaction` mailbox row, the pill collects 
 ## 10. Build brief (plan-direct; paste to the build session)
 
 You are the build session for **F10, reactions full circuit**, on the fletch checkout. Read, in order:
-`CLAUDE.md`, `docs/plan/KICKOFF.md`, this plan (`/home/hatch/workspace/docs/briefs/reactions-plan-fable-2026-10-23.md`),
+`CLAUDE.md`, `docs/plan/KICKOFF.md`, this plan (`docs/briefs/reactions-plan-fable-2026-10-23.md`),
 then the spec and dump beside it. Confirm the part id and tag against `docs/plan/parts.md` at kickoff (F10 unless
 Kyle renumbered); if the part section is not in `parts.md` yet, stop and say so — a build session never adds a part.
 
 **Base and branch.** Start from `origin/main` at `aa122a3` (or its current head if newer): `git fetch origin
-+refs/heads/main:refs/remotes/origin/main`, `git switch -c f10-reactions origin/main`. Do not branch from
++refs/heads/main:refs/remotes/origin/main`, then `git switch f10-reactions` (it already exists on `origin`, carrying this plan, the part section and the TODO row on top of `aa122a3`). Do not branch from
 `f9-hover-parity` (it holds no code). If F9 merges during the build, rebase onto `origin/main` before the final
 accept and re-run `test/workers/m29-message-actions.test.ts` and `m27-chat.test.ts`.
 
@@ -450,7 +450,7 @@ identities (`ada` = sam-solo, `pat-solo` for the second member).
 **Commits.** Conventional, signed off, naming the part: `git commit -s -m "feat(agent): F10 the agent reacts: core
 react tool, react effect, by on the reaction frame"`, `test(agent): F10 …`, `refactor(agent): F10 flushOutbox moves
 to chat/outbox.ts for the file cap`, `docs(plan): F10 done at <sha>`. End every commit message with
-`Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`. Show `git log -1 --oneline` and `git status --short`
+a `Co-Authored-By:` line naming the model that actually wrote the commit. Show `git log -1 --oneline` and `git status --short`
 after each.
 
 **Gates.** Per step: the touched test files. Before the final run: `pnpm check > "$LOG" 2>&1; echo "check exit $?"`,
