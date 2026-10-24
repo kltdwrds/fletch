@@ -216,7 +216,7 @@ export function shellMarkup(p: { chat: string; views: string; panel: string; set
 <aside id="drawer" class="qf-listcol qf-listcol--chat" aria-label="${SHELL_TEXT.chats}">
   <div class="drawer-top">${CHATS_FILTER_FIELD}<button id="archived-btn" class="qf-ibtn qf-ibtn--28" aria-haspopup="menu" aria-expanded="false" aria-label="${CHATS_TEXT.listOptions}">${ic("dots", "xs")}</button></div>
   <button id="close-drawer" class="vh">${SHELL_TEXT.closeChats}</button>
-  <div id="chats"><div class="qf-listhead">${CHATS_TEXT.side}<button id="new-chat" class="qf-ibtn qf-ibtn--28" aria-label="${SHELL_TEXT.newChat}">${ic("plus", "xs")}</button></div></div>
+  <div id="chats"><div class="qf-listhead">${CHATS_TEXT.side}<button id="new-chat" class="qf-ibtn qf-ibtn--28" aria-label="${SHELL_TEXT.newChat}" title="${SHELL_TEXT.newChat}">${ic("plus", "xs")}</button></div></div>
   <div id="archived" hidden></div>
   ${CHATS_FILTER_LIST}
   <div class="qf-colresize">${separator("list-resize", SHELL_TEXT.resizeList, COLUMNS.list)}<span class="qf-colresize-line"></span></div>

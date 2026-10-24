@@ -14,6 +14,18 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 `CF_LIVE_TOKEN`, and run the live-deploy workflow once (`docs/runbooks/live-deploy.md`). The same account can close
 the free-plan spike (Q2).
 
+### Q7 (F7), 2026-10-23: The sign-in return record is Kyle's to accept
+
+**Blocks:** F7, whole part. The part changes the published `@qyvr/host-cloudflare` login contract (one-way
+door), so under the runbook it cannot start until Kyle accepts the record proposed in the F7 plan (2026-10-23):
+after sign-in the host honours `/login?next=<path>` only for an absolute same-origin path not under `/login`,
+else `/`, with the open-redirect shapes planted in the part's tests. The fallback inside the part, if Kyle
+prefers no host change: a short-lived same-site cookie set by the agent on the sign-in redirect, read once at
+boot — then the record is two-way and the session sets it.
+
+**Recommended answer:** accept the record as proposed (Kyle was asked in chat 2026-10-23; the ask stands until
+he answers).
+
 ## Open, not blocking
 
 ### Q6 (F4), 2026-10-23: D-0010 is a stub until the artifact record lands

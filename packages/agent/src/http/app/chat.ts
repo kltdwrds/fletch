@@ -6,7 +6,9 @@
 // chat decides everything: a send is drawn as sent only once the chat answers `turn_started`, a refusal is
 // said in words with its code kept on the node, a decision is a request the chat answers, and a socket
 // quiet while a turn is shown working is asked for the chat's state (M19.1). Text from the server is
-// always set as text, never as markup.
+// always set as text, never as markup. A new chat (F8) is the placeholder at `/chats/new`: the composer open with
+// no chat connected and nothing on the server; its first send creates the chat, titled from the prompt, connects
+// it and sends the message once its history is drawn, in the same view.
 
 import { ANSWER_TIMEOUT_MS, OPEN_TIMEOUT_MS, RECONNECT_DELAYS_MS } from "../reconnect.ts";
 import { CHATS_CSS, CHATS_SCRIPT, CHATS_TEXT } from "./chats-list.ts";
@@ -174,6 +176,10 @@ function flow(d, text) {
   const w = el("span", text); w.className = "w qf-stream-chunk"; b.append(w);
 }
 let reply = null, thinking = null, conn = null, chatId = null, mainId = null, fresh = false;
+// The placeholder (F8): \`drafting\` while the view is a chat not yet made, \`draft\` its unsent text while the person is
+// elsewhere in this page session (never sent, never stored), and \`held\` the first send, waiting for the made chat's
+// history to be drawn before it goes.
+let drafting = false, draft = "", held = null;
 // Files staged for the next message (M24.3): each uploaded as soon as it is chosen or pasted, and sent by id.
 let staged = [];
 // The turn the page shows working and how much of its reply text it drew (M19.1); watch is its quiet-socket check.
@@ -193,7 +199,8 @@ const JOB_LINE = ${JOB_LINE.toString()}, JOB_BUTTON = ${JSON.stringify(JOB_BUTTO
 // is the socket's state (panel.ts). Nothing here writes a sentence about the socket.
 let sock = "connecting", busyNow = false;
 function showState() {
-  const live = sock === "connected";
+  // The placeholder has no socket: its composer is open for the draft (F8).
+  const live = sock === "connected" || drafting;
   input.disabled = !live; $("send").disabled = !live; $("attach").disabled = !live;
   input.placeholder = live ? COMPOSER.live : COMPOSER.down;
   drawSend();
@@ -365,6 +372,8 @@ function frame(e) {
     // this page joined midway streamed part of its reply before the socket opened: when it ends, the
     // page asks once for the history, which holds the whole of it.
     current = f.running ? f.running.turn : null; drawn = 0; working(!!f.running);
+    // The first send from the placeholder goes now that the made chat's history is drawn (F8), under its bubble.
+    if (held) { const m = held; held = null; if (dispatch(m)) tookOff(m); }
   }
   else if (f.type === "turn_started") {
     // A turn that goes on after a decision (M20.1) has no text: nothing the person typed starts it.
@@ -396,15 +405,45 @@ function frame(e) {
   }
   watchTurn();
 }
+// The list's row for the open chat wears aria-current; on the placeholder (null) none does.
+function currentRow(id) {
+  for (const r of $("chats").querySelectorAll("[data-chat]")) { const b = r.children[0]; if (id && r.dataset.chat === id) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); }
+}
+// Leaving the placeholder (F8) keeps its unsent text for the next time, out of the chat's composer; so does leaving a
+// first send still held (its chat made, its history not yet drawn): it never goes, and its words are the draft again.
+function leaveDraft() {
+  if (held) { held = null; drafting = true; }
+  if (!drafting) return;
+  draft = input.value; input.value = ""; drafting = false; drawSend();
+}
+// The placeholder (F8): the chat view with no chat connected, the composer open with the draft and focused. Drawn
+// again while it is on screen, it only takes focus.
+function openDraft() {
+  if (!drafting) {
+    leaveDraft();
+    if (conn) conn.stop();
+    endReply(); closeActions(); seeking = null;
+    chatId = null; drafting = true; held = null; log.replaceChildren(); reply = thinking = null; lastAt = null; current = null; stopping = null; drawn = 0; pending.clear(); gone.clear(); working(false);
+    currentRow(null);
+    input.value = draft; drawSend();
+  }
+  showState();
+  if (input.focus) input.focus();
+}
 function open(id) {
+  leaveDraft();
   if (conn) conn.stop();
   endReply(); closeActions();
   // A message sought in another chat (F3) is not sought once the person has moved on.
   if (seeking && seeking.chat !== id) seeking = null;
-  chatId = id; log.replaceChildren(); reply = thinking = null; lastAt = null; current = null; stopping = null; drawn = 0; pending.clear(); gone.clear(); working(false);
+  chatId = id; log.replaceChildren(); reply = thinking = null; lastAt = null; current = null; stopping = null; drawn = 0; pending.clear(); gone.clear(); held = null; working(false);
   // The address is the router's (F4): opening a chat never writes it, so a chat connected under another view leaves
   // that view's address alone. A fresh open gets the chat from the Person (M17.1).
-  for (const r of $("chats").querySelectorAll("[data-chat]")) { const b = r.children[0]; if (r.dataset.chat === id) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); }
+  currentRow(id);
+  connect(id);
+}
+// The chat's socket, kept connected; the first send (F8) connects the chat it made here without clearing its bubble.
+function connect(id) {
   conn = keepConnected(
     () => new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/chats/" + id + "/ws"),
     // The composer is open while the socket is live; its placeholder says why it is not (M23.2).
@@ -436,24 +475,50 @@ input.onpaste = (e) => {
   e.preventDefault();
   for (const f of files) upload(f, true);
 };
-form.onsubmit = (e) => {
+form.onsubmit = async (e) => {
   e.preventDefault();
   const text = input.value.trim();
   if (staged.some((s) => !s.ready)) { add("note", ATTACH.wait).dataset.code = "UPLOADING"; return; }
   const sent = staged.slice();
-  if ((!text && !sent.length) || !conn) return;
+  if ((!text && !sent.length) || (!conn && !drafting)) return;
   const id = crypto.randomUUID();
   const shown = [text, ...sent.map((s) => "+ " + s.name)].filter(Boolean).join(" · ");
   // Drawn faint until the chat answers that it stored it; held before the frame goes, since the answer can come at once.
   const node = add("you pending", shown, true);
-  pending.set(id, { text: shown, node });
   const frame = { type: "send", text, id, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
   if (sent.length) frame.attachments = sent.map((s) => s.id);
   // A reply names the message it quotes; the chat reads the quote's text from its own history (M29.4).
   if (replying) { frame.quote = replying.mid; drawQuote(node, replying); }
-  if (!conn.send(JSON.stringify(frame))) { pending.delete(id); node.remove(); regroup(); add("note", NOT_SENT.DOWN).dataset.code = "DOWN"; return; }
-  input.value = ""; staged = []; for (const s of sent) s.chip.remove(); drawStaged(); endReply();
+  const m = { id, shown, node, frame, sent };
+  if (drafting) { await create(m, text); return; }
+  if (dispatch(m)) tookOff(m);
 };
+// What a send that went leaves behind: the composer without its words, its files' chips and its quote. Until it
+// goes (a first send held for its chat's history, F8) the words stay, so a send that never goes is never lost.
+function tookOff(m) { input.value = ""; staged = staged.filter((s) => !m.sent.includes(s)); for (const s of m.sent) s.chip.remove(); drawStaged(); endReply(); }
+// A send goes over the socket under its bubble (drawn again where the history replaced the thread); one the socket
+// could not take is said so.
+function dispatch(m) {
+  if (!m.node.parentNode) { log.append(m.node); regroup(); }
+  pending.set(m.id, { text: m.shown, node: m.node });
+  if (conn && conn.send(JSON.stringify(m.frame))) return true;
+  pending.delete(m.id); m.node.remove(); regroup(); add("note", NOT_SENT.DOWN).dataset.code = "DOWN";
+  return false;
+}
+// The first send from the placeholder (F8): one create, titled from the prompt's own words (the Person keeps its own
+// default for a send with no words), then the chat connected under the bubble already drawn, the address replaced
+// with the chat's (Back belongs to where the person came from, never here) and the list drawn with its row; the
+// message goes once the chat's history is drawn, and the composer keeps its words until then. A refused create keeps
+// the draft in the composer and says so.
+async function create(m, text) {
+  const r = await post("/app/chats", text ? { title: promptTitle(text) } : {});
+  const b = await r.json().catch(() => ({}));
+  if (!r.ok || !b.chatId) { m.node.remove(); regroup(); lineError(CHATS.notOpened, b.code || "HTTP_" + r.status); return; }
+  drafting = false; draft = ""; chatId = b.chatId; held = m; $("conn").hidden = true;
+  connect(chatId);
+  go(chatPath(chatId), { replace: true });
+  await chats(chatId, true);
+}
 // The person's actions (M18.1, Q33): coming back to the tab, focus or the network checks the socket
 // once; typing reconnects one that is down. Nothing checks it on a timer.
 const act = (check) => { if (conn) conn.nudge(check); };

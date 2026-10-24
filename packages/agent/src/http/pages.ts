@@ -9,7 +9,9 @@
 // not-found page until then. Settings' addresses (F5) are its panes, each drawn over the page it was
 // opened from: `/settings`, `/settings/<pane>`, a nested pane under its parent's and a connector at
 // `/settings/connectors/<id>`. A message's position is the fragment (`/chats/<id>#<mid>`), which the server never
-// sees. No API path is a page (`test/workers/f4-pages.test.ts`).
+// sees. A new chat is the literal `/chats/new` (F8): a page of the chat view with no id, matched before the uuid row,
+// which holds a draft on the page and nothing on the server until its first message is sent. No API path is a page
+// (`test/workers/f4-pages.test.ts`).
 
 /** A chat's id as the Person mints it (routes.ts' `CHAT_ID`, the same shape). */
 const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
@@ -32,6 +34,7 @@ export const COLLECTIONS: Record<string, string> = { files: "notes/plan.md" };
 
 export const PAGES: readonly PageRow[] = [
   { name: "home", pattern: "^/$", view: "chat", example: "/" },
+  { name: "new", pattern: "^/chats/new$", view: "chat", example: "/chats/new" },
   { name: "chat", pattern: `^/chats/(${UUID})$`, view: "chat", example: "/chats/6f1c2a4e-8b3d-4c5e-9f70-1a2b3c4d5e6f" },
   { name: "feed", pattern: "^/feed$", view: "feed", example: "/feed" },
   { name: "goals", pattern: "^/goals$", view: "goals", example: "/goals" },
@@ -81,3 +84,6 @@ export const wantsPage = (request: Request) => request.method === "GET" && (requ
 
 /** A chat's address, and a message's in it (the fragment names the bubble's `mid`). */
 export const chatPath = (chatId: string, mid?: string | null) => `/chats/${encodeURIComponent(chatId)}${mid ? `#${encodeURIComponent(mid)}` : ""}`;
+
+/** The drafted placeholder's address (F8): a chat not yet made. */
+export const NEW_CHAT_PATH = "/chats/new";

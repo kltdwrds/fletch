@@ -401,3 +401,70 @@ path; the session cookie's attributes.
   sets a short-lived same-site cookie on the 302 that the shell reads once at boot and clears.
 - Ruling: only an absolute same-origin path not under `/login` is honoured — because `next` is the classic open
   redirect and a loop into `/login` is a dead page — if wrong, only the list of refused shapes grows.
+
+## F8 A new chat is a drafted placeholder at `/chats/new`
+
+**Read:** F4's grammar and router (D-0009), F5's overlay history rules. Kyle's direction, 2026-10-23: a new chat
+starts as a client-side drafted placeholder, fast to navigate to; the chat is created and named from the first
+input when it is sent, and the address reroutes to the assigned id as the response comes in (muse.ai's
+`/thread/new` flow). Then `packages/agent/src/http/pages.ts` (the chat row is a strict UUID pattern — the literal
+`new` needs its own row, matched before any id pattern), `packages/agent/src/http/app/chats-list.ts`
+(`NEW_CHAT.onclick` at line 159 creates a chat over `POST /app/chats` on the click, then navigates — the behaviour
+this part removes), `packages/agent/src/http/app/chat.ts` (the composer, the send path and where the open chat's
+id is held), `packages/agent/src/http/app/router.ts` (the replace/push choices), and the server side of
+`POST /app/chats` in `packages/agent/src/http/app-routes.ts` (what a created chat's title is before any rename:
+today the literal `New chat`). Also the `#new-chat` button in `packages/agent/src/http/app/shell.ts` (line 219)
+and the `qf-ibtn` styles: Kyle asked for a hover state on the `+`, with the tooltip naming the action, as Muse's
+`+` shows `New side chat` on hover.
+
+**Scope:** `/chats/new` is a page in the grammar that holds a draft; nothing exists on the server until the
+first message is sent.
+
+1. The grammar gains the literal row `/chats/new` (view `chat`, no id). It never matches a UUID row and no UUID
+   is ever `new`. The server serves the page on it like any page path; a signed-out browser is sent to sign in
+   as elsewhere (F7's return is not this part's problem).
+2. Clicking New side chat navigates to `/chats/new` at once — a push, like opening any chat — and fires **no**
+   `POST /app/chats`. The composer is focused and ready. An unsent draft's text stays in the composer when the
+   person navigates away and back to `/chats/new` in the same page session; it is never sent and never saved
+   anywhere else.
+3. The first send from the placeholder creates the chat and sends the message through the existing paths (one
+   `POST /app/chats`, then the message on the created chat), and when the creation answers, the address is
+   **replaced** with `/chats/<id>` — Back from the created chat never lands on the placeholder. The reply streams
+   into the same view without a redraw of the conversation.
+4. The created chat is named from the first prompt: when its first message lands, its title in the list and the
+   document title is drawn from that prompt (trimmed, on one line, sensibly capped), not the literal `New chat`,
+   unless the person renames it — a rename always wins, before or after. The mechanism (server names it on the
+   first message, or the client sets it through the rename path) is the session's choice; the claim is what the
+   person sees. A chat created any other way with no message keeps `New chat`.
+5. Leaving `/chats/new` without sending creates nothing: no empty chat appears in the list, then or after a
+   reload. (Today's two-step: every `+` click leaves a real `New chat` row behind — the violation this part
+   removes.)
+6. The `#new-chat` button gets its hover state: on hover (and on keyboard focus) it shows the same visible
+   treatment the design system's icon buttons use for hover, and a tooltip naming the action (`New side chat`,
+   the button's existing accessible name). No other button's behaviour changes.
+
+**Acceptance:** `test/workers/f8-new-chat.test.ts` (the page harness and `serve`): booted at `/chats/new` the
+composer is the chat view with no id and no `POST /app/chats` is recorded while the page opens or the person
+types (the violation planted: the old click handler's create-on-open fails this); clicking `#new-chat` from an
+open chat pushes `/chats/new` and records no create; sending a first message records exactly one create, the
+address is replaced by `/chats/<new id>` (a following `history.back()` does not return to `/chats/new`), and
+the reply renders in place; after the send the list row and the document title show the prompt-derived name,
+not `New chat`; navigating from `/chats/new` to the main chat and back keeps the unsent text and still records
+no create; a reload at `/chats/new` serves the page (200). The hover claim is covered in the harness by the
+button's tooltip text and hover class hook, and by eye at UAT — CSS pseudo-classes are not asserted in tests.
+
+**Not in scope:** an LLM-summarised title (the name is drawn from the prompt's own words; a summariser is a
+later part if Kyle wants one); attachments staged on the placeholder (the composer's existing attach flow is
+unchanged — if it needs a chat id today, that limit stays and is said in the part's report); drafts surviving a
+reload; the main chat's creation, which is the Person's own; F7's sign-in return.
+
+**Rulings:**
+
+- Ruling: creation waits for the first send — because a chat nobody wrote in is list noise (Kyle's screenshot
+  showed two `New chat` rows from two clicks) and Muse's `/thread/new` proves the placeholder flow — if wrong,
+  creation returns to the click and the placeholder is only an address.
+- Ruling: the reroute replaces, never pushes — because the placeholder was never a place the person was; Back
+  from the new chat belongs to where they came from — if wrong, it pushes and Back shows an empty composer.
+- Ruling: the name comes from the first prompt's own words, set once when the first message lands — because the
+  list must say which chat this is without a model call on the send path — if wrong (Kyle wants a summary), a
+  later part renames it when the first reply completes, and this part's claim moves there.

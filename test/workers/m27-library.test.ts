@@ -49,9 +49,13 @@ async function pageFor(w: World, person: string, layout: Layout = {}) {
     if (p.ui.device() !== "desktop") await click("lib-pick");
     await click(`lib-pick-${k}`);
   };
+  // A viewer is drawn once its signed link answers (`libLinkInto`, WebCrypto on the thread pool), which on an idle 4
+  // vCPU box takes 16 to 36 immediates and under a full run more than the 40 `settle` waits: the wait is on the
+  // drawing, bounded, then the usual settle. A file the viewer never draws into (a refusal) runs the bound out.
   const open = async (path: string, id = "lib-list") => {
     const it = item(path, id);
     await (it.children[0]?.onclick ? it.children[0] : it).onclick?.();
+    for (let i = 0; i < 2000 && p.byId("viewer-body").children.length === 0; i++) await new Promise((r) => setImmediate(r));
     await settle();
   };
   const kebab = async (path: string) => {

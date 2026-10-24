@@ -303,15 +303,14 @@ describe("[M27.3] the chats list on ListRow", () => {
     expect([...rows(q.byId("chats")), ...rows(q.byId("archived"))].map((r) => r.title)).toEqual([CHATS_TEXT.main]);
   });
 
-  it("New side chat opens one at the Person and opens it; the open chat's row is current", async () => {
+  it("New side chat opens the placeholder (F8): nothing at the Person and no row current until its first send; the button stays in the head", async () => {
     const w = authorityWorld();
     const p = await pageOf(w, ada.email, { desktop: true });
     await p.byId("new-chat").onclick?.();
     await settle();
-    const made = w.host(ada.email).chats.entries().filter((c) => c.kind === "side");
-    expect(made).toHaveLength(1);
-    expect(p.sockets.at(-1)?.url).toBe(`wss://solo-sam.example/chats/${made[0]?.id}/ws`);
-    expect(rows(p.byId("chats")).map((r) => r.current)).toEqual([null, "page"]);
+    expect(w.host(ada.email).chats.entries().filter((c) => c.kind === "side")).toHaveLength(0);
+    expect([p.location.pathname, p.sockets.length, p.sockets.at(-1)?.closed?.reason]).toEqual(["/chats/new", 1, "switched"]);
+    expect(rows(p.byId("chats")).map((r) => r.current)).toEqual([null]);
     expect(p.byId("new-chat").parent).toBe(p.byId("chats").children[1]);
   });
 });
