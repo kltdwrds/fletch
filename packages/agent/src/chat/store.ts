@@ -146,8 +146,8 @@ export class ChatStore {
   /**
    * The reactions on each message, and on a reply its quote, drawn above it, with the reply's text the person's own
    * words alone (M29.4). A reaction is drawn by who put it there: the agent's first, then the owner's (F10), so the
-   * pill reads the same on every reload. Anyone else's is never drawn: the chat answers its owner. Reactions are
-   * drawn only; the transcript, so the model, never has them.
+   * pill reads the same on every reload. Anyone else's is never drawn: the chat answers its owner. Reactions never
+   * enter the transcript: the model reads the standing ones in each turn's envelope (`reactionsLead`).
    */
   private withActions(entries: HistoryEntry[]): HistoryEntry[] {
     const actions = this.actions;

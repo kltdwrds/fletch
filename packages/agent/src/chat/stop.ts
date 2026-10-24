@@ -11,7 +11,8 @@ export const STOP_CODE = "TURN_STOPPED";
 export const stopKey = (turnId: string) => `stop:${turnId}`;
 
 const label = (tool: string) => tool.replaceAll("_", " ");
-const clip = (text: string) => (text.length > 80 ? `${text.slice(0, 79)}…` : text);
+/** A message's words cut to 80 characters, for a line that names it. */
+export const clip = (text: string) => (text.length > 80 ? `${text.slice(0, 79)}…` : text);
 
 /** One committed effect in words: what already happened, or was already handed on, before the stop. */
 export function effectWords(effect: Effect): string {

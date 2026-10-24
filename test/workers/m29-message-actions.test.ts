@@ -365,17 +365,6 @@ describe("[M29.4] reactions", () => {
     expect(await answerFrame(ada.email, JSON.stringify({ type: "react", mid: "<b>", emoji: "👍" }), chat)).toMatchObject({ type: "error", code: "FRAME_UNPARSEABLE" });
     expect(w.chats.harness(adaMain).rows("SELECT * FROM reactions")).toEqual([]);
   });
-
-  it("the model never sees a reaction: Ada's next turn's input carries none", async () => {
-    const { w, adaMain } = await seeded([{ text: "Noted." }]);
-    const chat = w.chats.harness(adaMain).instance;
-    expect(chat.react(ada.email, "m2", "😮")).toEqual({ ok: true, mid: "m2", emoji: "😮" });
-    await w.say(ada.email, "What time again?", adaMain);
-    const input = JSON.stringify(w.fake.requests.at(-1)?.inputs.messages);
-    expect(input).toContain("What time again?");
-    expect(input).not.toContain("😮");
-    expect(w.chats.harness(adaMain).rows("SELECT body FROM messages").some((r) => String(r.body).includes("😮"))).toBe(false);
-  });
 });
 
 // ---- (4) Reply ----

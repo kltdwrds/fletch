@@ -12,6 +12,7 @@ import { compactIfDue } from "./compact-turn.ts";
 import type { TurnContext } from "./gate.ts";
 import type { EngineHooks } from "./hooks.ts";
 import { CHAT_TASK, PLATFORM_INSTRUCTIONS, REQUEST_TASK } from "./instructions.ts";
+import { reactionsLead } from "./message-actions.ts";
 import type { Projections } from "./projection.ts";
 import { otherReaders, sharedContext } from "./shared-context.ts";
 import { standingSnapshot } from "./standing-copy.ts";
@@ -54,6 +55,7 @@ export async function assembleTurn(d: AssembleDeps, turnId: string, person: stri
   const shared = await sharedContext({ company: hooks.companyInstructions, memory: hooks.memory?.(person), meta: (k) => store.meta(k), keep, context: d.context, turnId, person });
   if (!shared.ok) return shared;
   const transcript = liveTranscript(store);
+  const owner = store.meta("owner") ?? person;
   const messages = assemble({
     platform: PLATFORM_INSTRUCTIONS,
     // A chat opened for a colleague's request keeps its own task block for its whole life.
@@ -64,7 +66,8 @@ export async function assembleTurn(d: AssembleDeps, turnId: string, person: stri
     memory: shared.memory,
     skills: shortlist,
     toolReference: toolReference(session.registry.namespaces, session.loaded),
-    envelope: { now: d.now(), timeZone, surface: "chat", modelId, owner: person },
+    // The reactions standing now (F10): per turn, in the envelope, since a reaction changes after the message it is on.
+    envelope: { now: d.now(), timeZone, surface: "chat", modelId, owner: person, reactions: reactionsLead(store.history(), hooks.nameOf?.(owner) ?? owner) },
     tools: session.tools,
     transcript,
   });

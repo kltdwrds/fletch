@@ -60,6 +60,8 @@ export interface Envelope {
   owner: string;
   /** Set when the sender is not the owner (a colleague or an agent); arrives with M7. */
   counterpart?: string;
+  /** The reactions standing on recent messages, already fenced (F10); appended only when non-empty. */
+  reactions?: string;
 }
 
 export interface ContextInputs {
@@ -114,6 +116,7 @@ export function envelopeText(e: Envelope): string {
     `owner: ${e.owner}`,
   ];
   if (e.counterpart) lines.push(`sender: ${e.counterpart} (not the owner)`);
+  if (e.reactions) lines.push("", e.reactions);
   return lines.join("\n");
 }
 
