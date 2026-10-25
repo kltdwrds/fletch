@@ -78,6 +78,7 @@ export const PERSON_MIGRATIONS: readonly Migration[] = [
 
 export const COMPANY_MIGRATIONS: readonly Migration[] = [
   schema("company.authority", B, AUTHORITY),
+  schema("company.grants", B, GRANTS),
   schema("company.connectors", B, CONNECTORS),
   schema("company.instructions", B, INSTRUCTIONS),
   schema("company.members", B, MEMBERS),
