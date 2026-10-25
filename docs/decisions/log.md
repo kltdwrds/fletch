@@ -88,3 +88,11 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   message — the agent re-asked it — and is delivered as the answer to the pending question; any other reaction
   stays ambient. A `chat.reaction` log line records the decision (answer vs ambient) so Workers Logs shows it.
   Confirming test: `test/workers/f10-reactions.test.ts` ("an earlier phrasing answers").
+- 2026-10-24 The Company's own migrations create the grants tables (Kyle's UAT call): `COMPANY_MIGRATIONS`
+  never included the grants schema, so a real Company object — whose constructor runs only its own list —
+  had no `grants` table, and the approval step for a company-scoped card (`jobs_enable`) failed with
+  "no such table: grants" on staging, leaving an agent-registered job off. The harness runs
+  `HARNESS_MIGRATIONS` (every list) against one storage, so the missing entry never showed in tests.
+  Confirming test: `test/workers/m25-3-migrations.test.ts` ("the Company's own list creates the grants
+  tables its authority uses") — it builds a Company authority over only `COMPANY_MIGRATIONS` and creates
+  a company grant, and fails with the staging error when the entry is removed.
