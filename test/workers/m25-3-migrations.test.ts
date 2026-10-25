@@ -4,14 +4,17 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Company } from "../../packages/agent/src/objects/company.ts";
+import { CompanyAuthority } from "../../packages/agent/src/company/authority.ts";
+import { CompanyMembers } from "../../packages/agent/src/company/members.ts";
+import { CompanyTeams } from "../../packages/agent/src/company/teams.ts";
 import { Ledger } from "../../packages/agent/src/objects/ledger.ts";
 import { Person } from "../../packages/agent/src/objects/person.ts";
 import { Vault } from "../../packages/agent/src/objects/vault.ts";
-import { OBJECT_MIGRATIONS, type ObjectKind } from "../../packages/agent/src/migrations/catalog.ts";
+import { COMPANY_MIGRATIONS, OBJECT_MIGRATIONS, type ObjectKind } from "../../packages/agent/src/migrations/catalog.ts";
 import { migrate, migrationStatus, type Migration } from "../../packages/agent/src/migrations/engine.ts";
 import { type Probe, sweepTenant } from "../../packages/agent/src/migrations/sweep.ts";
 import { ObjectHarness } from "../support/object-harness.ts";
-import { ada } from "./support/authority-world.ts";
+import { ada, T0 } from "./support/authority-world.ts";
 
 const FIXTURES = join(import.meta.dirname, "../fixtures/db/release-m25.2");
 const fixture = (kind: string) => readFileSync(join(FIXTURES, `${kind}.sql`), "utf8");
@@ -92,6 +95,30 @@ describe("[M25.3] named migrations", () => {
   it("every exported store schema is in the catalog: a new SCHEMA a list forgets fails here", () => {
     expect(unlistedSchemas()).toEqual([]);
     expect(unlistedSchemas({ "x/store.ts": "export const SCHEMA = `CREATE TABLE IF NOT EXISTS x (a INTEGER)`;" }, "")).toEqual(["x/store.ts"]);
+  });
+
+  it("the Company's own list creates the grants tables its authority uses", () => {
+    // The regression: COMPANY_MIGRATIONS never included the grants schema, so a real Company object —
+    // whose constructor runs only its own list — had no grants table, and the approval step for a
+    // company-scoped card (jobs_enable) failed with "no such table: grants" on staging. The harness
+    // runs HARNESS_MIGRATIONS (every list) against one storage, so it never showed.
+    const h = new ObjectHarness("company-grants", (ctx) => ctx as { storage: never }, {});
+    h.autoMigrate = false;
+    const storage = h.instance.storage;
+    migrate(storage, COMPANY_MIGRATIONS);
+    const members = new CompanyMembers(storage, JSON.stringify([{ email: ada.email, role: "admin", name: "Ada" }]), () => T0);
+    const teams = new CompanyTeams(storage, members, () => T0);
+    const authority = new CompanyAuthority(storage, "solo-sam", members, teams, () => T0);
+    const created = authority.createGrant(ada.email, {
+      grantor: { kind: "company", id: "solo-sam" },
+      grantee: { kind: "any-member" },
+      subject: { kind: "action-kind", ref: "jobs.enable" },
+      mode: "auto",
+      created_from: "approval-card",
+      constraints: {},
+    });
+    expect(created.ok).toBe(true);
+    if (created.ok) expect(authority.snapshot().grants.map((g) => g.id)).toContain(created.grant.id);
   });
 });
 
