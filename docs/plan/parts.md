@@ -499,3 +499,378 @@ reload; the main chat's creation, which is the Person's own; F7's sign-in return
 - Ruling: the pending question is the agent's last drawn message carrying `?` — because the ASKING contract makes that the agent's convention and the engine holds no other state — if wrong, an explicit `awaiting_reply` marker on the turn replaces the test.
 - Ruling: the agent's reaction is set/replace, never toggle — because the outbox replays an effect after a crash and must land on one state — if wrong, a `remove` flag joins the tool.
 - Ruling: reactions enter context through the envelope, never the stored transcript — because they change after the fact and the envelope is the per-turn, unpersisted, replayed block — if wrong, a harness message is appended at assembly and recorded for replay.
+
+## F11 Activity design: the task drawer specimens, before any code draws one
+
+**Read:** `~/workspace/qyvr-for-muse/planning/activity-plan-fable-2026-10-25.md` §(b.7) and §(c) F11; the primer's §1
+(the five PR #15 screenshots, catalogued) and §5 Phase 0; `packages/agent/src/design/fletch/ds/components/bundle.css`
+(`.qf-tl`, `.qf-items-head`, `.qf-status`, `.qf-dlg--960`, `.qf-src`, `.qf-acc`, the phone sheet rules at the
+`qf-scrim2--sheet` block); `packages/agent/src/http/app/panel.ts` (`PANEL_CSS`, the job dialog's markup and
+`openJob`); `scripts/ds-tokens.ts` (how the bundle reaches `tokens.ts`); `test/workers/f9-hover-parity.test.ts`
+(served-CSS assertions, the style to copy). No one-way door.
+
+**Scope:** The drawer's look is settled in the design system before F15 draws it. One new comment block in
+`bundle.css`, "Task drawer (activity)", holding: the drawer body `.qf-task` (two panes from 768 px, the timeline
+at 360 px and the detail filling the rest; one pane under 768 with `.qf-task.is-detail` showing the detail and a
+Back control); the head row `.qf-task-head` with the status pill on `.qf-status` and four tones `--done`,
+`--run`, `--fail`, `--wait` (dot colours from the tokens' success, accent, error and tertiary fills) and the
+title; the timeline on `.qf-tl` with a selected row `.qf-tl li.is-sel`, a failed rail mark `.qf-tl .rail
+b.is-fail`, a waiting mark `.is-wait`, a nested list `.qf-tl--nested` for a coordinator's workers, and a one-line
+ellipsised title `.qf-tl .nm`; the section header reusing `.qf-items-head` for `SUBAGENT 01`; the code block
+`.qf-code` (the `.qf-src` face) with its control bar `.qf-code-bar` (Copy, Download), the fold `.qf-code.is-cut`
+and the Show more control `.qf-more`; the file card `.qf-fcard` (name, type, an eight-line preview); the empty
+and could-not-read states reuse `.panel-note`. A static specimen document,
+`packages/agent/src/design/fletch/ds/specimens/task-drawer.html`, uses only the bundle's classes and shows the
+PR #15 drawer with its main steps, a `SUBAGENT 01` section, one selected step with a code detail, one edit
+detail and the summary with two file cards, in light and dark. A screenshot set of that specimen at 1280 px
+and 390 px, light and dark, made with the pinned `playwright-core` Chromium, is attached to the PR for Kyle's
+approval. `pnpm ds` regenerates `tokens.ts`; neither it nor `icons.ts` is edited by hand.
+
+**Acceptance:** `test/workers/f11-activity-specimens.test.ts`: the served `PAGE_CSS` (`http/page.ts`) carries each
+rule named above by selector (planted: deleting `.qf-tl li.is-sel` from the bundle fails it); the two-pane rule
+sits inside a `min-width: 768px` media query and the one-pane rule outside it (planted: an ungated two-pane
+rule fails); the specimen document's class names are all defined in the bundle (planted: one undefined class
+fails); the specimen draws every step kind the primer's §1.3 catalogues (a bash-shaped code step, an edit, a
+launch, a summary with file cards, a bare Started) as text in the document. By eye, not by test: Kyle approves
+the screenshot set or returns questions before F15 starts.
+
+**Not in scope:** any script, route or store; the page's drawer (F15); the detail's behaviour (F16); copying the
+Claude Design artifacts, which hold no activity screen (the plan's §(b.7)); glyph additions to `SCRIPT_GLYPHS`
+(F15 takes them when a drawing needs them).
+
+**Rulings:**
+
+- Ruling: the drawer extends the bundle's own goal-detail timeline (`.qf-tl`), status pill (`.qf-status`) and
+  section header (`.qf-items-head`) — because they exist, match the screenshots' rail-and-glyph shape and keep
+  one timeline language across goals and tasks — if wrong, a `.qf-task-tl` of its own is one renamed block.
+- Ruling: two panes from 768 px, the panel's own pin breakpoint — because the panel is pinned beside the chat
+  from the same width (`shell.ts`, M29.2) and one breakpoint is one rule — if wrong, the drawer's own breakpoint
+  is one media query.
+- Ruling: the truncation rules are three and stated here: a list title is one line, ellipsised at the pane
+  edge; a command, a script or a change in the detail is never truncated; a result block folds past 40 lines
+  behind Show more and says "cut at 20,000 characters" when the route cut it — because the reference's output
+  truncation had no affordance (primer §1.4) — if wrong, the fold length and the route cap are two constants.
+
+## F12 A task is a record: a turn's work becomes a titled task with its join keys
+
+**Read:** `~/workspace/qyvr-for-muse/planning/activity-plan-fable-2026-10-25.md` §(b.1), §(b.6) and §(c) F12; the primer's
+§2, §4.2 and decisions 6.1–6.3, 6.6; `packages/agent/src/chat/store.ts` (`turns`, `turn`, `history`, the
+`typed:` meta, `compactBefore`), `packages/agent/src/chat/mailbox.ts` (the start-kind read at the
+`delivery = 'start'` query), `packages/agent/src/chat/engine.ts` (`send`, `request`, `handoff`, `beginHandoff`,
+`cardsFor`, `lastAt`), `packages/agent/src/objects/chat.ts` (`cardsFor`, `lastAt`, `search` as owner-checked
+reads), `packages/agent/src/http/app-routes.ts` (`/app/activity`, the approvals fan-out, `part`),
+`packages/agent/src/index.ts` (the `app` directory at the `activity:` line), `packages/agent/src/http/app/chats-list.ts`
+(`promptTitle`, `TITLE_FROM_PROMPT`), `packages/agent/src/obs/activity-words.ts` (keep the words tables, delete the
+note projection), `packages/agent/src/grants/journal.ts` (`runId` is the turn id; `id` is the effect id). No
+one-way door: no schema changes.
+
+**Scope:** Every main-agent turn's work is a task the owner can list, without a gated effect having happened.
+
+1. `packages/agent/src/chat/activity.ts`: `TaskRecord { id, chatId, title, origin: "typed" | "request", status:
+   "running" | "waiting" | "done" | "failed" | "stopped", code, startedAt, endedAt, turnIds, stepCount, groups,
+   summary: null, capped: false }` and `tasksOf(store, mailbox)` / `taskOf(store, mailbox, id)`. The anchor rule
+   from the plan's §(b.1): a turn begun by the person's own words (the `typed:` meta, or a mailbox start of kind
+   `user`) or by a colleague's request (`requestText:` meta) is an anchor and a task; every other turn attaches to
+   the latest anchor before it. `stepCount` is the number of `toolCall` parts across the task's turns, read with
+   a new `ChatStore.rowsOfTurns(turnIds)` that does not filter `compacted` (the steps themselves are F13).
+2. `promptTitle` and `TITLE_FROM_PROMPT` move to `packages/agent/src/chat/prompt-title.ts`; `chats-list.ts`
+   re-exports them. A typed task's title is `promptTitle` of the anchor's text; a request task's is
+   `promptTitle` of its `requestText:` meta.
+3. `ChatEngine.tasksFor(person)` and `taskFor(person, id)` (null unless `person` is the owner, as `cardsFor`),
+   exposed on the `Chat` object; `AppDirectory.chatTasks(person, chatId)` and `chatTask(person, chatId, turnId)`;
+   `index.ts` wires them to `getAgentByName(env.CHAT, chatId)`.
+4. `GET /app/activity` answers `{ ok, tasks, unread }`: the person's chats from `dir.chats(view)`, each asked in
+   parallel for its tasks (`TASKS_PER_CHAT = 50` newest), merged newest first by `startedAt`, cut at
+   `TASKS_SHOWN = 100`; a chat that could not be read is in `unread` with its code. `GET
+   /app/activity/<chatId>/<turnId>` answers `{ ok, task }` or the refusal with its code (403 on `CHAT_NOT_OWNER`,
+   404 on `TASK_NOT_FOUND`). `notesOf`, `ActivityNote` and the Ledger `activity` wiring are deleted.
+5. The panel's Activity tab (`panel.ts` `sheetActivity`) draws the tasks as `prow`s in day groups: title, the
+   status in words from one table (`ACTIVITY_TEXT.status`: "Complete", "Running", "Waiting on you", "Failed:
+   <code>", "Stopped"), the time; the glyph by status (`ACTIVITY_GLYPH` re-keyed: `check`, `pulse`, `bell`,
+   `x`, `dot`). Rows are not yet buttons (F15). `activityEmpty` stays, said only when there are no tasks.
+
+**Acceptance:** `test/workers/f12-activity-tasks.test.ts` (the authority world and the `m27-panel` page harness):
+a turn that only writes a file (`file_write`, no gated effect) produces a task with its title from the prompt,
+`done`, start and end times and one turn id, and the Activity tab draws it instead of "Nothing yet" while the
+Ledger holds no journal row for it (the planted violation: a list read from the journal alone fails); a mail
+proposal decided later continues under the same task (the continuation turn attaches); a delegation's handoff
+turn attaches to the task that delegated; a colleague's request is its own task titled from the request;
+a compacted anchor still lists with its step count (`compactNow`, then the read; planted: a `compacted = 0`
+filter in `rowsOfTurns` fails); Bo cannot list or open Ada's task (his list has none; `GET /app/activity/<ada's
+chat>/<turn>` answers 403 with `CHAT_NOT_OWNER`); a chat whose read fails is named in `unread` and the tab says
+"Could not read" for it, never empty; `promptTitle` through `chats-list.ts` is unchanged (the F8 test still
+passes).
+
+**Not in scope:** the steps (F13), sub-agent sections (F14), the drawer (F15), typed detail (F16); a job run as a
+task (its gated effects leave the Activity tab; the Upcoming tab's run history keeps them — a later part makes
+runs tasks on `jobs/store.ts`'s steps); an address for a task.
+
+**Rulings:**
+
+- Ruling: a task is an anchor turn plus the turns that continue it without new words from the person — because
+  `MAX_STEPS_PER_TURN` is 8 and a reviewer's handoff is its own turn, so one turn per task would split one
+  request's work into untitled pieces — if wrong, `tasksOf` returns one task per turn and the attach step goes.
+- Ruling: the title is the anchor's own words under F8's cap, no model call — because the list must name the
+  task on the read path and F8 settled the cap — if wrong, a later part renames from the summary.
+- Ruling: the journal-only Activity feed is deleted, not kept beside the tasks — because two lists of what the
+  agent did drift, and the journal's rows are now joined into the tasks' steps (F13) — if wrong, an "Other
+  activity" group returns from the journal rows whose `runId` is no chat turn.
+
+## F13 The step timeline: a task's tool calls, in order, with their results
+
+**Read:** `~/workspace/qyvr-for-muse/planning/activity-plan-fable-2026-10-25.md` §(b.2), §(b.4) and §(c) F13; the primer's
+§1.2 (the step catalogue), §1.5, §4.3, decision 6.6; `packages/agent/src/chat/history.ts` (`visibleHistory`,
+`textOf`: what the timeline must not reuse and why), the pi-ai `ToolResultMessage` type
+(`node_modules/@earendil-works/pi-ai/dist/types.d.ts`, `toolCallId`, `isError`, `timestamp`, `durationMs`,
+`details`), `packages/agent/src/chat/turn.ts` (the barrier; `afterToolCall` fences every result),
+`packages/agent/src/context/fence.ts`, `packages/agent/src/files/tools.ts`, `packages/agent/src/code/tool.ts`,
+`packages/agent/src/chat/todo.ts`, `packages/agent/src/memory/tools.ts`, `packages/agent/src/tools/registry.ts`
+(a tool's error is `CODE: reason`), `packages/agent/src/chat/approvals.ts` (`row`: journal `id` and `runId`),
+`packages/agent/src/chat/tools.ts` (`ActionEffect.detail`), `packages/agent/src/objects/ledger.ts` (`journalRows`).
+No one-way door.
+
+**Scope:** A task's steps are its tool calls as the transcript stores them, named by code.
+
+1. `packages/agent/src/chat/activity-steps.ts`: `StepRecord { n, turnId, callId, kind, tool, title, state:
+   "started" | "done" | "failed" | "waiting" | "refused", code, startedAt, endedAt, durationMs, detail }` and
+   `stepsOf(rows, journal)`: each `toolCall` part of an assistant message in seq order is a step; its result is
+   the `toolResult` with the same `toolCallId`; `startedAt` is the message's `timestamp`, `endedAt` the
+   result's, `durationMs` the result's; the result's text is read with the outer `tool:<name>` fence stripped
+   (an `unfence` beside `fence`). `send_to_user` and `react` are not steps.
+2. `STEP_WORDS`, one table by tool name: the kind (`read | edit | write | delete | search | code | todo | memory
+   | load | launch | close | action | observe | other`) and the title in code's words ("Read `<path>`",
+   "Edited `<path>`", "Wrote `<path>`", "Searched for `<pattern>`", "Ran a script", "Updated the checklist: 2
+   open, 3 done", "Saved to memory", "Loaded the jobs tools", "Started 1 sub-agent: <first line of the brief>",
+   a gated action by its label); an unknown tool is "Called <tool with spaces>". A step whose result `isError`
+   is `failed` with the code parsed from the leading `CODE:` token (else `TOOL_FAILED`) and the title `<title>
+   failed (<CODE>)`. The same path edited twice is two steps; the same tool called twice is two steps.
+3. The journal join: for the task's turn ids, the Ledger's rows for the person with `runId` in them, matched
+   to a step by `id === callId` or `id === callId + ":decision"`: outcome `DONE` → `done`, `PENDING` →
+   `waiting`, a denial → `refused` with the outcome as its code; the decision and the outcome words
+   (`OUTCOME_WORDS`, kept) go into the detail's lines. Memory tools have no row and need none.
+4. `STEPS_PER_TASK = 200`: past it, the first 199 steps, a marker step saying how many are not shown, then the
+   summary; `TaskRecord.capped` is true. `summaryOf`: the last done turn's final assistant text, plus up to
+   three file cards for the paths of `edit` and `write` steps (newest first), each with the first eight lines
+   of the change as preview. The summary is the task's last step (`kind: "summary"`), never the title.
+5. `detailOf(step)` fills the plan's §(b.4) `StepDetail` for every kind, with the route's `BLOCK_CHARS =
+   20_000` cut per block and `cut: true` when it cut. `GET /app/activity/<chatId>/<turnId>` now answers
+   `{ ok, task, steps }`, the summary last.
+
+**Acceptance:** `test/workers/f13-activity-steps.test.ts` (the authority world with the working tree, as
+`m24-3-*` tests use it): a scripted task of the fallback shape (file_read, file_edit, file_edit of the same path,
+code_execute whose script throws, code_execute that returns, todo_write, memory_write, a final text) lists its
+steps in that order with the table's titles and kinds; the failed script step is `failed` with its code in the
+title and in the detail's result; the two edits are two steps (planted: a dedupe by path fails); every step with
+a stored result carries a start time and a duration; a gated action's step carries the journal's outcome by
+call id (an auto mail → `done`; a card left pending → `waiting`; a declined card → `refused` with `DECLINED`),
+and a join that drops `id` or `runId` before matching finds nothing (planted); a compacted task lists every step
+(planted: `compacted = 0`); a task of 250 calls answers 199 steps, the marker and the summary and is `capped`;
+no `send_to_user` step appears; the summary names the edited file with a preview of its change; a `<b>` in a
+todo item is text in the step's title (the data, not the page: the page half is F16).
+
+**Not in scope:** sub-agent steps and sections (F14); drawing anything (F15, F16); a model-written reading
+sentence under a step (the plan's §(g)); per-step cost.
+
+**Rulings:**
+
+- Ruling: a message to the person (`send_to_user`) and a reaction are not steps — because they are the chat,
+  drawn there already, and the reference draws the final message as the summary, not as a step — if wrong, two
+  rows in `STEP_WORDS`.
+- Ruling: the step's evidence comes from the transcript and only the outcome from the journal — because the
+  journal is content-free by design (D-0001 territory: never reconstruct from prose) and the transcript is the
+  chat's own owner-only record — if wrong, a `steps` table is a one-way door for Kyle.
+- Ruling: the detail's sentence is code's words — because v1 makes no model call on a read path — if wrong, a
+  later part asks the cheap route for one sentence per step and stores it beside the summary.
+
+## F14 Sub-agent nesting: `SUBAGENT 01`, the launch step and the verdict in both places
+
+**Read:** `~/workspace/qyvr-for-muse/planning/activity-plan-fable-2026-10-25.md` §(b.3) and §(c) F14; the primer's §1.2
+(the sub-agent section), §1.5, §4.2, decision 6.4. **Blocker:** D-0011 (`docs/decisions/0011-subagent-transcript-read.md`,
+proposed in the plan's §(g)) must be `accepted` by Kyle before this part reads a facet's transcript; if it is
+not, build the section from the parent's rows alone and answer the child's steps with
+`SUBAGENT_STEPS_UNAVAILABLE`, and record the half in `docs/plan/QUESTIONS.md`. Then
+`packages/agent/src/subagents/store.ts` (`group`, `children`, `handedOffAt`), `packages/agent/src/subagents/host.ts`
+(`delegate`, `run`, `deliver`, `renderHandoff`), `packages/agent/src/subagents/run.ts` (`subagent_transcript`),
+`packages/agent/src/objects/subagent.ts`, `packages/agent/src/objects/chat.ts` (`ctx.facets.get`),
+`packages/agent/src/chat/outbox.ts` (`startSubagents`, the group id), `test/workers/support/subagent-world.ts`.
+
+**Scope:** A delegation is a step in the parent and a section of the child's own steps.
+
+1. `groupIdOf(turnId, callId)` exported from `chat/outbox.ts` and used by `startSubagents` and by the reader.
+2. The launch step's detail (kind `launch`): one paragraph in code's words naming each request's role, the brief
+   (as text), the spawn status from the rows (queued, running, waiting, done, failed with its code), whether
+   results are back (`result !== null`), and the verifier contract ("its handoff is checked by the verifier
+   before it returns: pass, fail or unverified, with a reason").
+3. `SubAgent.transcript()` on the facet (`objects/subagent.ts`): the facet's `subagent_transcript` rows as
+   `Message[]`, in seq order. The parent calls it only after it has matched the child's row `person` to the
+   session person; the route never names a facet.
+4. The task answer gains `subagents: Array<{ n, grp, launchStep, rows: Array<{ id, role, depth, parent, brief,
+   status, code, verdict, verdictReason, steps: StepRecord[] | { ok: false, code } }> }>`, one per group in
+   creation order, numbered `01`, `02`; a coordinator's workers nest by depth; the child's steps come from
+   `stepsOf` over the facet's messages with no journal (sub-agents are refused every action by their gate);
+   the child's final text is its last step, "Handed off", with the text as the detail.
+5. The verdict in both places: a synthesized `verdict` step in the parent, after the launch step's turn and at
+   the group's `handed_off_at`, titled "Sub-agent 01 returned: pass" (or fail, unverified) with the stored
+   reason as the detail; the chat handoff (`deliver`, unchanged) keeps carrying the same verdict.
+
+**Acceptance:** `test/workers/f14-activity-subagents.test.ts` (the sub-agent world, with Bo from
+`test/fixtures/people.json` as the second member): after a delegation, the task's `subagents[0]` is `01` with
+the child's setup steps in order (its reads, as the fixture tools record them), the launch step names the role,
+the brief, the spawn status and that results are not yet back; after the handoff the parent timeline holds the
+verdict step with the stored verdict and reason and the chat's handoff carries the same verdict (both places,
+one stored value); a child that failed shows its code at the section head and its steps up to the failure; a
+second delegation is `02`; a coordinator's workers nest under it; Bo's read of Ada's task answers
+`CHAT_NOT_OWNER` and never reaches a facet (planted: a reader that takes the person from the request instead of
+the parent's row fails); a facet whose read throws answers the section with `SUBAGENT_STEPS_UNAVAILABLE`, never
+an empty list.
+
+**Not in scope:** drawing (F15); the child's detail shapes beyond F13's builders; closing or steering
+sub-agents from the drawer.
+
+**Rulings:**
+
+- Ruling: the verdict lands as a parent step and as the chat handoff, drawn from one stored value — because the
+  drawer must be complete on its own and the chat's behaviour is settled (M7.2) — if wrong, the step goes and
+  the section head keeps the verdict.
+- Ruling: sections number groups in creation order within the task, workers nest by depth — because the
+  reference's `SUBAGENT 01` is spawn order and a coordinator's round is part of its delegation — if wrong, every
+  row is its own section.
+- Ruling: the parent decides who may read a child's transcript, from its own row — because the row is the
+  authority on every spawn today (`depth.ts`) and the facet knows no person — if wrong, the facet stores the
+  person at its first write and checks it too.
+
+## F15 The Activity tab lists tasks and a row opens the drawer
+
+**Read:** `~/workspace/qyvr-for-muse/planning/activity-plan-fable-2026-10-25.md` §(b.5), §(e) and §(c) F15; the primer's
+§1.1, §1.4, §4.1, decisions 6.5–6.6; F11's specimens; `packages/agent/src/http/app/panel.ts` (`sheetActivity`,
+`prow`, `openJob`, `drawJob`, `jobAgain`), `packages/agent/src/http/app/overlays.ts` (`openDialog` forms, the F5
+entries), `packages/agent/src/http/app/shell.ts` (`openPanel`, `SCRIPT_GLYPHS`, `COMMON_SCRIPT`'s `el`, `icon`,
+`getJson`, `couldNot`, `coded`), `packages/agent/src/http/page.ts` (script order), `packages/agent/src/http/app/icons.ts`,
+`test/workers/f5-back.test.ts` (the overlay-entry claim's style). No one-way door; no address.
+
+**Scope:** The drawer exists and shows a task end to end on real turn data.
+
+1. `packages/agent/src/http/app/activity.ts`: `ACTIVITY_TEXT` (every word the drawer says, one table: the
+   status words, "Refresh", "Back", "Steps", "Summary", "Show more", "Copy", "Download", "Could not read this
+   task", "N more steps are not shown", "Sub-agent"), `ACTIVITY_CSS` (only what the bundle does not hold),
+   `ACTIVITY_MARKUP` (`#task-dialog`: head with `#task-state` pill, `#task-title`, `#task-refresh`, the X; body
+   `.qf-task` with `#task-steps` and `#task-detail`), `ACTIVITY_SCRIPT` (`openTask(chatId, turnId)`,
+   `loadTask(ref)`, `drawTask(t)`, `drawSteps`, `selectStep(n)`, `drawDetail(step)`, `taskRefresh`), wired in
+   `page.ts`. `panel.ts` keeps its 600-line headroom: its Activity rows become buttons (`tap`) that call
+   `openTask`.
+2. The timeline: main steps on `.qf-tl` in order, the glyph by kind, the title one line, a failed step's rail
+   mark; then each `SUBAGENT nn` section (`.qf-items-head`) with its status and verdict at the head and the
+   child's steps nested; then the summary step. Selecting a step marks it `.is-sel` and draws its detail
+   generically from `StepDetail`: the prose, each block as a `.qf-code` with its label, the result with its
+   code and duration in words, the lines. The typed polish is F16.
+3. The head: the pill in the status tone and words; the title from the record (the same string the list row
+   and the detail head show: one record, three places); Refresh calls `loadTask` again and keeps the selected
+   step by `n`; a running task's pill says "Running".
+4. Opening pushes one history entry (the overlay's own) and Back closes exactly it; the X and Escape close it;
+   on a phone the drawer takes the panel dialog's place as the job dialog does and shows one pane with Back
+   between them.
+5. `SCRIPT_GLYPHS` gains the glyphs the timeline uses, from `icons.ts` only; `pnpm ds` if a glyph is new to
+   `icons.ts`.
+6. A task that could not be read is said in the drawer with its code (`couldNot`), never drawn empty.
+
+**Acceptance:** `test/workers/f15-activity-panel.test.ts` (the `m27-panel` harness): after a file-only turn the
+Activity tab's row is a button whose title, status word and time are the record's; clicking it opens
+`#task-dialog`, whose title equals the row's and the detail head's (planted: a drawer that formats its own title
+fails); the timeline lists the steps in order with the table's titles and a failed step marked; a delegated
+task shows `SUBAGENT 01` with the child's steps and verdict; selecting a step draws its prose, blocks and result
+words; Refresh re-reads the route (the second request is recorded) and the selection survives; a running task
+says "Running" and offers Refresh; the opening pushes one entry and `history.back()` closes the drawer and
+nothing else (F5's harness); on the phone layout the detail pane is hidden until a step is selected and Back
+returns to the list; a route refusal draws "Could not read this task" with the code; Bo's panel draws none of
+Ada's rows.
+
+**Not in scope:** the typed detail shapes, the code-block controls, the fold, the file cards (F16); an address
+(`/app/activity/<id>` stays reserved); live frames for a running task (the plan's §(e) names the follow-up).
+
+**Rulings:**
+
+- Ruling: the drawer is an overlay entry with no address — because decision 6.5 settled it and F5's mechanics
+  exist — if wrong, one `PAGES` row and a `drawPage` branch (F4's pattern).
+- Ruling: a running task is an open-time snapshot with Refresh — because decision 6.5 settled it and the
+  panel already re-reads on open — if wrong, §(e)'s frame lands on the chat socket.
+- Ruling: the drawer is its own module, `activity.ts` — because `panel.ts` is at 430 lines against the 600 cap
+  and the drawer is a surface of its own — if wrong, nothing: a module split is free.
+
+## F16 The detail pane per step type
+
+**Read:** `~/workspace/qyvr-for-muse/planning/activity-plan-fable-2026-10-25.md` §(b.4) and §(c) F16; the primer's §1.3
+(the detail catalogue) and §4.3; F11's specimens; F15's `activity.ts`. No one-way door.
+
+**Scope:** Every step kind draws the shape the reference shows, as data the page sets only as text.
+
+1. The builders in `activity-steps.ts` `detailOf` complete per kind: read (prose "Read `<path>`", the result
+   block); edit (prose "Edited `<path>`", "Change:" block of the new text, "Before:" block folded, "Result:"
+   the confirmation line); write (the whole text as the change); delete; search (the pattern and the matches);
+   code (prose "Ran a script", "Script:" block in `js`, "Result (<n> ms):" block or "Failed (<CODE>, <n> ms):"
+   with the error text); todo (the items as lines, open and done); memory (the write's text); load (the
+   namespaces loaded); launch and verdict (one paragraph each, F14's); a gated action (the card's own lines
+   from the effect's `detail`, the decision and outcome in `OUTCOME_WORDS`); the summary (the final text, then
+   the file cards); bare (the title and one sentence). A step that started and has no result says so.
+2. The page: each block is a `.qf-code` with its label, Copy (`navigator.clipboard`, falling back to a
+   selection) and Download (a Blob URL named `<task>-<n>-<label>.txt`); a block over 40 lines folds behind Show
+   more; a block the route cut says "cut at 20,000 characters" after Show more; file cards on `.qf-fcard` with
+   the name, the type by extension and the preview; every string reaches the DOM through `el(tag, text)` or
+   `textContent`, never `innerHTML`.
+3. The phone form: selecting a step switches the drawer to the detail pane (`.is-detail`) with Back.
+
+**Acceptance:** `test/workers/f16-activity-detail.test.ts` (the `m27-panel` harness on the fallback task plus a
+delegation): each kind draws its shape (the labels and block count per kind, from one table in the test); the
+code detail shows the whole script while the timeline's title is one line; the result words carry the code and
+the duration; the edit detail shows the change block and the confirmation line; the summary shows the outcome
+sentence and a card naming the edited file with its preview; a `<b>` placed in a todo item, an edit's new text
+and the final text comes back as text in the row, the detail and the summary (planted: an `innerHTML`
+assignment in `drawDetail` fails); a 60-line result folds with Show more and a cut block says so; every block
+has Copy and Download; the phone layout shows the detail with Back after a selection.
+
+**Not in scope:** editing anything from the drawer; a model-written reading; cost per step; syntax colouring
+beyond the bundle's `.qf-src` tones.
+
+**Rulings:**
+
+- Ruling: Download is a Blob URL of the block's text — because nothing is served and no route is needed — if
+  wrong, a route per block is the follow-up.
+- Ruling: the fold is 40 lines on the page and the cut is 20,000 characters on the route — because the page
+  must stay light and a cut must be said (D-0001's rule on partial reads) — if wrong, two constants.
+
+## F17 The v1 activity eval: the fallback task, end to end, and the stretch shape
+
+**Read:** `~/workspace/qyvr-for-muse/planning/activity-plan-fable-2026-10-25.md` §(f) and §(c) F17; the primer's §7 (the V1
+GATE and the STRETCH) and §8; F12–F16; `docs/runbooks/preview.md`; `test/scenarios/` (any file, for the twice-run
+style). No one-way door.
+
+**Scope:** The gate the primer set, run as scenarios and by eye.
+
+1. `test/scenarios/activity/f17-fallback-eval.test.ts`: the fallback task scripted on the authority world with
+   the working tree — read a file, edit it, edit it again, run a script that throws, run one that returns,
+   update the checklist, save to memory, answer — and asserted through the real routes and the shipped page in
+   one scenario: the Activity tab lists the task by its title with "Complete"; the drawer lists its steps in
+   that order with the table's titles; the failed script step carries its code in the title and in words in the
+   detail; one code detail shows the whole script, the code and the duration; one edit detail shows the change
+   and the confirmation; the summary shows the outcome sentence and the file card; no step is dropped; no model
+   text is markup.
+2. `test/scenarios/activity/f17-stretch-shape.test.ts`: the PR #15 shape in fletch's vocabulary — 27 main
+   steps including the same file edited three times, two "verify"-like script runs of which one fails, four
+   checklist writes, a memory write, a delegated reviewer whose child makes eight reads, the verdict step, and
+   a summary with two file cards — asserting the order, the `SUBAGENT 01` section, both places for the
+   verdict, and that the cap is not reached.
+3. Live, by eye (the PR body): on a preview slot (`pnpm preview up`), Kyle runs the fallback task with the real
+   model and opens the task from the panel: the list row, five step details (read, edit, code, launch where a
+   delegation ran, summary), the sub-agent section, the file card. The UAT report lists measured defects apart
+   from impressions, with the slot's address.
+
+**Acceptance:** both scenario files pass twice under `pnpm accept F17` (the scenarios lane runs twice); the UAT
+report is in the PR body with the preview address and the screenshots; `ACCEPT F17: PASS`.
+
+**Not in scope:** new features; any change to the drawer the eval did not require; the literal PR #15 replay
+(a merge, a PR, a staging deploy: fletch has no shell or git tool, the plan's §(g)).
+
+**Rulings:**
+
+- Ruling: the stretch is the PR #15 *shape* over fletch's own tools, not the PR #15 commands — because fletch
+  cannot run `sed`, `git` or `pnpm verify` today — if wrong, a shell tool is a part of its own and the replay
+  returns as a live eval after it.
