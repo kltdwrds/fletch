@@ -251,8 +251,27 @@ export class ChatStore {
     return this.sql.exec<TurnRow>("SELECT * FROM turns WHERE id = ?", id).toArray()[0];
   }
 
+  /** Every turn in the order it began; two on the same tick keep the order they were stored in. */
   turns(): TurnRow[] {
-    return this.sql.exec<TurnRow>("SELECT * FROM turns ORDER BY started_at").toArray();
+    return this.sql.exec<TurnRow>("SELECT * FROM turns ORDER BY started_at, rowid").toArray();
+  }
+
+  /**
+   * Every message the given turns stored, compacted or not, in order (F12): a task's record reads its own work,
+   * which a compaction folds out of the prompt but never out of the chat. The ids go as one JSON value, so a task of
+   * many turns stays under the platform's bound on parameters.
+   */
+  rowsOfTurns(turnIds: readonly string[]): TranscriptRow[] {
+    if (!turnIds.length) return [];
+    return this.sql
+      .exec<{ seq: number; turn_id: string; body: string }>("SELECT seq, turn_id, body FROM messages WHERE turn_id IN (SELECT value FROM json_each(?)) ORDER BY seq", JSON.stringify(turnIds))
+      .toArray()
+      .map((r) => ({ seq: r.seq, turnId: r.turn_id, message: JSON.parse(r.body) as Message }));
+  }
+
+  /** Every chat-meta value whose key starts with `prefix`, by the rest of the key (`typed:`, `requestText:`). */
+  metaPrefixed(prefix: string): Map<string, string> {
+    return new Map(this.sql.exec<{ key: string; value: string }>("SELECT key, value FROM chat_meta WHERE substr(key, 1, ?) = ?", prefix.length, prefix).toArray().map((r) => [r.key.slice(prefix.length), r.value] as const));
   }
 
   /** A finished step's input tokens; the first step after a compaction in this turn is that compaction's tokens after. */

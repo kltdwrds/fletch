@@ -3,6 +3,7 @@
 // transcript and outbox are the engine's (`chat/engine.ts`). The owner is decided here, on every
 // connection and every frame: the person comes from the header the agent script sets from props,
 // and frames go only to the owner's connections.
+import { chatTask, chatTasks, type TaskResult, type TasksResult } from "../chat/activity.ts";
 import { holdTypedSecrets } from "../vault/typed.ts";
 import { Agent, type Connection, type ConnectionContext, type WSMessage } from "agents";
 import { getAgentByName } from "agents";
@@ -201,6 +202,16 @@ export class Chat extends Agent<Env> {
   /** The cards of this chat, rendered by the harness, for its owner. */
   async cardsFor(person: string) {
     return this.engine.cardsFor(person);
+  }
+
+  /** This chat's newest tasks (F12), for its owner; anyone else is refused `CHAT_NOT_OWNER`. */
+  async tasksFor(person: string): Promise<TasksResult> {
+    return chatTasks(this.engine, person);
+  }
+
+  /** One task of this chat by its anchor turn (F12), for its owner; refused by code otherwise. */
+  async taskFor(person: string, id: string): Promise<TaskResult> {
+    return chatTask(this.engine, person, id);
   }
 
   /** When this chat last had something to show (M29.3, the list row's time), for its owner. */

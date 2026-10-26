@@ -1,6 +1,7 @@
 // The chats list (M23.1's list column and drawer, drawn on the system's ListRow at M27.3): its words, its rules,
 // the row menu's static items with inline rename, and the script that draws the list from the Person's answer.
 // The script runs inside the chat's (CHAT_SCRIPT interpolates it where it stood), so it shares the chat's scope.
+import { TITLE_FROM_PROMPT } from "../../chat/prompt-title.ts";
 import { NEW_CHAT_PATH } from "../pages.ts";
 import { ic } from "./icons.ts";
 
@@ -31,21 +32,8 @@ export const CHATS_TEXT = {
   hours: "{n} h",
 };
 
-/** How many characters of its first prompt name a chat (F8), before the cut and its ellipsis. */
-export const TITLE_FROM_PROMPT = 60;
-
-/**
- * A chat's name from its first prompt (F8): the prompt's own words on one line, trimmed, and past the cap cut at the
- * last word that fits (or at the cap when none does) with an ellipsis. The page script carries a copy (`CHATS_SCRIPT`),
- * which `test/workers/f8-new-chat.test.ts` holds to this one.
- */
-export function promptTitle(text: string): string {
-  const t = text.replace(/\s+/g, " ").trim();
-  if (t.length <= TITLE_FROM_PROMPT) return t;
-  const cut = t.slice(0, TITLE_FROM_PROMPT);
-  const at = cut.lastIndexOf(" ");
-  return `${(at > TITLE_FROM_PROMPT / 2 ? cut.slice(0, at) : cut).trimEnd()}…`;
-}
+// The title rule moved beside the task records that use it too (F12); the list and its test still read it here.
+export { promptTitle, TITLE_FROM_PROMPT } from "../../chat/prompt-title.ts";
 
 /**
  * The list's rules: the rows, their options and the archived view. New side chat stays in the head at every width,

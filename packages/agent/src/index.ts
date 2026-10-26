@@ -114,6 +114,9 @@ function directory(env: Env): Directory {
     app: {
       chats: async (person, call) => (await getAgentByName(env.PERSON, person)).chatsCall(person, call),
       chatLast: async (person, chatId) => (await getAgentByName(env.CHAT, chatId)).lastAt(person),
+      // A chat's tasks (F12), each answered by that `Chat` for its owner alone, as `chatLast` is.
+      chatTasks: async (person, chatId) => (await getAgentByName(env.CHAT, chatId)).tasksFor(person),
+      chatTask: async (person, chatId, turnId) => (await getAgentByName(env.CHAT, chatId)).taskFor(person, turnId),
       chatSearch: async (person, chatId, query) => (await getAgentByName(env.CHAT, chatId)).search(person, query),
       cards: async (person, chatId) => ((await (await getAgentByName(env.PERSON, person)).ownsChat(chatId)) ? (await getAgentByName(env.CHAT, chatId)).cardsFor(person) : null),
       jobIds: async (person) => (await getAgentByName(env.PERSON, person)).jobIds(person),
@@ -129,7 +132,6 @@ function directory(env: Env): Directory {
       fileLinked: async (person, link) => (await getAgentByName(env.PERSON, person)).documentCall(person, { op: "linked", ...link }) as never,
       loops: async (person) => (await getAgentByName(env.PERSON, person)).loopSettings(person),
       setLoop: async (person, loop, patch) => (await getAgentByName(env.PERSON, person)).setLoop(person, loop, patch),
-      activity: (person) => ledger().journalRows({ principal: person }),
       homeFile: async (person, path) => (await getAgentByName(env.PERSON, person)).memoryGet({ path, limit: 200 }, person),
       credentials: (person) => env.VAULT.get(env.VAULT.idFromName(env.TENANT_ID)).list(person),
       companyConnectors: (person) => company().connectorsFor(person),

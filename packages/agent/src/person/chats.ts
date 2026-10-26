@@ -66,10 +66,17 @@ export class PersonChats {
     return { ok: true, chatId };
   }
 
+  /** The main chat being opened, shared by every read that needs it meanwhile: its claim is an await, so two at once made two (F12). */
+  private openingMain?: Promise<OpenResult>;
+
   /** The person's main chat, opened on first need: at enrolment or the first visit. */
   async main(now: number): Promise<OpenResult> {
     const id = this.sql.exec<{ id: string }>("SELECT id FROM chats WHERE kind = 'main' ORDER BY opened_at LIMIT 1").toArray()[0]?.id;
-    return id ? { ok: true, chatId: id } : this.create(now, "main");
+    if (id) return { ok: true, chatId: id };
+    this.openingMain ??= this.create(now, "main").finally(() => {
+      this.openingMain = undefined;
+    });
+    return this.openingMain;
   }
 
   owns(chatId: string): boolean {

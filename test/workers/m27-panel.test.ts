@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { ACTIVITY_GLYPH, PANEL_BODY, PANEL_TABS, PANEL_TEXT } from "../../packages/agent/src/http/app/panel.ts";
 import { APP_PAGE } from "../../packages/agent/src/http/page.ts";
-import { KIND_WORDS } from "../../packages/agent/src/obs/activity-words.ts";
+import { ACTIVITY_TEXT } from "../../packages/agent/src/obs/activity-words.ts";
 import { type FakeStep, report } from "../support/fake-model.ts";
 import { ada, authorityWorld } from "./support/authority-world.ts";
 import { type El, page } from "./support/page-harness.ts";
@@ -98,31 +98,31 @@ const openFirstJob = async (p: Page) => {
 };
 
 describe("[M27.4] the Activity tab", () => {
-  it("is day groups of ListRows, each with its glyph, title, line and time, from Ada's own journal; Bo's panel says it has nothing yet", async () => {
+  it("is day groups of ListRows, each with its glyph, title, status and time, from Ada's own tasks (F12); Bo's panel says it has nothing yet", async () => {
     const w = authorityWorld({ script: [] });
     w.fake.enqueue(mail("m1"));
     await w.say(ada.email, "Mail Bo the notes.");
     w.clock.now += 2 * 86_400_000;
     w.fake.enqueue(mail("m2"));
     await w.say(ada.email, "Mail Bo the notes again.");
-    const notes = ((await w.http(ada.email, "GET", "/app/activity")).body as { notes: Array<{ title: string; line: string }> }).notes;
-    expect(notes.length).toBeGreaterThanOrEqual(2);
+    const tasks = ((await w.http(ada.email, "GET", "/app/activity")).body as { tasks: Array<{ title: string; status: "waiting" }> }).tasks;
+    expect(tasks.map((t) => [t.title, t.status])).toEqual([["Mail Bo the notes again.", "waiting"], ["Mail Bo the notes.", "waiting"]]);
     const p = await pageOf(w, ada.email);
     const box = p.byId("panel-activity");
     expect(headings(box)).toHaveLength(2);
     const rows = rowsOf(box);
-    expect(rows.map((r) => byClass(r, "t-sub-m")[0]?.textContent)).toEqual(notes.map((n) => n.title));
-    expect(rows.map((r) => byClass(r, "t-foot")[0]?.textContent)).toEqual(notes.map((n) => n.line));
+    expect(rows.map((r) => byClass(r, "t-sub-m")[0]?.textContent)).toEqual(tasks.map((t) => t.title));
+    expect(rows.map((r) => byClass(r, "t-foot")[0]?.textContent)).toEqual(tasks.map(() => ACTIVITY_TEXT.status.waiting));
     for (const r of rows) {
-      expect(byClass(r, "prow-tile")[0]?.children[0]?.copyOf).toBe(`glyph-${ACTIVITY_GLYPH["Sent a mail"]}`);
+      expect(byClass(r, "prow-tile")[0]?.children[0]?.copyOf).toBe(`glyph-${ACTIVITY_GLYPH.waiting}`);
       expect(byClass(r, "prow-side")[0]?.textContent).toMatch(/\d:\d\d/);
     }
     const pb = await pageOf(w, other.email);
     expect([rowsOf(pb.byId("panel-activity")).length, pb.byId("panel-activity").text()]).toEqual([0, PANEL_TEXT.activityEmpty]);
   });
 
-  it("every journal family has a glyph, and an activity that could not be read is said, never drawn as nothing yet", async () => {
-    for (const [, title] of KIND_WORDS) expect(ACTIVITY_GLYPH[title]).toBeTruthy();
+  it("every task status has a glyph, and an activity that could not be read is said, never drawn as nothing yet", async () => {
+    for (const s of Object.keys(ACTIVITY_TEXT.status) as Array<keyof typeof ACTIVITY_TEXT.status>) expect(ACTIVITY_GLYPH[s]).toBeTruthy();
     const p = await pageOf(authorityWorld({ script: [] }), ada.email, undefined, unreadable("/app/activity"));
     const said = p.byId("panel-activity").text();
     expect(said).toContain("Could not read your activity");

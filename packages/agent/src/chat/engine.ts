@@ -18,6 +18,7 @@ import { coreNamespace } from "../tools/search.ts";
 import { reactTool } from "./agent-reaction.ts";
 import { compact, type Compacted } from "./compact-turn.ts";
 import { type CompactionRecord, ChatStore } from "./store.ts";
+import { type TaskRecord, taskOf, tasksOf } from "./activity.ts";
 import { Approvals, type DecideResult, requestReply, type Tally } from "./approvals.ts";
 import { CardStore, type CardView, type Choice } from "./cards.ts";
 import type { LinkCard } from "../workspace/surfaces.ts";
@@ -356,6 +357,12 @@ export class ChatEngine {
     return r;
   }
 
+  /** The chat's newest tasks (F12), read from its turns and transcript, for its owner alone; null for anyone else. */
+  tasksFor(person: string): TaskRecord[] | null { return this.owner() === person ? tasksOf(this.store, this.mailbox, this.chatId()) : null; }
+
+  /** One task by its anchor turn (F12), for the owner alone; null for anyone else and for a task that does not begin there. */
+  taskFor(person: string, id: string): TaskRecord | null { return this.owner() === person ? (taskOf(this.store, this.mailbox, this.chatId(), id) ?? null) : null; }
+
   /** When the chat last had something to show (M29.3), for its owner alone; anyone else is refused. */
   lastAt(person: string): { ok: true; at: number | null } | { ok: false; code: "CHAT_NOT_OWNER" } {
     if (this.owner() !== person) return { ok: false, code: "CHAT_NOT_OWNER" };
@@ -415,17 +422,11 @@ export class ChatEngine {
     else await this.drain();
   }
 
-  private ledger(): LedgerSink {
-    return this.env.LEDGER.get(this.env.LEDGER.idFromName(this.env.TENANT_ID));
-  }
+  private ledger(): LedgerSink { return this.env.LEDGER.get(this.env.LEDGER.idFromName(this.env.TENANT_ID)); }
 
-  private streamFn(route: Route, person: string, runId: string) {
-    return createStreamFn({ ai: this.env.AI, ledger: this.ledger(), wait: this.wait, now: this.now, schedule: this.schedule, models: modelConfig(this.env) }, { tenant: this.env.TENANT_ID, person, runId, route });
-  }
+  private streamFn(route: Route, person: string, runId: string) { return createStreamFn({ ai: this.env.AI, ledger: this.ledger(), wait: this.wait, now: this.now, schedule: this.schedule, models: modelConfig(this.env) }, { tenant: this.env.TENANT_ID, person, runId, route }); }
 
-  private nameOf(email: string): string {
-    return this.hooks.nameOf?.(email) ?? email;
-  }
+  private nameOf(email: string): string { return this.hooks.nameOf?.(email) ?? email; }
 
   private contextOf(turnId: string, person: string): TurnContext {
     const raw = this.store.meta(`context:${turnId}`);
@@ -565,9 +566,7 @@ export class ChatEngine {
     }
   }
 
-  private chatId(): string {
-    return this.ctx.id?.name ?? this.ctx.id?.toString() ?? "unknown";
-  }
+  private chatId(): string { return this.ctx.id?.name ?? this.ctx.id?.toString() ?? "unknown"; }
 
   /** Ends a turn failed: its code and reason persist on the turn's row, so history draws it on every re-sync (M17.1). */
   private async failTurn(turnId: string, code: string, detail: string): Promise<SendResult> {
