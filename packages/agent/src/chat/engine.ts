@@ -19,7 +19,8 @@ import { reactTool } from "./agent-reaction.ts";
 import { compact, type Compacted } from "./compact-turn.ts";
 import { type CompactionRecord, ChatStore } from "./store.ts";
 import { type TaskRecord, taskOf, tasksOf, taskSteps } from "./activity.ts";
-import { Approvals, type DecideResult, requestReply, type Tally } from "./approvals.ts";
+import { Approvals, type DecideResult, requestReply } from "./approvals.ts";
+import { addTally, replyToColleague, tallyOf } from "./approval-ports.ts";
 import { CardStore, type CardView, type Choice } from "./cards.ts";
 import type { LinkCard } from "../workspace/surfaces.ts";
 import type { ChatFrame, ClaimResult, SendResult, StopResult } from "./frames.ts";
@@ -308,7 +309,7 @@ export class ChatEngine {
     await this.wakeup.arm(at + RESUME_AFTER_MS);
     const ran = await this.runTurn(turnId, owner);
     if (ran.status === "refused") return { status: "refused", code: ran.code };
-    return requestReply(name, this.tallyOf(turnId));
+    return requestReply(name, tallyOf(this.store, turnId));
   }
 
   /**
@@ -436,10 +437,6 @@ export class ChatEngine {
     return raw ? (JSON.parse(raw) as TurnContext) : ownTask(person);
   }
 
-  private tallyOf(turnId: string): Tally {
-    return { done: 0, pending: 0, refused: 0, ...JSON.parse(this.store.meta(`tally:${turnId}`) ?? "{}") };
-  }
-
   /** The gate's view of this chat for one turn: the latch, the cards, outside content read. */
   private gateState(turnId: string): GateState {
     return {
@@ -463,15 +460,8 @@ export class ChatEngine {
       ...(this.hooks.authority ? { authority: this.hooks.authority } : {}),
       ...(this.hooks.company ? { company: this.hooks.company } : {}),
       note: (id, text) => this.store.transaction(() => this.store.appendMessage(`decision:${id}`, { role: "system", content: text, timestamp: this.now() } as never)),
-      tally: (turnId, add) => {
-        const t = this.tallyOf(turnId);
-        this.store.transaction(() => this.store.setMeta(`tally:${turnId}`, JSON.stringify({ done: t.done + (add.done ?? 0), pending: t.pending + (add.pending ?? 0), refused: t.refused + (add.refused ?? 0) })));
-      },
-      reply: async (card, text) => {
-        const to = JSON.parse(this.store.meta(`context:${card.turnId}`) ?? "null") as TurnContext | null;
-        const target = to?.request?.replyTo;
-        if (target && this.hooks.colleagues) await this.hooks.colleagues.deliverReply(target.chatId, { id: `colleague-update:${this.chatId()}:${card.id}`, source: `colleague:${card.descriptor.principal}`, text, person: target.person });
-      },
+      tally: (turnId, add) => addTally(this.store, turnId, add),
+      reply: replyToColleague(this.store, this.hooks, () => this.chatId()),
       nameOf: (e) => this.nameOf(e),
       label: (tool) => tool.replaceAll("_", " "),
       now: () => this.now(),
