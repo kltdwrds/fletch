@@ -179,9 +179,10 @@ export async function appRoutes(request: Request, url: URL, person: string, dir:
   if (url.pathname === "/app/file/delete" && request.method === "POST") return answer(await part(() => dir.fileDelete(person, String(body.path ?? ""))));
 
   if (url.pathname === "/app/activity" && request.method === "GET") {
-    // The Person says which chats are the session person's; each Chat answers its own tasks for its owner (F12), read
-    // together as the approvals are. A chat that could not be read is named with its code, never left out as empty.
-    const listed = await dir.chats(person, { op: "view" });
+    // The Person says which chats are the session person's, opening none (the tab loads beside the page's own boot);
+    // each Chat answers its own tasks for its owner (F12), read together as the approvals are. A chat that could not
+    // be read is named with its code, never left out as empty.
+    const listed = await dir.chats(person, { op: "list" });
     if (failed(listed) || !("chats" in listed)) return answer(listed);
     const read = await Promise.all((listed.chats ?? []).map(async (c) => ({ c, r: await part(() => dir.chatTasks(person, c.id)) })));
     const tasks: TaskRecord[] = [];

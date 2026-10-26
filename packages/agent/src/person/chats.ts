@@ -148,6 +148,8 @@ export class PersonChats {
 /** The app's chat list calls (M14.2), for the person alone; the `Person` serves them through one method. */
 export type ChatsCall =
   | { op: "view" }
+  /** The person's chats as they stand, opening none (F12: a read that lists, beside the page's own boot). */
+  | { op: "list" }
   | { op: "main" }
   | { op: "open"; title?: unknown }
   | { op: "archive"; id: string; archived?: boolean }
@@ -163,6 +165,8 @@ export async function runChatsCall(chats: PersonChats, person: string, requester
       const last = await chats.last(now);
       return { ok: true as const, main: main.chatId, last: last.ok ? last.chatId : main.chatId, chats: chats.entries() };
     }
+    case "list":
+      return { ok: true as const, chats: chats.entries() };
     case "main":
       return chats.main(now);
     case "open":

@@ -217,8 +217,11 @@ describe("[F12] a task is a record", () => {
     expect(said).not.toContain(PANEL_TEXT.activityEmpty);
   });
 
-  it("a person with no tasks is told Nothing yet; promptTitle through chats-list.ts is the one rule", async () => {
+  it("a person with no tasks is told Nothing yet, and listing opens no chat; promptTitle through chats-list.ts is the one rule", async () => {
     const w = world();
+    // The tab loads beside the page's own boot: its read lists the chats as they stand and opens none.
+    expect(await activity(w, pat.email)).toEqual({ ok: true, tasks: [], unread: [] });
+    expect(w.chatsOf(pat.email)).toEqual([]);
     const p = await pageOf(w, pat.email);
     expect([byClass(p.byId("panel-activity"), "prow").length, p.byId("panel-activity").text()]).toEqual([0, PANEL_TEXT.activityEmpty]);
     expect([chatsList.promptTitle, chatsList.TITLE_FROM_PROMPT]).toEqual([promptTitle, TITLE_FROM_PROMPT]);
