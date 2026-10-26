@@ -96,6 +96,12 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   Confirming test: `test/workers/m25-3-migrations.test.ts` ("the Company's own list creates the grants
   tables its authority uses") — it builds a Company authority over only `COMPANY_MIGRATIONS` and creates
   a company grant, and fails with the staging error when the entry is removed.
+- 2026-10-25 F11 task drawer, three reversible calls: the waiting tone's dot is `--text-tertiary`, not
+  `--fill-tertiary`, because `--fill-tertiary` is the status pill's own ground in light and the dot vanished on it;
+  the canvas's inferred phone rule that stacked `.qf-dlg--960 .qf-task` (two lines in the phone container block) is
+  deleted, superseded by the drawer's one-pane rule (`.qf-task.is-detail`); the screenshot set lives beside its
+  specimen (`packages/agent/src/design/fletch/ds/specimens/task-drawer/`) so the PR can show it. Confirming test:
+  `test/workers/f11-activity-specimens.test.ts`.
 - 2026-10-26 F12: five task-record rulings, each reversible inside `packages/agent/src/chat/activity.ts`. A chat's
   first turn anchors a task whatever began it, because a turn with no anchor before it has nothing to continue and
   dropping it would hide work (rejected: leaving it out of the list). `tasksOf` and `taskOf` take the chat's id, so a
