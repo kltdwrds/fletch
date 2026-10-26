@@ -84,7 +84,9 @@ smallest boundary that lets the drawer show a delegation's steps. The alternativ
 its tool calls in `SubAgentResult` for the parent to store) is a new content store and a schema decision of its own.
 
 **Answered (Kyle, 2026-10-26):** "D-0011 accepted, build the transcript half." D-0011 is accepted (`decider: Kyle`), and
-the transcript half is built on the same branch.
+the transcript half is built on the same branch. The two tests this question names as failing were folded into the
+part's tests, which pass: `[F14] sub-agent sections and the launch step`, `[F14] the verdict in both places` and
+`[F14] who reads a child's transcript`.
 
 
 ### Q3, 2026-10-22: Preview slots on the shared account reach production's data
