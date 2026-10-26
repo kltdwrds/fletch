@@ -37,10 +37,13 @@ export async function flushOutbox(deps: OutboxDeps, _session: ToolSession): Prom
   }
 }
 
+/** A delegation's group id: the handoff's mailbox scope and the sub-agents' facet key (M7.2), a task's join key (F12). */
+export const delegationGroup = (turnId: string, effectId: string) => `${turnId.slice(0, 8)}-${effectId.slice(0, 40)}`;
+
 /** Hands a committed delegation to the host; a refusal there (the caps, decided again) joins the transcript. */
 async function startSubagents(deps: OutboxDeps, turnId: string, effect: Extract<Effect, { kind: "delegate" }>): Promise<void> {
   const owner = deps.owner();
   if (!deps.subagents || !owner) return;
-  const r = await deps.subagents.delegate({ grp: `${turnId.slice(0, 8)}-${effect.id.slice(0, 40)}`, turnId, person: owner, requests: effect.requests });
+  const r = await deps.subagents.delegate({ grp: delegationGroup(turnId, effect.id), turnId, person: owner, requests: effect.requests });
   if (!r.ok) deps.store.transaction(() => deps.store.appendMessage(`subagents:${effect.id}`, { role: "user", content: `The delegation ${effect.id} did not start: ${r.code}: ${r.reason ?? ""}`, timestamp: deps.now() }));
 }

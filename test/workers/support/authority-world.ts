@@ -42,6 +42,7 @@ import { completeForJob } from "../../../packages/agent/src/jobs/model.ts";
 import type { JobsApi } from "../../../packages/agent/src/jobs/tools.ts";
 import { PersonJobIndex } from "../../../packages/agent/src/person/job-index.ts";
 import { Ledger } from "../../../packages/agent/src/objects/ledger.ts";
+import { chatTask, chatTasks } from "../../../packages/agent/src/chat/activity.ts";
 import { PersonChats, runChatsCall } from "../../../packages/agent/src/person/chats.ts";
 import type { AppDirectory } from "../../../packages/agent/src/http/app-routes.ts";
 import type { CredentialMint } from "../../../packages/agent/src/grants/credential-use.ts";
@@ -424,8 +425,9 @@ export function authorityWorld(o: WorldOptions = {}) {
     // The Jobs page's reads and actions (M14.2, M15.7): the person's index, then the `Job` named for them.
     jobIds: async (p) => host(p).jobs.list(),
     job: (p, id) => jobOf(p, id).instance as never,
-    // The sheet's tabs (M23.3): the journal from the Ledger filtered to the session's person, and one home file.
-    activity: async (p) => ledgerH.instance.journalRows({ principal: p }),
+    // The Activity tab's tasks (F12), each chat answering for its owner as the `Chat` object does; and one home file.
+    chatTasks: async (p, chatId) => chatTasks(chats.harness(chatId).instance, p),
+    chatTask: async (p, chatId, turnId) => chatTask(chats.harness(chatId).instance, p, turnId),
     homeFile: async (p, path) => host(p).memory.memoryGet({ path, limit: 200 }, p),
     // The Library's files (M23.4): each person's own `PersonFiles`, decided there for the session's person.
     files: async (p) => host(p).files.list({ preview: true }, p),

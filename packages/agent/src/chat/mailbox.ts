@@ -133,6 +133,11 @@ export class Mailbox {
     return this.sql.exec<{ kind: MailKind }>("SELECT kind FROM mailbox WHERE turn_id = ? AND delivery = 'start'", turnId).toArray()[0]?.kind;
   }
 
+  /** Every row a turn took, by start or by steer, oldest first: what began each turn and what reached it (F12). */
+  taken(): MailRow[] {
+    return this.sql.exec<Raw>("SELECT * FROM mailbox WHERE delivery IS NOT NULL ORDER BY ordinal").toArray().map(row);
+  }
+
   /**
    * Takes every queued row into the running turn at its step boundary, inside the barrier's
    * transaction: one fenced block appended through `append`, each row `completed`. Null when none waits.

@@ -96,3 +96,10 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   Confirming test: `test/workers/m25-3-migrations.test.ts` ("the Company's own list creates the grants
   tables its authority uses") — it builds a Company authority over only `COMPANY_MIGRATIONS` and creates
   a company grant, and fails with the staging error when the entry is removed.
+- 2026-10-26 F12: five task-record rulings, each reversible inside `packages/agent/src/chat/activity.ts`. A chat's
+  first turn anchors a task whatever began it, because a turn with no anchor before it has nothing to continue and
+  dropping it would hide work (rejected: leaving it out of the list). `tasksOf` and `taskOf` take the chat's id, so a
+  record names its chat without the route stitching it on. A waiting or running task has no `endedAt`: the latest
+  turn ended, the task did not. `code` is the latest turn's code unless the task is done or running. `groups` is the
+  delegation groups the task's turns launched (the outbox's `delegate` rows, through the one `delegationGroup`) or
+  received (`internal_handoff` mailbox rows). Confirming test: `test/workers/f12-activity-tasks.test.ts`.

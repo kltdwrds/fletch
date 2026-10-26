@@ -1,0 +1,132 @@
+// A task is a record (F12): the work of one request, read from the chat's own turns and transcript, never from the
+// journal, so a turn whose work gated nothing still lists. A turn begun by the person's own words (the `typed:` meta,
+// or a mailbox start of kind `user`) or by a colleague's request (the `requestText:` meta) anchors a task; every other
+// turn (the continuation after a decision, a delegation's handoff, a reaction's answer) continues the latest anchor
+// before it, because a request's work outruns one turn's step cap and a handoff is its own turn. A chat's first turn
+// anchors whatever began it, since it has nothing to continue. The title is the anchor's own words under F8's cap.
+// The join keys are the turn ids (the journal's `runId`) and the delegation groups the task's turns launched or
+// received; the steps themselves are F13's.
+import type { Message } from "@earendil-works/pi-ai";
+import { type TranscriptRow, TYPED_WITHOUT_ID } from "./history.ts";
+import type { Mailbox } from "./mailbox.ts";
+import { delegationGroup } from "./outbox.ts";
+import { promptTitle } from "./prompt-title.ts";
+import type { ChatStore, TurnRow } from "./store.ts";
+import type { Effect } from "./tools.ts";
+
+export type TaskStatus = "running" | "waiting" | "done" | "failed" | "stopped";
+
+export interface TaskRecord {
+  /** The anchor turn's id: with the chat's id, the task's address. */
+  id: string;
+  chatId: string;
+  title: string;
+  origin: "typed" | "request";
+  /** The latest turn's: `waiting` while it paused on the person's decision. */
+  status: TaskStatus;
+  /** The latest turn's code when it did not simply finish (`AWAITING_DECISION`, a failure's code), else null. */
+  code: string | null;
+  startedAt: number;
+  /** When the latest turn ended, once the task is no longer running or waiting; null until then. */
+  endedAt: number | null;
+  turnIds: string[];
+  /** The tool calls across the task's turns, compacted ones included. */
+  stepCount: number;
+  /** The delegation groups its turns launched or received (M7.2): the sub-agent sections' join key (F14). */
+  groups: string[];
+  /** A later part's summary of the task; none yet. */
+  summary: null;
+  /** Whether the record was cut short; F12 reads every turn, so never. */
+  capped: false;
+}
+
+/** The newest tasks one chat answers with: the Activity tab merges them across the person's chats. */
+export const TASKS_PER_CHAT = 50;
+
+type Group = { origin: TaskRecord["origin"]; request?: string; typedId?: string; turns: TurnRow[] };
+
+/** The chat's turns as tasks, oldest first: each anchor with the turns that continue it. */
+function groups(store: ChatStore, mailbox: Mailbox): Group[] {
+  const typed = store.metaPrefixed("typed:");
+  const requested = store.metaPrefixed("requestText:");
+  const started = new Map(mailbox.taken().flatMap((r) => (r.delivery === "start" && r.turnId ? [[r.turnId, r.kind] as const] : [])));
+  const out: Group[] = [];
+  for (const turn of store.turns()) {
+    const request = requested.get(turn.id);
+    const anchor = request !== undefined || typed.has(turn.id) || started.get(turn.id) === "user";
+    const last = out.at(-1);
+    if (last && !anchor) last.turns.push(turn);
+    else out.push({ origin: request !== undefined ? "request" : "typed", ...(request !== undefined ? { request } : {}), ...(typed.has(turn.id) && typed.get(turn.id) !== TYPED_WITHOUT_ID ? { typedId: typed.get(turn.id) } : {}), turns: [turn] });
+  }
+  return out;
+}
+
+const textOf = (m: Message): string => {
+  const c = (m as { content?: unknown }).content;
+  if (typeof c === "string") return c;
+  return Array.isArray(c) ? c.map((p) => (p && typeof p === "object" && (p as { type?: unknown }).type === "text" ? String((p as { text?: unknown }).text ?? "") : "")).join(" ") : "";
+};
+const toolCalls = (m: Message): number => (m.role === "assistant" && Array.isArray(m.content) ? m.content.filter((p) => p.type === "toolCall").length : 0);
+
+function statusOf(t: TurnRow): TaskStatus {
+  if (t.status === "done" && t.code === "AWAITING_DECISION") return "waiting";
+  return t.status;
+}
+
+function record(store: ChatStore, mailbox: Mailbox, chatId: string, g: Group, rows: TranscriptRow[]): TaskRecord {
+  const anchor = g.turns[0] as TurnRow;
+  const last = g.turns.at(-1) as TurnRow;
+  const ids = new Set(g.turns.map((t) => t.id));
+  const own = rows.filter((r) => ids.has(r.turnId));
+  const first = own.find((r) => r.turnId === anchor.id && r.message.role === "user");
+  // A reply's quote is not the person's words (M29.4): the title is what they typed after it.
+  const words = g.request ?? (first ? store.actions.shown(g.typedId, textOf(first.message)) : "");
+  const status = statusOf(last);
+  const launched = g.turns.flatMap((t) => store.committed(t.id).flatMap((o) => ((e: Effect) => (e.kind === "delegate" ? [delegationGroup(t.id, e.id)] : []))(JSON.parse(o.payload) as Effect)));
+  const received = mailbox.taken().flatMap((r) => (r.kind === "internal_handoff" && r.turnId && ids.has(r.turnId) && r.scope.startsWith("delegation:") ? [r.scope.slice("delegation:".length)] : []));
+  return {
+    id: anchor.id,
+    chatId,
+    title: promptTitle(words),
+    origin: g.origin,
+    status,
+    code: status === "done" || status === "running" ? null : last.code,
+    startedAt: anchor.started_at,
+    endedAt: status === "running" || status === "waiting" ? null : last.ended_at,
+    turnIds: g.turns.map((t) => t.id),
+    stepCount: own.reduce((n, r) => n + toolCalls(r.message), 0),
+    groups: [...new Set([...launched, ...received])],
+    summary: null,
+    capped: false,
+  };
+}
+
+/** The chat's tasks, newest first, at most `limit`. */
+export function tasksOf(store: ChatStore, mailbox: Mailbox, chatId: string, limit = TASKS_PER_CHAT): TaskRecord[] {
+  const picked = groups(store, mailbox).reverse().slice(0, limit);
+  const rows = store.rowsOfTurns(picked.flatMap((g) => g.turns.map((t) => t.id)));
+  return picked.map((g) => record(store, mailbox, chatId, g, rows));
+}
+
+/** One task by its anchor turn's id; undefined when no task begins there. */
+export function taskOf(store: ChatStore, mailbox: Mailbox, chatId: string, id: string): TaskRecord | undefined {
+  const g = groups(store, mailbox).find((x) => x.turns[0]?.id === id);
+  return g ? record(store, mailbox, chatId, g, store.rowsOfTurns(g.turns.map((t) => t.id))) : undefined;
+}
+
+type Owned = { owner(): string | null; tasksFor(person: string): TaskRecord[] | null; taskFor(person: string, id: string): TaskRecord | null };
+export type TasksResult = { ok: true; tasks: TaskRecord[] } | { ok: false; code: "CHAT_NOT_OWNER" };
+export type TaskResult = { ok: true; task: TaskRecord } | { ok: false; code: "CHAT_NOT_OWNER" | "TASK_NOT_FOUND" };
+
+/** A chat's tasks for its owner, as the `Chat` object answers them; anyone else is refused by code, never answered empty. */
+export function chatTasks(chat: Owned, person: string): TasksResult {
+  const tasks = chat.tasksFor(person);
+  return tasks ? { ok: true, tasks } : { ok: false, code: "CHAT_NOT_OWNER" };
+}
+
+/** One task for the chat's owner; anyone else is `CHAT_NOT_OWNER`, a task that does not begin there `TASK_NOT_FOUND`. */
+export function chatTask(chat: Owned, person: string, id: string): TaskResult {
+  if (chat.owner() !== person) return { ok: false, code: "CHAT_NOT_OWNER" };
+  const task = chat.taskFor(person, id);
+  return task ? { ok: true, task } : { ok: false, code: "TASK_NOT_FOUND" };
+}
