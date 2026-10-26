@@ -105,3 +105,7 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   now hold the task rows, since the journal-note feed they held is deleted. `ChatStore.turns()` orders by
   `started_at, rowid`, so turns on one clock tick keep their order. Confirming test:
   `test/workers/f12-activity-tasks.test.ts`.
+- 2026-10-26 F12 the Activity read lists chats with a read-only `ChatsCall` `{ op: "list" }` (the chats as they
+  stand), not `view`, because `view` opens the main chat and the tab loads beside the page's own boot, so the two
+  raced and a second chat appeared (M27.3's chat-list tests). Confirming test: `test/workers/f12-activity-tasks.test.ts`
+  ("listing opens no chat").
