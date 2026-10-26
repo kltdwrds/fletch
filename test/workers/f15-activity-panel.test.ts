@@ -167,7 +167,10 @@ describe("[F15] the Activity tab opens the task drawer", () => {
     const result = byClass(d, "task-result")[0] as El;
     expect(result.dataset.code).toBe("CODE_SCRIPT_THREW");
     expect(result.textContent).toContain("CODE_SCRIPT_THREW");
-    expect(result.textContent).toMatch(/ms|s/);
+    // The result in words: its code and its duration, from the table (the scripted run takes under a second).
+    const ms = failed.detail.result?.durationMs as number;
+    expect(ms).toBeLessThan(1000);
+    expect(result.textContent).toBe(`${ACTIVITY_TEXT.failedWith.replace("{code}", "CODE_SCRIPT_THREW")} ${ACTIVITY_TEXT.after.replace("{duration}", ACTIVITY_TEXT.ms.replace("{n}", String(ms)))}.`);
   });
 
   it("a running task says Running and offers Refresh, which reads the route again and draws its new answer", async () => {
