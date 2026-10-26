@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 import { type TaskRecord, TASKS_PER_CHAT } from "../../packages/agent/src/chat/activity.ts";
 import { promptTitle } from "../../packages/agent/src/chat/prompt-title.ts";
 import { promptTitle as listTitle, TITLE_FROM_PROMPT } from "../../packages/agent/src/http/app/chats-list.ts";
+import { TASKS_SHOWN } from "../../packages/agent/src/http/app-routes.ts";
 import { ACTIVITY_GLYPH, PANEL_TEXT } from "../../packages/agent/src/http/app/panel.ts";
 import { ACTIVITY_TEXT } from "../../packages/agent/src/obs/activity-words.ts";
 import type { FakeStep } from "../support/fake-model.ts";
@@ -154,6 +155,18 @@ describe("[F12] a task is a record", () => {
     expect([rowsOf(pb).length, pb.text()]).toEqual([0, PANEL_TEXT.activityEmpty]);
   });
 
+  it("Sam's chat itself refuses Pat its tasks and its task by code, whatever list asked it", async () => {
+    const w = world({ script: [{ text: "Done." }] });
+    const { chatId, result } = await w.say(ada.email, "Draft the agenda");
+    const turnId = (result as { turnId: string }).turnId;
+    const app = (w.dir as unknown as { app: { chatTasks(p: string, c: string): Promise<unknown>; chatTask(p: string, c: string, t: string): Promise<unknown> } }).app;
+    expect(await app.chatTasks(pat.email, chatId)).toEqual({ ok: false, code: "CHAT_NOT_OWNER" });
+    expect(await app.chatTask(pat.email, chatId, turnId)).toEqual({ ok: false, code: "CHAT_NOT_OWNER" });
+    const engine = w.chats.harness(chatId).instance;
+    expect([engine.tasksFor(pat.email), engine.taskFor(pat.email, turnId)]).toEqual([null, null]);
+    expect(await app.chatTasks(ada.email, chatId)).toMatchObject({ ok: true, tasks: [{ id: turnId }] });
+  });
+
   it("a chat whose read fails is named in unread and the tab says it could not read it, never empty", async () => {
     const w = world({ script: [{ text: "One." }, { text: "Two." }] });
     const good = await w.say(ada.email, "Plan the harbour day");
@@ -181,7 +194,7 @@ describe("[F12] a task is a record", () => {
     expect(only.text()).not.toContain(PANEL_TEXT.activityEmpty);
   });
 
-  it("the tab draws every status in words from one table, with its glyph, newest first in day groups, cut at the limits", async () => {
+  it("the tab draws every status in words from one table, with its glyph, newest first in day groups", async () => {
     for (const s of ["running", "waiting", "done", "failed", "stopped"] as const) {
       expect(ACTIVITY_TEXT.status[s]).toBeTruthy();
       expect(ACTIVITY_GLYPH[s]).toBeTruthy();
@@ -201,6 +214,25 @@ describe("[F12] a task is a record", () => {
     expect(titles(box)).toEqual(["Today's task", "Yesterday's task"]);
     expect(lines(box)[0]).toBe(ACTIVITY_TEXT.status.failed.replace("{code}", tasks[0]?.code ?? ""));
     expect(glyphs(box)).toEqual([`glyph-${ACTIVITY_GLYPH.failed}`, `glyph-${ACTIVITY_GLYPH.done}`]);
+  });
+
+  it("each chat answers its newest TASKS_PER_CHAT tasks, and the tab shows the newest TASKS_SHOWN across chats", async () => {
+    const w = world();
+    const chatIds: string[] = [];
+    for (let c = 0; c < 3; c++) {
+      let chatId: string | undefined;
+      for (let i = 0; i < TASKS_PER_CHAT + 1; i++) {
+        w.clock.now += 1000;
+        w.fake.enqueue({ text: "Ok." });
+        chatId = (await w.say(ada.email, `Chat ${c} task ${i}`, chatId)).chatId;
+      }
+      chatIds.push(chatId as string);
+    }
+    const app = (w.dir as unknown as { app: { chatTasks(p: string, c: string): Promise<{ ok: true; tasks: TaskRecord[] }> } }).app;
+    const one = (await app.chatTasks(ada.email, chatIds[0] as string)).tasks;
+    expect([one.length, one[0]?.title, one.at(-1)?.title]).toEqual([TASKS_PER_CHAT, `Chat 0 task ${TASKS_PER_CHAT}`, "Chat 0 task 1"]);
+    const shown = (await activity(w, ada.email)).tasks;
+    expect([shown.length, shown[0]?.title, shown.at(-1)?.title]).toEqual([TASKS_SHOWN, `Chat 2 task ${TASKS_PER_CHAT}`, "Chat 1 task 1"]);
   });
 
   it("the tab's read and the chats list at once, on a person's first visit, open one main chat", async () => {
