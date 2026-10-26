@@ -209,7 +209,7 @@ export class Chat extends Agent<Env> {
     return chatTasks(this.engine, person);
   }
 
-  /** One task of this chat by its anchor turn (F12), for its owner; refused by code otherwise. */
+  /** One task of this chat by its anchor turn (F12) with its steps (F13), for its owner; refused by code otherwise. */
   async taskFor(person: string, id: string): Promise<TaskResult> {
     return chatTask(this.engine, person, id);
   }

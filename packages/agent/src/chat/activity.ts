@@ -5,8 +5,10 @@
 // before it, because a request's work outruns one turn's step cap and a handoff is its own turn. A chat's first turn
 // anchors whatever began it, since it has nothing to continue. The title is the anchor's own words under F8's cap.
 // The join keys are the turn ids (the journal's `runId`) and the delegation groups the task's turns launched or
-// received; the steps themselves are F13's.
+// received. Its steps (F13) are the turns' tool calls, read by `activity-steps.ts` with the journal's outcomes.
 import type { Message } from "@earendil-works/pi-ai";
+import type { JournalRow } from "../grants/journal.ts";
+import { type StepRecord, STEPS_PER_TASK, stepCalls, timelineOf } from "./activity-steps.ts";
 import { type TranscriptRow, TYPED_WITHOUT_ID } from "./history.ts";
 import type { Mailbox } from "./mailbox.ts";
 import { delegationGroup } from "./outbox.ts";
@@ -30,14 +32,14 @@ export interface TaskRecord {
   /** When the latest turn ended, once the task is no longer running or waiting; null until then. */
   endedAt: number | null;
   turnIds: string[];
-  /** The tool calls across the task's turns, compacted ones included. */
+  /** The steps across the task's turns, compacted ones included: every tool call but `send_to_user` and `react` (F13). */
   stepCount: number;
   /** The delegation groups its turns launched or received (M7.2): the sub-agent sections' join key (F14). */
   groups: string[];
   /** A later part's summary of the task; none yet. */
   summary: null;
-  /** Whether the record was cut short; F12 reads every turn, so never. */
-  capped: false;
+  /** Whether its steps are cut at `STEPS_PER_TASK` (F13): the timeline then says how many are not shown. */
+  capped: boolean;
 }
 
 /** The newest tasks one chat answers with: the Activity tab merges them across the person's chats. */
@@ -66,8 +68,6 @@ const textOf = (m: Message): string => {
   if (typeof c === "string") return c;
   return Array.isArray(c) ? c.map((p) => (p && typeof p === "object" && (p as { type?: unknown }).type === "text" ? String((p as { text?: unknown }).text ?? "") : "")).join(" ") : "";
 };
-const toolCalls = (m: Message): number => (m.role === "assistant" && Array.isArray(m.content) ? m.content.filter((p) => p.type === "toolCall").length : 0);
-
 function statusOf(t: TurnRow): TaskStatus {
   if (t.status === "done" && t.code === "AWAITING_DECISION") return "waiting";
   return t.status;
@@ -82,6 +82,7 @@ function record(store: ChatStore, mailbox: Mailbox, chatId: string, g: Group, ro
   // A reply's quote is not the person's words (M29.4): the title is what they typed after it.
   const words = g.request ?? (first ? store.actions.shown(g.typedId, textOf(first.message)) : "");
   const status = statusOf(last);
+  const stepCount = own.reduce((n, r) => n + stepCalls(r.message), 0);
   const launched = g.turns.flatMap((t) => store.committed(t.id).flatMap((o) => ((e: Effect) => (e.kind === "delegate" ? [delegationGroup(t.id, e.id)] : []))(JSON.parse(o.payload) as Effect)));
   const received = mailbox.taken().flatMap((r) => (r.kind === "internal_handoff" && r.turnId && ids.has(r.turnId) && r.scope.startsWith("delegation:") ? [r.scope.slice("delegation:".length)] : []));
   return {
@@ -94,10 +95,10 @@ function record(store: ChatStore, mailbox: Mailbox, chatId: string, g: Group, ro
     startedAt: anchor.started_at,
     endedAt: status === "running" || status === "waiting" ? null : last.ended_at,
     turnIds: g.turns.map((t) => t.id),
-    stepCount: own.reduce((n, r) => n + toolCalls(r.message), 0),
+    stepCount,
     groups: [...new Set([...launched, ...received])],
     summary: null,
-    capped: false,
+    capped: stepCount > STEPS_PER_TASK,
   };
 }
 
@@ -114,9 +115,24 @@ export function taskOf(store: ChatStore, mailbox: Mailbox, chatId: string, id: s
   return g ? record(store, mailbox, chatId, g, store.rowsOfTurns(g.turns.map((t) => t.id))) : undefined;
 }
 
-type Owned = { owner(): string | null; tasksFor(person: string): TaskRecord[] | null; taskFor(person: string, id: string): TaskRecord | null };
+/**
+ * A task's timeline (F13): its turns' tool calls in seq order, compacted rows included, joined to the journal rows of
+ * the task's own turns, cut at `STEPS_PER_TASK`, then its summary from the last turn that finished.
+ */
+export function taskSteps(store: ChatStore, task: TaskRecord, journal: readonly JournalRow[]): StepRecord[] {
+  const turnIds = new Set(task.turnIds);
+  const done = task.turnIds.filter((id) => ((t) => t?.status === "done" && t.code !== "AWAITING_DECISION")(store.turn(id)));
+  return timelineOf(store.rowsOfTurns(task.turnIds), journal.filter((r) => turnIds.has(r.runId)), { chatId: task.chatId, doneTurnIds: done }).steps;
+}
+
+type Owned = {
+  owner(): string | null;
+  tasksFor(person: string): TaskRecord[] | null;
+  taskFor(person: string, id: string): TaskRecord | null;
+  stepsFor(person: string, task: TaskRecord): Promise<StepRecord[] | null>;
+};
 export type TasksResult = { ok: true; tasks: TaskRecord[] } | { ok: false; code: "CHAT_NOT_OWNER" };
-export type TaskResult = { ok: true; task: TaskRecord } | { ok: false; code: "CHAT_NOT_OWNER" | "TASK_NOT_FOUND" };
+export type TaskResult = { ok: true; task: TaskRecord; steps: StepRecord[] } | { ok: false; code: "CHAT_NOT_OWNER" | "TASK_NOT_FOUND" };
 
 /** A chat's tasks for its owner, as the `Chat` object answers them; anyone else is refused by code, never answered empty. */
 export function chatTasks(chat: Owned, person: string): TasksResult {
@@ -124,9 +140,11 @@ export function chatTasks(chat: Owned, person: string): TasksResult {
   return tasks ? { ok: true, tasks } : { ok: false, code: "CHAT_NOT_OWNER" };
 }
 
-/** One task for the chat's owner; anyone else is `CHAT_NOT_OWNER`, a task that does not begin there `TASK_NOT_FOUND`. */
-export function chatTask(chat: Owned, person: string, id: string): TaskResult {
+/** One task and its steps for the chat's owner; anyone else is `CHAT_NOT_OWNER`, a task that does not begin there `TASK_NOT_FOUND`. */
+export async function chatTask(chat: Owned, person: string, id: string): Promise<TaskResult> {
   if (chat.owner() !== person) return { ok: false, code: "CHAT_NOT_OWNER" };
   const task = chat.taskFor(person, id);
-  return task ? { ok: true, task } : { ok: false, code: "TASK_NOT_FOUND" };
+  if (!task) return { ok: false, code: "TASK_NOT_FOUND" };
+  const steps = await chat.stepsFor(person, task);
+  return steps ? { ok: true, task, steps } : { ok: false, code: "CHAT_NOT_OWNER" };
 }

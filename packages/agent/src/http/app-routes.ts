@@ -51,7 +51,7 @@ export interface AppDirectory extends ConnectorReads {
   attachments?: AttachmentDirectory;
   /** One chat's newest tasks (F12), answered by that `Chat` for its owner alone. */
   chatTasks(person: string, chatId: string): Promise<TasksResult>;
-  /** One task of a chat by its anchor turn (F12), answered by that `Chat` for its owner alone. */
+  /** One task of a chat by its anchor turn (F12) with its steps, the summary last (F13), answered by that `Chat` for its owner alone. */
   chatTask(person: string, chatId: string, turnId: string): Promise<TaskResult>;
   /** One home file read for its owner: its lines and when it last changed. */
   homeFile(person: string, path: "IDENTITY.md" | "SOUL.md" | "MEMORY.md"): Promise<unknown>;
