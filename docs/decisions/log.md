@@ -96,3 +96,12 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   Confirming test: `test/workers/m25-3-migrations.test.ts` ("the Company's own list creates the grants
   tables its authority uses") — it builds a Company authority over only `COMPANY_MIGRATIONS` and creates
   a company grant, and fails with the staging error when the entry is removed.
+- 2026-10-26 F12 tasks, reversible calls: `ChatEngine.tasksFor` and `taskFor` answer `{ ok, tasks | task }` or a
+  refusal with its code (as `lastAt` does), not null, because the task route must tell `CHAT_NOT_OWNER` (403) from
+  `TASK_NOT_FOUND` (404); `tasksOf`/`taskOf` take one reads object (owner, chat id, store, mailbox, cards) instead of
+  `(store, mailbox)`, because "waiting" is a card still open on one of the task's turns and the card store says it.
+  A turn before any anchor names no one's words and is not listed. The status words and glyphs live in `panel.ts`
+  (`ACTIVITY_TEXT`, `ACTIVITY_GLYPH`); `pulse`, `x` and `dot` join `SCRIPT_GLYPHS` for them. The M27.4 Activity tests
+  now hold the task rows, since the journal-note feed they held is deleted. `ChatStore.turns()` orders by
+  `started_at, rowid`, so turns on one clock tick keep their order. Confirming test:
+  `test/workers/f12-activity-tasks.test.ts`.

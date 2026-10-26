@@ -129,7 +129,9 @@ function directory(env: Env): Directory {
       fileLinked: async (person, link) => (await getAgentByName(env.PERSON, person)).documentCall(person, { op: "linked", ...link }) as never,
       loops: async (person) => (await getAgentByName(env.PERSON, person)).loopSettings(person),
       setLoop: async (person, loop, patch) => (await getAgentByName(env.PERSON, person)).setLoop(person, loop, patch),
-      activity: (person) => ledger().journalRows({ principal: person }),
+      // The Activity tab's tasks (F12): each `Chat` answers its own for its owner alone.
+      chatTasks: async (person, chatId) => (await getAgentByName(env.CHAT, chatId)).tasksFor(person),
+      chatTask: async (person, chatId, turnId) => (await getAgentByName(env.CHAT, chatId)).taskFor(person, turnId),
       homeFile: async (person, path) => (await getAgentByName(env.PERSON, person)).memoryGet({ path, limit: 200 }, person),
       credentials: (person) => env.VAULT.get(env.VAULT.idFromName(env.TENANT_ID)).list(person),
       companyConnectors: (person) => company().connectorsFor(person),

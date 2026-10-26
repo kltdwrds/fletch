@@ -424,8 +424,9 @@ export function authorityWorld(o: WorldOptions = {}) {
     // The Jobs page's reads and actions (M14.2, M15.7): the person's index, then the `Job` named for them.
     jobIds: async (p) => host(p).jobs.list(),
     job: (p, id) => jobOf(p, id).instance as never,
-    // The sheet's tabs (M23.3): the journal from the Ledger filtered to the session's person, and one home file.
-    activity: async (p) => ledgerH.instance.journalRows({ principal: p }),
+    // The sheet's tabs: each chat's tasks from its own `Chat` for its owner (F12), as `index.ts` wires them, and one home file.
+    chatTasks: async (p, chatId) => chats.harness(chatId).instance.tasksFor(p),
+    chatTask: async (p, chatId, turnId) => chats.harness(chatId).instance.taskFor(p, turnId),
     homeFile: async (p, path) => host(p).memory.memoryGet({ path, limit: 200 }, p),
     // The Library's files (M23.4): each person's own `PersonFiles`, decided there for the session's person.
     files: async (p) => host(p).files.list({ preview: true }, p),

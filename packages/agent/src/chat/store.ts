@@ -32,6 +32,9 @@ export interface CompactionRecord {
 
 export type CompactionTrigger = "threshold" | "manual";
 
+/** Turn ids bound per `rowsOfTurns` query, under the storage's 100 bound values. */
+export const ROWS_OF_TURNS_SLICE = 90;
+
 export type TurnStatus = "running" | "done" | "failed" | "stopped";
 
 export type TurnRow = {
@@ -252,7 +255,21 @@ export class ChatStore {
   }
 
   turns(): TurnRow[] {
-    return this.sql.exec<TurnRow>("SELECT * FROM turns ORDER BY started_at").toArray();
+    return this.sql.exec<TurnRow>("SELECT * FROM turns ORDER BY started_at, rowid").toArray();
+  }
+
+  /**
+   * Every message the turns wrote, in order, compacted ones included (F12): a task's title and steps are what its
+   * turns did, which a compaction folds out of the model's prompt but never out of the record.
+   */
+  rowsOfTurns(turnIds: string[]): TranscriptRow[] {
+    const rows: Array<{ seq: number; turn_id: string; body: string }> = [];
+    // A query binds at most 100 values, so a long task is read in slices and put back in order.
+    for (let i = 0; i < turnIds.length; i += ROWS_OF_TURNS_SLICE) {
+      const ids = turnIds.slice(i, i + ROWS_OF_TURNS_SLICE);
+      rows.push(...this.sql.exec<{ seq: number; turn_id: string; body: string }>(`SELECT seq, turn_id, body FROM messages WHERE turn_id IN (${ids.map(() => "?").join(", ")})`, ...ids).toArray());
+    }
+    return rows.sort((a, b) => a.seq - b.seq).map((r) => ({ seq: r.seq, turnId: r.turn_id, message: JSON.parse(r.body) as Message }));
   }
 
   /** A finished step's input tokens; the first step after a compaction in this turn is that compaction's tokens after. */

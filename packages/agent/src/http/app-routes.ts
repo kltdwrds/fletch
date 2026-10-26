@@ -11,8 +11,7 @@ import { JOB_ID } from "../jobs/body.ts";
 import type { JobStatus } from "../jobs/store.ts";
 import { statusWords } from "../jobs/status-words.ts";
 import { nextSlotAfter } from "../jobs/schedule.ts";
-import type { JournalRow } from "../grants/journal.ts";
-import { notesOf } from "../obs/activity-words.ts";
+import type { TaskAnswer, TaskRecord, TasksAnswer } from "../chat/activity.ts";
 import { type ConnectorReads, connectorRoutes } from "./connector-routes.ts";
 import type { LinkResult, ServedResult } from "../files/links.ts";
 import { servedResponse } from "./share-routes.ts";
@@ -50,8 +49,10 @@ export interface AppDirectory extends ConnectorReads {
   loops(person: string): Promise<unknown>;
   /** The person's uploads (M24.3): their `Person` keeps the rows and decides every read; the bytes are in the bucket. */
   attachments?: AttachmentDirectory;
-  /** The person's own journal rows, from the Ledger filtered to them (M23.3). */
-  activity(person: string): Promise<JournalRow[]>;
+  /** One chat's tasks, its newest first (F12), answered by that `Chat` for its owner alone. */
+  chatTasks(person: string, chatId: string): Promise<TasksAnswer>;
+  /** One task of one chat by its anchor turn (F12), answered by that `Chat` for its owner alone. */
+  chatTask(person: string, chatId: string, turnId: string): Promise<TaskAnswer>;
   /** One home file read for its owner: its lines and when it last changed. */
   homeFile(person: string, path: "IDENTITY.md" | "SOUL.md" | "MEMORY.md"): Promise<unknown>;
   now(): number;
@@ -64,6 +65,8 @@ const statusOf = (code: string) => (/NOT_OWNER|NOT_YOURS/.test(code) ? 403 : /NO
 const CHAT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 /** Decided cards the Approvals page keeps showing, the latest first. */
 export const DECIDED_SHOWN = 20;
+/** Tasks the Activity tab shows (F12): every chat's newest, merged newest first. */
+export const TASKS_SHOWN = 100;
 /** Runs shown per job: the latest first. */
 export const RUNS_SHOWN = 10;
 /** Pages of 200 lines one file read walks; a file longer than this is answered `complete: false`, never as whole. */
@@ -176,9 +179,26 @@ export async function appRoutes(request: Request, url: URL, person: string, dir:
   if (url.pathname === "/app/file/delete" && request.method === "POST") return answer(await part(() => dir.fileDelete(person, String(body.path ?? ""))));
 
   if (url.pathname === "/app/activity" && request.method === "GET") {
-    // The Ledger is asked for this session's person alone; nothing in the request names another.
-    const rows = await part(() => dir.activity(person));
-    return json(Array.isArray(rows) ? { ok: true, notes: notesOf(rows) } : rows);
+    // The Person says which chats are the session person's; each Chat answers its own tasks for its owner (F12), read
+    // together as the approvals are. A chat that could not be read is named with its code, never left out as empty.
+    const listed = await dir.chats(person, { op: "view" });
+    if (failed(listed) || !("chats" in listed)) return answer(listed);
+    const read = await Promise.all((listed.chats ?? []).map(async (c) => ({ c, r: await part(() => dir.chatTasks(person, c.id)) })));
+    const tasks: TaskRecord[] = [];
+    const unread: Array<{ chatId: string; title: string; code: string }> = [];
+    for (const { c, r } of read) {
+      if (r.ok) tasks.push(...r.tasks);
+      else unread.push({ chatId: c.id, title: c.title, code: r.code });
+    }
+    tasks.sort((a, b) => b.startedAt - a.startedAt || (a.id < b.id ? 1 : -1));
+    return json({ ok: true, tasks: tasks.slice(0, TASKS_SHOWN), unread });
+  }
+  const task = /^\/app\/activity\/([^/]+)\/([^/]+)$/.exec(url.pathname);
+  if (task && request.method === "GET") {
+    const [chatId, turnId] = [task[1] as string, task[2] as string];
+    if (!CHAT_ID.test(chatId)) return json({ ok: false, code: "CHAT_NOT_FOUND" }, 404);
+    if (!CHAT_ID.test(turnId)) return json({ ok: false, code: "TASK_NOT_FOUND" }, 404);
+    return answer(await part(() => dir.chatTask(person, chatId, turnId)));
   }
 
   if (url.pathname === "/app/profile" && request.method === "GET") {

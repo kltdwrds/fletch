@@ -18,6 +18,7 @@ import { coreNamespace } from "../tools/search.ts";
 import { reactTool } from "./agent-reaction.ts";
 import { compact, type Compacted } from "./compact-turn.ts";
 import { type CompactionRecord, ChatStore } from "./store.ts";
+import { type TaskAnswer, type TaskReads, type TasksAnswer, taskFor, tasksFor } from "./activity.ts";
 import { Approvals, type DecideResult, requestReply, type Tally } from "./approvals.ts";
 import { CardStore, type CardView, type Choice } from "./cards.ts";
 import type { LinkCard } from "../workspace/surfaces.ts";
@@ -159,14 +160,10 @@ export class ChatEngine {
   notices(): Array<{ id: string; source: string; text: string; at: number }> { return this.store.notices(); }
 
   /** The chat's compaction records for its owner alone (M15.2, read by the dashboard); null for anyone else. */
-  compactionsFor(person: string): CompactionRecord[] | null {
-    return this.owner() === person ? this.store.compactions() : null;
-  }
+  compactionsFor(person: string): CompactionRecord[] | null { return this.owner() === person ? this.store.compactions() : null; }
 
   /** The notices for the chat's owner alone; null for anyone else. */
-  noticesFor(person: string): Array<{ id: string; source: string; text: string; at: number }> | null {
-    return this.owner() === person ? this.store.notices() : null;
-  }
+  noticesFor(person: string): Array<{ id: string; source: string; text: string; at: number }> | null { return this.owner() === person ? this.store.notices() : null; }
 
   /**
    * Takes the owner's message (M24.2): stored as a mailbox row first, keyed on the page's id for the send,
@@ -361,6 +358,11 @@ export class ChatEngine {
     if (this.owner() !== person) return { ok: false, code: "CHAT_NOT_OWNER" };
     return { ok: true, at: this.store.lastAt() };
   }
+
+  /** The chat's tasks (F12), its newest first, and one by its anchor turn: for its owner alone, anyone else refused with a code. */
+  tasksFor(person: string): TasksAnswer { return tasksFor(this.taskReads, person); }
+  taskFor(person: string, id: string): TaskAnswer { return taskFor(this.taskReads, person, id); }
+  private get taskReads(): TaskReads { return { owner: this.owner(), chatId: this.chatId(), store: this.store, mailbox: this.mailbox, cards: this.cards }; }
 
   /** The link cards this chat showed its owner (M16.2); they carry no choices. */
   linksFor(person: string): LinkCard[] | null {

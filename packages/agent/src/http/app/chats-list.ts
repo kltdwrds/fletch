@@ -31,21 +31,10 @@ export const CHATS_TEXT = {
   hours: "{n} h",
 };
 
-/** How many characters of its first prompt name a chat (F8), before the cut and its ellipsis. */
-export const TITLE_FROM_PROMPT = 60;
-
-/**
- * A chat's name from its first prompt (F8): the prompt's own words on one line, trimmed, and past the cap cut at the
- * last word that fits (or at the cap when none does) with an ellipsis. The page script carries a copy (`CHATS_SCRIPT`),
- * which `test/workers/f8-new-chat.test.ts` holds to this one.
- */
-export function promptTitle(text: string): string {
-  const t = text.replace(/\s+/g, " ").trim();
-  if (t.length <= TITLE_FROM_PROMPT) return t;
-  const cut = t.slice(0, TITLE_FROM_PROMPT);
-  const at = cut.lastIndexOf(" ");
-  return `${(at > TITLE_FROM_PROMPT / 2 ? cut.slice(0, at) : cut).trimEnd()}…`;
-}
+// A chat's name from its first prompt (F8): the one rule lives in `chat/prompt-title.ts` (a task's title is the same,
+// F12); the page script below carries a copy (`CHATS_SCRIPT`), which `test/workers/f8-new-chat.test.ts` holds to it.
+import { TITLE_FROM_PROMPT } from "../../chat/prompt-title.ts";
+export { promptTitle, TITLE_FROM_PROMPT } from "../../chat/prompt-title.ts";
 
 /**
  * The list's rules: the rows, their options and the archived view. New side chat stays in the head at every width,

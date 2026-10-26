@@ -2,7 +2,7 @@
 // opened from the chat header's avatar, pinned at the end of the chat from 768 px and a bottom sheet on a phone
 // (M29.2); the shell moves `#panel` between the two. The host is the system's: the
 // avatar, the name, the handle, Connected with its dot, and the four-icon segment Activity, Approvals, Upcoming,
-// Identity. Activity is the person's own journal in day groups of ListRows; Approvals the decided cards with where
+// Identity. Activity is the tasks the agent worked for the person (F12), in day groups of ListRows; Approvals the decided cards with where
 // each went and how it was decided, each opening to its words and, for a standing grant, Revoke (the cards still
 // waiting sit above); Upcoming the jobs grouped by cadence, each opening the job dialog with its schedule, its run
 // history, Run now, Turn off or on and Remove (asked again on the ConfirmDialog); Identity the name card and the
@@ -10,7 +10,7 @@
 // (M27.3). Every row comes from a route whose owning store answers for the signed-in person alone; the page only
 // says it in words and decides nothing. A part that could not be read says so.
 
-import { KIND_WORDS, UNKNOWN_TITLE } from "../../obs/activity-words.ts";
+import type { TaskStatus } from "../../chat/activity.ts";
 import { type IconName, ic } from "./icons.ts";
 import { SCRIPT_GLYPHS } from "./shell.ts";
 
@@ -85,22 +85,14 @@ const PANEL_GLYPH: Record<(typeof PANEL_TABS)[number], IconName> = { activity: "
 /** Each tab's body (M27.4). */
 export const PANEL_BODY: Record<(typeof PANEL_TABS)[number], string> = { activity: "panel-activity", approvals: "panel-approvals", upcoming: "panel-upcoming", identity: "panel-identity" };
 
-/** An Activity row's glyph by its title, the journal's action family (`KIND_WORDS`); one it does not know is the check. */
-export const ACTIVITY_GLYPH: Record<string, IconName> = {
-  "Sent a mail": "at",
-  "Asked a colleague": "user",
-  "Invited a colleague": "user",
-  "Handled a notification": "bell",
-  "Changed a reminder": "clock",
-  "Changed a skill": "sparkle",
-  "Used the web": "globe",
-  "Worked in your workspace": "folder",
-  "Asked for a workspace": "folder",
-  "Updated what it remembers": "data",
-  "Used a connected app": "plug",
-  [UNKNOWN_TITLE]: "check",
+/** A task's status in words (F12), one table; a failure says its code. */
+export const ACTIVITY_TEXT = {
+  status: { done: "Complete", running: "Running", waiting: "Waiting on you", failed: "Failed: {code}", stopped: "Stopped" } satisfies Record<TaskStatus, string>,
+  /** A chat whose tasks could not be read, as `couldNot` says it: "Could not read <this> just now…". */
+  unreadChat: "the tasks in “{title}”",
 };
-for (const [, title] of KIND_WORDS) if (!ACTIVITY_GLYPH[title]) throw new Error(`ACTIVITY_GLYPH has no glyph for "${title}"`);
+/** An Activity row's glyph by its task's status (F12). */
+export const ACTIVITY_GLYPH: Record<TaskStatus, IconName> = { done: "check", running: "pulse", waiting: "bell", failed: "x", stopped: "dot" };
 /** Every glyph the panel's script copies is in the page's one glyph set. */
 for (const g of [...Object.values(ACTIVITY_GLYPH), "shield", "bell", "clock", "chevup", "chevdown"])
   if (!(SCRIPT_GLYPHS as readonly string[]).includes(g)) throw new Error(`SCRIPT_GLYPHS lacks the panel's glyph "${g}"`);
@@ -193,7 +185,7 @@ ${PANEL_TABS.map((k) => `      <button id="panel-tab-${k}" class="tab" role="tab
 </div>`;
 
 export const PANEL_SCRIPT = `const PANEL = ${JSON.stringify(PANEL_TEXT)};
-const PANEL_TABS = ${JSON.stringify(PANEL_TABS)}, PANEL_BODY = ${JSON.stringify(PANEL_BODY)}, ACTIVITY_GLYPH = ${JSON.stringify(ACTIVITY_GLYPH)};
+const PANEL_TABS = ${JSON.stringify(PANEL_TABS)}, PANEL_BODY = ${JSON.stringify(PANEL_BODY)}, ACTIVITY_GLYPH = ${JSON.stringify(ACTIVITY_GLYPH)}, ACTIVITY = ${JSON.stringify(ACTIVITY_TEXT)};
 const SEG_AT = ${JSON.stringify(PANEL_TABS.map((_, i) => segAt(i)))};
 // Settings' usage card (settings.ts) draws its totals with these and PANEL's usage words.
 const plural = (n, w) => n + " " + (n === 1 ? w[0] : w[1]);
@@ -253,12 +245,16 @@ const sheetActivity = latest(async (current) => {
   try { a = await getJson("/app/activity"); } catch (e) { if (current()) { box.replaceChildren(); box.append(couldNot(el("p"), "your activity", e)); } return; }
   if (!current()) return;
   box.replaceChildren();
-  if (!a.notes.length) { say(box, PANEL.activityEmpty); return; }
+  // A chat that could not be read is said by its title with its code (F12); with one, the tab is never "Nothing yet".
+  for (const u of a.unread) couldNot(say(box, ""), ACTIVITY.unreadChat.replace("{title}", u.title), u);
+  if (!a.tasks.length) { if (!a.unread.length) say(box, PANEL.activityEmpty); return; }
   const now = Date.now(); let day = null;
-  for (const n of a.notes) {
-    const d = dayName(n.at, now);
+  // Each task is a row with its title, its status in words and when it began; a row opens nothing yet (F15).
+  for (const t of a.tasks) {
+    const d = dayName(t.startedAt, now);
     if (d !== day) { day = d; heading(box, d); }
-    prow(box, { glyph: ACTIVITY_GLYPH[n.title] || "check", title: n.title, desc: n.line, time: clock(n.at) });
+    const r = prow(box, { glyph: ACTIVITY_GLYPH[t.status] || "dot", title: t.title, desc: ACTIVITY.status[t.status].replace("{code}", t.code || ""), time: clock(t.startedAt), danger: t.status === "failed" });
+    r.dataset.task = t.chatId + "/" + t.id;
   }
 });
 // One decided approval: the row opens to where it went, how it was decided, its words, and Revoke while the standing

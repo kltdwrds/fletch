@@ -1,17 +1,8 @@
-// The person's journal as notes in words (M23.3, the sheet's Activity tab). A journal row is identifiers
-// and codes; a note is a title, one line and a time, and carries none of them: no grant id, no tool or
-// action name, no subject, no counterpart and no run id. The route that serves it reads only the session
-// person's rows from the Ledger, so whose notes these are is the owning store's answer. One table says
-// every kind and outcome; one this table does not know still gets a sentence, never the code.
-import type { JournalRow } from "../grants/journal.ts";
-
-export interface ActivityNote {
-  /** The row's id, so a page can key a note; it is an effect or decision id, never shown. */
-  id: string;
-  at: number;
-  title: string;
-  line: string;
-}
+// What the agent did, in words, by a journal row's action kind and outcome (M23.3). A journal row is identifiers and
+// codes; these tables say it with none of them: no grant id, no tool or action name, no subject, no counterpart and
+// no run id. One table says every kind and outcome; one this table does not know still gets a sentence, never the
+// code. The Activity tab lists tasks from the chats' own turns (F12), so the journal-only feed these words drew is
+// gone; the tables stay for the journal rows a task's steps join (F13).
 
 /** What the agent did, by the action kind's family: the longest matching prefix wins. */
 export const KIND_WORDS: Array<[prefix: string, title: string]> = [
@@ -40,7 +31,8 @@ export const OUTCOME_WORDS: Record<string, string> = {
 };
 export const UNKNOWN_OUTCOME = "It did not finish.";
 
-const BY: Record<string, string> = {
+/** Who decided a success, by the gate's decision. */
+export const BY: Record<string, string> = {
   auto: "It went ahead under a permission you gave.",
   ask: "You were asked first.",
   deny: "It was held back.",
@@ -50,17 +42,4 @@ export function titleOf(actionKind: string): string {
   let best: [string, string] | null = null;
   for (const k of KIND_WORDS) if ((actionKind === k[0] || actionKind.startsWith(`${k[0]}.`)) && (!best || k[0].length > best[0].length)) best = k;
   return best ? best[1] : UNKNOWN_TITLE;
-}
-
-export function noteOf(row: JournalRow): ActivityNote {
-  const how = OUTCOME_WORDS[row.outcome];
-  // A success after an approval says who decided; a refusal or a failure says only what happened.
-  const line = row.outcome === "DONE" ? `${how} ${BY[row.decision] ?? ""}`.trim() : (how ?? UNKNOWN_OUTCOME);
-  return { id: row.id, at: row.at, title: titleOf(row.actionKind), line };
-}
-
-/** Newest first, a page of them; the row ids are the Ledger's order (`at`, then `id`). */
-export const ACTIVITY_SHOWN = 100;
-export function notesOf(rows: JournalRow[]): ActivityNote[] {
-  return rows.map(noteOf).sort((a, b) => b.at - a.at || (a.id < b.id ? 1 : -1)).slice(0, ACTIVITY_SHOWN);
 }

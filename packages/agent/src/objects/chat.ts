@@ -208,6 +208,16 @@ export class Chat extends Agent<Env> {
     return this.engine.lastAt(person);
   }
 
+  /** This chat's tasks, its newest first (F12, the Activity tab), for its owner alone; anyone else is refused with a code. */
+  async tasksFor(person: string) {
+    return this.engine.tasksFor(person);
+  }
+
+  /** One task of this chat by its anchor turn (F12), for its owner alone. */
+  async taskFor(person: string, id: string) {
+    return this.engine.taskFor(person, id);
+  }
+
   /** What this chat's thread draws that holds `query` (F2), for its owner alone; anyone else is refused with a code. */
   async search(person: string, query: string): Promise<ChatSearch> {
     return searchChat(this.engine, person, query);
