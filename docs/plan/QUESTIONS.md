@@ -35,8 +35,9 @@ value the chat handoff carries, and Pat's read refused `CHAT_NOT_OWNER` before a
 answer `SUBAGENT_STEPS_UNAVAILABLE`, because D-0011 (`docs/decisions/0011-subagent-transcript-read.md`) is
 `proposed`, a one-way door (a new read across the facet's storage boundary), and no session may accept it. Waiting
 on it: `SubAgent.transcript()` on the facet (Scope 3), the child's steps from `stepsOf` with "Handed off" last
-(Scope 4), and the acceptance claims on the child's setup steps, a failed child's steps up to the failure, and the
-planted reader that takes the person from the request. Two tests under `[F14] the child's own steps (waits on
+(Scope 4), and the acceptance claims on the child's setup steps, a failed child's steps up to the failure, the
+planted reader that takes the person from the request, and a facet whose read throws (today no facet is read, so the
+branch's test of that claim can only check the refusal by name). Two tests under `[F14] the child's own steps (waits on
 D-0011)` in `test/workers/f14-activity-subagents.test.ts` state the first two and fail today.
 
 **Recommended answer:** accept D-0011 as proposed (set `status: accepted`, `decider: Kyle`). The transcript half
