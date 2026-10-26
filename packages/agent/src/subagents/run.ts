@@ -56,6 +56,10 @@ export interface SubAgentDeps {
 
 export const SCHEMA = "CREATE TABLE IF NOT EXISTS subagent_transcript (seq INTEGER PRIMARY KEY AUTOINCREMENT, body TEXT NOT NULL);";
 
+/** The facet's transcript as stored, in seq order: what its run continues from, and its parent's one read (D-0011). */
+export const readTranscript = (storage: Pick<DurableObjectStorage, "sql">): Message[] =>
+  storage.sql.exec("SELECT body FROM subagent_transcript ORDER BY seq").toArray().map((r) => JSON.parse(String(r.body)) as Message);
+
 export const SUBAGENT_TASK = [
   "Surface: sub-agent. You work on one part of the person's request for the agent that started you, and you never speak to the person.",
   "Your final answer is your handoff: the findings, plainly, with what you could not establish. Report only what you observed.",
@@ -103,7 +107,7 @@ export async function runSubAgent(storage: Pick<DurableObjectStorage, "sql" | "t
   const own: Namespace = { name: "subagents", description: "sub-agents for parts of this task", deferral: "eager", tools: [delegateRequestSpec(input, spawns)] };
   const session = new ToolSession(new ToolRegistry([own, ...deps.namespaces(input.person)]), [], subAgentGate);
   const model = modelFor("subagent");
-  const transcript = storage.sql.exec("SELECT body FROM subagent_transcript ORDER BY seq").toArray().map((r) => JSON.parse(String(r.body)) as Message);
+  const transcript = readTranscript(storage);
   const messages = assemble({
     platform: PLATFORM_INSTRUCTIONS,
     task: SUBAGENT_TASK,

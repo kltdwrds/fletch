@@ -428,7 +428,7 @@ export function authorityWorld(o: WorldOptions = {}) {
     // The Activity tab's tasks (F12), each chat answering for its owner as the `Chat` object does; and one home file.
     chatTasks: async (p, chatId) => chatTasks(chats.harness(chatId).instance, p),
     // These chats wire no sub-agents (the sub-agent world does, F14), so their record holds no delegation.
-    chatTask: async (p, chatId, turnId) => chatTask(chats.harness(chatId).instance, p, turnId, { group: () => [], handedOffAt: () => null }),
+    chatTask: async (p, chatId, turnId) => chatTask(chats.harness(chatId).instance, p, turnId, { group: () => [], handedOffAt: () => null, transcript: async () => [] }),
     homeFile: async (p, path) => host(p).memory.memoryGet({ path, limit: 200 }, p),
     // The Library's files (M23.4): each person's own `PersonFiles`, decided there for the session's person.
     files: async (p) => host(p).files.list({ preview: true }, p),

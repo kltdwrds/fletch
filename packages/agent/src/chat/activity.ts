@@ -143,7 +143,7 @@ export function chatTasks(chat: Owned, person: string): TasksResult {
 
 /**
  * One task, its steps and its sub-agent sections (F14) for the chat's owner, the sections read from the chat's own
- * `subagents` rows only after the owner check; anyone else is `CHAT_NOT_OWNER`, a task that does not begin there
+ * `subagents` rows and, for the owner's rows, their facets' transcripts (D-0011), only after the owner check; anyone else is `CHAT_NOT_OWNER`, a task that does not begin there
  * `TASK_NOT_FOUND`.
  */
 export async function chatTask(chat: Owned, person: string, id: string, subagents: SubAgentRows): Promise<TaskResult> {
@@ -151,5 +151,5 @@ export async function chatTask(chat: Owned, person: string, id: string, subagent
   const task = chat.taskFor(person, id);
   if (!task) return { ok: false, code: "TASK_NOT_FOUND" };
   const steps = await chat.stepsFor(person, task);
-  return steps ? { ok: true, task, ...subagentSections(subagents, task, steps) } : { ok: false, code: "CHAT_NOT_OWNER" };
+  return steps ? { ok: true, task, ...(await subagentSections(subagents, person, task, steps)) } : { ok: false, code: "CHAT_NOT_OWNER" };
 }
