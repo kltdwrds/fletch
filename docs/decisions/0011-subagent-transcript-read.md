@@ -22,8 +22,9 @@ The activity plan (Fable, 2026-10-25) proposed this record: `objects/subagent.ts
 facet's storage, and F14 needs the child's tool calls, which live only there. F14 first built its sections from the
 parent's rows alone and answered the child's steps with `SUBAGENT_STEPS_UNAVAILABLE` (Q8). Kyle accepted the record
 in chat on 2026-10-26, in the session https://claude.ai/code/session_012Ezz9csrb82nZGBmft4xsa: "D-0011 accepted,
-build the transcript half. Kyle accepted D-0011 in chat just now." The session recorded his decision here, quoting
-him, as `docs/plan/KICKOFF.md` ("Questions") provides, in the same commit as Q8's answer.
+build the transcript half. Kyle accepted D-0011 in chat just now." Asked in the same session to confirm, as Kyle
+and in his own words, that he accepts D-0011, he answered "confirmed" (2026-10-26). The session recorded his decision
+here, quoting him, as `docs/plan/KICKOFF.md` ("Questions") provides, in the same commit as Q8's answer.
 `SubAgent.transcript()` is the facet's one read, `Chat.taskFor` its only caller, and
 `chat/activity-subagents.ts` reads it only for a row whose stored `person` is the requester, after the chat's owner
 check; `test/workers/f14-activity-subagents.test.ts` plants a row stored for another person and a facet whose read

@@ -83,7 +83,8 @@ authority on every spawn, so the parent checking its own row's `person` before c
 smallest boundary that lets the drawer show a delegation's steps. The alternative in the record (the facet returning
 its tool calls in `SubAgentResult` for the parent to store) is a new content store and a schema decision of its own.
 
-**Answered (Kyle, 2026-10-26):** "D-0011 accepted, build the transcript half." D-0011 is accepted (`decider: Kyle`), and
+**Answered (Kyle, 2026-10-26):** "D-0011 accepted, build the transcript half." Asked to confirm as Kyle, in his own
+words, that he accepts D-0011: "confirmed". D-0011 is accepted (`decider: Kyle`), and
 the transcript half is built on the same branch. The two tests this question names as failing were folded into the
 part's tests, which pass: `[F14] sub-agent sections and the launch step`, `[F14] the verdict in both places` and
 `[F14] who reads a child's transcript`.
