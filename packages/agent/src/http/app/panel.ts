@@ -2,8 +2,8 @@
 // opened from the chat header's avatar, pinned at the end of the chat from 768 px and a bottom sheet on a phone
 // (M29.2); the shell moves `#panel` between the two. The host is the system's: the
 // avatar, the name, the handle, Connected with its dot, and the four-icon segment Activity, Approvals, Upcoming,
-// Identity. Activity is the person's tasks (F12) in day groups of ListRows; Approvals the decided cards with where
-// each went and how it was decided, each opening to its words and, for a standing grant, Revoke (the cards still
+// Identity. Activity is the person's tasks (F12) in day groups of ListRows, each opening its task in the drawer
+// (F15, `activity.ts`); Approvals the decided cards with where each went and how it was decided, each opening to its words and, for a standing grant, Revoke (the cards still
 // waiting sit above); Upcoming the jobs grouped by cadence, each opening the job dialog with its schedule, its run
 // history, Run now, Turn off or on and Remove (asked again on the ConfirmDialog); Identity the name card and the
 // SOUL and MEMORY IdentityCards, each opening its file. Devices is Settings' (M27.6) and Compact the chat's menu
@@ -246,7 +246,9 @@ const sheetActivity = latest(async (current) => {
   for (const t of a.tasks) {
     const d = dayName(t.startedAt, now);
     if (d !== day) { day = d; heading(box, d); }
-    prow(box, { glyph: ACTIVITY_GLYPH[t.status], title: t.title, desc: ACTIVITY_TEXT.status[t.status].replace("{code}", t.code || ""), time: clock(t.startedAt), danger: t.status === "failed" });
+    // A row opens its task in the drawer (F15, activity.ts) by its chat and anchor turn.
+    const r = prow(box, { glyph: ACTIVITY_GLYPH[t.status], title: t.title, desc: ACTIVITY_TEXT.status[t.status].replace("{code}", t.code || ""), time: clock(t.startedAt), danger: t.status === "failed", tap: () => openTask(t.chatId, t.id) });
+    r.dataset.task = t.id;
   }
 });
 // One decided approval: the row opens to where it went, how it was decided, its words, and Revoke while the standing
