@@ -209,9 +209,9 @@ export class Chat extends Agent<Env> {
     return chatTasks(this.engine, person);
   }
 
-  /** One task of this chat by its anchor turn (F12) with its steps (F13), for its owner; refused by code otherwise. */
+  /** One task of this chat by its anchor turn (F12) with its steps (F13) and sub-agent sections (F14), for its owner; refused by code otherwise. */
   async taskFor(person: string, id: string): Promise<TaskResult> {
-    return chatTask(this.engine, person, id);
+    return chatTask(this.engine, person, id, new SubAgentStore(this.ctx.storage));
   }
 
   /** When this chat last had something to show (M29.3, the list row's time), for its owner. */

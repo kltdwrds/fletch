@@ -46,7 +46,8 @@ export interface StepRecord {
   turnId: string;
   /** The tool call's id; empty for the marker and the summary. */
   callId: string;
-  kind: StepKind | "marker" | "summary";
+  /** `verdict` is a returned delegation's, synthesized from the parent's rows (F14). */
+  kind: StepKind | "marker" | "summary" | "verdict";
   tool: string;
   title: string;
   state: StepState;
