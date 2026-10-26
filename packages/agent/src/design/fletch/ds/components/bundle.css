@@ -489,6 +489,61 @@ body{background:var(--bg-primary);color:var(--text-primary);font-family:var(--fo
 .qf-tl .tx b{font-weight:600}
 .qf-tl .tx p{margin:0}
 
+/* ===== Task drawer (activity), F11: one task's steps and their detail, in the job dialog's .qf-dlg--960. Specimen:
+   ds/specimens/task-drawer.html. It extends the goal timeline above (.qf-tl), the status pill (.qf-status) and the
+   section header (.qf-items-head, for SUBAGENT 01) rather than drawing a second timeline language.
+   Layout: from 768 px (the panel's pin breakpoint) two panes, the timeline .qf-task-list at 360 and the detail
+   .qf-task-detail filling the rest; under it one pane, the timeline, and .qf-task.is-detail shows the detail with
+   its Back (.qf-task-back) instead. The empty and could-not-read states are the panel's .panel-note (PANEL_CSS).
+   Truncation, three rules: a list title is one line, ellipsised at the pane edge (.qf-tl .nm); a command, a script
+   or a change in the detail is never cut (.qf-code .qf-src wraps); a result folds past 40 lines (.qf-code.is-cut)
+   behind Show more (.qf-more), its bar saying "cut at 20,000 characters" when the route cut it. */
+.qf-task-head{display:flex;align-items:center;gap:12px;min-height:60px;padding:12px 64px 12px 24px;border-bottom:1px solid var(--fill-divider);flex-shrink:0}
+.qf-task-head h2{flex:1;min-width:0;margin:0;font:600 18px/26px var(--font-sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qf-task-head .qf-status{flex-shrink:0}
+.qf-status--done i{background:var(--status-success)}
+.qf-status--run i{background:var(--accent)}
+.qf-status--fail i{background:var(--status-error)}
+.qf-status--wait i{background:var(--text-tertiary)} /* tertiary: fill-tertiary is the pill's own ground in light */
+.qf-task{display:flex;flex:1;min-height:0}
+.qf-task-list{flex:1;min-width:0;overflow:auto;padding:16px 16px 8px}
+.qf-task-detail{display:none;flex:1;min-width:0;flex-direction:column;gap:12px;overflow:auto;padding:16px 24px 24px}
+.qf-task.is-detail>.qf-task-list{display:none}
+.qf-task.is-detail>.qf-task-detail{display:flex}
+.qf-task-back{align-self:flex-start;margin:-8px 0 0 -12px}
+.qf-task-detail>*{flex-shrink:0} /* a block keeps its height; the pane scrolls */
+.qf-task-detail h3{margin:0;font:600 16px/22px var(--font-sans);overflow-wrap:anywhere}
+.qf-task-detail p{margin:0;color:var(--text-secondary);font:400 14px/20px var(--font-sans)}
+@media (min-width:768px){
+  .qf-task{display:grid;grid-template-columns:360px minmax(0,1fr)}
+  .qf-task>.qf-task-list,.qf-task.is-detail>.qf-task-list{display:block;border-right:1px solid var(--fill-divider)}
+  .qf-task>.qf-task-detail{display:flex}
+  .qf-task-back{display:none}
+}
+.qf-task-list .qf-items-head{height:36px;margin:4px -16px 12px;padding:0 16px;border-top:1px dashed var(--fill-divider)}
+.qf-tl .tx{flex:1;min-width:0}
+.qf-tl .nm{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-primary);font-weight:500}
+.qf-tl li.is-sel{margin:0 -8px;padding:0 8px;border-radius:10px;background:var(--fill-highlight)}
+.qf-tl li.is-sel .tx{padding-top:4px;padding-bottom:12px}
+.qf-tl .rail b.is-fail{color:var(--status-error)}
+.qf-tl .rail b.is-wait{color:var(--text-tertiary)}
+.qf-tl--nested{padding-left:30px} /* under the launch step's text: the 18 px rail plus the 12 px gap */
+.qf-code{display:flex;flex-direction:column;border-radius:12px;background:var(--gray-1100);overflow:hidden} /* the .qf-src face is dark in both themes */
+.qf-code-bar{display:flex;align-items:center;gap:8px;height:36px;padding:0 6px 0 12px;border-bottom:1px solid rgba(255,255,255,.08);color:#8b949e;font:500 12px/16px var(--font-sans)}
+.qf-code-bar .k{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qf-code-bar button{height:28px;padding:0 10px;border:0;border-radius:var(--radius-full);background:transparent;color:#c9d1d9;font:500 12px/16px var(--font-sans);cursor:pointer}
+.qf-code-bar button:hover{background:rgba(255,255,255,.08)}
+.qf-code .qf-src{white-space:pre-wrap;overflow-wrap:anywhere}
+.qf-code.is-cut .qf-src{max-height:calc(40 * 19.5px + 8px);overflow:hidden;-webkit-mask-image:linear-gradient(#000 85%,transparent);mask-image:linear-gradient(#000 85%,transparent)}
+.qf-src .add{color:#3fb950}.qf-src .del{color:#f85149}
+.qf-more{display:flex;align-items:center;justify-content:center;width:100%;height:36px;border:0;border-top:1px solid rgba(255,255,255,.08);background:transparent;color:#58a6ff;font:500 13px/18px var(--font-sans);cursor:pointer}
+.qf-fcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.qf-fcard{display:flex;flex-direction:column;min-width:0;border-radius:16px;border:1px solid var(--fill-divider);background:var(--bg-primary);overflow:hidden}
+.qf-fcard-head{display:flex;align-items:baseline;gap:8px;padding:10px 12px}
+.qf-fcard .nm{flex:1;min-width:0;font:500 14px/20px var(--font-sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qf-fcard .kd{flex-shrink:0;color:var(--text-secondary);font:400 12px/16px var(--font-sans);text-transform:uppercase}
+.qf-fcard .pv{height:calc(8 * 18px + 8px);margin:0;padding:8px 12px 0;overflow:hidden;background:var(--fill-code-block);color:var(--text-secondary);font:400 12px/18px var(--font-mono,ui-monospace,monospace);white-space:pre} /* eight lines */
+
 /* Share targets */
 .qf-share{display:flex;gap:24px;padding:4px 0;justify-content:center;flex-wrap:wrap}
 .qf-share>div{display:flex;flex-direction:column;align-items:center;gap:8px;width:64px}
@@ -738,10 +793,6 @@ html:active-view-transition-type(qf-push)::view-transition-new(root){animation:q
   .qf-set-back{top:22px}
   .qf-set-x{display:none}
   .qf-set-body{padding:0 16px 16px}
-
-  /* Task detail: Muse keeps two panes and crushes them at 390; we stack (inferred) */
-  .qf-dlg--960 .qf-task{flex-direction:column}
-  .qf-dlg--960 .qf-task>*{width:auto!important}
 }
 
 /* ---------- Tablet (768-1023) ---------- */
