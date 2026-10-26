@@ -203,6 +203,15 @@ describe("[F12] a task is a record", () => {
     expect(glyphs(box)).toEqual([`glyph-${ACTIVITY_GLYPH.failed}`, `glyph-${ACTIVITY_GLYPH.done}`]);
   });
 
+  it("the tab's read and the chats list at once, on a person's first visit, open one main chat", async () => {
+    const w = world();
+    const [chats, a] = await Promise.all([w.http(ada.email, "GET", "/app/chats"), activity(w, ada.email)]);
+    expect([chats.status, a.tasks]).toEqual([200, []]);
+    const mains = w.host(ada.email).chats.entries().filter((c) => c.kind === "main");
+    expect(mains).toHaveLength(1);
+    expect(chats.body.main).toBe(mains[0]?.id);
+  });
+
   it("promptTitle through chats-list.ts is the one in chat/prompt-title.ts", () => {
     expect(listTitle).toBe(promptTitle);
   });
