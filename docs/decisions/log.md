@@ -123,3 +123,13 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   `stepCount > STEPS_PER_TASK`, so the list row and the timeline agree. `StepDetail` is `{ prose, blocks, result,
   lines, files, cut }` (the plan's §(b.4) was not in the session's checkout; F16 completes the per-kind shapes).
   Confirming test: `test/workers/f13-activity-steps.test.ts`.
+- 2026-10-26 F14: the half built from the parent's rows, where the part left a choice. The second member is Pat
+  (`pat-solo`), since `test/fixtures/people.json` has no Bo (rejected: adding an identity). `chatTask` takes the
+  chat's `SubAgentRows` as a required argument, so the `Chat` object cannot forget its record (rejected: an optional
+  one answering `subagents: []`, which would read as "no delegations"; the engine is at its 600-line cap). Sections
+  follow `task.groups` sorted by their first row's `created_at`; the launch step is matched by
+  `groupIdOf(step.turnId, step.callId)`; the verdict step goes after the launch turn's steps, before the first later
+  step started at or after `handed_off_at`, else before the marker and summary, with one title naming each request's
+  verdict (a failed one's `failed (<CODE>)`, since the verifier checks only what returns to the main agent). No
+  facet is read until D-0011 is accepted: every row's `steps` is `{ ok: false, code: "SUBAGENT_STEPS_UNAVAILABLE" }`
+  (Q8). Confirming test: `test/workers/f14-activity-subagents.test.ts`.
