@@ -109,3 +109,17 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   turn ended, the task did not. `code` is the latest turn's code unless the task is done or running. `groups` is the
   delegation groups the task's turns launched (the outbox's `delegate` rows, through the one `delegationGroup`) or
   received (`internal_handoff` mailbox rows). Confirming test: `test/workers/f12-activity-tasks.test.ts`.
+- 2026-10-26 F13: the step timeline's readings where the part left a choice. The journal join matches
+  `<chatId>:<callId>` and `<chatId>:<callId>:decision`, because `chat/approvals.ts` writes every row id under its
+  chat (rejected: a bare `callId`, which matches nothing; a suffix match, which would join another chat's call with
+  the same id); the latest row decides the state, so a declined card is `refused` after its `PENDING` proposal. A
+  call with journal rows is an `action` step titled by its card's label (the tool's name in words, as
+  `ChatEngine.approvals` labels cards) — the engine is at its 600-line cap, so no registry lookup on the read path.
+  A waiting step's code is null (its words say it waits) rather than `PENDING`. The todo title adds the next open
+  item after the counts ("…; next: <item>"), so the item's own characters are in the title as data (rejected: counts
+  alone, which leaves the part's markup claim nothing to hold). The summary step is present once a task's turn has
+  finished without awaiting a decision (rejected: a summary of a running or waiting task, which would read as done,
+  D-0001). `stepCount` now counts steps (every call but `send_to_user` and `react`) and `capped` is
+  `stepCount > STEPS_PER_TASK`, so the list row and the timeline agree. `StepDetail` is `{ prose, blocks, result,
+  lines, files, cut }` (the plan's §(b.4) was not in the session's checkout; F16 completes the per-kind shapes).
+  Confirming test: `test/workers/f13-activity-steps.test.ts`.
