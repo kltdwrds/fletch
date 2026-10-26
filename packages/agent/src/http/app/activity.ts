@@ -7,8 +7,8 @@
 // snapshot of its opening, with Refresh. Every word is in `ACTIVITY_TEXT`; the title is the record's own string,
 // drawn as it came, in the head and the detail pane as in the row; a task that could not be read is said with its code.
 
-import type { StepRecord } from "../../chat/activity-steps.ts";
 import type { TaskStatus } from "../../chat/activity.ts";
+import type { StepRecord } from "../../chat/activity-steps.ts";
 import { ACTIVITY_TEXT as STATUS_WORDS } from "../../obs/activity-words.ts";
 import { type IconName, ic } from "./icons.ts";
 import { SCRIPT_GLYPHS } from "./shell.ts";
@@ -16,7 +16,6 @@ import { SCRIPT_GLYPHS } from "./shell.ts";
 /** Every word the drawer says, one table. The task's status words are F12's table, cited, not copied. */
 export const ACTIVITY_TEXT = {
   status: STATUS_WORDS.status,
-  dialog: "Task",
   refresh: "Refresh",
   back: "Back",
   close: "Close",
@@ -135,7 +134,6 @@ function drawTask(t) {
   pill.hidden = !t; pill.replaceChildren();
   $("task-title").textContent = t ? titleOf(t.task) : "";
   $("task-detail-task").textContent = t ? titleOf(t.task) : "";
-  $("task-dialog").setAttribute("aria-label", t ? titleOf(t.task) : TASK.dialog);
   if (t) { pill.className = "qf-status qf-status--" + TASK_TONE[t.task.status]; pill.append(el("i"), fill(TASK.status[t.task.status], { code: t.task.code })); }
   drawSteps(t);
   const keep = t && taskSel && stepAt(taskSel) ? taskSel : null;
