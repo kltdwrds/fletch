@@ -130,6 +130,16 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   follow `task.groups` sorted by their first row's `created_at`; the launch step is matched by
   `groupIdOf(step.turnId, step.callId)`; the verdict step goes after the launch turn's steps, before the first later
   step started at or after `handed_off_at`, else before the marker and summary, with one title naming each request's
-  verdict (a failed one's `failed (<CODE>)`, since the verifier checks only what returns to the main agent). No
-  facet is read until D-0011 is accepted: every row's `steps` is `{ ok: false, code: "SUBAGENT_STEPS_UNAVAILABLE" }`
-  (Q8). Confirming test: `test/workers/f14-activity-subagents.test.ts`.
+  verdict (a failed one's `failed (<CODE>)`, since the verifier checks only what returns to the main agent). The
+  child's steps waited on D-0011 (Q8) and are the next line. Confirming test:
+  `test/workers/f14-activity-subagents.test.ts`.
+- 2026-10-26 F14, the transcript half after Kyle accepted D-0011. `SubAgentRows` gains `transcript(id)`, the facet's
+  one read through `Chat.facet`, which the run transport shares. A row is read only when its stored `person` is the
+  requester (else `SUBAGENT_NOT_YOURS`, the host's code for the same ownership refusal), a read that throws is
+  `SUBAGENT_STEPS_UNAVAILABLE`, and a queued row answers `[]` without a read, since it has not run and a read would
+  make its facet (rejected: reading it, which creates storage for nothing). A child has no journal, so a call its gate
+  refused (the result's `details.code`, `subAgentGate`) is `refused` with that code and titled "…: not done (<CODE>)"
+  as a parent's refused action is (rejected: F13's reading, which shows the refusal as done, against D-0001).
+  "Handed off" (kind `handoff`) is the last assistant text of a `done` child's transcript; a failed child has none.
+  `tasksOf` in `activity-steps.ts` reads a coordinator's `briefs` as workers', so its own launch step is titled from
+  them. Confirming test: `test/workers/f14-activity-subagents.test.ts`.

@@ -26,26 +26,6 @@ boot — then the record is two-way and the session sets it.
 **Recommended answer:** accept the record as proposed (Kyle was asked in chat 2026-10-23; the ask stands until
 he answers).
 
-### Q8 (F14), 2026-10-26: Accept D-0011, the parent's owner-checked read of a sub-agent facet's transcript
-
-**Blocks:** F14's transcript half, so F14 cannot reach `ACCEPT F14: PASS`. The buildable half is on the branch
-`claude/fletch-f14-subagent-steps-q7ko2x`: `groupIdOf`, the launch step's detail from the rows, the task answer's
-`subagents` sections numbered `01`, `02` and nested by depth, the verdict step in the parent from the same stored
-value the chat handoff carries, and Pat's read refused `CHAT_NOT_OWNER` before any row is read. Every child's steps
-answer `SUBAGENT_STEPS_UNAVAILABLE`, because D-0011 (`docs/decisions/0011-subagent-transcript-read.md`) is
-`proposed`, a one-way door (a new read across the facet's storage boundary), and no session may accept it. Waiting
-on it: `SubAgent.transcript()` on the facet (Scope 3), the child's steps from `stepsOf` with "Handed off" last
-(Scope 4), and the acceptance claims on the child's setup steps, a failed child's steps up to the failure, the
-planted reader that takes the person from the request, and a facet whose read throws (today no facet is read, so the
-branch's test of that claim can only check the refusal by name). Two tests under `[F14] the child's own steps (waits on
-D-0011)` in `test/workers/f14-activity-subagents.test.ts` state the first two and fail today.
-
-**Recommended answer:** accept D-0011 as proposed (set `status: accepted`, `decider: Kyle`). The transcript half
-waits on D-0011: the facet's transcript is the only copy of a child's steps, and the parent already holds the
-authority on every spawn, so the parent checking its own row's `person` before calling the facet's one read is the
-smallest boundary that lets the drawer show a delegation's steps. The alternative in the record (the facet returning
-its tool calls in `SubAgentResult` for the parent to store) is a new content store and a schema decision of its own.
-
 ## Open, not blocking
 
 ### Q6 (F4), 2026-10-23: D-0010 is a stub until the artifact record lands
@@ -82,6 +62,30 @@ measured slow.
 **Recommended answer:** run it on the Q1 account (`docs/runbooks/free-plan-spike.md`) and paste the table.
 
 ## Answered
+
+### Q8 (F14), 2026-10-26: Accept D-0011, the parent's owner-checked read of a sub-agent facet's transcript
+
+**Blocks:** F14's transcript half, so F14 cannot reach `ACCEPT F14: PASS`. The buildable half is on the branch
+`claude/fletch-f14-subagent-steps-q7ko2x`: `groupIdOf`, the launch step's detail from the rows, the task answer's
+`subagents` sections numbered `01`, `02` and nested by depth, the verdict step in the parent from the same stored
+value the chat handoff carries, and Pat's read refused `CHAT_NOT_OWNER` before any row is read. Every child's steps
+answer `SUBAGENT_STEPS_UNAVAILABLE`, because D-0011 (`docs/decisions/0011-subagent-transcript-read.md`) is
+`proposed`, a one-way door (a new read across the facet's storage boundary), and no session may accept it. Waiting
+on it: `SubAgent.transcript()` on the facet (Scope 3), the child's steps from `stepsOf` with "Handed off" last
+(Scope 4), and the acceptance claims on the child's setup steps, a failed child's steps up to the failure, the
+planted reader that takes the person from the request, and a facet whose read throws (today no facet is read, so the
+branch's test of that claim can only check the refusal by name). Two tests under `[F14] the child's own steps (waits on
+D-0011)` in `test/workers/f14-activity-subagents.test.ts` state the first two and fail today.
+
+**Recommended answer:** accept D-0011 as proposed (set `status: accepted`, `decider: Kyle`). The transcript half
+waits on D-0011: the facet's transcript is the only copy of a child's steps, and the parent already holds the
+authority on every spawn, so the parent checking its own row's `person` before calling the facet's one read is the
+smallest boundary that lets the drawer show a delegation's steps. The alternative in the record (the facet returning
+its tool calls in `SubAgentResult` for the parent to store) is a new content store and a schema decision of its own.
+
+**Answered (Kyle, 2026-10-26):** "D-0011 accepted, build the transcript half." D-0011 is accepted (`decider: Kyle`), and
+the transcript half is built on the same branch.
+
 
 ### Q3, 2026-10-22: Preview slots on the shared account reach production's data
 

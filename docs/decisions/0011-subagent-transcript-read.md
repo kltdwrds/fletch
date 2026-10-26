@@ -1,10 +1,10 @@
 ---
 id: D-0011
 title: A sub-agent facet answers its parent's owner-checked read of its transcript, and nothing else reads it
-status: proposed
+status: accepted
 door: one-way
-decided: 2026-10-25
-decider: agent
+decided: 2026-10-26
+decider: Kyle
 confirmation: test/workers/f14-activity-subagents.test.ts
 revisit-when: a sub-agent runs anywhere but as a facet of its parent Chat, or a facet's storage is retained
   on a different schedule from the parent's
@@ -18,12 +18,14 @@ store and a schema decision of its own.
 
 ## Context
 
-The activity plan (Fable, 2026-10-25) proposes this record: `objects/subagent.ts` says the parent cannot read
-the facet's storage, and F14 needs the child's tool calls, which live only there. This file is the proposed
-record, written by the plan session so the plan's citations resolve; it binds nothing (`proposed`, one-way
-door). F14 is blocked on Kyle accepting it: until then it builds the `SUBAGENT 01` section from the parent's
-rows alone and answers the child's steps with `SUBAGENT_STEPS_UNAVAILABLE`, and records the half in
-`docs/plan/QUESTIONS.md`.
+The activity plan (Fable, 2026-10-25) proposed this record: `objects/subagent.ts` said the parent cannot read the
+facet's storage, and F14 needs the child's tool calls, which live only there. F14 first built its sections from the
+parent's rows alone and answered the child's steps with `SUBAGENT_STEPS_UNAVAILABLE` (Q8). Kyle accepted the record
+in chat on 2026-10-26 ("D-0011 accepted, build the transcript half"); the session recorded his decision here.
+`SubAgent.transcript()` is the facet's one read, `Chat.taskFor` its only caller, and
+`chat/activity-subagents.ts` reads it only for a row whose stored `person` is the requester, after the chat's owner
+check; `test/workers/f14-activity-subagents.test.ts` plants a row stored for another person and a facet whose read
+throws.
 
 ## Options
 
