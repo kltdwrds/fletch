@@ -308,6 +308,7 @@ describe("[F15] a delegated task in the drawer", () => {
     const [head] = heads(p) as [El];
     expect(head.text()).toContain("SUBAGENT 01");
     expect(head.text()).toContain(ACTIVITY_TEXT.rowStatus.done);
+    expect(head.text()).toContain(ACTIVITY_TEXT.verdict.replace("{verdict}", "pass"));
     const sub = byClass(p.byId("task-steps"), "task-sub")[0] as El;
     expect(sub.text()).toContain(ACTIVITY_TEXT.verdict.replace("{verdict}", "pass"));
     expect(sub.text()).toContain("names the launch date from the notes");
@@ -319,6 +320,11 @@ describe("[F15] a delegated task in the drawer", () => {
     await click(kids[0]);
     expect(selected(p)).toEqual([kids[0]?.dataset.key]);
     expect(pane(p).children.find((c) => c.tag === "h3")?.textContent).toBe(child[0]?.title);
+    // The launch step's prose is its own paragraph, not its title: drawn as a line of the pane.
+    const launch = answer.steps.find((s) => s.kind === "launch") as StepRecord;
+    expect(launch.detail.prose).not.toBe(launch.title);
+    await click(lis(p).find((li) => li.dataset.key === String(launch.n)));
+    expect(pane(p).children.filter((c) => c.tag === "p").map((c) => c.textContent)).toContain(launch.detail.prose);
     // In drawing order: the main steps, the section and its steps, then the summary.
     const order = all(p.byId("task-steps")).filter((e) => e.tag === "li" || has(e, "qf-items-head")).map((e) => (e.tag === "li" ? e.dataset.kind : "section"));
     expect(order).toEqual([...answer.steps.filter((s) => s.kind !== "summary").map((s) => s.kind), "section", ...child.map((s) => s.kind), "summary"]);

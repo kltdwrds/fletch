@@ -170,11 +170,13 @@ function drawSteps(t) {
   for (const sec of t.subagents || []) {
     const lead = sec.rows[0];
     const head = el("div"); head.className = "qf-items-head"; head.dataset.section = sec.n;
-    head.append(el("span", fill(TASK.section, { n: sec.n })), el("span", lead ? fill(TASK.rowStatus[lead.status] || lead.status, { code: lead.code }) : ""));
+    // The head says the lead row's status and verdict; each row's own line below repeats them with its reason.
+    const verdictOf = (r) => (r.verdict ? fill(TASK.verdict, { verdict: r.verdict }) : TASK.noVerdict);
+    head.append(el("span", fill(TASK.section, { n: sec.n })), el("span", lead ? fill(TASK.rowStatus[lead.status] || lead.status, { code: lead.code }) + " · " + verdictOf(lead) : ""));
     box.append(head);
     for (const r of sec.rows) {
       const sub = el("p"); sub.className = "task-sub"; sub.dataset.row = r.id;
-      sub.append(el("span", [TASK.subAgent + " " + r.id.split(".").slice(1).join("."), r.role, fill(TASK.rowStatus[r.status] || r.status, { code: r.code }), r.verdict ? fill(TASK.verdict, { verdict: r.verdict }) + (r.verdictReason ? ": " + r.verdictReason : "") : TASK.noVerdict].join(" · ")));
+      sub.append(el("span", [TASK.subAgent + " " + r.id.split(".").slice(1).join("."), r.role, fill(TASK.rowStatus[r.status] || r.status, { code: r.code }), verdictOf(r) + (r.verdict && r.verdictReason ? ": " + r.verdictReason : "")].join(" · ")));
       box.append(sub);
       // A child's steps are drawn when the answer carries them; refused, they are said by code, never an empty list.
       if (Array.isArray(r.steps)) { const ol = tl(box, true); for (const s of r.steps) stepLi(ol, s, sec.n + "/" + r.id + "/" + s.n); }
