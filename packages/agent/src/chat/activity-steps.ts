@@ -46,7 +46,8 @@ export interface StepRecord {
   turnId: string;
   /** The tool call's id; empty for the marker and the summary. */
   callId: string;
-  kind: StepKind | "marker" | "summary";
+  /** `verdict` is a returned delegation's, synthesized from the parent's rows; `handoff` a sub-agent's final text (F14). */
+  kind: StepKind | "marker" | "summary" | "verdict" | "handoff";
   tool: string;
   title: string;
   state: StepState;
@@ -74,7 +75,9 @@ const oneLine = (s: string): string => s.replace(/\s+/g, " ").trim();
 const firstLine = (s: string): string => oneLine(s.split("\n").find((l) => l.trim()) ?? "");
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const todoItems = (a: Args): Array<{ text: string; done: boolean }> => (Array.isArray(a.items) ? (a.items as Array<{ text?: unknown; done?: unknown }>).map((i) => ({ text: str(i?.text), done: i?.done === true })) : []);
-const tasksOf = (a: Args): Array<{ role: string; brief: string }> => (Array.isArray(a.tasks) ? (a.tasks as Array<{ role?: unknown; brief?: unknown }>).map((t) => ({ role: str(t?.role), brief: str(t?.brief) })) : []);
+/** A delegation's requests: the main agent's `tasks`, or a coordinator's `briefs`, each a worker's (`subagents/run.ts`, F14). */
+const tasksOf = (a: Args): Array<{ role: string; brief: string }> =>
+  Array.isArray(a.tasks) ? (a.tasks as Array<{ role?: unknown; brief?: unknown }>).map((t) => ({ role: str(t?.role), brief: str(t?.brief) })) : Array.isArray(a.briefs) ? (a.briefs as unknown[]).map((b) => ({ role: "worker", brief: str(b) })) : [];
 
 /** Each tool's kind and title in code's words, by tool name; a tool not here is "Called <tool>". */
 export const STEP_WORDS: Record<string, { kind: StepKind; title: (a: Args) => string }> = {

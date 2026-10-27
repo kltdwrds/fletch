@@ -75,7 +75,7 @@ describe("[F12] a task is a record", () => {
     expect([titles(box), lines(box), glyphs(box)]).toEqual([[promptTitle(PROMPT)], [ACTIVITY_TEXT.status.done], [`glyph-${ACTIVITY_GLYPH.done}`]]);
     expect(box.text()).not.toContain(PANEL_TEXT.activityEmpty);
     // The one task opens by its chat and anchor turn.
-    expect((await w.http(ada.email, "GET", `/app/activity/${chatId}/${turnId}`)).body).toEqual({ ok: true, task: a.tasks[0], steps: expect.any(Array) });
+    expect((await w.http(ada.email, "GET", `/app/activity/${chatId}/${turnId}`)).body).toEqual({ ok: true, task: a.tasks[0], steps: expect.any(Array), subagents: [] });
   });
 
   it("a mail proposal decided later continues under the same task: waiting on Sam, then done with the continuation's turn", async () => {

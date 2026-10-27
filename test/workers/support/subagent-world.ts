@@ -8,7 +8,7 @@ import { Type } from "@earendil-works/pi-ai";
 import { ChatEngine, type EngineCtx } from "../../../packages/agent/src/chat/engine.ts";
 import { Ledger } from "../../../packages/agent/src/objects/ledger.ts";
 import { type SubAgentTransport, SubAgentHost } from "../../../packages/agent/src/subagents/host.ts";
-import { runSubAgent, type SubAgentInput } from "../../../packages/agent/src/subagents/run.ts";
+import { readTranscript, runSubAgent, type SubAgentInput } from "../../../packages/agent/src/subagents/run.ts";
 import { SubAgentStore } from "../../../packages/agent/src/subagents/store.ts";
 import { verifyHandoff } from "../../../packages/agent/src/subagents/verifier.ts";
 import type { Namespace } from "../../../packages/agent/src/tools/registry.ts";
@@ -70,19 +70,27 @@ export function subagentWorld(o: SubAgentWorldOptions = {}) {
   const reads = o.reads ?? fixtureReads;
 
   /** Facets: one harness per sub-agent id, so each has its own SQLite, as a facet does. */
-  const facets = new Map<string, ObjectHarness<{ run(i: SubAgentInput): ReturnType<typeof runSubAgent> }>>();
+  type Facet = { run(i: SubAgentInput): ReturnType<typeof runSubAgent>; transcript(): Promise<ReturnType<typeof readTranscript>> };
+  const facets = new Map<string, ObjectHarness<Facet>>();
   const runs: SubAgentInput[] = [];
+  /** The sub-agent ids whose transcript the parent read, in order (D-0011). */
+  const transcriptReads: string[] = [];
+  /** A facet by its sub-agent's id, made on first use as `ctx.facets.get` makes one: its run and its one read, as `SubAgent` has. */
+  const facet = (id: string): Facet => {
+    let h = facets.get(id);
+    if (!h) {
+      h = new ObjectHarness<Facet>(`subagent:${id}`, (ctx) => ({
+        run: (i: SubAgentInput) => runSubAgent((ctx as DurableObjectState).storage, { ai: fake.binding as unknown as Ai, ledger: ledger(), tenant: TENANT, namespaces: reads, now: () => clock.now, wait }, i),
+        transcript: async () => readTranscript((ctx as DurableObjectState).storage),
+      }), env);
+      facets.set(id, h);
+    }
+    return h.instance;
+  };
   const realTransport: SubAgentTransport = {
     run: async (input) => {
       runs.push(input);
-      let h = facets.get(input.id);
-      if (!h) {
-        h = new ObjectHarness(`subagent:${input.id}`, (ctx) => ({
-          run: (i: SubAgentInput) => runSubAgent((ctx as DurableObjectState).storage, { ai: fake.binding as unknown as Ai, ledger: ledger(), tenant: TENANT, namespaces: reads, now: () => clock.now, wait }, i),
-        }), env);
-        facets.set(input.id, h);
-      }
-      return h.instance.run(input);
+      return facet(input.id).run(input);
     },
   };
   const transport = o.transport ? o.transport(realTransport) : realTransport;
@@ -130,7 +138,20 @@ export function subagentWorld(o: SubAgentWorldOptions = {}) {
   const transcript = () => chat.rows("SELECT body FROM messages ORDER BY seq").map((r) => String(r.body));
   const toolResults = () => fake.requests.flatMap((r) => r.inputs.messages.filter((m) => m.role === "tool").map((m) => String(m.content)));
 
-  return { clock, fake, performed, chat, ledger, say, alarm, settle, rows, transcript, toolResults, runs, arms: () => arms };
+  /** The parent's record as `Chat.taskFor` hands it to the activity read: the rows, and each facet's transcript (D-0011). */
+  const record = () => {
+    const store = chat.instance.store;
+    return {
+      group: (g: string) => store.group(g),
+      handedOffAt: (g: string) => store.handedOffAt(g),
+      transcript: async (id: string) => {
+        transcriptReads.push(id);
+        return facet(id).transcript();
+      },
+    };
+  };
+
+  return { clock, fake, performed, chat, ledger, say, alarm, settle, rows, transcript, toolResults, runs, transcriptReads, record, arms: () => arms };
 }
 
 export type SubAgentWorld = ReturnType<typeof subagentWorld>;

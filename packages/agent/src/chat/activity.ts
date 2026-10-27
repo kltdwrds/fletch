@@ -9,9 +9,10 @@
 import type { Message } from "@earendil-works/pi-ai";
 import type { JournalRow } from "../grants/journal.ts";
 import { type StepRecord, STEPS_PER_TASK, stepCalls, timelineOf } from "./activity-steps.ts";
+import { type SubAgentRows, type SubAgentSection, subagentSections } from "./activity-subagents.ts";
 import { type TranscriptRow, TYPED_WITHOUT_ID } from "./history.ts";
 import type { Mailbox } from "./mailbox.ts";
-import { delegationGroup } from "./outbox.ts";
+import { groupIdOf } from "./outbox.ts";
 import { promptTitle } from "./prompt-title.ts";
 import type { ChatStore, TurnRow } from "./store.ts";
 import type { Effect } from "./tools.ts";
@@ -83,7 +84,7 @@ function record(store: ChatStore, mailbox: Mailbox, chatId: string, g: Group, ro
   const words = g.request ?? (first ? store.actions.shown(g.typedId, textOf(first.message)) : "");
   const status = statusOf(last);
   const stepCount = own.reduce((n, r) => n + stepCalls(r.message), 0);
-  const launched = g.turns.flatMap((t) => store.committed(t.id).flatMap((o) => ((e: Effect) => (e.kind === "delegate" ? [delegationGroup(t.id, e.id)] : []))(JSON.parse(o.payload) as Effect)));
+  const launched = g.turns.flatMap((t) => store.committed(t.id).flatMap((o) => ((e: Effect) => (e.kind === "delegate" ? [groupIdOf(t.id, e.id)] : []))(JSON.parse(o.payload) as Effect)));
   const received = mailbox.taken().flatMap((r) => (r.kind === "internal_handoff" && r.turnId && ids.has(r.turnId) && r.scope.startsWith("delegation:") ? [r.scope.slice("delegation:".length)] : []));
   return {
     id: anchor.id,
@@ -132,7 +133,7 @@ type Owned = {
   stepsFor(person: string, task: TaskRecord): Promise<StepRecord[] | null>;
 };
 export type TasksResult = { ok: true; tasks: TaskRecord[] } | { ok: false; code: "CHAT_NOT_OWNER" };
-export type TaskResult = { ok: true; task: TaskRecord; steps: StepRecord[] } | { ok: false; code: "CHAT_NOT_OWNER" | "TASK_NOT_FOUND" };
+export type TaskResult = { ok: true; task: TaskRecord; steps: StepRecord[]; subagents: SubAgentSection[] } | { ok: false; code: "CHAT_NOT_OWNER" | "TASK_NOT_FOUND" };
 
 /** A chat's tasks for its owner, as the `Chat` object answers them; anyone else is refused by code, never answered empty. */
 export function chatTasks(chat: Owned, person: string): TasksResult {
@@ -140,11 +141,15 @@ export function chatTasks(chat: Owned, person: string): TasksResult {
   return tasks ? { ok: true, tasks } : { ok: false, code: "CHAT_NOT_OWNER" };
 }
 
-/** One task and its steps for the chat's owner; anyone else is `CHAT_NOT_OWNER`, a task that does not begin there `TASK_NOT_FOUND`. */
-export async function chatTask(chat: Owned, person: string, id: string): Promise<TaskResult> {
+/**
+ * One task, its steps and its sub-agent sections (F14) for the chat's owner, the sections read from the chat's own
+ * `subagents` rows and, for the owner's rows, their facets' transcripts (D-0011), only after the owner check; anyone else is `CHAT_NOT_OWNER`, a task that does not begin there
+ * `TASK_NOT_FOUND`.
+ */
+export async function chatTask(chat: Owned, person: string, id: string, subagents: SubAgentRows): Promise<TaskResult> {
   if (chat.owner() !== person) return { ok: false, code: "CHAT_NOT_OWNER" };
   const task = chat.taskFor(person, id);
   if (!task) return { ok: false, code: "TASK_NOT_FOUND" };
   const steps = await chat.stepsFor(person, task);
-  return steps ? { ok: true, task, steps } : { ok: false, code: "CHAT_NOT_OWNER" };
+  return steps ? { ok: true, task, ...(await subagentSections(subagents, person, task, steps)) } : { ok: false, code: "CHAT_NOT_OWNER" };
 }

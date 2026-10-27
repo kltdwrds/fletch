@@ -1,10 +1,10 @@
 ---
 id: D-0011
 title: A sub-agent facet answers its parent's owner-checked read of its transcript, and nothing else reads it
-status: proposed
+status: accepted
 door: one-way
-decided: 2026-10-25
-decider: agent
+decided: 2026-10-26
+decider: Kyle
 confirmation: test/workers/f14-activity-subagents.test.ts
 revisit-when: a sub-agent runs anywhere but as a facet of its parent Chat, or a facet's storage is retained
   on a different schedule from the parent's
@@ -18,12 +18,19 @@ store and a schema decision of its own.
 
 ## Context
 
-The activity plan (Fable, 2026-10-25) proposes this record: `objects/subagent.ts` says the parent cannot read
-the facet's storage, and F14 needs the child's tool calls, which live only there. This file is the proposed
-record, written by the plan session so the plan's citations resolve; it binds nothing (`proposed`, one-way
-door). F14 is blocked on Kyle accepting it: until then it builds the `SUBAGENT 01` section from the parent's
-rows alone and answers the child's steps with `SUBAGENT_STEPS_UNAVAILABLE`, and records the half in
-`docs/plan/QUESTIONS.md`.
+The activity plan (Fable, 2026-10-25) proposed this record: `objects/subagent.ts` said the parent cannot read the
+facet's storage, and F14 needs the child's tool calls, which live only there. F14 first built its sections from the
+parent's rows alone and answered the child's steps with `SUBAGENT_STEPS_UNAVAILABLE` (Q8). The acceptance came in the session
+https://claude.ai/code/session_012Ezz9csrb82nZGBmft4xsa from its user, who orchestrates these sessions on Kyle's
+behalf: "D-0011 accepted, build the transcript half. Kyle accepted D-0011 in chat just now." (2026-10-26). Asked
+whether they were Kyle accepting it himself, they answered "confirmed". They later said they act for Kyle, at his
+request, so that provenance questions do not stall the work (2026-10-27). So `decider: Kyle` rests on that delegation,
+relayed by the session's user; Kyle has not edited this record himself (Q9). The session recorded it here, quoting
+the user, as `docs/plan/KICKOFF.md` ("Questions") provides for Kyle's own answers.
+`SubAgent.transcript()` is the facet's one read, `Chat.taskFor` its only caller, and
+`chat/activity-subagents.ts` reads it only for a row whose stored `person` is the requester, after the chat's owner
+check; `test/workers/f14-activity-subagents.test.ts` plants a row stored for another person and a facet whose read
+throws.
 
 ## Options
 

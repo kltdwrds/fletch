@@ -123,3 +123,23 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   `stepCount > STEPS_PER_TASK`, so the list row and the timeline agree. `StepDetail` is `{ prose, blocks, result,
   lines, files, cut }` (the plan's §(b.4) was not in the session's checkout; F16 completes the per-kind shapes).
   Confirming test: `test/workers/f13-activity-steps.test.ts`.
+- 2026-10-26 F14: the half built from the parent's rows, where the part left a choice. The second member is Pat
+  (`pat-solo`), since `test/fixtures/people.json` has no Bo (rejected: adding an identity). `chatTask` takes the
+  chat's `SubAgentRows` as a required argument, so the `Chat` object cannot forget its record (rejected: an optional
+  one answering `subagents: []`, which would read as "no delegations"; the engine is at its 600-line cap). Sections
+  follow `task.groups` sorted by their first row's `created_at`; the launch step is matched by
+  `groupIdOf(step.turnId, step.callId)`; the verdict step goes after the launch turn's steps, before the first later
+  step started at or after `handed_off_at`, else before the marker and summary, with one title naming each request's
+  verdict (a failed one's `failed (<CODE>)`, since the verifier checks only what returns to the main agent). The
+  child's steps waited on D-0011 (Q8) and are the next line. Confirming test:
+  `test/workers/f14-activity-subagents.test.ts`.
+- 2026-10-26 F14, the transcript half after Kyle accepted D-0011. `SubAgentRows` gains `transcript(id)`, the facet's
+  one read through `Chat.facet`, which the run transport shares. A row is read only when its stored `person` is the
+  requester (else `SUBAGENT_NOT_YOURS`, the host's code for the same ownership refusal), a read that throws is
+  `SUBAGENT_STEPS_UNAVAILABLE`, and a queued row answers `[]` without a read, since it has not run and a read would
+  make its facet (rejected: reading it, which creates storage for nothing). A child has no journal, so a call its gate
+  refused (the result's `details.code`, `subAgentGate`) is `refused` with that code and titled "…: not done (<CODE>)"
+  as a parent's refused action is (rejected: F13's reading, which shows the refusal as done, against D-0001).
+  "Handed off" (kind `handoff`) is the last assistant text of a `done` child's transcript; a failed child has none.
+  `tasksOf` in `activity-steps.ts` reads a coordinator's `briefs` as workers', so its own launch step is titled from
+  them. Confirming test: `test/workers/f14-activity-subagents.test.ts`.

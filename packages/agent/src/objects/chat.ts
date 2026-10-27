@@ -5,6 +5,7 @@
 // and frames go only to the owner's connections.
 import { chatTask, chatTasks, type TaskResult, type TasksResult } from "../chat/activity.ts";
 import { holdTypedSecrets } from "../vault/typed.ts";
+import type { Message } from "@earendil-works/pi-ai";
 import { Agent, type Connection, type ConnectionContext, type WSMessage } from "agents";
 import { getAgentByName } from "agents";
 import type { Choice } from "../chat/cards.ts";
@@ -59,10 +60,7 @@ export class Chat extends Agent<Env> {
     this.hostInstance ??= new SubAgentHost({
       store: new SubAgentStore(this.ctx.storage),
       transport: {
-        run: (input) => {
-          const facet = this.ctx.facets.get(`subagent:${input.id}`, () => ({ class: (this.ctx.exports as unknown as { SubAgent: DurableObjectClass }).SubAgent }));
-          return (facet as unknown as { run(i: SubAgentInput): Promise<SubAgentResult> }).run(input);
-        },
+        run: (input) => this.facet(input.id).run(input),
       },
       verify: (who, brief, handoff) => verifyHandoff(deps, who, brief, handoff),
       handoff: (h) => this.engine.handoff(h),
@@ -70,6 +68,12 @@ export class Chat extends Agent<Env> {
       now: () => Date.now(),
     });
     return this.hostInstance;
+  }
+
+  /** One sub-agent's facet (M7.2): its run, and its transcript, which only `taskFor` reads, for the owner's own rows (D-0011). */
+  private facet(id: string) {
+    const facet = this.ctx.facets.get(`subagent:${id}`, () => ({ class: (this.ctx.exports as unknown as { SubAgent: DurableObjectClass }).SubAgent }));
+    return facet as unknown as { run(i: SubAgentInput): Promise<SubAgentResult>; transcript(): Promise<Message[]> };
   }
 
   private get engine(): ChatEngine {
@@ -209,9 +213,10 @@ export class Chat extends Agent<Env> {
     return chatTasks(this.engine, person);
   }
 
-  /** One task of this chat by its anchor turn (F12) with its steps (F13), for its owner; refused by code otherwise. */
+  /** One task of this chat by its anchor turn (F12) with its steps (F13) and sub-agent sections (F14), for its owner; refused by code otherwise. */
   async taskFor(person: string, id: string): Promise<TaskResult> {
-    return chatTask(this.engine, person, id);
+    const store = new SubAgentStore(this.ctx.storage);
+    return chatTask(this.engine, person, id, { group: (g) => store.group(g), handedOffAt: (g) => store.handedOffAt(g), transcript: (sub) => this.facet(sub).transcript() });
   }
 
   /** When this chat last had something to show (M29.3, the list row's time), for its owner. */

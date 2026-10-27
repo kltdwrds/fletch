@@ -28,6 +28,28 @@ he answers).
 
 ## Open, not blocking
 
+### Q9 (F14), 2026-10-27: May a session record Kyle's acceptance relayed by the person orchestrating for him?
+
+**Blocks:** nothing now. F14 is DONE under an override, and this question decides whether that override stands as
+the rule. Three fresh verifiers (`docs/plan/VERIFIER-PROMPT.md`, unchanged) passed every scope line, test and guard
+rail of F14 and still answered `VERIFIER: blocking findings` on provenance alone, for two reasons. First,
+`decider: Kyle` on D-0011, a one-way door, was written by the session, quoting the session's user. Second, Q8 was
+moved to Answered by the session, while `docs/plan/KICKOFF.md` says "Kyle moves it to Answered". The session's user,
+acting for Kyle at his request, overrode the verifier on 2026-10-27 and had F14 marked DONE. `KICKOFF.md` lets "the
+session, quoting him" set a record to accepted. The verifier reads that as Kyle's own words only, and it cannot see
+a chat, so any session-recorded acceptance fails it.
+
+**Recommended answer:** Kyle confirms D-0011 by his own commit on the record, for example a one-line edit to its
+Context, so the one-way door rests on his hand, not on a relay. Then he picks one rule and writes it into
+`KICKOFF.md` and `VERIFIER-PROMPT.md` together, because they disagree today:
+- (a) A one-way record's acceptance, and a BLOCKED question's move to Answered, are always Kyle's own commit. This
+  is the safer option: the verifier can check it from git alone.
+- (b) A session may record them when it quotes Kyle, or a named delegate of his, with the session link, and the
+  verifier accepts that.
+
+Until he does, a verifier on any part with a session-recorded acceptance will flag it again.
+
+
 ### Q6 (F4), 2026-10-23: D-0010 is a stub until the artifact record lands
 
 **Blocks:** nothing. `docs/plan/parts.md` cites D-0010 (the artifact plan's record, "proposed on Kyle's thread") in the
@@ -62,6 +84,35 @@ measured slow.
 **Recommended answer:** run it on the Q1 account (`docs/runbooks/free-plan-spike.md`) and paste the table.
 
 ## Answered
+
+### Q8 (F14), 2026-10-26: Accept D-0011, the parent's owner-checked read of a sub-agent facet's transcript
+
+**Blocks:** F14's transcript half, so F14 cannot reach `ACCEPT F14: PASS`. The buildable half is on the branch
+`claude/fletch-f14-subagent-steps-q7ko2x`: `groupIdOf`, the launch step's detail from the rows, the task answer's
+`subagents` sections numbered `01`, `02` and nested by depth, the verdict step in the parent from the same stored
+value the chat handoff carries, and Pat's read refused `CHAT_NOT_OWNER` before any row is read. Every child's steps
+answer `SUBAGENT_STEPS_UNAVAILABLE`, because D-0011 (`docs/decisions/0011-subagent-transcript-read.md`) is
+`proposed`, a one-way door (a new read across the facet's storage boundary), and no session may accept it. Waiting
+on it: `SubAgent.transcript()` on the facet (Scope 3), the child's steps from `stepsOf` with "Handed off" last
+(Scope 4), and the acceptance claims on the child's setup steps, a failed child's steps up to the failure, the
+planted reader that takes the person from the request, and a facet whose read throws (today no facet is read, so the
+branch's test of that claim can only check the refusal by name). Two tests under `[F14] the child's own steps (waits on
+D-0011)` in `test/workers/f14-activity-subagents.test.ts` state the first two and fail today.
+
+**Recommended answer:** accept D-0011 as proposed (set `status: accepted`, `decider: Kyle`). The transcript half
+waits on D-0011: the facet's transcript is the only copy of a child's steps, and the parent already holds the
+authority on every spawn, so the parent checking its own row's `person` before calling the facet's one read is the
+smallest boundary that lets the drawer show a delegation's steps. The alternative in the record (the facet returning
+its tool calls in `SubAgentResult` for the parent to store) is a new content store and a schema decision of its own.
+
+**Answered (Kyle, 2026-10-26, relayed):** the session's user, who acts for Kyle when orchestrating these sessions,
+wrote "D-0011 accepted, build the transcript half. Kyle accepted D-0011 in chat just now." Asked whether they were
+Kyle accepting it himself, they answered "confirmed". On 2026-10-27 they said they act on Kyle's behalf, at his request.
+Kyle has not moved this question or edited D-0011 himself (Q9). D-0011 is accepted (`decider: Kyle`), and
+the transcript half is built on the same branch. The two tests this question names as failing were folded into the
+part's tests, which pass: `[F14] sub-agent sections and the launch step`, `[F14] the verdict in both places` and
+`[F14] who reads a child's transcript`.
+
 
 ### Q3, 2026-10-22: Preview slots on the shared account reach production's data
 
