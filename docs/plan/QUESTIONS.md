@@ -28,6 +28,28 @@ he answers).
 
 ## Open, not blocking
 
+### Q9 (F14), 2026-10-27: May a session record Kyle's acceptance relayed by the person orchestrating for him?
+
+**Blocks:** nothing now. F14 is DONE under an override, and this question decides whether that override stands as
+the rule. Three fresh verifiers (`docs/plan/VERIFIER-PROMPT.md`, unchanged) passed every scope line, test and guard
+rail of F14 and still answered `VERIFIER: blocking findings` on provenance alone, for two reasons. First,
+`decider: Kyle` on D-0011, a one-way door, was written by the session, quoting the session's user. Second, Q8 was
+moved to Answered by the session, while `docs/plan/KICKOFF.md` says "Kyle moves it to Answered". The session's user,
+acting for Kyle at his request, overrode the verifier on 2026-10-27 and had F14 marked DONE. `KICKOFF.md` lets "the
+session, quoting him" set a record to accepted. The verifier reads that as Kyle's own words only, and it cannot see
+a chat, so any session-recorded acceptance fails it.
+
+**Recommended answer:** Kyle confirms D-0011 by his own commit on the record, for example a one-line edit to its
+Context, so the one-way door rests on his hand, not on a relay. Then he picks one rule and writes it into
+`KICKOFF.md` and `VERIFIER-PROMPT.md` together, because they disagree today:
+- (a) A one-way record's acceptance, and a BLOCKED question's move to Answered, are always Kyle's own commit. This
+  is the safer option: the verifier can check it from git alone.
+- (b) A session may record them when it quotes Kyle, or a named delegate of his, with the session link, and the
+  verifier accepts that.
+
+Until he does, a verifier on any part with a session-recorded acceptance will flag it again.
+
+
 ### Q6 (F4), 2026-10-23: D-0010 is a stub until the artifact record lands
 
 **Blocks:** nothing. `docs/plan/parts.md` cites D-0010 (the artifact plan's record, "proposed on Kyle's thread") in the
@@ -83,8 +105,10 @@ authority on every spawn, so the parent checking its own row's `person` before c
 smallest boundary that lets the drawer show a delegation's steps. The alternative in the record (the facet returning
 its tool calls in `SubAgentResult` for the parent to store) is a new content store and a schema decision of its own.
 
-**Answered (Kyle, 2026-10-26):** "D-0011 accepted, build the transcript half." Asked to confirm as Kyle, in his own
-words, that he accepts D-0011: "confirmed". D-0011 is accepted (`decider: Kyle`), and
+**Answered (Kyle, 2026-10-26, relayed):** the session's user, who acts for Kyle when orchestrating these sessions,
+wrote "D-0011 accepted, build the transcript half. Kyle accepted D-0011 in chat just now." Asked whether they were
+Kyle accepting it himself, they answered "confirmed". On 2026-10-27 they said they act on Kyle's behalf, at his request.
+Kyle has not moved this question or edited D-0011 himself (Q9). D-0011 is accepted (`decider: Kyle`), and
 the transcript half is built on the same branch. The two tests this question names as failing were folded into the
 part's tests, which pass: `[F14] sub-agent sections and the launch step`, `[F14] the verdict in both places` and
 `[F14] who reads a child's transcript`.
