@@ -89,7 +89,7 @@ const TAB_GLYPH: Record<(typeof TAB_VIEWS)[number], IconName> = { chat: "chat", 
  * tiles, an artifact's kebab, the Browser's hero, a default's check, a digest row's tiles, Show n more, a menu
  * item's, a Library row's tile): every name a script passes to `icon(…)`, so a name missing here fails the M27.1 test, not the page.
  */
-export const SCRIPT_GLYPHS = ["shield", "chat", "check", "grid", "monitor", "bell", "clock", "chev", "dots", "globe", "sparkle", "pencil", "archive", "trash", "pin", "copy", "download", "restore", "at", "user", "folder", "data", "plug", "chevup", "chevdown", "back", "file", "image", "smile", "reply", "plus", "pulse", "x", "dot"] as const satisfies readonly IconName[];
+export const SCRIPT_GLYPHS = ["shield", "chat", "check", "grid", "monitor", "bell", "clock", "chev", "dots", "globe", "sparkle", "pencil", "archive", "trash", "pin", "copy", "download", "restore", "at", "user", "folder", "data", "plug", "chevup", "chevdown", "back", "file", "image", "smile", "reply", "plus", "pulse", "x", "dot", "search", "checksq", "bulb", "eye", "list", "checkcircle"] as const satisfies readonly IconName[];
 
 /** The shell's own rules: what the canvas's `.app` frame and inline styles say and the bundle does not carry. */
 export const SHELL_CSS = `
@@ -199,7 +199,7 @@ const separator = (id: string, label: string, c: { min: number; max: number; def
  * column from 768 or in its dialog. One agent avatar is on the page: the header's, or the open panel's.
  * Overlays live in `#overlays` until the helper opens them over `#scrim`; the menus' static items in `#menu-home`.
  */
-export function shellMarkup(p: { chat: string; views: string; panel: string; settings: string; search: string }): string {
+export function shellMarkup(p: { chat: string; views: string; panel: string; settings: string; search: string; task: string }): string {
   return `<div id="app" class="qf-vp">
 <div id="shell" class="qf-shell">
 <nav id="rail" class="qf-rail" aria-label="Primary">
@@ -270,6 +270,7 @@ ${p.views}
 <div id="menu" class="qf-menu" role="menu" hidden></div></div>
 <div id="scrim" class="qf-scrim2" hidden></div>
 ${p.search}
+${p.task}
 <div id="glyphs" hidden>${SCRIPT_GLYPHS.map((g) => ic(g, "sm").replace("<svg ", `<svg id="glyph-${g}" `)).join("")}</div>
 </div>`;
 }

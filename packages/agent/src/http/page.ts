@@ -13,6 +13,7 @@
 // asked for the chat's state, and a `turn_done` whose reply the page drew less of than the chat streamed asks
 // for the history once) and M20.1 (a card is drawn once per id, and no code is shown as words).
 
+import { ACTIVITY_CSS, ACTIVITY_MARKUP, ACTIVITY_SCRIPT } from "./app/activity.ts";
 import { CHAT_CSS, CHAT_MARKUP, CHAT_SCRIPT } from "./app/chat.ts";
 import { CONNECTOR_PANE, CONNECTORS_CSS, CONNECTORS_PANE, CONNECTORS_SCRIPT, PERMISSIONS_PANE } from "./app/connectors.ts";
 import { GOALS_FEED_CSS, GOALS_FEED_MARKUP, GOALS_FEED_SCRIPT } from "./app/goals-feed.ts";
@@ -36,7 +37,7 @@ export { APP_VIEWS };
  * the stack the tokens name; nothing is shipped or fetched (Q-M27-1). The shell and the Settings frame are on the
  * `qf-` classes since M27.2; until M27.3 to M27.7 move the surfaces inside, their old markup renders unstyled.
  */
-export const PAGE_CSS = `${TOKENS_CSS}${BUNDLE_CSS}\n${SHELL_CSS}${SETTINGS_CSS}${GOALS_FEED_CSS}${CONNECTORS_CSS}${SEARCH_CSS}${CHATS_FILTER_CSS}${CHAT_CSS}${PANEL_CSS}${LIBRARY_CSS}`;
+export const PAGE_CSS = `${TOKENS_CSS}${BUNDLE_CSS}\n${SHELL_CSS}${SETTINGS_CSS}${GOALS_FEED_CSS}${CONNECTORS_CSS}${SEARCH_CSS}${CHATS_FILTER_CSS}${CHAT_CSS}${PANEL_CSS}${ACTIVITY_CSS}${LIBRARY_CSS}`;
 
 export const APP_PAGE = `<!doctype html>
 <html lang="en">
@@ -50,7 +51,7 @@ export const APP_PAGE = `<!doctype html>
 <style>${PAGE_CSS}</style>
 </head>
 <body>
-${shellMarkup({ chat: CHAT_MARKUP, views: GOALS_FEED_MARKUP + LIBRARY_MARKUP + ROUTER_MARKUP, panel: PANEL_MARKUP, settings: settingsMarkup({ connectors: CONNECTORS_PANE, connector: CONNECTOR_PANE, permissions: PERMISSIONS_PANE }), search: SEARCH_MARKUP })}
+${shellMarkup({ chat: CHAT_MARKUP, views: GOALS_FEED_MARKUP + LIBRARY_MARKUP + ROUTER_MARKUP, panel: PANEL_MARKUP, settings: settingsMarkup({ connectors: CONNECTORS_PANE, connector: CONNECTOR_PANE, permissions: PERMISSIONS_PANE }), search: SEARCH_MARKUP, task: ACTIVITY_MARKUP })}
 <script>
 ${RECONNECT_SCRIPT}
 ${COMMON_SCRIPT}
@@ -62,6 +63,7 @@ ${CONNECTORS_SCRIPT}
 ${SEARCH_SCRIPT}
 ${CHATS_FILTER_SCRIPT}
 ${PANEL_SCRIPT}
+${ACTIVITY_SCRIPT}
 ${SHELL_SCRIPT}
 ${ROUTER_SCRIPT}
 </script>
