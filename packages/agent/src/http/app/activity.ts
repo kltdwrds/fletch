@@ -36,7 +36,7 @@ export const ACTIVITY_TEXT = {
   rowStatus: { queued: "Queued", running: "Running", waiting: "Waiting", done: "Done", failed: "Failed: {code}" },
   verdict: "Verdict: {verdict}",
   noVerdict: "No verdict yet",
-  stepsUnavailable: "This sub-agent's own steps cannot be shown yet.",
+  stepsUnavailable: "Could not read this sub-agent's own steps just now. Refresh to try again.",
   result: "Result",
   cutAt: "cut at 20,000 characters",
   finished: "Finished",
@@ -69,6 +69,7 @@ export const STEP_GLYPH: Record<StepRecord["kind"], IconName> = {
   marker: "dots",
   summary: "list",
   verdict: "checkcircle",
+  handoff: "reply",
 };
 /** Every glyph the drawer's script copies is in the page's one glyph set. */
 for (const g of Object.values(STEP_GLYPH)) if (!(SCRIPT_GLYPHS as readonly string[]).includes(g)) throw new Error(`SCRIPT_GLYPHS lacks the drawer's glyph "${g}"`);

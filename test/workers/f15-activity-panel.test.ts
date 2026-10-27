@@ -2,13 +2,12 @@
 // `m27-panel` shape); its requests go to the agent script's real `route` as Sam or Pat of solo-sam, each real
 // `ChatEngine` answers its own tasks for its owner, and the model is the scripted fake. A delegated task comes from the
 // sub-agent world (the real engine, host, store and verifier), whose task answer is the same `chatTask` the `Chat`
-// serves. On this branch D-0011 is proposed, so a child's own steps answer SUBAGENT_STEPS_UNAVAILABLE and the drawer
-// says so by name; the nesting itself is drawn from the answer's `steps` array when one is there.
+// serves, with each facet's transcript read under D-0011; a facet whose read throws is said by name in the drawer.
 // Planted: a drawer that formats its own title.
 import { describe, expect, it } from "vitest";
 import { chatTask, type TaskRecord } from "../../packages/agent/src/chat/activity.ts";
 import type { StepRecord } from "../../packages/agent/src/chat/activity-steps.ts";
-import { SUBAGENT_STEPS_UNAVAILABLE, type SubAgentSection } from "../../packages/agent/src/chat/activity-subagents.ts";
+import { SUBAGENT_STEPS_UNAVAILABLE, type SubAgentRows, type SubAgentSection } from "../../packages/agent/src/chat/activity-subagents.ts";
 import type { RunResult } from "../../packages/agent/src/code/run.ts";
 import { ACTIVITY_TEXT, STEP_GLYPH, TASK_TONE } from "../../packages/agent/src/http/app/activity.ts";
 import { APP_PAGE } from "../../packages/agent/src/http/page.ts";
@@ -281,8 +280,8 @@ const ONE_WORKER: FakeStep[] = [
   { text: "Your worker found the launch is Thursday." },
 ];
 
-/** The sub-agent world's task, served to the page as the `Chat` serves it, after the delegation has handed off. */
-async function delegated(shape: (t: Task) => Task = (t) => t) {
+/** The sub-agent world's task, served to the page as the `Chat` serves it (the parent's record with its facets' transcripts, D-0011), after the delegation has handed off. */
+async function delegated(reader?: (real: SubAgentRows) => SubAgentRows) {
   const sw = subagentWorld({ script: ONE_WORKER });
   await sw.say("When is the launch? Delegate it.");
   sw.clock.now += 60_000;
@@ -290,9 +289,9 @@ async function delegated(shape: (t: Task) => Task = (t) => t) {
   const engine = sw.chat.instance.engine;
   const tasks = engine.tasksFor(ada.email) as TaskRecord[];
   const [t] = tasks as [TaskRecord];
-  const answer = (await chatTask(engine, ada.email, t.id, sw.chat.instance.store)) as Task;
+  const answer = (await chatTask(engine, ada.email, t.id, reader ? reader(sw.record()) : sw.record())) as Task;
   const over: Answer = async (path) =>
-    path === "/app/activity" ? { status: 200, body: { ok: true, tasks, unread: [] } } : path === taskAt(t.chatId, t.id) ? { status: 200, body: shape(answer) } : null;
+    path === "/app/activity" ? { status: 200, body: { ok: true, tasks, unread: [] } } : path === taskAt(t.chatId, t.id) ? { status: 200, body: answer } : null;
   const p = await pageOf(null, ada.email, { desktop: true }, { over });
   await click(rowsOf(p)[0]);
   return { p, answer };
@@ -300,32 +299,37 @@ async function delegated(shape: (t: Task) => Task = (t) => t) {
 const heads = (p: Page) => byClass(p.byId("task-steps"), "qf-items-head");
 
 describe("[F15] a delegated task in the drawer", () => {
-  it("shows SUBAGENT 01 after the main steps with its status and verdict, the child's steps refused by name, the summary last", async () => {
+  it("shows SUBAGENT 01 after the main steps with its status and verdict and the child's own steps nested, each selectable; the summary last", async () => {
     const { p, answer } = await delegated();
     const row = answer.subagents[0]?.rows[0];
-    expect(row).toMatchObject({ status: "done", verdict: "pass", steps: { ok: false, code: SUBAGENT_STEPS_UNAVAILABLE } });
+    expect(row).toMatchObject({ status: "done", verdict: "pass" });
+    const child = row?.steps as StepRecord[];
+    expect(Array.isArray(child) && child.length).toBeGreaterThan(0);
     const [head] = heads(p) as [El];
     expect(head.text()).toContain("SUBAGENT 01");
     expect(head.text()).toContain(ACTIVITY_TEXT.rowStatus.done);
     const sub = byClass(p.byId("task-steps"), "task-sub")[0] as El;
     expect(sub.text()).toContain(ACTIVITY_TEXT.verdict.replace("{verdict}", "pass"));
     expect(sub.text()).toContain("names the launch date from the notes");
-    const refused = byClass(p.byId("task-steps"), "task-sub-note")[0] as El;
-    expect([refused.dataset.code, refused.textContent]).toEqual([SUBAGENT_STEPS_UNAVAILABLE, ACTIVITY_TEXT.stepsUnavailable]);
-    // In drawing order: the main steps, the section, then the summary.
-    const order = all(p.byId("task-steps")).filter((e) => e.tag === "li" || has(e, "qf-items-head")).map((e) => (e.tag === "li" ? e.dataset.kind : "section"));
-    expect(order).toEqual([...answer.steps.filter((s) => s.kind !== "summary").map((s) => s.kind), "section", "summary"]);
-  });
-
-  it("a section whose answer carries steps nests them under it, each selectable", async () => {
-    const child = (t: Task) => t.steps.filter((s) => s.kind !== "summary").map((s) => ({ ...s, title: `Child: ${s.title}` }));
-    const { p, answer } = await delegated((t) => ({ ...t, subagents: t.subagents.map((s) => ({ ...s, rows: s.rows.map((r) => ({ ...r, steps: child(t) })) })) }));
+    // The child's own steps, read from its facet, nested under the section in their order.
     const nested = byClass(p.byId("task-steps"), "qf-tl--nested")[0] as El;
     const kids = nested.children.filter((c) => c.tag === "li");
-    expect(kids.map(stepTitle)).toEqual(child(answer).map((s) => s.title));
+    expect(kids.map((li) => [li.dataset.kind, stepTitle(li)])).toEqual(child.map((s) => [s.kind, s.title]));
+    expect(byClass(p.byId("task-steps"), "task-sub-note")).toEqual([]);
     await click(kids[0]);
     expect(selected(p)).toEqual([kids[0]?.dataset.key]);
-    expect(pane(p).children.find((c) => c.tag === "h3")?.textContent).toBe(child(answer)[0]?.title);
-    expect(byClass(p.byId("task-steps"), "task-sub-note")).toEqual([]);
+    expect(pane(p).children.find((c) => c.tag === "h3")?.textContent).toBe(child[0]?.title);
+    // In drawing order: the main steps, the section and its steps, then the summary.
+    const order = all(p.byId("task-steps")).filter((e) => e.tag === "li" || has(e, "qf-items-head")).map((e) => (e.tag === "li" ? e.dataset.kind : "section"));
+    expect(order).toEqual([...answer.steps.filter((s) => s.kind !== "summary").map((s) => s.kind), "section", ...child.map((s) => s.kind), "summary"]);
+  });
+
+  it("a facet whose read throws is said by name under its section, never drawn as an empty list", async () => {
+    const { p, answer } = await delegated((real) => ({ ...real, transcript: async () => { throw new Error("facet unreachable"); } }));
+    expect(answer.subagents[0]?.rows[0]?.steps).toEqual({ ok: false, code: SUBAGENT_STEPS_UNAVAILABLE });
+    expect(heads(p)[0]?.text()).toContain("SUBAGENT 01");
+    expect(byClass(p.byId("task-steps"), "qf-tl--nested")).toEqual([]);
+    const refused = byClass(p.byId("task-steps"), "task-sub-note")[0] as El;
+    expect([refused.dataset.code, refused.textContent]).toEqual([SUBAGENT_STEPS_UNAVAILABLE, ACTIVITY_TEXT.stepsUnavailable]);
   });
 });
