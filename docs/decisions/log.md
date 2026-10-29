@@ -165,3 +165,9 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   every part from F21 names an existing contract file), and Q9 answered as option (a) by Kyle in this session.
   Rejected: one long-running open-ended goal in a single session (the evaluator reads only the transcript, stops a
   waiting session, and Locked needs Kyle's UAT); the orchestrator editing the scorecard directly (it lands as a PR).
+- 2026-10-29 The orchestrator goal made permissive on Kyle's read: the budget, time and three-strikes stops, the
+  two-builder cap, the owner-visible-surface merge rule and the per-cluster `go` before interrogating Muse are gone;
+  the orchestrator uses its own judgement and records it in the ledgers, and Kyle watches. The hard lines stay
+  (one-way doors, Kyle's own commits, guard-rail files, secrets, redaction before storage, previews only, no red
+  merges). Rejected: keeping the caps as defaults the orchestrator may raise (a cap it may raise is a prompt, not a
+  guard, and reads as a stop).
