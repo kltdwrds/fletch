@@ -1,0 +1,100 @@
+{
+  "task_id": "T-P1-06",
+  "cluster": "P1",
+  "version_hash": "550090e2c7a499e03ffd2d79ef97dfa2a85d47fdfd38a59bac967c05715596a0",
+  "runs": [
+    {
+      "run_at": "2026-10-29T21:42:15.900Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_THREW",
+          "rule": "the agent's reaction on the message is 🫶 or none",
+          "started_at": "2026-10-29T21:42:15.901Z",
+          "finished_at": "2026-10-29T21:42:41.713Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_THREW",
+          "rule": "the agent's reaction on the message is 🫶 or none",
+          "started_at": "2026-10-29T21:42:41.713Z",
+          "finished_at": "2026-10-29T21:43:18.646Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_THREW",
+          "rule": "the agent's reaction on the message is 🫶 or none",
+          "started_at": "2026-10-29T21:43:18.646Z",
+          "finished_at": "2026-10-29T21:43:26.808Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-29T21:43:26.811Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_THREW",
+          "rule": "the agent's reaction on the message is 🫶 or none",
+          "started_at": "2026-10-29T21:43:26.811Z",
+          "finished_at": "2026-10-29T21:43:35.022Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_THREW",
+          "rule": "the agent's reaction on the message is 🫶 or none",
+          "started_at": "2026-10-29T21:43:35.022Z",
+          "finished_at": "2026-10-29T21:43:39.664Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_THREW",
+          "rule": "the agent's reaction on the message is 🫶 or none",
+          "started_at": "2026-10-29T21:43:39.664Z",
+          "finished_at": "2026-10-29T21:43:44.492Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-29T21:49:28.320Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply is plain",
+          "started_at": "2026-10-29T21:49:28.321Z",
+          "finished_at": "2026-10-29T21:49:41.009Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply is plain",
+          "started_at": "2026-10-29T21:49:41.010Z",
+          "finished_at": "2026-10-29T21:49:49.080Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply is plain",
+          "started_at": "2026-10-29T21:49:49.080Z",
+          "finished_at": "2026-10-29T21:49:55.935Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}

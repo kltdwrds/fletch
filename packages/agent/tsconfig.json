@@ -5,5 +5,5 @@
     "moduleResolution": "bundler",
     "types": ["node"]
   },
-  "include": ["worker-configuration.d.ts", "src/**/*.ts", "../../test/workers/**/*.ts", "../../test/scenarios/**/*.ts", "../../test/support/host.setup.ts"]
+  "include": ["worker-configuration.d.ts", "src/**/*.ts", "../../test/workers/**/*.ts", "../../test/scenarios/**/*.ts", "../../test/evals/**/*.ts", "../../test/support/host.setup.ts"]
 }
