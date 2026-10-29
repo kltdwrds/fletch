@@ -11,8 +11,10 @@
 //   baseline  the results file for the task's versionHash, docs/plan-v2/evidence/results/<versionHash>.json: its last
 //             run with a pass or fail verdict. A pass after a fail is `improved`, a fail after a pass `regressed`; an
 //             infra run neither moves the baseline nor earns a note. A changed grader is a new hash and no baseline.
-//   results   the file holds the task id, cluster, hash and every run (time, slot, trials with outcome, code, grader
-//             name and times, verdict, note): never a line the agent or the person said (D-0014).
+//   results   the file holds the task id, cluster, hash and every run (time, slot, trials with status, code, the
+//             grader's name as `rule` and times; the run's status; its state against the baseline): never a line the
+//             agent or the person said (D-0014), and every key on the redaction gate's allowlist
+//             (scripts/redact-capture.mjs), so `pnpm redact` over a results file changes nothing.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { InfraError, type SlotWorld, TurnError } from "../../test/support/evals.ts";
@@ -24,35 +26,38 @@ export type Outcome = "pass" | "fail" | "infra";
 export type Note = "regressed" | "improved";
 
 export interface Trial {
-  trial: number;
-  outcome: Outcome;
+  /** 1 to TRIALS. */
+  trial_id: number;
+  status: Outcome;
   /** `fail`: GRADER_FAILED, MINEFIELD, GRADER_THREW or the turn's code; `infra`: the slot's code. */
   code?: string;
   /** The grader that failed or the minefield stepped on, by its name in the task. */
-  grader?: string;
+  rule?: string;
   started_at: string;
   finished_at: string;
 }
 
 export interface Run {
   run_at: string;
-  slot: string;
+  preview_slot: string;
   trials: Trial[];
-  verdict: Outcome;
-  note?: Note;
+  /** The verdict. */
+  status: Outcome;
+  /** Against the baseline: `regressed` or `improved`; absent when neither. */
+  state?: Note;
 }
 
 export interface ResultsFile {
-  task: string;
+  task_id: string;
   cluster: string;
-  versionHash: string;
+  version_hash: string;
   runs: Run[];
 }
 
 export interface TaskResult extends Run {
-  task: string;
+  task_id: string;
   cluster: string;
-  versionHash: string;
+  version_hash: string;
 }
 
 /** A slot the runner can open chats on; the worktree's preview slot, or a scripted one in a test. */
@@ -84,7 +89,7 @@ export function driveable(task: DefinedTask<SlotWorld>, owner: string): string |
 /** One trial: a chat, the prompts, the graders. Never throws for a slot's or the agent's failure; a grader that throws is the task's `fail`. */
 export async function trial(task: DefinedTask<SlotWorld>, slot: Slot, n: number, now: () => Date): Promise<Trial> {
   const started_at = now().toISOString();
-  const done = (t: Omit<Trial, "trial" | "started_at" | "finished_at">): Trial => ({ trial: n, ...t, started_at, finished_at: now().toISOString() });
+  const done = (t: Omit<Trial, "trial_id" | "started_at" | "finished_at">): Trial => ({ trial_id: n, ...t, started_at, finished_at: now().toISOString() });
   try {
     const world = await slot.open();
     for (const turn of task.turns) if (turn.kind === "prompt") await world.send(turn.text);
@@ -93,22 +98,22 @@ export async function trial(task: DefinedTask<SlotWorld>, slot: Slot, n: number,
       try {
         answer = await g.check(world);
       } catch {
-        return done({ outcome: "fail", code: "GRADER_THREW", grader: g.name });
+        return done({ status: "fail", code: "GRADER_THREW", rule: g.name });
       }
-      if (g.kind === "minefield" ? answer : !answer) return done({ outcome: "fail", code: g.kind === "minefield" ? "MINEFIELD" : "GRADER_FAILED", grader: g.name });
+      if (g.kind === "minefield" ? answer : !answer) return done({ status: "fail", code: g.kind === "minefield" ? "MINEFIELD" : "GRADER_FAILED", rule: g.name });
     }
-    return done({ outcome: "pass" });
+    return done({ status: "pass" });
   } catch (error) {
-    if (error instanceof InfraError) return done({ outcome: "infra", code: error.code });
-    if (error instanceof TurnError) return done({ outcome: "fail", code: error.code });
+    if (error instanceof InfraError) return done({ status: "infra", code: error.code });
+    if (error instanceof TurnError) return done({ status: "fail", code: error.code });
     throw error;
   }
 }
 
 /** `pass` only when every one of TRIALS trials passed; any `fail` is `fail`; anything else (an infra trial, trials cut short) is `infra`. */
-export function verdictOf(trials: Pick<Trial, "outcome">[]): Outcome {
-  if (trials.some((t) => t.outcome === "fail")) return "fail";
-  return trials.length === TRIALS && trials.every((t) => t.outcome === "pass") ? "pass" : "infra";
+export function verdictOf(trials: Pick<Trial, "status">[]): Outcome {
+  if (trials.some((t) => t.status === "fail")) return "fail";
+  return trials.length === TRIALS && trials.every((t) => t.status === "pass") ? "pass" : "infra";
 }
 
 /** The note against a baseline: a change between pass and fail; an infra verdict, or no baseline, earns none. */
@@ -126,7 +131,7 @@ export function readResults(file: string): ResultsFile | null {
 
 /** The last run that reached a verdict on the agent: pass or fail, never infra. */
 export function baselineOf(results: ResultsFile | null): Outcome | undefined {
-  return results?.runs.findLast((r) => r.verdict !== "infra")?.verdict;
+  return results?.runs.findLast((r) => r.status !== "infra")?.status;
 }
 
 export function writeResults(file: string, results: ResultsFile): void {
@@ -144,17 +149,17 @@ export async function runTask(task: DefinedTask<SlotWorld>, deps: RunDeps): Prom
   for (let n = 1; n <= TRIALS; n++) {
     const t = await trial(task, deps.slot, n, deps.now);
     trials.push(t);
-    log(`evals: ${task.id} trial ${n}: ${t.outcome}${t.code ? ` (${t.code}${t.grader ? `: ${t.grader}` : ""})` : ""}`);
-    if (t.outcome === "infra") break;
+    log(`evals: ${task.id} trial ${n}: ${t.status}${t.code ? ` (${t.code}${t.rule ? `: ${t.rule}` : ""})` : ""}`);
+    if (t.status === "infra") break;
   }
-  const versionHash = task.versionHash();
-  const file = resultsPath(deps.resultsDir, versionHash);
-  const previous = readResults(file) ?? { task: task.id, cluster: task.cluster, versionHash, runs: [] };
-  const verdict = verdictOf(trials);
-  const note = noteOf(baselineOf(previous), verdict);
-  const run: Run = { run_at, slot: deps.slot.name, trials, verdict, ...(note ? { note } : {}) };
+  const version_hash = task.versionHash();
+  const file = resultsPath(deps.resultsDir, version_hash);
+  const previous = readResults(file) ?? { task_id: task.id, cluster: task.cluster, version_hash, runs: [] };
+  const status = verdictOf(trials);
+  const state = noteOf(baselineOf(previous), status);
+  const run: Run = { run_at, preview_slot: deps.slot.name, trials, status, ...(state ? { state } : {}) };
   writeResults(file, { ...previous, runs: [...previous.runs, run] });
-  return { task: task.id, cluster: task.cluster, versionHash, ...run };
+  return { task_id: task.id, cluster: task.cluster, version_hash, ...run };
 }
 
 /** Every task in order, each to its own results file. */
@@ -170,11 +175,11 @@ export function selectTasks(tasks: DefinedTask<SlotWorld>[], selector: string): 
   return { selected: matching.filter((t) => t.tier === 2), skippedTier1: matching.filter((t) => t.tier !== 2).map((t) => t.id) };
 }
 
-const cell = (t: Trial | undefined) => (t ? (t.code ? `${t.outcome} (${t.code})` : t.outcome) : "not run");
+const cell = (t: Trial | undefined) => (t ? (t.code ? `${t.status} (${t.code})` : t.status) : "not run");
 
 /** One Markdown table for the PR body: task, version (the hash's first 12), each trial, the verdict in bold, the note. */
 export function table(results: TaskResult[]): string {
   const head = ["| Task | Version | Trial 1 | Trial 2 | Trial 3 | Verdict | Note |", "|---|---|---|---|---|---|---|"];
-  const rows = results.map((r) => `| ${r.task} | \`${r.versionHash.slice(0, 12)}\` | ${[0, 1, 2].map((i) => cell(r.trials[i])).join(" | ")} | **${r.verdict}** | ${r.note ?? ""} |`);
+  const rows = results.map((r) => `| ${r.task_id} | \`${r.version_hash.slice(0, 12)}\` | ${[0, 1, 2].map((i) => cell(r.trials[i])).join(" | ")} | **${r.status}** | ${r.state ?? ""} |`);
   return `${[...head, ...rows].join("\n")}\n`;
 }

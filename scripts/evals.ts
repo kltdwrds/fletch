@@ -91,7 +91,7 @@ async function main(argv: string[]): Promise<number> {
   const deps: RunDeps = { slot, resultsDir: args.resultsDir, now: () => new Date(), owner: OWNER, log };
   const results = await runTasks(selected, deps);
   console.log(`\n${table(results)}`);
-  return results.every((r) => r.verdict === "pass") ? 0 : 1;
+  return results.every((r) => r.status === "pass") ? 0 : 1;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

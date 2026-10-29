@@ -1,12 +1,14 @@
 // F19: the tier-2 runner against a fake slot. Three trials and the pass rule; an infrastructure failure is
 // `infra`, never `fail`; a result for the same versionHash is the baseline (regressed, improved) and a changed
 // grader is a new hash with no baseline; the Markdown table's shape; a task the slot cannot drive is refused
-// before any trial. No network: the slot is scripted, the clock is the test's.
+// before any trial; a results file is content-free and passes the redaction gate unchanged (D-0014). No network: the
+// slot is scripted, the clock is the test's.
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { driveable, readResults, resultsPath, runTask, runTasks, selectTasks, table, TRIALS, verdictOf } from "../../scripts/evals/runner.ts";
+import { redactValue } from "../../scripts/redact-capture.mjs";
 import { EMPTY_SNAPSHOT, InfraError, type SlotWorld, TurnError } from "../support/evals.ts";
 import { type DefinedTask, defineTask, type Task } from "../support/task.ts";
 import { repoRoot } from "../support/temp-repo.ts";
@@ -96,24 +98,24 @@ describe("[F19] the tier-2 runner", () => {
     const r = await runTask(task, deps(slot, resultsDir()));
     expect(TRIALS).toBe(3);
     expect(slot.opened).toBe(3);
-    expect(r.trials.map((t) => t.outcome)).toEqual(["pass", "pass", "pass"]);
-    expect(r.verdict).toBe("pass");
-    expect(r.note).toBeUndefined();
-    expect(r.trials.map((t) => t.trial)).toEqual([1, 2, 3]);
+    expect(r.trials.map((t) => t.status)).toEqual(["pass", "pass", "pass"]);
+    expect(r.status).toBe("pass");
+    expect(r.state).toBeUndefined();
+    expect(r.trials.map((t) => t.trial_id)).toEqual([1, 2, 3]);
     for (const t of r.trials) expect(Date.parse(t.finished_at)).toBeGreaterThan(Date.parse(t.started_at));
 
     const mixed = await runTask(task, deps(fakeSlot([{ reply: "pong" }, { reply: "ping" }, { reply: "pong" }]), resultsDir()));
-    expect(mixed.trials.map((t) => t.outcome)).toEqual(["pass", "fail", "pass"]);
-    expect(mixed.trials[1]).toMatchObject({ code: "GRADER_FAILED", grader: "the reply says pong" });
-    expect(mixed.verdict).toBe("fail");
+    expect(mixed.trials.map((t) => t.status)).toEqual(["pass", "fail", "pass"]);
+    expect(mixed.trials[1]).toMatchObject({ code: "GRADER_FAILED", rule: "the reply says pong" });
+    expect(mixed.status).toBe("fail");
 
     const mined = await runTask(task, deps(fakeSlot([{ reply: "pong?" }, { reply: "pong" }, { reply: "pong" }]), resultsDir()));
-    expect(mined.trials[0]).toMatchObject({ outcome: "fail", code: "MINEFIELD", grader: "the agent asked a question instead" });
-    expect(mined.verdict).toBe("fail");
+    expect(mined.trials[0]).toMatchObject({ status: "fail", code: "MINEFIELD", rule: "the agent asked a question instead" });
+    expect(mined.status).toBe("fail");
 
     const failedTurn = await runTask(task, deps(fakeSlot([{ turn: new TurnError("TURN_FAILED:MODEL_UNAVAILABLE") }, { reply: "pong" }, { reply: "pong" }]), resultsDir()));
-    expect(failedTurn.trials[0]).toMatchObject({ outcome: "fail", code: "TURN_FAILED:MODEL_UNAVAILABLE" });
-    expect(failedTurn.verdict).toBe("fail");
+    expect(failedTurn.trials[0]).toMatchObject({ status: "fail", code: "TURN_FAILED:MODEL_UNAVAILABLE" });
+    expect(failedTurn.status).toBe("fail");
   });
 
   it("never counts an infrastructure failure as fail: the trial is infra, the task stops there, and the verdict is infra", async () => {
@@ -121,19 +123,19 @@ describe("[F19] the tier-2 runner", () => {
     const noSlot = fakeSlot([{ infra: new InfraError("SLOT_MISSING", "this worktree holds no slot") }, { reply: "pong" }, { reply: "pong" }]);
     const r = await runTask(task, deps(noSlot, resultsDir()));
     expect(r.trials).toHaveLength(1);
-    expect(r.trials[0]).toMatchObject({ trial: 1, outcome: "infra", code: "SLOT_MISSING" });
-    expect(r.verdict).toBe("infra");
+    expect(r.trials[0]).toMatchObject({ trial_id: 1, status: "infra", code: "SLOT_MISSING" });
+    expect(r.status).toBe("infra");
     expect(noSlot.opened).toBe(1);
 
     // A 5xx before the first model call on the third trial: two passes do not make a pass, and nothing is a fail.
     const late = await runTask(task, deps(fakeSlot([{ reply: "pong" }, { reply: "pong" }, { infra: new InfraError("SLOT_5XX", "POST /chats answered 503") }]), resultsDir()));
-    expect(late.trials.map((t) => t.outcome)).toEqual(["pass", "pass", "infra"]);
-    expect(late.verdict).toBe("infra");
+    expect(late.trials.map((t) => t.status)).toEqual(["pass", "pass", "infra"]);
+    expect(late.status).toBe("infra");
 
     // Where the agent did fail, infra elsewhere does not hide it.
-    expect(verdictOf([{ outcome: "fail" }, { outcome: "infra" }])).toBe("fail");
-    expect(verdictOf([{ outcome: "pass" }, { outcome: "pass" }])).toBe("infra");
-    expect(verdictOf([{ outcome: "pass" }, { outcome: "pass" }, { outcome: "pass" }])).toBe("pass");
+    expect(verdictOf([{ status: "fail" }, { status: "infra" }])).toBe("fail");
+    expect(verdictOf([{ status: "pass" }, { status: "pass" }])).toBe("infra");
+    expect(verdictOf([{ status: "pass" }, { status: "pass" }, { status: "pass" }])).toBe("pass");
   });
 
   it("writes results by versionHash, reads the same hash's last pass or fail as the baseline, and a changed grader starts a new one", async () => {
@@ -143,30 +145,36 @@ describe("[F19] the tier-2 runner", () => {
     const file = resultsPath(dir, task.versionHash());
     expect(file).toBe(join(dir, `${task.versionHash()}.json`));
     expect(existsSync(file)).toBe(true);
-    expect(first.note).toBeUndefined();
+    expect(first.state).toBeUndefined();
     const written = readResults(file);
-    expect(written).toMatchObject({ task: "T-P0-11", cluster: "P0", versionHash: task.versionHash() });
+    expect(written).toMatchObject({ task_id: "T-P0-11", cluster: "P0", version_hash: task.versionHash() });
     expect(written?.runs).toHaveLength(1);
-    expect(written?.runs[0]).toMatchObject({ slot: "fletch-pv-9", verdict: "pass" });
+    expect(written?.runs[0]).toMatchObject({ preview_slot: "fletch-pv-9", status: "pass" });
     // Content-free: the file carries codes, names and times, never what the agent or the person said.
     expect(readFileSync(file, "utf8")).not.toMatch(/pong|Answer with/);
 
     // The same hash again, now failing: regressed, appended to the same file.
     const second = await runTask(task, deps(fakeSlot([{ reply: "pong" }, { reply: "nope" }, { reply: "pong" }]), dir));
-    expect(second.verdict).toBe("fail");
-    expect(second.note).toBe("regressed");
+    expect(second.status).toBe("fail");
+    expect(second.state).toBe("regressed");
     expect(readResults(file)?.runs).toHaveLength(2);
 
     // An infra run neither moves the baseline nor earns a note; the next pass is improved against the fail.
     const third = await runTask(task, deps(fakeSlot([{ infra: new InfraError("LEASE_LAPSED", "the lease is another branch's") }]), dir));
-    expect(third.note).toBeUndefined();
+    expect(third.state).toBeUndefined();
     const fourth = await runTask(task, deps(fakeSlot([{ reply: "pong" }, { reply: "pong" }, { reply: "pong" }]), dir));
-    expect(fourth.note).toBe("improved");
-    expect(readResults(file)?.runs.map((r) => r.verdict)).toEqual(["pass", "fail", "infra", "pass"]);
+    expect(fourth.state).toBe("improved");
+    expect(readResults(file)?.runs.map((r) => r.status)).toEqual(["pass", "fail", "infra", "pass"]);
 
     // The same outcome twice is neither.
     const fifth = await runTask(task, deps(fakeSlot([{ reply: "pong" }, { reply: "pong" }, { reply: "pong" }]), dir));
-    expect(fifth.note).toBeUndefined();
+    expect(fifth.state).toBeUndefined();
+
+    // Every key is on the redaction gate's allowlist, so `pnpm redact` over the file changes nothing (D-0014):
+    // a key outside it (a grader's words under `grader`, say) would be stripped to a shape, which is the planted case.
+    const stored = JSON.parse(readFileSync(file, "utf8"));
+    expect(redactValue(stored)).toEqual(stored);
+    expect(redactValue({ ...stored, grader: "the reply says pong" })).not.toEqual({ ...stored, grader: "the reply says pong" });
 
     // A changed grader is a new hash: its own file, no baseline, no note, whatever the old file says.
     const changed = pong();
@@ -174,8 +182,8 @@ describe("[F19] the tier-2 runner", () => {
     const other = defineTask(changed);
     expect(other.versionHash()).not.toBe(task.versionHash());
     const theirs = await runTask(other, deps(fakeSlot([{ reply: "pong" }, { reply: "nope" }, { reply: "pong" }]), dir));
-    expect(theirs.verdict).toBe("fail");
-    expect(theirs.note).toBeUndefined();
+    expect(theirs.status).toBe("fail");
+    expect(theirs.state).toBeUndefined();
     expect(readdirSync(dir).toSorted()).toEqual([`${other.versionHash()}.json`, `${task.versionHash()}.json`].toSorted());
     expect(readResults(resultsPath(dir, other.versionHash()))?.runs).toHaveLength(1);
   });
@@ -227,7 +235,7 @@ describe("[F19] the tier-2 runner", () => {
     const b = defineTask({ ...pong(), id: "T-P0-12", clauses: ["B-P0-12"] });
     const slot = fakeSlot([{ reply: "pong" }, { reply: "pong" }, { reply: "pong" }, { reply: "pong" }, { reply: "nope" }, { reply: "pong" }]);
     const results = await runTasks([a, b], deps(slot, dir));
-    expect(results.map((r) => [r.task, r.verdict])).toEqual([
+    expect(results.map((r) => [r.task_id, r.status])).toEqual([
       ["T-P0-11", "pass"],
       ["T-P0-12", "fail"],
     ]);
