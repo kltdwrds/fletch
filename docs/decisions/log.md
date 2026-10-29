@@ -209,3 +209,7 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
 - 2026-10-29: builder sessions (the terminal `claude -p "/goal …"` runs) use `--model opus` from now on, at Kyle's word in the
   orchestrator session; the running F19 builder stays on the model it started with. The orchestrator itself keeps its own
   model. Rejected: editing `GOAL-PROMPT.md`'s loop line (off-limits to the orchestrator; the flag rides on the command).
+- 2026-10-29: a specimen is published rendered, as a claude.ai artifact with the tokens and the bundle inlined (the app's
+  file pane and the built-in browser serve a local file without its stylesheets), and the `look` item links that page;
+  the source stays `ds/specimens/`. Kyle's look never blocks a part: the builder ships the surface and his findings land
+  as UAT on it (Kyle, 2026-10-29). Rejected: holding F21 for the look (a day's latency on every surface for no gain).

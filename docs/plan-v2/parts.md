@@ -104,9 +104,27 @@ part of its own after this one.
 **Not in scope:** changing the reactions behaviour; any other cluster; the deletion of `docs/briefs/` (the PR after
 this one, once the contract stands on its own).
 
+## F21 Reactions: a person's own message takes no reaction
+
+**Read:** `docs/plan-v2/contracts/P1-reactions.md` (B-P1-10, Translation delta 6, T-P1-08),
+`packages/agent/src/http/app/message-actions.ts` (`openActions`, `holdable`), `test/workers/m29-message-actions.test.ts`,
+`test/evals/p1-reactions/surface-controls.task.ts`. The specimen `packages/agent/src/design/fletch/ds/specimens/reactions.html` (Kyle's look on it is UAT after the
+build, never a blocker). No one-way door.
+
+**Scope:** The ⋯ sheet and the 500 ms hold popover on the person's own message offer Reply and Copy and no reaction,
+as the hover row already does; on the agent's message they keep the reactions. The m29 assertion that the person's own
+message takes a reaction is replaced by its opposite. T-P1-08's own-message leg passes and its `it.fails` marker goes.
+
+**Acceptance:** `test/evals/p1-reactions/surface-controls.test.ts` passes whole under `[F20]` with no known-failure
+marker; `test/workers/m29-message-actions.test.ts` asserts no reaction control on the person's own message at 390 and in
+the hold popover, with the planted page that offers one failing the check; `ACCEPT F21: PASS`.
+
+**Not in scope:** the server side (`reactionRefusal` keeps accepting a mid of either side; the contract grades the
+surface); the `+` more control; any other delta of the contract.
+
 ## Spine clusters
 
-Parts for each cluster are added here by the orchestrator, numbered from F21, once `contracts/P<n>-<slug>.md` has its
+Parts for each cluster are added here by the orchestrator, numbered from F22, once `contracts/P<n>-<slug>.md` has its
 translation. The order is by dependency (design §6): P2 loop, tools and deferral → P15 approvals and grants → P6
 memory with context assembly → P7 jobs, hooks and ledger → P5 and P3 activity, provenance and delegation. Folded in
 from the first plan: F7 (the address survives sign-in, and its one-way record) into P1's contract; F16 (the detail

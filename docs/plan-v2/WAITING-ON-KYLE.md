@@ -36,9 +36,9 @@ Kyle's own lines go under `## Steering`.
   before F21 builds it (design §4.5): a chip that hangs off the bubble's inner corner (the person's a button that
   removes, the agent's a labelled image), the hover row and six-emoji picker on an agent message, a heart glyph in the
   warning colour for the care register, and the 390 sheets (an agent message: five reactions, More, Reply, Copy; your
-  own message: Reply and Copy only). Approve it or say what to change before F21 draws it in the app. Deep dive: open
-  [`packages/agent/src/design/fletch/ds/specimens/reactions.html`](../../packages/agent/src/design/fletch/ds/specimens/reactions.html)
-  in a browser (light then dark); the rules are the `Reactions (chat), F20` block in
+  own message: Reply and Copy only). F21 draws it in the app without waiting; what you want changed lands as UAT on F21.
+  Deep dive: the rendered page https://claude.ai/artifact/BnCGn9dkLDJByGgnzNEgNW (both themes, sheets inlined); the
+  source is `packages/agent/src/design/fletch/ds/specimens/reactions.html`; the rules are the `Reactions (chat), F20` block in
   [`bundle.css`](../../packages/agent/src/design/fletch/ds/components/bundle.css); the check is
   `test/workers/f20-reactions-specimen.test.ts`; commit da209df.
 
