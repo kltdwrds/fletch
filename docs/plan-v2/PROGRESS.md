@@ -7,7 +7,7 @@ test counts, the verifier's result, the duration and `model: <model>` for parts 
 
 | Part | Status | Commit | Date | Note |
 |---|---|---|---|---|
-| F18 | TODO | | | The contract kit: contract template and scorecard, the interrogation checklist, the trace, the redaction gate, tasks as code. |
+| F18 | DONE | 89e3268 | 2026-10-29 | The contract kit: the contract template and its section rules (`contracts/README.md`), an empty `SCORECARD.md`, the evidence README (git-ignored on Kyle's Mac, redacted first, only README and `results/` tracked, D-0014), `INTERROGATE.md` (the five asks per step, the browser capture, three attempts, the dump refresh and diff); the trace as types and `validateTrace()` (`test/support/trace.ts`: tokens in asserted fields, prose only in `failure.user_words` and `examples`), emitted by `defineScenario` to `$QYVR_TRACE_DIR/<id>.json` when set and never otherwise; the redaction gate `pnpm redact` (`scripts/redact-capture.mjs`: a secret deletes the file and fails by rule name, values outside the allowlist stripped to a shape, addresses masked, idempotent); tasks as code (`test/support/task.ts`: `defineTask()` with the Appendix A fields, `versionHash()` over them with grader source normalised, `runTask()` through the scenario core). Accept TREE 60f342256f8dece6c723672ff1f2a625f8544b9b; 1221 tests passed, 0 failed (154 files, 2 of this part in 2 files, plus `scripts/redact-capture.test.mjs` among 192 gate tests); verifier: no blocking findings; about 30 min; model: claude-fable-5-1. |
 | F19 | TODO | | | The tier-2 runner on a preview slot; CI wiring proposed, not enabled (O9). |
 | F20 | TODO | | | The dry run on reactions: the full loop once, the first contract and scorecard row. |
 
