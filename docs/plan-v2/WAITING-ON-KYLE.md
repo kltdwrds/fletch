@@ -49,6 +49,14 @@ Kyle's own lines go under `## Steering`.
   so only if you would rather keep the briefs. Deep dive:
   [Q12](QUESTIONS.md#q12-f20-2026-10-29-the-dump-brief-and-the-designs-muse-counts-are-stale),
   [design §5.1 and §7](2026-10-29-parity-framework-design.md).
+- [ ] 2026-10-29 question: **Q13, builders cannot open their PR.** The F21 builder (Opus, `--permission-mode auto`)
+  finished the part, `ACCEPT F21: PASS` and `VERIFIER: no blocking findings`, then its `gh pr create --draft` was
+  refused by the permission classifier ("Create Public Surface") and it looped on the block until the orchestrator
+  opened PR #29 for it. Each part's last step will hit this. The recommended answer: allow `gh pr create` (and
+  `gh pr edit`) for builder sessions in the project's permission settings, which only you may change; until then
+  the orchestrator opens every builder's PR, which costs one wait per part and nothing else. Deep dive:
+  [Q13](QUESTIONS.md#q13-f21-2026-10-29-the-f21-draft-pr-could-not-be-opened-from-the-session),
+  [PR #29](https://github.com/kltdwrds/fletch/pull/29).
 
 ## Steering
 
