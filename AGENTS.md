@@ -83,6 +83,7 @@ carries a part tag, `[F<n>]` for fletch's own or `[M<n>]` for one inherited from
 | `pnpm preview` | Leases a preview slot and deploys the working tree to it, from a laptop or a cloud session (`docs/runbooks/preview.md`). |
 | `pnpm create-fletch` | Sets up a deploy; see README.md and `docs/runbooks/`. |
 | `pnpm live-sweep` | Removes `fletch-ci-` leftovers from the throwaway account (`docs/runbooks/live-deploy.md`). |
+| `pnpm redact <file>` | The redaction gate over a capture before it is stored under `docs/plan-v2/evidence/`: deletes it on a secret, strips values outside the allowlist (`scripts/redact-capture.mjs`). |
 | `pnpm ds` | Compiles the design tokens; the pre-commit hook refuses a stale `tokens.ts` or `icons.ts`. |
 | `pnpm release` | Builds the two primitives and publishes the changesets (CI only; `docs/runbooks/release.md`). |
 

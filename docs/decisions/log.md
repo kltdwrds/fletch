@@ -180,3 +180,15 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   orchestrator lists it for Kyle's look before any builder draws it. Not parity: Muse's name, brand, voice. Earlier
   design artifacts are not inputs. Rejected: fletch's design system interpreting Muse's surfaces freely (a second
   design loop beside the RE loop).
+- 2026-10-29 F18, the trace: an asserted field of a trace (`test/support/trace.ts`) is a token, no whitespace and at most
+  80 characters, or an enum value; prose is allowed only in `failure.user_words` and `examples[]`. `defineScenario`
+  emits one trace per run with one step (what the turns added, the failure by code) when `QYVR_TRACE_DIR` is set.
+  Rejected: a step per turn (the runner sees the turns as one function today; a per-turn trace comes with the cluster
+  that needs it), and a looser prose rule by length alone (a short sentence is still a sentence).
+- 2026-10-29 F18, tasks as code: a task is `defineTask()` in `test/evals/<cluster>/<task>.task.ts`, pure and importable
+  by node, and a `.test.ts` beside it calls `runTask()`; `versionHash` covers every field and each grader's name, kind
+  and source with comments and whitespace removed. Rejected: declarative graders only (a hash that misses the grader's
+  code is not a scorer baseline), and registering under vitest from the task file (F19 could not import it).
+- 2026-10-29 F18, the redaction gate allowlists by field name (`ALLOWLIST` and the `_id`/`_at` suffixes in
+  `scripts/redact-capture.mjs`) and strips the rest to a shape; a request `path` keeps its path and loses its query
+  (a setup link rides there). Rejected: an allowlist by value shape (an id and a short message look alike).
