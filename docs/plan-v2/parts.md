@@ -114,10 +114,13 @@ build, never a blocker). No one-way door.
 **Scope:** The ⋯ sheet and the 500 ms hold popover on the person's own message offer Reply and Copy and no reaction,
 as the hover row already does; on the agent's message they keep the reactions. The m29 assertion that the person's own
 message takes a reaction is replaced by its opposite. T-P1-08's own-message leg passes and its `it.fails` marker goes.
+The contract's D14 planted failing write (Fresh-session check): a page test under `test/evals/p1-reactions/` in which
+the reaction write fails and no chip is drawn, the chip appearing only once the store's frame carries the row.
 
 **Acceptance:** `test/evals/p1-reactions/surface-controls.test.ts` passes whole under `[F20]` with no known-failure
 marker; `test/workers/m29-message-actions.test.ts` asserts no reaction control on the person's own message at 390 and in
-the hold popover, with the planted page that offers one failing the check; `ACCEPT F21: PASS`.
+the hold popover, with the planted page that offers one failing the check; the planted failing write draws no chip
+and the test fails when the page draws on the click instead of the frame; `ACCEPT F21: PASS`.
 
 **Not in scope:** the server side (`reactionRefusal` keeps accepting a mid of either side; the contract grades the
 surface); the `+` more control; any other delta of the contract.
