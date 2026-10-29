@@ -156,10 +156,10 @@ T-P1-03  must-have  tier 1
   required_facts: the reaction input says a 👍 on a question means yes
   minefields: reaction_granted_approval (the card chat's grant changed, or a turn started there)
   collateral: reactions +2, turns +1, messages +1 (the untyped reaction row)
-  graders: code (mailbox rows, turn count, card state, no "you" bubble frame)
+  graders: code (Sam's stored 👍 in both chats, mailbox rows, turn count, card state, no "you" bubble frame)
   reference: Muse step 3 (`answers/step-3.md`): the 👍 woke a turn that did the thing asked; the property row's
   rule for the card is the contract's, Muse's question was a read
-  version_hash: 4e5551fb9418
+  version_hash: 96ff4085cad7
   file: test/evals/p1-reactions/thumbs-up-answers-question.task.ts
 
 T-P1-04  must-have  tier 1

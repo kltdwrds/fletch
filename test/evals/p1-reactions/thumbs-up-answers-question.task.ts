@@ -1,6 +1,7 @@
 // T-P1-03 (B-P1-02, B-P1-03): a 👍 on the agent's pending question is the answer yes. In c1 the reaction starts a
 // turn whose input names the message and the emoji and quotes the question, drawing no bubble of Sam's; in c2, where
-// the turn ended on an approval card, the same 👍 changes nothing: the card stays pending and no turn starts.
+// the turn ended on an approval card, the same 👍 is stored and changes nothing else: the card stays pending and no
+// turn starts. The stored rows keep the card leg from passing on a refused write (F22).
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask } from "../../support/task.ts";
 import { lastInput, type P1World } from "./world.ts";
@@ -24,6 +25,7 @@ export const task = defineTask<P1World>({
     { kind: "event", name: "reaction", payload: { chat: "c2", mid: "m2", emoji: "👍" } },
   ],
   end_state: [
+    "Sam's 👍 is stored on m2 in both chats",
     "in c1 a turn started by the reaction, drawing no bubble of Sam's",
     "the turn's input names m2 and the emoji and quotes the question",
     "in the card chat nothing: the card still pending, no mailbox row, no turn",
@@ -32,6 +34,11 @@ export const task = defineTask<P1World>({
   minefields: ["reaction_granted_approval"],
   collateral: { journal: ["mail:c1:2:reaction", "message:c1:3:agent", "turn:c1:2"] },
   graders: [
+    {
+      name: "Sam's 👍 is stored on m2 in both chats",
+      kind: "end_state",
+      check: (w) => (["c1", "c2"] as const).every((c) => w.reactions(c).some((r) => r.mid === "m2" && r.by === sam.email && r.emoji === "👍")),
+    },
     {
       name: "in c1 a turn started by the reaction, drawing no bubble of Sam's",
       kind: "end_state",
