@@ -6,16 +6,17 @@ list; never copy one here. Write a directory with a trailing `/`.
 
 ## Start here: which entry point?
 
-fletch is built one way with two entry points.
+fletch is built one way with two entry points (D-0012).
 
-- **Roadmap work is a part.** Every planned item is an `F<n>` part in `docs/plan/parts.md`, with its Scope,
-  Acceptance and Not in scope. A part runs unattended (the `/goal` loop in `docs/plan/GOAL-PROMPT.md`) or with
-  Kyle at the keyboard; either way follow `docs/plan/KICKOFF.md`, and the part is done only at
-  `ACCEPT F<n>: PASS` plus the verifier's `VERIFIER: no blocking findings`.
+- **Roadmap work is a part.** Every planned item is an `F<n>` part in `docs/plan-v2/parts.md`, with its Scope,
+  Acceptance and Not in scope, written by the orchestrator from a cluster's contract under the parity framework
+  (`docs/plan-v2/2026-10-29-parity-framework-design.md`). A part runs unattended (the `/goal` loop in
+  `docs/plan-v2/GOAL-PROMPT.md`) or with Kyle at the keyboard; either way follow `docs/plan-v2/KICKOFF.md`, and the
+  part is done only at `ACCEPT F<n>: PASS` plus the verifier's `VERIFIER: no blocking findings`.
 - **Everything else is a plain PR**: a bug fix, a small change, a harness tweak. No part id and no plan entry; it
   passes `pnpm verify` and review. A change too big to describe in a PR body becomes a part first.
 
-Is there a part for what you were asked? Follow `docs/plan/KICKOFF.md`. If not, it is a normal PR.
+Is there a part for what you were asked? Follow `docs/plan-v2/KICKOFF.md`. If not, it is a normal PR.
 
 ## Product contract
 
@@ -31,7 +32,7 @@ choices nobody else depends on are one line in `docs/decisions/log.md`. `scripts
 something still cites a record that was replaced.
 
 - **Only `accepted` binds.** When work contradicts an accepted record, stop: write a `proposed` record that supersedes
-  it and a question in `docs/plan/QUESTIONS.md`, and carry on only with what the conflict does not touch.
+  it and a question in `docs/plan-v2/QUESTIONS.md`, and carry on only with what the conflict does not touch.
 - **Two-way doors** (cheap to reverse) are yours: a log line, or a record with `decider: agent` when others rely on it.
 - **One-way doors** (irreversible, spends money, a security boundary, a published package's contract, a storage
   schema) you may only propose. Kyle accepts them; never write `decider: Kyle` yourself.
@@ -49,7 +50,7 @@ something still cites a record that was replaced.
 | `packages/create-fletch/` | `create-fletch` (private): the one command that sets fletch up on an owner's account. Read `packages/create-fletch/AGENTS.md` first. |
 | `test/` | The hermetic suite and the live lane (layout below). |
 | `scripts/` | The gates, each with a `*.test.mjs` beside it; `scripts/accept.ts`, the acceptance contract; `scripts/pre-commit.ts` and `scripts/pre-push.mjs`, the git hooks; `scripts/scans.ts`, the secret and privacy scans. |
-| `docs/plan/` | The part plan, its ledgers and the session protocol. |
+| `docs/plan-v2/` | The parity framework, the spine's contracts (one file per cluster, from F18), the part plan, its ledgers and the builder's protocol. |
 | `docs/runbooks/` | Procedures with exact commands, one per file (`docs/runbooks/README.md` is the index). |
 | `docs/decisions/` | Decision records, their index and the log of reversible choices. |
 | `skills/` | Skills, one source each, linked into `.claude/skills/`. `skills/handoff` carries a long session across compaction. |
@@ -130,7 +131,7 @@ and why, and a DCO sign-off (`git commit -s`; CI refuses a commit without one). 
 
 ## Raising a rule
 
-When review or the verifier finds the same defect class twice, propose one change in `docs/plan/QUESTIONS.md`: add,
+When review or the verifier finds the same defect class twice, propose one change in `docs/plan-v2/QUESTIONS.md`: add,
 sharpen or delete a rule here, add a check under `scripts/`, or add a hook. A rule that must never be broken is a
 hook, not a sentence. A rule changes only when Kyle agrees.
 

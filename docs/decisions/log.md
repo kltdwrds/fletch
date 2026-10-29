@@ -143,3 +143,11 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   "Handed off" (kind `handoff`) is the last assistant text of a `done` child's transcript; a failed child has none.
   `tasksOf` in `activity-steps.ts` reads a coordinator's `briefs` as workers', so its own launch step is titled from
   them. Confirming test: `test/workers/f14-activity-subagents.test.ts`.
+- 2026-10-29 The pare-down (parity framework v2, §5.1): the plan moved to `docs/plan-v2/` (`docs/plan/` deleted;
+  D-0012 supersedes D-0006 on the new paths), `docs/runbooks/muse-execution.md` deleted (the orchestrator is the
+  loop's subject, design §3), nine Muse-era briefs deleted (the three reactions briefs stay until F20 has used them),
+  F0–F17 closed in `PROGRESS.md` with F7, F16 and F17 folded into P1 and P5, Q7 and Q4 closed, the delegation-kernel
+  note and the hosted-isolation brief committed under `docs/plan-v2/`, `VISION.md` reworded for the spine, and
+  `scripts/check-agent-docs.mjs` repointed at `docs/plan-v2/`. Rejected: keeping `docs/plan/` beside the new folder
+  (two plans), and rewriting the briefs as contracts now (they are re-derived by interrogation when a cluster needs
+  them).

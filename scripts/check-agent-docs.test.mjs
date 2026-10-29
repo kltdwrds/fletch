@@ -30,19 +30,19 @@ function repo(tree) {
 
 describe('check-agent-docs', () => {
   it('pins its scope, and which files bind their paths and identifiers', () => {
-    for (const f of ['AGENTS.md', 'packages/host/AGENTS.md', 'VISION.md', 'CONTRIBUTING.md', 'docs/runbooks/incident.md', 'docs/plan/parts.md', 'skills/handoff/SKILL.md']) assert.ok(inScope(f), f);
-    for (const f of ['README.md', 'CLAUDE.md', 'docs/plan-v2/KICKOFF.md', 'docs/runbooks/a/b.md', 'docs/decisions/a/b.md']) assert.ok(!inScope(f), f);
-    for (const f of ['AGENTS.md', 'docs/plan/KICKOFF.md', 'docs/plan/VERIFIER-PROMPT.md', 'docs/runbooks/a.md']) assert.ok(BINDING(f), f);
-    for (const f of ['docs/plan/parts.md', 'docs/plan/PROGRESS.md', 'packages/agent/docs/platform/files.md', 'docs/decisions/0001-a.md', 'docs/decisions/log.md']) assert.ok(!BINDING(f), f);
+    for (const f of ['AGENTS.md', 'packages/host/AGENTS.md', 'VISION.md', 'CONTRIBUTING.md', 'docs/runbooks/incident.md', 'docs/plan-v2/parts.md', 'skills/handoff/SKILL.md']) assert.ok(inScope(f), f);
+    for (const f of ['README.md', 'CLAUDE.md', 'docs/plan/KICKOFF.md', 'docs/runbooks/a/b.md', 'docs/decisions/a/b.md']) assert.ok(!inScope(f), f);
+    for (const f of ['AGENTS.md', 'docs/plan-v2/KICKOFF.md', 'docs/plan-v2/VERIFIER-PROMPT.md', 'docs/runbooks/a.md']) assert.ok(BINDING(f), f);
+    for (const f of ['docs/plan-v2/parts.md', 'docs/plan-v2/PROGRESS.md', 'packages/agent/docs/platform/files.md', 'docs/decisions/0001-a.md', 'docs/decisions/log.md']) assert.ok(!BINDING(f), f);
     for (const f of ['docs/decisions/0001-a.md', 'docs/decisions/log.md']) assert.ok(inScope(f), f);
   });
 
   it('pins the line budgets', () => {
     assert.equal(budgetOf('AGENTS.md'), 200);
-    assert.equal(budgetOf('docs/plan/KICKOFF.md'), 200);
+    assert.equal(budgetOf('docs/plan-v2/KICKOFF.md'), 200);
     assert.equal(budgetOf('skills/x/SKILL.md'), 200);
     assert.equal(budgetOf('packages/host/AGENTS.md'), 80);
-    assert.equal(budgetOf('docs/plan/parts.md'), null);
+    assert.equal(budgetOf('docs/plan-v2/parts.md'), null);
     const long = (n) => `${'x\n'.repeat(n)}`;
     assert.deepEqual(codes('packages/host/AGENTS.md', long(80)), []);
     assert.deepEqual(codes('packages/host/AGENTS.md', long(81)), ['81 line-budget']);
@@ -55,7 +55,7 @@ describe('check-agent-docs', () => {
     const text = 'Run `scripts/accept.ts` and `scripts/gone.ts`; see `src/host.ts`; not `origin/main`, `@qyvr/host` or `/api`.\n`hostOf` `HOST_NOT_SET` `renamedAway()` `JSON.stringify` `plain`\n';
     assert.deepEqual(at('AGENTS.md', text), ['1 missing-path', '1 missing-path', '2 missing-identifier']);
     assert.deepEqual(at('packages/host/AGENTS.md', text), ['1 missing-path', '2 missing-identifier']);
-    assert.deepEqual(at('docs/plan/parts.md', text), []);
+    assert.deepEqual(at('docs/plan-v2/parts.md', text), []);
   });
 
   it('fails a broken relative link and passes a resolving one', () => {

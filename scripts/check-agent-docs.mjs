@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // The agent-docs check (AGENTS.md, "Keep this file true"): the instruction files an agent follows must not rot.
 // Files in scope: every AGENTS.md and SKILL.md, VISION.md files, the root CONTRIBUTING.md, docs/runbooks/*.md,
-// docs/plan/*.md and packages/agent/docs/platform/*.md. CLAUDE.md is a link to the AGENTS.md beside it, read once
+// docs/plan-v2/*.md and packages/agent/docs/platform/*.md. CLAUDE.md is a link to the AGENTS.md beside it, read once
 // through that file. Rules, each with a code:
 //   - broken-link:    a relative markdown link `](path)` whose target (fragment and query removed,
 //                     resolved from the file's directory) does not exist; http(s), mailto and bare
@@ -18,7 +18,7 @@
 //   - secret-shape:   a string shaped like a credential (scripts/lib/secret-patterns.ts), reported by
 //                     rule name, never by value;
 // and, ported from qyvr's scripts/check-agent-docs.mjs:
-//   - line-budget:    the root AGENTS.md, docs/plan/KICKOFF.md and every SKILL.md over MAX_LINES, a package
+//   - line-budget:    the root AGENTS.md, docs/plan-v2/KICKOFF.md and every SKILL.md over MAX_LINES, a package
 //                     AGENTS.md over PACKAGE_MAX_LINES: point to the code or the plan instead of copying it;
 //   - missing-path:   a binding file (BINDING) names in backticks a repository path git does not know (tracked,
 //                     or untracked and not ignored), resolved from the file's directory, else the root;
@@ -30,7 +30,7 @@
 //   - skill-name:     a skills/<name>/ without a SKILL.md whose frontmatter `name` is <name>;
 //   - harness-link:   an entry in a harness directory (HARNESS_DIRS) that is not a symlink to skills/<entry>:
 //                     skills have one source.
-// Plans and ledgers (docs/plan/parts.md and the rest of docs/plan/ but KICKOFF.md and VERIFIER-PROMPT.md) may name
+// Plans and ledgers (docs/plan-v2/parts.md and the rest of docs/plan-v2/ but KICKOFF.md and VERIFIER-PROMPT.md) may name
 // paths a part has not made yet, so the path and identifier rules skip them. Every violation fails the check; there
 // is no allowlist.
 import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync, realpathSync } from 'node:fs';
@@ -47,7 +47,7 @@ const DUMP = ['harness', 'dump'].join('-');
 
 const isPlatformDoc = (file) => /^packages\/agent\/docs\/platform\/[^/]+\.md$/.test(file);
 const isRunbook = (file) => /^docs\/runbooks\/[^/]+\.md$/.test(file);
-const isPlan = (file) => /^docs\/plan\/[^/]+\.md$/.test(file);
+const isPlan = (file) => /^docs\/plan-v2\/[^/]+\.md$/.test(file);
 const isDecision = (file) => /^docs\/decisions\/[^/]+\.md$/.test(file);
 const base = (file) => path.posix.basename(file);
 
@@ -55,11 +55,11 @@ export const inScope = (file) =>
   base(file) === 'AGENTS.md' || base(file) === 'SKILL.md' || base(file) === 'VISION.md' || file === 'CONTRIBUTING.md' || isPlatformDoc(file) || isRunbook(file) || isPlan(file) || isDecision(file);
 
 /** The files whose backticked paths and identifiers must exist: what an agent is told to do, not a plan or a ledger. */
-export const BINDING = (file) => inScope(file) && !isPlatformDoc(file) && !isDecision(file) && (!isPlan(file) || file === 'docs/plan/KICKOFF.md' || file === 'docs/plan/VERIFIER-PROMPT.md');
+export const BINDING = (file) => inScope(file) && !isPlatformDoc(file) && !isDecision(file) && (!isPlan(file) || file === 'docs/plan-v2/KICKOFF.md' || file === 'docs/plan-v2/VERIFIER-PROMPT.md');
 
 /** The line budget of `file`, or null when it has none. */
 export function budgetOf(file) {
-  if (file === 'AGENTS.md' || file === 'docs/plan/KICKOFF.md' || base(file) === 'SKILL.md') return MAX_LINES;
+  if (file === 'AGENTS.md' || file === 'docs/plan-v2/KICKOFF.md' || base(file) === 'SKILL.md') return MAX_LINES;
   if (base(file) === 'AGENTS.md') return PACKAGE_MAX_LINES;
   return null;
 }

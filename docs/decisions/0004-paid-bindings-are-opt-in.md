@@ -6,7 +6,7 @@ door: two-way
 decided: 2026-10-20
 decider: inherited
 confirmation: packages/create-fletch/test/init.test.ts
-revisit-when: the free-plan spike (docs/plan/QUESTIONS.md, Q2) shows the free plan accepts either binding
+revisit-when: the free-plan spike (docs/plan-v2/QUESTIONS.md, Q2) shows the free plan accepts either binding
 ---
 Ruling: the Worker Loader (`LOADER`) and Images (`IMAGES`) bindings are left out of `packages/agent/wrangler.jsonc`
 and added only by `create-fletch --paid` — because setup targets the free plan and `wrangler types` would otherwise

@@ -16,7 +16,7 @@ A merged change alters what either primitive exports or does.
    ```
 
    A renamed or removed export, or a renamed refusal code, is a major bump and a one-way door: ask in
-   `docs/plan/QUESTIONS.md` first (AGENTS.md, Decisions).
+   `docs/plan-v2/QUESTIONS.md` first (AGENTS.md, Decisions).
 2. Merge. The workflow runs `pnpm verify` without publish credentials, then the changesets action opens or updates
    a "Version Packages" PR.
 3. Merge that PR. The workflow builds both primitives and publishes them (`pnpm release`).

@@ -4,8 +4,8 @@
 **Date:** 2026-10-29 (v2 the same day, after Kyle's review of the first draft; the changes are listed at the end).
 **Replaces:** the Muse-authored parity spec of 2026-10-26 (not in any checkout; its inventory is carried in §7 and
 its levels in §2), the first draft of this document, and `docs/runbooks/muse-execution.md` (deleted in Phase 0).
-**Companion:** the delegation-kernel note (`docs/plan-v2/delegation-kernel.md`, untracked in Kyle's checkout; Phase 0
-commits it), which names the twelve pieces of the spine.
+**Companion:** the delegation-kernel note (`docs/plan-v2/delegation-kernel.md`), which names the twelve pieces of the
+spine.
 
 ---
 

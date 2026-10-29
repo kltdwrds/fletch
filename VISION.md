@@ -1,7 +1,8 @@
 # fletch — vision
 
 fletch is a personal agent you own outright: open source, running on your own Cloudflare account, working for
-you and nobody else.
+you and nobody else. It is the reference agent on the qyvr spine: the kernel every delegated agent needs (who it
+acts for, what it may touch, what it remembers, what it ran, what it refused), published on its own.
 
 > You run one command. Ten minutes later an agent answers at your own address and signs you in with your face or
 > fingerprint. You tell it about the trip you are planning; next week it still knows. You hand it a folder, a
@@ -23,17 +24,20 @@ you and nobody else.
   pretends a failure was a success.
 - **Only you get in.** A passkey signs you in, a recovery code you keep gets you back, and nobody who finds the
   address can take it over.
-- **Built from parts anyone can reuse.** The pieces fletch stands on are published on their own, so someone can
-  build a different agent on them without taking fletch along.
+- **Built on a spine anyone can build on.** The kernel fletch stands on is published on its own and proven in
+  fletch first, so a different agent, including one someone hosts for other people, can be built on it without
+  taking fletch along.
 
 ## What it is not
 
-Not a hosted service, and not a platform for teams: one agent for one person, on that person's account. Not a
-model: it thinks with the models on your own account, and you choose them. Not a walled garden: leave whenever you
-like, and take everything with you.
+fletch itself is one agent for one person, on that person's account: not a hosted service and not a tool for teams.
+The spine beneath it makes no such promise; it is built so that a hosted or many-person agent can stand on it later
+without fletch changing shape. Not a model: it thinks with the models on your own account, and you choose them. Not
+a walled garden: leave whenever you like, and take everything with you.
 
 ## How it grows
 
-First the path from nothing to a working agent of your own, proven end to end. Then each thing a personal agent
-should do (mail, browsing, documents, working beside other people's agents) arrives once one person can run it on
-their own account, and is plainly refused until then.
+First the spine, proven in fletch against the most complete personal agent we can measure: each kernel capability
+arrives when one person can run it on their own account and the tests say it holds, and is plainly refused until
+then. Then each thing a personal agent should do (mail, browsing, documents, working beside other people's agents),
+picked one at a time and held to the same bar.

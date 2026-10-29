@@ -1,7 +1,8 @@
 ---
 id: D-0006
 title: One plan with two entry points: roadmap work is an `F<n>` part, everything else a plain PR
-status: accepted
+status: superseded
+superseded-by: D-0012
 door: two-way
 decided: 2026-10-22
 decider: Kyle

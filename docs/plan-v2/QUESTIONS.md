@@ -14,27 +14,15 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 `CF_LIVE_TOKEN`, and run the live-deploy workflow once (`docs/runbooks/live-deploy.md`). The same account can close
 the free-plan spike (Q2).
 
-### Q7 (F7), 2026-10-23: The sign-in return record is Kyle's to accept
-
-**Blocks:** F7, whole part. The part changes the published `@qyvr/host-cloudflare` login contract (one-way
-door), so under the runbook it cannot start until Kyle accepts the record proposed in the F7 plan (2026-10-23):
-after sign-in the host honours `/login?next=<path>` only for an absolute same-origin path not under `/login`,
-else `/`, with the open-redirect shapes planted in the part's tests. The fallback inside the part, if Kyle
-prefers no host change: a short-lived same-site cookie set by the agent on the sign-in redirect, read once at
-boot — then the record is two-way and the session sets it.
-
-**Recommended answer:** accept the record as proposed (Kyle was asked in chat 2026-10-23; the ask stands until
-he answers).
-
 ## Open, not blocking
 
 ### Q9 (F14), 2026-10-27: May a session record Kyle's acceptance relayed by the person orchestrating for him?
 
 **Blocks:** nothing now. F14 is DONE under an override, and this question decides whether that override stands as
-the rule. Three fresh verifiers (`docs/plan/VERIFIER-PROMPT.md`, unchanged) passed every scope line, test and guard
+the rule. Three fresh verifiers (`docs/plan-v2/VERIFIER-PROMPT.md`, unchanged) passed every scope line, test and guard
 rail of F14 and still answered `VERIFIER: blocking findings` on provenance alone, for two reasons. First,
 `decider: Kyle` on D-0011, a one-way door, was written by the session, quoting the session's user. Second, Q8 was
-moved to Answered by the session, while `docs/plan/KICKOFF.md` says "Kyle moves it to Answered". The session's user,
+moved to Answered by the session, while `docs/plan-v2/KICKOFF.md` says "Kyle moves it to Answered". The session's user,
 acting for Kyle at his request, overrode the verifier on 2026-10-27 and had F14 marked DONE. `KICKOFF.md` lets "the
 session, quoting him" set a record to accepted. The verifier reads that as Kyle's own words only, and it cannot see
 a chat, so any session-recorded acceptance fails it.
@@ -49,10 +37,9 @@ Context, so the one-way door rests on his hand, not on a relay. Then he picks on
 
 Until he does, a verifier on any part with a session-recorded acceptance will flag it again.
 
-
 ### Q6 (F4), 2026-10-23: D-0010 is a stub until the artifact record lands
 
-**Blocks:** nothing. `docs/plan/parts.md` cites D-0010 (the artifact plan's record, "proposed on Kyle's thread") in the
+**Blocks:** nothing. `docs/plan-v2/parts.md` cites D-0010 (the artifact plan's record, "proposed on Kyle's thread") in the
 F4 to F7 preamble and in F4's and F6's rulings, but the record was never in this repository, so
 `node scripts/check-decisions.mjs` failed at 391af92 and with it every `pnpm check`. F4 added
 `docs/decisions/0010-artifact-collection-address.md`, a `proposed` stub that states only what the plan cites it for
@@ -61,20 +48,6 @@ F4 to F7 preamble and in F4's and F6's rulings, but the record was never in this
 **Recommended answer:** replace the stub with the record from the artifact thread, keeping the id D-0010, before F6
 starts (F6 must leave that collection free). The alternative, rewording the plan's citations, edits other parts' text
 and loses the link.
-
-### Q4 (F2), 2026-10-22: A stored search index per chat
-
-**Blocks:** nothing. F2 derives the index at query time (F2, Ruling 1): each `Chat` scans its own `messages` table
-for its owner, and `/app/search` fans out to every live chat as `/app/chats` already does, so F2 binds no storage
-schema. This question decides whether a later part adds an FTS5 table to each `Chat` object, a storage schema and so a
-one-way door (D-0007), and when.
-
-**Recommended answer:** not yet. Measure F2 on a preview with Kyle's real history (the time of one `/app/search` with
-a query, the number of live chats). Add the stored index only when a search exceeds a second or the owner passes about
-200 live chats; then it is a `chat.search-index` migration (an FTS5 external-content table over `messages`, written in
-the same transaction as `appendMessage`) under a `proposed` record for Kyle to accept, and F2's substring matching gives
-way to the tokeniser's. The alternative, building the FTS5 table in F2, spends a one-way door before the scan has been
-measured slow.
 
 ### Q2 (F1), 2026-10-22: Run the free-plan spike for Code Mode and Images
 
@@ -113,7 +86,6 @@ the transcript half is built on the same branch. The two tests this question nam
 part's tests, which pass: `[F14] sub-agent sections and the launch step`, `[F14] the verdict in both places` and
 `[F14] who reads a child's transcript`.
 
-
 ### Q3, 2026-10-22: Preview slots on the shared account reach production's data
 
 **Blocks:** accepting D-0008. `pnpm preview` works today on the shared account (`docs/runbooks/preview.md`).
@@ -127,3 +99,40 @@ anyone holding it can bind qyvr.dev production's buckets, databases or services 
 cloud environment's `CLOUDFLARE_ACCOUNT_ID` to it. The alternative is to accept the gap and D-0008 as it stands.
 
 **Answered (Kyle, 2026-10-22):** "accept the gap and keep previews on the shared account." D-0008 is accepted.
+
+## Closed
+
+Closed by the pare-down of 2026-10-29 (the parity framework v2, §5.1): the part each question served was folded into
+a spine cluster, and the question returns, if at all, with that cluster's contract.
+
+### Q7 (F7): closed 2026-10-29, folded into P1
+
+F7 (the address survives sign-in) is folded into P1's contract; the one-way login record returns as a `proposed`
+record when P1 is translated. The original question:
+
+**Blocks:** F7, whole part. The part changes the published `@qyvr/host-cloudflare` login contract (one-way
+door), so under the runbook it cannot start until Kyle accepts the record proposed in the F7 plan (2026-10-23):
+after sign-in the host honours `/login?next=<path>` only for an absolute same-origin path not under `/login`,
+else `/`, with the open-redirect shapes planted in the part's tests. The fallback inside the part, if Kyle
+prefers no host change: a short-lived same-site cookie set by the agent on the sign-in redirect, read once at
+boot — then the record is two-way and the session sets it.
+
+**Recommended answer:** accept the record as proposed (Kyle was asked in chat 2026-10-23; the ask stands until
+he answers).
+
+### Q4 (F2): closed 2026-10-29, folded into P1
+
+Whether a stored search index is ever needed is a P1 task (a search over Kyle-scale history on a preview, measured),
+not a standing question. The original question:
+
+**Blocks:** nothing. F2 derives the index at query time (F2, Ruling 1): each `Chat` scans its own `messages` table
+for its owner, and `/app/search` fans out to every live chat as `/app/chats` already does, so F2 binds no storage
+schema. This question decides whether a later part adds an FTS5 table to each `Chat` object, a storage schema and so a
+one-way door (D-0007), and when.
+
+**Recommended answer:** not yet. Measure F2 on a preview with Kyle's real history (the time of one `/app/search` with
+a query, the number of live chats). Add the stored index only when a search exceeds a second or the owner passes about
+200 live chats; then it is a `chat.search-index` migration (an FTS5 external-content table over `messages`, written in
+the same transaction as `appendMessage`) under a `proposed` record for Kyle to accept, and F2's substring matching gives
+way to the tokeniser's. The alternative, building the FTS5 table in F2, spends a one-way door before the scan has been
+measured slow.
