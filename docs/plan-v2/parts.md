@@ -32,8 +32,9 @@ today), `scripts/scans.ts` and `scripts/lib/secret-patterns.ts` (the scans the g
 1. `docs/plan-v2/contracts/README.md`: the contract file template of Appendix A, with the rules for each section
    (a clause cites a row, a capture or a quoted line, or carries `[attested]`; a task names its file; a property row
    names its proof), `docs/plan-v2/SCORECARD.md` with its header row and no rows, and `docs/plan-v2/evidence/README.md`:
-   what is stored there (captures, dump slices, Muse's answers, tier-2 results, one folder per cluster), that every
-   file passed `pnpm redact` first, and that the folder never travels to the public release (D-0013).
+   what is stored there (captures, dump slices, Muse's answers, one folder per cluster, all git-ignored and local to
+   Kyle's Mac), that every file passed `pnpm redact` first, and that only the README and `results/` (tier-2 verdicts:
+   task hash, trial outcomes, timestamps, never agent or user text) are tracked (D-0014).
 2. `docs/plan-v2/INTERROGATE.md`: the checklist the orchestrator follows in Muse's chat per scenario step (design
    §4.1: do, list calls, `SELECT` the changed rows, quote the governing text, `[attested]` for the rest), the browser
    capture per step (§4.2: screenshot, DOM note of roles, labels, hrefs and order, request log as method, path, status

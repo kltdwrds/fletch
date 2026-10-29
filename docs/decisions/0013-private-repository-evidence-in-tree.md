@@ -1,7 +1,8 @@
 ---
 id: D-0013
 title: The repository is private while the spine is built; parity evidence lives in docs/plan-v2/evidence/; the public release is cut later by cherry-pick
-status: accepted
+status: superseded
+superseded-by: D-0014
 door: two-way
 decided: 2026-10-29
 decider: agent

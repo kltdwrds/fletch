@@ -171,3 +171,7 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   (one-way doors, Kyle's own commits, guard-rail files, secrets, redaction before storage, previews only, no red
   merges). Rejected: keeping the caps as defaults the orchestrator may raise (a cap it may raise is a prompt, not a
   guard, and reads as a stop).
+- 2026-10-29 Back to a public repository within the hour: the private one (D-0013) could not run CI (Actions billing
+  refused the job). D-0014: evidence git-ignored under `docs/plan-v2/evidence/` on Kyle's Mac, its README and the
+  content-free tier-2 `results/` tracked so `check-plan` still holds a scorecard row to a results file in CI. The
+  superseded Muse spec's line naming three of Kyle's killed watches now names them generically, since it is public.

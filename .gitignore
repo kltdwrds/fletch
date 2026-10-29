@@ -15,3 +15,7 @@ worker-configuration.d.ts
 /wrangler.jsonc
 # the config `pnpm preview` deploys a slot from (scripts/preview.mjs)
 packages/agent/wrangler.preview.jsonc
+# parity evidence from Kyle's Muse account stays on his Mac (D-0014); only its README and the content-free tier-2 results are tracked
+docs/plan-v2/evidence/*
+!docs/plan-v2/evidence/README.md
+!docs/plan-v2/evidence/results/

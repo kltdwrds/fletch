@@ -64,5 +64,6 @@ After adding or changing a record, run `node scripts/check-decisions.mjs --write
 | [D-0010](0010-artifact-collection-address.md) | Stub for Kyle's artifact record - artifacts live at `/library/artifacts/<slug>`, a collection of the page grammar | proposed | two-way | 2026-10-23 |  |
 | [D-0011](0011-subagent-transcript-read.md) | A sub-agent facet answers its parent's owner-checked read of its transcript, and nothing else reads it | accepted | one-way | 2026-10-26 |  |
 | [D-0012](0012-one-plan-on-the-parity-loop.md) | One plan with two entry points, on the parity loop: a part is one builder session under docs/plan-v2/, everything else a plain PR | accepted | two-way | 2026-10-29 | 2027-01-29 |
-| [D-0013](0013-private-repository-evidence-in-tree.md) | The repository is private while the spine is built; parity evidence lives in docs/plan-v2/evidence/; the public release is cut later by cherry-pick | accepted | two-way | 2026-10-29 | 2027-01-29 |
+| [D-0013](0013-private-repository-evidence-in-tree.md) | The repository is private while the spine is built; parity evidence lives in docs/plan-v2/evidence/; the public release is cut later by cherry-pick | superseded | two-way | 2026-10-29 | 2027-01-29 |
+| [D-0014](0014-public-repository-evidence-git-ignored.md) | The repository stays public; parity evidence lives git-ignored under docs/plan-v2/evidence/ on Kyle's Mac, with only its README and the content-free tier-2 results tracked | accepted | two-way | 2026-10-29 | 2027-01-29 |
 <!-- index:end -->

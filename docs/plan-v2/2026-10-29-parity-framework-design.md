@@ -111,10 +111,11 @@ checklist and, later, the comparison document.
 
 Everything captured passes an automated gate before it is stored: the repository's secret scan, value stripping on
 bodies with an allowlist of fields that keep values (ids, enums, status codes, failure words), personal content
-removed. A capture that fails is deleted, not fixed by hand. The repository is private while the spine is built
-(O1, D-0013): captures, dumps, Muse's answers and tier-2 results live in `docs/plan-v2/evidence/`, and a contract
-cites them by path. The public release is cut later as a new repository by cherry-pick, the evidence folder left
-behind, which is why the gate runs on everything stored even now.
+removed. A capture that fails is deleted, not fixed by hand. The repository is public (O1, D-0014): captures, dump
+slices and Muse's answers live under `docs/plan-v2/evidence/`, git-ignored, on Kyle's Mac where the orchestrator
+runs, and a contract cites them by path; only the folder's README and the content-free tier-2 results
+(`evidence/results/`) are tracked, so a scorecard row can be held to a results file in CI. The gate runs on
+everything stored there all the same.
 
 ## 5. Phase 0: the framework, and the pare-down
 
@@ -215,7 +216,7 @@ Conventional Commits with DCO sign-off; branch and PR, never straight to `main`.
 
 | # | Decision | Where it stands (2026-10-29) | Kind |
 |---|---|---|---|
-| O1 | Home of private evidence | **Decided:** the repository is private and evidence lives in `docs/plan-v2/evidence/` (D-0013); the public release is a later cherry-picked repository. | two-way (no capture stored yet) |
+| O1 | Home of private evidence | **Decided:** the repository stays public; evidence lives git-ignored under `docs/plan-v2/evidence/` on Kyle's Mac, with the README and the content-free tier-2 results tracked (D-0014, after an hour as a private repository under D-0013 stopped CI on billing). | two-way (no capture stored yet) |
 | O2 | Tier 2 comments or gates at first | **Decided:** comments until the dry run shows stable verdicts. | two-way |
 | O4 | P8 group chats in scope, under what discretion | **Narrowed 2026-10-29:** side chats fold into P1 and workers into P3 and P7, both spine; only group chats with outsiders remain, mapped and not built until Kyle rules on whether fletch ever speaks in a room. | one-way |
 | O5 | Payments scope | **Decided:** wallet and payments are spine (P12, its own milestone); shopping, bookings, travel and tickets are higher-level behaviour (P16, by pick); purchase or flag-only per vertical is Kyle's when P16 is picked. | one-way per vertical, later |
@@ -294,7 +295,8 @@ examples[]:    model prose, never asserted
 
 ## Kyle's answers to the open decisions (2026-10-29)
 
-O1: one private repository, evidence in a folder here, a public version cut later by cherry-pick (D-0013). O2: the
+O1: first one private repository with evidence in tree (D-0013), then, when the private repository stopped CI on
+billing, back to public with the evidence git-ignored on Kyle's Mac (D-0014). O2: the
 default. O4: side chats and workers fold into P1, P3 and P7; group chats with outsiders stay his to rule. O5: wallet and payments are a spine milestone of their own; shopping,
 booking, travel and tickets are higher-level behaviour on it. O6: connector types and flows are spine, specific
 connectors are per agent. O9: fine; the record comes with F19.

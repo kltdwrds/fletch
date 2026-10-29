@@ -50,7 +50,7 @@ A cluster's score is the lowest score of its must-have sub-capabilities, not the
 
 - **My training data, my model weights, my exact wording on every reply.** The agent's voice is a product decision for fletch, not a parity target. The target is capabilities, affordances, and contracts.
 - **My internal tool names, unless the user sees them.** Tool names are translated to fletch's registry (`artifact_create` for `artifact.create`, etc.). The mapping is recorded in §7; the name itself is not sacred.
-- **Features Kyle has killed or scoped out.** The Harry Styles watch, the paused two-wheel hunt, the suspended Marketplace buyer-message watch — killed machinery stays killed. A parity inventory lists them as out of scope with the reason and date, it does not revive them.
+- **Features Kyle has killed or scoped out.** three of Kyle's watches, killed or paused by name in the dump — killed machinery stays killed. A parity inventory lists them as out of scope with the reason and date, it does not revive them.
 - **Muse-the-product's billing, plans, and app chrome** except where they surface as a capability the user exercises (e.g. an approval card, a share link, a Library view). The app shell is fletch's design system; the capability inside it is the parity target.
 
 ### 1.4 The fidelity gap, stated plainly
