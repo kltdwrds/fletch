@@ -14,7 +14,7 @@ import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { EMPTY_SNAPSHOT, InfraError, type SlotWorld, TurnError } from "../../test/support/evals.ts";
+import { EMPTY_SNAPSHOT, InfraError, reactionsOf, type SlotEntry, type SlotWorld, TurnError } from "../../test/support/evals.ts";
 import { type SavedPasskey, softAuthenticator } from "../../test/support/soft-authenticator.ts";
 import { origin as originOf, ownerTag, SLOT_OWNER, slotPlan } from "../preview-plan.mjs";
 import { knownSubdomain, readJson } from "../preview-pool.mjs";
@@ -143,6 +143,42 @@ export async function signIn(base: string, lease: Lease, file: string): Promise<
   throw new InfraError("SESSION_UNAVAILABLE", `no session on slot ${lease.slot}: the saved cookie and passkey are not accepted and the lease's setup token is ${setup ? "spent" : "not kept"}; a fresh lease (\`pnpm preview down\`, then \`up\`) gives a new one`);
 }
 
+/** The chat's history as a fresh socket's first frame carries it (`connectFrame`, type `history`): what the page draws. */
+export function history(base: string, chatId: string, cookie: string, timeoutMs = 30_000): Promise<SlotEntry[]> {
+  const wsUrl = `${base.replace(/^http/, "ws")}/chats/${chatId}/ws`;
+  const Socket = WebSocket as unknown as new (url: string, init: { headers: Record<string, string> }) => WebSocket;
+  const ws = new Socket(wsUrl, { headers: { cookie } });
+  return new Promise<SlotEntry[]>((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => fail(new InfraError("SLOT_UNREACHABLE", `no history frame in ${Math.round(timeoutMs / 1000)} s`)), timeoutMs);
+    const end = () => {
+      settled = true;
+      clearTimeout(timer);
+      ws.close();
+    };
+    const fail = (error: Error) => {
+      if (settled) return;
+      end();
+      reject(error);
+    };
+    ws.addEventListener("error", () => fail(new InfraError("SLOT_UNREACHABLE", `the chat socket failed: ${wsUrl}`)));
+    ws.addEventListener("close", () => fail(new InfraError("SLOT_UNREACHABLE", "the chat socket closed before its history frame")));
+    ws.addEventListener("message", (event) => {
+      let frame: { type: string; code?: string; entries?: SlotEntry[] };
+      try {
+        frame = JSON.parse(String(event.data));
+      } catch {
+        return;
+      }
+      if (frame.type === "history") {
+        if (settled) return;
+        end();
+        resolve(frame.entries ?? []);
+      } else if (frame.type === "refused") fail(new InfraError("SESSION_UNAVAILABLE", `the history read was refused ${frame.code ?? ""}`));
+    });
+  });
+}
+
 /** One turn over the chat socket, as the live exit test does it: resolves with the reply on `turn_done`, rejects with a TurnError otherwise. */
 export function turn(base: string, chatId: string, cookie: string, text: string, timeoutMs = TURN_TIMEOUT_MS): Promise<string> {
   const wsUrl = `${base.replace(/^http/, "ws")}/chats/${chatId}/ws`;
@@ -217,13 +253,17 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
       if (opened.res.status !== 201) throw new InfraError("SLOT_5XX", `POST /chats answered ${opened.res.status} ${String(opened.body.code ?? "")}`);
       const chatId = opened.body.chatId as string;
       const replies: string[] = [];
+      let entries: SlotEntry[] = [];
       return {
         chatId,
         replies,
         snapshot: () => EMPTY_SNAPSHOT,
+        entries: () => entries,
+        reactions: () => reactionsOf(entries, OWNER),
         async send(text) {
           const reply = await turn(base, chatId, cookie, text);
           replies.push(reply);
+          entries = await history(base, chatId, cookie);
           return reply;
         },
         async read(path) {
