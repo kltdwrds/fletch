@@ -109,9 +109,10 @@ checklist and, later, the comparison document.
 
 Everything captured passes an automated gate before it is stored: the repository's secret scan, value stripping on
 bodies with an allowlist of fields that keep values (ids, enums, status codes, failure words), personal content
-removed. A capture that fails is deleted, not fixed by hand. Captures, dumps and Muse's answers live in the private
-repo `fletch-parity` (O1); contracts, scorecard and tasks live in fletch, public, and reference evidence by id only.
-CI without the evidence repo runs tier 1 alone.
+removed. A capture that fails is deleted, not fixed by hand. The repository is private while the spine is built
+(O1, D-0013): captures, dumps, Muse's answers and tier-2 results live in `docs/plan-v2/evidence/`, and a contract
+cites them by path. The public release is cut later as a new repository by cherry-pick, the evidence folder left
+behind, which is why the gate runs on everything stored even now.
 
 ## 5. Phase 0: the framework, and the pare-down
 
@@ -139,7 +140,8 @@ The first Phase 0 part. Everything below is a two-way door and lands as one PR K
 - **Interrogation protocol** (§4.1) as a checklist the orchestrator follows; the dump-refresh and diff procedure.
 - **Redaction gate** (§4.4) as a script, planted-violation test beside it.
 - **Tier-2 runner:** tasks against a preview slot, three trials, code graders, results per task hash, a PR comment.
-  Its CI key is a one-way door (O9) and ships as a `proposed` record; until accepted, tier 2 runs from Kyle's Mac.
+  Kyle agreed to its CI key in principle (O9, 2026-10-29); F19 writes the record with the key's scope and spend cap
+  for his acceptance, and the runner runs from his Mac until then.
 
 ### 5.3 Acceptance
 
@@ -152,7 +154,8 @@ cluster starts before that.
 
 1. Phase 0: the pare-down, the kit, the dry run.
 2. Spine clusters in dependency order: loop, tools and deferral → approvals and grants → context assembly and
-   memory → jobs, hooks and ledger → activity, provenance and delegation.
+   memory → jobs, hooks and ledger → activity, provenance and delegation → connector types and flows with the vault
+   (P9 core) → wallet and payments (P12, its own milestone: how payment goes through Cloudflare is open).
 3. Picked clusters. The artifacts and Library track continues on its own seams.
 4. The remaining clusters mapped.
 5. The kernel extracted: when the spine is Locked, its interfaces and the harness are published beside
@@ -172,13 +175,14 @@ Re-ordering happens at a scorecard review with Kyle, never mid-part.
 | P6 | Memory, goals and tracking | saved memory, daily notes, people, goals, tracked items, briefings | **yes** (memory); rest by pick |
 | P7 | Scheduling, hooks and proactivity | crons, hooks, checks, proactive briefs, feed | **yes** (jobs, hooks, ledger); rest by pick |
 | P8 | Side chats, groups and workers | external side chats, group chats, workers, per-chat discretion | design question first (O4) |
-| P9 | Connectors, devices and accounts | mail, calendar, drive, GitHub, Linear, health, devices, vault logins | **yes** (credential refs, the gate); each connector by pick (O6) |
+| P9 | Connectors, devices and accounts | mail, calendar, drive, GitHub, Linear, health, devices, vault logins | **yes**: the connector types and flows (API OAuth, raw credentials held in the vault, credential references, the observation/action gate); each specific connector per agent, by pick (O6) |
 | P10 | Search, browser, places and media | web search, fetch, places, image and video, social | by pick |
 | P11 | Files, documents and spreadsheets | library, render, sheets, decks, export, share links | by pick |
-| P12 | Payments, shopping and bookings | wallet, checkout, shopping, travel, tickets | by pick; flag-only until Kyle rules per vertical (O5) |
+| P12 | Wallet and payments | wallet, payment instruments, spend requests, their approvals | **yes**, its own milestone (O5) |
 | P13 | Voice, audio and podcasts | voice notes, TTS, podcasts, audio artifacts | by pick |
 | P14 | Identity, avatar, profile and settings | avatar, profile, passkeys, settings | **yes** (identity); rest by pick |
 | P15 | Safety, approvals, grants and discretion | approval cards, grants matrix, discretion, vault, CAPTCHA policy, rate limits | **yes** |
+| P16 | Shopping, bookings, travel and tickets | checkout, shopping, flights, hotels, tickets | by pick: higher-level behaviour on P12; purchase or flag-only per vertical is Kyle's when picked (O5) |
 
 Every `tools.json` namespace maps to one row as *in both / in Muse only / in fletch only (keep) / retired*.
 Behaviour that lives only in the prompt is inventoried from interrogation.
@@ -204,14 +208,14 @@ Conventional Commits with DCO sign-off; branch and PR, never straight to `main`.
 
 ## 10. Open decisions
 
-| # | Decision | Default | Kind |
+| # | Decision | Where it stands (2026-10-29) | Kind |
 |---|---|---|---|
-| O1 | Home of private evidence | private sibling repo `fletch-parity` | two-way until the first capture is stored, then Kyle's |
-| O2 | Tier 2 comments or gates at first | comments until the dry run shows stable verdicts | two-way |
-| O4 | P8 groups and workers in scope, under what discretion | mapped, not built, until Kyle rules | one-way |
-| O5 | P12 payments scope | flag-only per vertical until Kyle rules | one-way per vertical |
-| O6 | Connector model | one record per connector class; the gate is the shared mechanism | one-way per class |
-| O9 | A live-model key and slot token in CI for tier 2 | tier 2 runs from Kyle's Mac until accepted | one-way (spend, boundary) |
+| O1 | Home of private evidence | **Decided:** the repository is private and evidence lives in `docs/plan-v2/evidence/` (D-0013); the public release is a later cherry-picked repository. | two-way (no capture stored yet) |
+| O2 | Tier 2 comments or gates at first | **Decided:** comments until the dry run shows stable verdicts. | two-way |
+| O4 | P8 side chats, groups and workers in scope, under what discretion | **Open.** Mapped, not built, until Kyle rules. | one-way |
+| O5 | Payments scope | **Decided:** wallet and payments are spine (P12, its own milestone); shopping, bookings, travel and tickets are higher-level behaviour (P16, by pick); purchase or flag-only per vertical is Kyle's when P16 is picked. | one-way per vertical, later |
+| O6 | Connector model | **Decided:** the connector types and flows are spine (P9 core: API OAuth, raw credentials in the vault, references, the gate); each specific connector is per agent, by pick, under one record per connector class. | one-way per class, later |
+| O9 | A live-model key and slot token in CI for tier 2 | **Agreed in principle.** F19 writes the record with the key's scope and spend cap; Kyle accepts it; the runner runs from his Mac until then. | one-way (spend, boundary) |
 
 Dropped from the first draft: O3 (judge family: no tier 3 yet), O7 (UAT strictness: visible surfaces only is now the
 rule), O8 (browser capture of Kyle's account: Kyle's steer is to use it).
@@ -282,3 +286,10 @@ examples[]:    model prose, never asserted
   wrapper and tier 3 wait for a cluster that needs them.
 - Four artifact templates collapse into one contract file per cluster. Three tiers of done collapse into two.
 - `tools.json` is 108 functions in 32 namespaces; the unverifiable "185 envelopes" is gone.
+
+## Kyle's answers to the open decisions (2026-10-29)
+
+O1: one private repository, evidence in a folder here, a public version cut later by cherry-pick (D-0013). O2: the
+default. O4: explained, still his to rule. O5: wallet and payments are a spine milestone of their own; shopping,
+booking, travel and tickets are higher-level behaviour on it. O6: connector types and flows are spine, specific
+connectors are per agent. O9: fine; the record comes with F19.

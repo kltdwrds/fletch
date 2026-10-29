@@ -31,7 +31,9 @@ today), `scripts/scans.ts` and `scripts/lib/secret-patterns.ts` (the scans the g
 
 1. `docs/plan-v2/contracts/README.md`: the contract file template of Appendix A, with the rules for each section
    (a clause cites a row, a capture or a quoted line, or carries `[attested]`; a task names its file; a property row
-   names its proof), and `docs/plan-v2/SCORECARD.md` with its header row and no rows.
+   names its proof), `docs/plan-v2/SCORECARD.md` with its header row and no rows, and `docs/plan-v2/evidence/README.md`:
+   what is stored there (captures, dump slices, Muse's answers, tier-2 results, one folder per cluster), that every
+   file passed `pnpm redact` first, and that the folder never travels to the public release (D-0013).
 2. `docs/plan-v2/INTERROGATE.md`: the checklist the orchestrator follows in Muse's chat per scenario step (design
    §4.1: do, list calls, `SELECT` the changed rows, quote the governing text, `[attested]` for the rest), the browser
    capture per step (§4.2: screenshot, DOM note of roles, labels, hrefs and order, request log as method, path, status
@@ -52,8 +54,8 @@ scenario emits a trace that validates; prose in `failure.user_words` is accepted
 refused; no file is written without `QYVR_TRACE_DIR`); `test/m0/f18-task.test.ts` `[F18]` (`versionHash` changes
 when a grader changes and not when a comment does; a task's minefield failing fails the task); `ACCEPT F18: PASS`.
 
-**Not in scope:** the tier-2 runner (F19); creating the evidence repo (O1, Kyle's, at the first stored capture); any
-cluster's contract; the browser automation itself (the orchestrator drives the built-in browser by hand).
+**Not in scope:** the tier-2 runner (F19); any cluster's contract; the browser automation itself (the orchestrator
+drives the built-in browser by hand).
 
 ## F19 The tier-2 runner
 
@@ -67,8 +69,7 @@ slot through the app's routes with a session obtained as the live test obtains o
 grades by the task's code graders, and separates an infrastructure failure (no slot, a 5xx before the first model
 call, a lease that lapsed) from an agent failure. Per task the verdict is `pass` (all three trials), `fail`, or
 `infra`; a `regressed` or `improved` note is added when a result for the same `versionHash` exists. Results are
-written to `$FLETCH_PARITY_DIR/results/<versionHash>.json` when that variable is set (git-ignored `evals/results/`
-otherwise) and summarised as one Markdown table for the PR body. The CI wiring is written as a `proposed` record
+written to `docs/plan-v2/evidence/results/<versionHash>.json` and summarised as one Markdown table for the PR body. The CI wiring is written as a `proposed` record
 (the key's scope, the spend cap, where it lives) and not enabled.
 
 **Acceptance:** `test/m0/f19-evals.test.ts` `[F19]` against a fake slot: three trials and the `pass` rule; `infra`
@@ -87,8 +88,8 @@ builder, and its scope names the contract file it writes.
 
 **Scope:** The full loop once, on a capability that already shipped. Interrogate: the reaction scenario (ack on
 work start, a 👍 answering a pending question, an ambient reaction, a reaction the agent sets) run in Muse's chat
-per `INTERROGATE.md`, the captures through `pnpm redact`, and `contracts/P1-reactions.md` written with clauses that
-cite rows and captures. Translate: the survey of F10's code as shipped, the mechanism mapping, a property row for
+per `INTERROGATE.md`, the captures through `pnpm redact` into `docs/plan-v2/evidence/p1-reactions/`, and
+`contracts/P1-reactions.md` written with clauses that cite rows and captures by path. Translate: the survey of F10's code as shipped, the mechanism mapping, a property row for
 approval finality (a reaction answering a question is an answer, never a grant), the deltas, and the fresh-session
 check recorded in the file. Build: the tasks under `test/evals/p1-reactions/`, tier 1 under vitest and tier 2 with
 `pnpm evals p1-reactions` on a preview slot. Lock: the first row of `SCORECARD.md`.

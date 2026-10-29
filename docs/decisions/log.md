@@ -151,3 +151,8 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   `scripts/check-agent-docs.mjs` repointed at `docs/plan-v2/`. Rejected: keeping `docs/plan/` beside the new folder
   (two plans), and rewriting the briefs as contracts now (they are re-derived by interrogation when a cluster needs
   them).
+- 2026-10-29 Kyle's answers to the framework's open decisions (design §10): O1 one private repository with evidence in
+  `docs/plan-v2/evidence/` (D-0013); O2 the default; O5 wallet and payments are spine (P12, own milestone) and
+  shopping, booking, travel, tickets are P16, by pick; O6 connector types and flows are spine (P9 core), specific
+  connectors per agent; O9 agreed in principle, the record comes with F19. O4 (P8) stays open. The sibling
+  `fletch-parity` repository and the `FLETCH_PARITY_DIR` variable are gone from the plan.
