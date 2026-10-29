@@ -6,9 +6,8 @@
 // The words are the shipped page's (`MESSAGE_TEXT` in `packages/agent/src/http/app/message-actions.ts`), written
 // here rather than imported so the task stays pure; the harness checks them against the page once.
 //
-// Known against shipped code (Translation, delta 6; a part for F21): the phone sheet offers reactions under the
-// person's own message too. The `react_on_own_message` minefield steps on it, and `surface-controls.test.ts` records
-// the failure by name instead of hiding it.
+// The `react_on_own_message` minefield is Translation delta 6, closed by F21: the phone sheet under the person's own
+// message offered reactions too.
 import { defineTask } from "../../support/task.ts";
 import type { PageWorld } from "./page-world.ts";
 

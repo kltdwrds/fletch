@@ -9,8 +9,8 @@
 // planted: the page served with the guard rewritten, and the same check must fail on it.
 import { type Browser, chromium, type Page } from "playwright-core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { REACTIONS } from "../../packages/agent/src/chat/reactions.ts";
 import { connectFrame } from "../../packages/agent/src/chat/protocol.ts";
+import { REACTIONS } from "../../packages/agent/src/chat/reactions.ts";
 import { answerFrame } from "../../packages/agent/src/chat/socket.ts";
 import { MESSAGE_TEXT } from "../../packages/agent/src/http/app/message-actions.ts";
 import { APP_PAGE } from "../../packages/agent/src/http/page.ts";
@@ -130,7 +130,9 @@ interface ActionsSeen {
   grab: boolean;
   stamp: string;
   emojis: string[];
-  plus: { label: string; disabled: boolean };
+  plus: { label: string; disabled: boolean } | null;
+  /** The reactions' row is drawn at all (the person's own message has none, F21). */
+  emosShown: boolean;
   rows: string[];
 }
 const READ_ACTIONS = `(() => {
@@ -142,7 +144,8 @@ const READ_ACTIONS = `(() => {
     open: n.checkVisibility() && r.width > 0, form: n.dataset.form || "", label: n.getAttribute("aria-label"),
     onSheetScrim: scrim.className.includes("qf-scrim2--sheet") && !scrim.hidden, atBottom: Math.abs(r.bottom - innerHeight) <= 1,
     grab: n.querySelector(".qf-grab").checkVisibility(), stamp: document.getElementById("msg-stamp").textContent,
-    emojis: emos.map((b) => b.getAttribute("aria-label")), plus: { label: plus.getAttribute("aria-label"), disabled: plus.disabled },
+    emojis: emos.map((b) => b.getAttribute("aria-label")), plus: plus ? { label: plus.getAttribute("aria-label"), disabled: plus.disabled } : null,
+    emosShown: document.getElementById("msg-emos").checkVisibility(),
     rows: [...n.querySelectorAll(".qf-srow .tx")].map((t) => t.textContent),
   };
 })()`;
@@ -169,6 +172,11 @@ async function popoverOver(pg: Page, mid: string) {
   expect(p.left < b.right && p.right > b.left && p.left >= 16 && p.right <= 390 - 16).toBe(true);
 }
 const closed = async (pg: Page) => expect(await shown(pg, "#msg-actions")).toBe(false);
+/** The person's own message (F21): the same actions with the stamp, Reply and Copy, and no reaction nor +. */
+function ownActions(s: ActionsSeen, form: string) {
+  expect([s.open, s.form]).toEqual([true, form]);
+  expect({ label: s.label, stamp: s.stamp, rows: s.rows, emojis: s.emojis, plus: s.plus, emosShown: s.emosShown }).toEqual({ label: ACTIONS.label, stamp: STAMP, rows: ACTIONS.rows, emojis: [], plus: null, emosShown: false });
+}
 
 /** A touch on a bubble's centre, held for `ms` of the page's clock, then lifted. */
 async function touchHold(pg: Page, mid: string, ms: number, check?: () => Promise<void>) {
@@ -196,6 +204,21 @@ async function phoneSheet(pg: Page) {
   sheetAsDrawn(await readActions(pg));
   await pg.keyboard.press("Escape");
   await closed(pg);
+  await ownSheet(pg);
+}
+/** At 390 the ⋯ under the person's own message (m1) opens the sheet with Reply and Copy and no reaction (F21). */
+async function ownSheet(pg: Page) {
+  await pg.click(`${msg("m1")} .msg-more`);
+  ownActions(await readActions(pg), "sheet");
+  await pg.keyboard.press("Escape");
+  await closed(pg);
+}
+/** A 500ms touch on the person's own message opens the popover with Reply and Copy and no reaction (F21). */
+async function ownHold(pg: Page) {
+  await touchHold(pg, "m1", 500, async () => ownActions(await readActions(pg), "popover"));
+  ownActions(await readActions(pg), "popover");
+  await pg.keyboard.press("Escape");
+  await closed(pg);
 }
 /** A 500ms touch opens the popover over the message and it stays when the finger lifts; a short tap and a mouse do not. */
 async function phoneHold(pg: Page) {
@@ -217,16 +240,17 @@ async function phoneHold(pg: Page) {
 }
 
 describe("[M29.4] the phone's message actions", () => {
-  it("at 390 a ⋯ under each message opens the Message actions sheet: the stamp, five reactions and +, Reply and Copy", async () => {
+  it("at 390 a ⋯ under each message opens the Message actions sheet: the stamp, five reactions and + on the agent's, Reply and Copy; [F21] none on the person's own", async () => {
     const { w } = await seeded();
     await on({ w, width: 390, height: 844 }, phoneSheet);
     await on({ w, who: ada.email, width: 390, height: 844 }, phoneSheet);
   }, 120_000);
 
-  it("a touch held 500ms on a bubble opens the same actions as a popover anchored to it; 499ms, a short tap and a mouse do not", async () => {
+  it("a touch held 500ms on a bubble opens the same actions as a popover anchored to it, [F21] with no reaction on the person's own; 499ms, a short tap and a mouse do not", async () => {
     const { w } = await seeded();
     await on({ w, width: 390, height: 844, heldClock: true }, async (pg) => {
       await phoneHold(pg);
+      await ownHold(pg);
       // The hold selects nothing: a bubble's text takes no selection on a phone, and does from 768.
       expect(await pg.evaluate(`getComputedStyle(document.querySelector('${msg("m2")} .qf-bubble')).userSelect`)).toBe("none");
     });
@@ -244,6 +268,19 @@ describe("[M29.4] the phone's message actions", () => {
     const mouse = swap(APP_PAGE, 'if (e.pointerType !== "touch" || device() !== "phone") return;', 'if (device() !== "phone") return;');
     await on({ w, width: 390, height: 844, html: mouse, heldClock: true }, async (pg) => expect(phoneHold(pg)).rejects.toThrow());
   }, 180_000);
+
+});
+
+describe("[F21] the person's own message takes no reaction at 390", () => {
+  it("planted: a sheet and a popover that offer reactions on the person's own message each fail the check", async () => {
+      const { w } = await seeded();
+      const own = swap(APP_PAGE, 'emos.hidden = m.who !== "agent";\n  if (m.who === "agent") {', "emos.hidden = false;\n  if (m) {");
+      await on({ w, width: 390, height: 844, html: own }, async (pg) => expect(ownSheet(pg)).rejects.toThrow());
+      await on({ w, width: 390, height: 844, html: own, heldClock: true }, async (pg) => expect(ownHold(pg)).rejects.toThrow());
+      // The row emptied but still drawn fails it too.
+      const drawn = swap(APP_PAGE, 'emos.hidden = m.who !== "agent";', "emos.hidden = false;");
+      await on({ w, width: 390, height: 844, html: drawn }, async (pg) => expect(ownSheet(pg)).rejects.toThrow());
+    }, 120_000);
 });
 
 // ---- (2) from 768: the hover row ----
@@ -339,22 +376,19 @@ describe("[M29.4] reactions", () => {
       await pg.click(`#msg-emos button[aria-label="${MESSAGE_TEXT.reactWith}thumbs up"]`);
       await pg.waitForFunction(`!document.querySelector('${msg("m2")} .reaction-pill')`);
       await closed(pg);
-      // One per message: a second pick replaces the first; the person's own message takes one too.
+      // One per message: a second pick replaces the first. The person's own message offers none (F21).
       for (const label of ["heart", "laughing face"]) {
         await pg.click(`${msg("m2")} .msg-more`);
         await pg.click(`#msg-emos button[aria-label="${MESSAGE_TEXT.reactWith}${label}"]`);
       }
-      await pg.click(`${msg("m1")} .msg-more`);
-      await pg.click(`#msg-emos button[aria-label="${MESSAGE_TEXT.reactWith}crying face"]`);
-      await pg.waitForFunction(`document.querySelector('${msg("m1")} .reaction-pill')`);
       await pg.waitForFunction(`document.querySelector('${msg("m2")} .reaction-pill') && document.querySelector('${msg("m2")} .reaction-pill').textContent === "😂"`);
     });
-    await on({ w, width: 1440 }, async (pg) => expect([await pill(pg, "m1"), await pill(pg, "m2")]).toEqual(["😢", "😂"]));
+    await on({ w, width: 1440 }, async (pg) => expect([await pill(pg, "m1"), await pill(pg, "m2")]).toEqual([null, "😂"]));
     // The Chat refuses anyone else's reaction on Ada's chat with a code, storing nothing.
     const ada$ = w.chats.harness(adaMain).instance;
     expect(await answerFrame("former-member", JSON.stringify({ type: "react", mid: "m2", emoji: "👍" }), ada$)).toEqual({ type: "refused", code: "CHAT_NOT_OWNER" });
-    expect(ada$.history().entries.flatMap((e) => ("reactions" in e && e.reactions ? [[e.mid, e.reactions]] : []))).toEqual([["m1", [{ by: "you", emoji: "😢" }]], ["m2", [{ by: "you", emoji: "😂" }]]]);
-    expect(w.chats.harness(adaMain).rows("SELECT person FROM reactions").map((r) => r.person)).toEqual([ada.email, ada.email]);
+    expect(ada$.history().entries.flatMap((e) => ("reactions" in e && e.reactions ? [[e.mid, e.reactions]] : []))).toEqual([["m2", [{ by: "you", emoji: "😂" }]]]);
+    expect(w.chats.harness(adaMain).rows("SELECT person FROM reactions").map((r) => r.person)).toEqual([ada.email]);
   }, 180_000);
 
   it("the Chat refuses a reaction outside the six and one on a message it does not hold, each with its code", async () => {

@@ -57,6 +57,7 @@ export const MESSAGE_CSS = `/* Message actions (M29.4): with a mouse, the canvas
 .emo.more { display: flex; align-items: center; justify-content: center; color: var(--text-primary); }
 .emo:disabled { cursor: default; }
 #msg-actions .msg-emos { display: flex; justify-content: space-between; align-items: center; padding: 0 8px; }
+#msg-actions .msg-emos[hidden] { display: none; }
 #msg-actions .qf-dlg-body { padding: 8px 16px 0; gap: 12px; }
 #msg-actions.msg-pop { position: absolute; z-index: 60; width: auto; padding: 12px 0; gap: 0; border-radius: 28px; }
 #msg-actions.msg-pop .qf-dlg-body { display: flex; flex-direction: column; padding: 0 12px; gap: 12px; }
@@ -89,8 +90,8 @@ export const MESSAGE_MARKUP = `<p id="msg-status" class="vh" role="status"></p>
   <div id="msgpop-backdrop" class="qf-backdrop" hidden></div>`;
 
 export const MESSAGE_SCRIPT = `// Message actions (M29.4, the canvas's message): a message the history named (its id, \`mid\`) gets the phone's ⋯
-// under its bubble, which opens the "Message actions" sheet, and from 768 the hover row (React on the agent's
-// messages, Reply, Copy response, More options). A touch held HOLD_MS on a bubble at 390 opens the same actions
+// under its bubble, which opens the "Message actions" sheet (reactions on the agent's messages, Reply, Copy), and from
+// 768 the hover row (React on the agent's messages, Reply, Copy response, More options). A touch held HOLD_MS on a bubble at 390 opens the same actions
 // as a popover over the message. A reaction is drawn when the chat answers it; a reply's quote rides on the next send.
 const MSG = ${JSON.stringify(MESSAGE_TEXT)}, REACTIONS = ${JSON.stringify(REACTIONS)};
 const whoWord = (who) => who === "you" ? MSG.yourself : MSG.agent;
@@ -188,9 +189,12 @@ function openActions(d, form) {
   const n = $("msg-actions"), m = d.msg;
   actionsFor = d;
   $("msg-stamp").textContent = stampOf(m.at);
-  const emos = $("msg-emos"); emos.replaceChildren();
-  for (const [ch, label] of REACTIONS.slice(0, form === "sheet" ? 5 : 6)) emos.append(emojiButton(m, ch, label, "emo", closeActions));
-  emos.append(moreReactions("emo more", "sm"));
+  // The person's own message takes no reaction (F21, P1 delta 6): its sheet and popover offer Reply and Copy, as its hover row does.
+  const emos = $("msg-emos"); emos.replaceChildren(); emos.hidden = m.who !== "agent";
+  if (m.who === "agent") {
+    for (const [ch, label] of REACTIONS.slice(0, form === "sheet" ? 5 : 6)) emos.append(emojiButton(m, ch, label, "emo", closeActions));
+    emos.append(moreReactions("emo more", "sm"));
+  }
   n.dataset.form = form;
   if (form === "sheet") { n.className = "qf-dlg qf-dlg--480"; n.removeAttribute("style"); openDialog(n, { form: "sheet", onClose: () => { actionsFor = null; } }); return; }
   settle(n);
