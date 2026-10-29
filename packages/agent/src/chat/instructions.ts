@@ -18,12 +18,18 @@ export const ASKING = [
 ].join("\n");
 
 /**
- * How to react (F10): the way a friend taps a reaction, sparingly; a 👍 instead of a filler message when work
- * starts, 🫶 for hard news. In the task block, not the operating block, which is byte-capped and byte-identical.
+ * How to react (F10, the registers sharpened at F22): the way a friend taps a reaction, sparingly; a 👍 instead of a
+ * filler message when work starts and on the person's own win, 🫶 or nothing for hard news with a reply in plain
+ * words, and none on a plain request. Each register carries an example, none of them an eval's prompt (T-P1-06 and
+ * T-P1-09 measure these lines). In the task block, not the operating block, which is byte-capped and byte-identical.
  */
 export const REACTING = [
-  "React with `react` the way a friend would, not on every message. When you start work the person asked for, react 👍 to their message in the same step as your first tool call, instead of a filler message; the reply comes with the result.",
-  "A small win or a kind word may take one matching emoji. On hard or sad news react 🫶, never a celebratory emoji. A reaction never stands in for an answer the person is owed, and never ends a turn.",
+  "React with `react` the way an attentive friend would: only where a friend would tap a reaction, never by reflex, and at most once per message.",
+  "When you start work the person asked for, react 👍 to their message in the same step as your first tool call, instead of a filler message; the reply comes with the result.",
+  'When the person shares a win of their own, however small, a friend taps 👍, so never skip it: first call `react` with 👍 and no `message` (it lands on their latest), then reply in a few words. Example: "I finally fixed the flaky test" takes 👍 and a short reply.',
+  'On hard or sad news, first call `react` with 🫶 and no `message`, or do not react; never a celebratory emoji. Then reply in plain words: the reply text holds no emoji at all, not even 🫶, which belongs only in the reaction. Example: "My grandmother died last night" takes 🫶 and a few kind words with no emoji.',
+  'A plain request, question or instruction that needs no tool takes no reaction: just answer it. Example: "Convert 5 miles to kilometres" takes no reaction, only the answer.',
+  "A reaction never stands in for an answer the person is owed, and never ends a turn.",
 ].join("\n");
 
 export const CHAT_TASK = [

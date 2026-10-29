@@ -132,7 +132,10 @@ export interface P1HarnessOptions {
   world?: Omit<WorldOptions, "script">;
 }
 
-/** A `prompt` turn by Sam is `say`; an `event` turn `reaction` is her react frame; anything else is refused by name. */
+/**
+ * A `prompt` turn by Sam is `say`; an `event` turn `reaction` is her react frame, and a refused write fails the turn
+ * (`P1_REACTION_REFUSED`) so no task passes on a reaction that never landed; anything else is refused by name.
+ */
 export async function playP1(world: P1Tier1World, turn: Turn): Promise<void> {
   if (turn.kind === "prompt") {
     if (turn.by !== sam.email) throw new Error(`P1_TURN_BY_UNKNOWN: ${turn.by}`);
@@ -142,7 +145,8 @@ export async function playP1(world: P1Tier1World, turn: Turn): Promise<void> {
   if (turn.kind === "event" && turn.name === "reaction") {
     const p = turn.payload ?? {};
     if (!p.mid || !p.emoji) throw new Error("P1_TURN_PAYLOAD: a reaction event names mid and emoji");
-    await world.react(p.mid, p.emoji, (p.chat as ChatLabel | undefined) ?? "c1");
+    const r = await world.react(p.mid, p.emoji, (p.chat as ChatLabel | undefined) ?? "c1");
+    if (!r.ok) throw new Error(`P1_REACTION_REFUSED: ${r.code}`);
     return;
   }
   throw new Error(`P1_TURN_UNSUPPORTED: ${turn.kind} ${"name" in turn ? turn.name : ""}`);

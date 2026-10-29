@@ -30,6 +30,20 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
+### Q14 (F22), 2026-10-29: a task's version hash depends on the loader, and T-P1-02 misses on counting
+
+**Blocks:** nothing. (1) `versionHash()` hashes each grader's `toString()`; vitest's transform rewrites that source, so
+the same task file hashes one way under vitest and another under Node's own type stripping, which `pnpm evals` uses and
+the contract and results files record (`care-reaction.task.ts`: `2ac596814f38…` under vitest, `550090e2c7a4…` under
+Node). F22's test computes the runner's hash in a child Node process (`test/evals/p1-reactions/reacting-registers.test.ts`).
+(2) T-P1-02 (must-have) passed 4 of 6 dry-run trials on F22's tree and its count prompt 6 of 8 on F21's `REACTING`:
+every miss is the count ("3", "One line.", asking for the text), never a reaction, so it is the model's counting, not
+the register; its next recorded run may say `regressed`.
+
+**Recommended answer:** none from you. The orchestrator folds (1) into the kit (hash a grader's source as Node loads it,
+or record the loader) when it next touches `test/support/task.ts`, and decides whether T-P1-02's count grader should
+accept a number word or the prompt should carry a fixed multi-line body.
+
 ### Q11 (F18), 2026-10-29: two limits of the task kit, found by P1's Build
 
 **Blocks:** nothing. `defineTask`'s `collateral` keys a snapshot by exact id and reads any removed key as collateral, so

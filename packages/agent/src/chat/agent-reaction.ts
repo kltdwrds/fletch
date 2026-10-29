@@ -40,7 +40,7 @@ export function reactTool(effects: EffectBuffer, entries: () => HistoryEntry[]):
     queues: "self",
     label: "React",
     description:
-      "Put one emoji on the person's message, the way a friend taps a reaction: a 👍 when you start on something they asked for, a matching emoji for a small win, 🫶 for a hard moment. Not a reply: anything that needs words still needs send_to_user or your answer.",
+      "Put one emoji on the person's message, the way a friend taps a reaction: a 👍 when you start on something they asked for or when they share a win of their own, 🫶 or nothing for a hard moment, and nothing on a plain request or question. Not a reply: anything that needs words still needs send_to_user or your answer.",
     parameters: Params,
     execute: async (toolCallId, p) => {
       const r = agentReactionRefusal(entries(), p.message, p.emoji);
