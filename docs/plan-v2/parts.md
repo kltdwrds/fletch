@@ -134,10 +134,13 @@ worktree's slot (`pnpm preview up`); if no slot can be leased, that is a questio
 
 **Scope:** The agent's reacting instruction and its examples, so that on hard news the agent's reaction is 🫶 or none
 and its reply carries no emoji, and a small win gets exactly one 👍 while an instrument-style request after it gets
-none. The two tasks are the measure; their graders do not change.
+none. The two tasks are the measure; their graders do not change. One harness gap the F20 verifier named goes with
+it: T-P1-03's harness (`test/evals/p1-reactions/harness.ts`, `thumbs-up-answers-question.task.ts`) asserts that the
+c2 reaction was stored, so the card leg cannot pass on a refused write (its hash moves; it is tier 1).
 
 **Acceptance:** `pnpm evals T-P1-06` and `pnpm evals T-P1-09` each `pass` (three of three), the table in the PR body and
-the results files committed; the tier-1 reactions tests still pass; `ACCEPT F22: PASS`.
+the results files committed; the tier-1 reactions tests still pass, T-P1-03's with the stored-reaction assertion and
+its new `version_hash` in the contract; `ACCEPT F22: PASS`.
 
 **Not in scope:** the surface (F21); any new task; a change to a grader or to the contract's clauses.
 
