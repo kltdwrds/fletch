@@ -377,7 +377,23 @@ file grades the fletch one and says so:
   limits, Q11: collateral cannot declare an expected removal; an id that depends on the tool-call count cannot be
   declared statically.
 
+Tier 2 (2026-10-29, `pnpm evals P1` on `fletch-pv-1`, three trials each; results under `../evidence/results/` by task hash):
+
+| Task | Version | Trial 1 | Trial 2 | Trial 3 | Verdict | Note |
+|---|---|---|---|---|---|---|
+| T-P1-06 | `550090e2c7a4` | fail (GRADER_FAILED) | fail (GRADER_FAILED) | fail (GRADER_FAILED) | **fail** | nice-to-have; grader "the reply is plain" |
+| T-P1-02 | `33ce7e13e0d3` | pass | pass | pass | **pass** | must-have |
+| T-P1-09 | `0ec8e079b898` | fail (GRADER_FAILED) | fail (GRADER_FAILED) | pass | **fail** | nice-to-have; grader "one agent reaction on the win, m1" |
+
+Findings against F10 as shipped (each a part of its own, per F20's acceptance):
+
+1. A person can react to their own message from the phone's ⋯ sheet and hold popover (delta 6; T-P1-08's own-message
+   leg fails): F21.
+2. The model does not hold the care register or react to a win: on hard news the reply itself carries an emoji
+   (T-P1-06, 0 of 3), and a 👍 on a small win comes 1 of 3 (T-P1-09). Both nice-to-have; the fix is the agent's
+   `REACTING` instruction and its examples, measured by the same two tasks: F22.
+
 ## Scorecard
 
 level | must-have tasks passing | evidence (PR, accept line, verifier line) | last verified
-0 | — | interrogated 2026-10-29 (this file, `../evidence/p1-reactions/trace.json` validates) | 2026-10-29
+1 | tier 1: 7 of 8 under vitest (T-P1-08 fails its own-message leg, finding 1); tier 2: T-P1-02 3 of 3 | interrogated and translated 2026-10-29 (this file); `pnpm evals P1` table above, results `../evidence/results/33ce7e13e0d3…json`; PR (Lock) | 2026-10-29

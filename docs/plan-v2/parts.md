@@ -122,9 +122,25 @@ the hold popover, with the planted page that offers one failing the check; `ACCE
 **Not in scope:** the server side (`reactionRefusal` keeps accepting a mid of either side; the contract grades the
 surface); the `+` more control; any other delta of the contract.
 
+## F22 Reactions: the care register and a reaction on a win
+
+**Read:** `docs/plan-v2/contracts/P1-reactions.md` (B-P1-07, B-P1-11, finding 2 and the tier-2 table), `test/evals/p1-reactions/care-reaction.task.ts`
+and `test/evals/p1-reactions/react-like-a-friend.task.ts` (the two graders, unchanged), `packages/agent/src/chat/instructions.ts`
+(`REACTING`), `docs/runbooks/evals.md`. No one-way door. A live step: `pnpm evals` runs from Kyle's Mac on this
+worktree's slot (`pnpm preview up`); if no slot can be leased, that is a question, not a reason to skip.
+
+**Scope:** The agent's reacting instruction and its examples, so that on hard news the agent's reaction is 🫶 or none
+and its reply carries no emoji, and a small win gets exactly one 👍 while an instrument-style request after it gets
+none. The two tasks are the measure; their graders do not change.
+
+**Acceptance:** `pnpm evals T-P1-06` and `pnpm evals T-P1-09` each `pass` (three of three), the table in the PR body and
+the results files committed; the tier-1 reactions tests still pass; `ACCEPT F22: PASS`.
+
+**Not in scope:** the surface (F21); any new task; a change to a grader or to the contract's clauses.
+
 ## Spine clusters
 
-Parts for each cluster are added here by the orchestrator, numbered from F22, once `contracts/P<n>-<slug>.md` has its
+Parts for each cluster are added here by the orchestrator, numbered from F23, once `contracts/P<n>-<slug>.md` has its
 translation. The order is by dependency (design §6): P2 loop, tools and deferral → P15 approvals and grants → P6
 memory with context assembly → P7 jobs, hooks and ledger → P5 and P3 activity, provenance and delegation. Folded in
 from the first plan: F7 (the address survives sign-in, and its one-way record) into P1's contract; F16 (the detail
