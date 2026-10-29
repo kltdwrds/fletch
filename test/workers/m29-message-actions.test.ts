@@ -268,19 +268,18 @@ describe("[M29.4] the phone's message actions", () => {
     const mouse = swap(APP_PAGE, 'if (e.pointerType !== "touch" || device() !== "phone") return;', 'if (device() !== "phone") return;');
     await on({ w, width: 390, height: 844, html: mouse, heldClock: true }, async (pg) => expect(phoneHold(pg)).rejects.toThrow());
   }, 180_000);
-
 });
 
 describe("[F21] the person's own message takes no reaction at 390", () => {
   it("planted: a sheet and a popover that offer reactions on the person's own message each fail the check", async () => {
-      const { w } = await seeded();
-      const own = swap(APP_PAGE, 'emos.hidden = m.who !== "agent";\n  if (m.who === "agent") {', "emos.hidden = false;\n  if (m) {");
-      await on({ w, width: 390, height: 844, html: own }, async (pg) => expect(ownSheet(pg)).rejects.toThrow());
-      await on({ w, width: 390, height: 844, html: own, heldClock: true }, async (pg) => expect(ownHold(pg)).rejects.toThrow());
-      // The row emptied but still drawn fails it too.
-      const drawn = swap(APP_PAGE, 'emos.hidden = m.who !== "agent";', "emos.hidden = false;");
-      await on({ w, width: 390, height: 844, html: drawn }, async (pg) => expect(ownSheet(pg)).rejects.toThrow());
-    }, 120_000);
+    const { w } = await seeded();
+    const own = swap(APP_PAGE, 'emos.hidden = m.who !== "agent";\n  if (m.who === "agent") {', "emos.hidden = false;\n  if (m) {");
+    await on({ w, width: 390, height: 844, html: own }, async (pg) => expect(ownSheet(pg)).rejects.toThrow());
+    await on({ w, width: 390, height: 844, html: own, heldClock: true }, async (pg) => expect(ownHold(pg)).rejects.toThrow());
+    // The row emptied but still drawn fails it too.
+    const drawn = swap(APP_PAGE, 'emos.hidden = m.who !== "agent";', "emos.hidden = false;");
+    await on({ w, width: 390, height: 844, html: drawn }, async (pg) => expect(ownSheet(pg)).rejects.toThrow());
+  }, 120_000);
 });
 
 // ---- (2) from 768: the hover row ----
