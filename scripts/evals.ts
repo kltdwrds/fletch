@@ -15,7 +15,7 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { SlotWorld } from "../test/support/evals.ts";
 import type { DefinedTask } from "../test/support/task.ts";
-import { type RunDeps, runTasks, selectTasks, table } from "./evals/runner.ts";
+import { type RunDeps, runTasks, selectTasks, table, tasksOf } from "./evals/runner.ts";
 import { OWNER, previewSlot } from "./evals/slot.ts";
 
 export const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -44,14 +44,11 @@ export function taskFiles(dir: string, base = root): string[] {
   return out.toSorted();
 }
 
-const isTask = (v: unknown): v is DefinedTask<SlotWorld> => typeof v === "object" && v !== null && typeof (v as { versionHash?: unknown }).versionHash === "function" && typeof (v as { id?: unknown }).id === "string";
-
 /** The tasks each file exports (any export that is a `defineTask()` result). */
 export async function loadTasks(files: string[], base = root): Promise<DefinedTask<SlotWorld>[]> {
   const out: DefinedTask<SlotWorld>[] = [];
   for (const file of files) {
-    const mod = (await import(pathToFileURL(join(base, file)).href)) as Record<string, unknown>;
-    for (const v of Object.values(mod)) if (isTask(v)) out.push(v);
+    out.push(...tasksOf((await import(pathToFileURL(join(base, file)).href)) as Record<string, unknown>));
   }
   return out;
 }

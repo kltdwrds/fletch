@@ -7,9 +7,9 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { driveable, readResults, resultsPath, runTask, runTasks, selectTasks, table, TRIALS, verdictOf } from "../../scripts/evals/runner.ts";
+import { driveable, readResults, resultsPath, runTask, runTasks, selectTasks, table, tasksOf, TRIALS, verdictOf } from "../../scripts/evals/runner.ts";
 import { redactValue } from "../../scripts/redact-capture.mjs";
-import { EMPTY_SNAPSHOT, InfraError, type SlotWorld, TurnError } from "../support/evals.ts";
+import { EMPTY_SNAPSHOT, InfraError, reactionsOf, type SlotWorld, TurnError } from "../support/evals.ts";
 import { type DefinedTask, defineTask, type Task } from "../support/task.ts";
 import { repoRoot } from "../support/temp-repo.ts";
 
@@ -37,6 +37,8 @@ function fakeSlot(scripts: Script[]) {
         chatId: `chat-${opened}`,
         replies,
         snapshot: () => EMPTY_SNAPSHOT,
+        entries: () => [],
+        reactions: () => [],
         async send() {
           if ("turn" in script) throw script.turn;
           replies.push(script.reply);
@@ -241,5 +243,28 @@ describe("[F19] the tier-2 runner", () => {
     ]);
     expect(readdirSync(dir)).toHaveLength(2);
     expect(table(results)).toContain("| T-P0-12 |");
+  });
+});
+
+describe("[F19] what a grader reads on a slot, found by F20's run", () => {
+  it("a task module that exports its task as `task` and `default` holds one task, not two", () => {
+    const t = defineTask(pong());
+    expect(tasksOf({ task: t, default: t, PROMPT: "pong" }).map((x) => x.id)).toEqual(["T-P0-11"]);
+  });
+
+  it("the reaction rows come from the history frame: the agent's as `agent`, the owner's as their email, an entry without a mid skipped", () => {
+    const rows = reactionsOf(
+      [
+        { kind: "you", mid: "m1", text: "hi", reactions: [{ by: "agent", emoji: "👍" }] },
+        { kind: "agent", mid: "m2", text: "hello", reactions: [{ by: "you", emoji: "❤️" }] },
+        { kind: "notice", text: "no mid", reactions: [{ by: "you", emoji: "🙏" }] },
+        { kind: "agent", mid: "m3", text: "none" },
+      ],
+      "sam@solo-sam.example",
+    );
+    expect(rows).toEqual([
+      { mid: "m1", by: "agent", emoji: "👍" },
+      { mid: "m2", by: "sam@solo-sam.example", emoji: "❤️" },
+    ]);
   });
 });

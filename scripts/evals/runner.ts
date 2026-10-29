@@ -169,6 +169,13 @@ export async function runTasks(tasks: DefinedTask<SlotWorld>[], deps: RunDeps): 
   return out;
 }
 
+const isTask = (v: unknown): v is DefinedTask<SlotWorld> => typeof v === "object" && v !== null && typeof (v as { versionHash?: unknown }).versionHash === "function" && typeof (v as { id?: unknown }).id === "string";
+
+/** The tasks a loaded module exports: every `defineTask()` value, once each (a task exported as `task` and `default` is one task). */
+export function tasksOf(mod: Record<string, unknown>): DefinedTask<SlotWorld>[] {
+  return [...new Set(Object.values(mod))].filter(isTask);
+}
+
 /** The tier-2 tasks whose cluster or id is `selector`; tier-1 matches are named, not run. */
 export function selectTasks(tasks: DefinedTask<SlotWorld>[], selector: string): { selected: DefinedTask<SlotWorld>[]; skippedTier1: string[] } {
   const matching = tasks.filter((t) => t.id === selector || t.cluster === selector);
