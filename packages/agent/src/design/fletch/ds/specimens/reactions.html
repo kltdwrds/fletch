@@ -1,0 +1,104 @@
+<!doctype html>
+<!-- F20: the reactions specimen. A static document drawn only from the design system's own sheets and the bundle's
+     classes (test/workers/f20-reactions-specimen.test.ts holds that), from the muse.ai capture of 2026-10-29
+     (docs/plan-v2/contracts/P1-reactions.md, B-P1-10 and the evidence under docs/plan-v2/evidence/p1-reactions/).
+     Each theme draws, at desktop width: the agent's 👍 on a person's message, the hover row on an agent message
+     (React, Reply, More), the picker open with its six and the disabled More, a person's ❤️ on an agent message, and
+     the care register on a person's message. Then at phone width (a 390 stage): the ⋯ sheet on an agent message with
+     the five reactions, More, Reply and Copy; and the sheet on the person's own message with Reply and Copy only,
+     which is what F21 makes true. The hover row on the person's own message is already Reply and Copy. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reactions (chat), specimen</title>
+<link rel="stylesheet" href="../../prototype/ds/qyvr-fletch/tokens.css">
+<link rel="stylesheet" href="../components/bundle.css">
+</head>
+<body>
+<div class="qf-vp" data-theme="light" id="light">
+<div class="qf-stage"><span class="qf-cap">Reactions (chat), light. A chip hangs off the bubble's inner corner; the person's is a button that removes, the agent's an image that nothing changes.</span></div>
+<div class="qf-stage" id="light-ack"><div class="qf-msg qf-msg--user" style="width:560px">
+<div class="qf-bubble qf-bubble--user">Can you pull the October numbers into the deck before the 3pm?</div>
+<span class="qf-reaction qf-reaction--agent" role="img" aria-label="Assistant reaction: 👍">👍</span>
+</div></div>
+<div class="qf-stage" id="light-hover"><div class="qf-msg" style="width:560px">
+<div class="qf-bubble qf-bubble--agent">On it. I have the October export and the deck; I'll replace the three charts and leave the narrative slide as it is.</div>
+<div class="qf-msgact" role="toolbar" aria-label="Message actions">
+<button type="button" aria-label="React"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM80,108a12,12,0,1,1,12,12A12,12,0,0,1,80,108Zm96,0a12,12,0,1,1-12-12A12,12,0,0,1,176,108Zm-1.07,48c-10.29,17.79-27.4,28-46.93,28s-36.63-10.2-46.92-28a8,8,0,1,1,13.84-8c7.47,12.91,19.21,20,33.08,20s25.61-7.1,33.07-20a8,8,0,0,1,13.86,8Z"/></svg></button>
+<button type="button" aria-label="Reply"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232,200a8,8,0,0,1-16,0,88.1,88.1,0,0,0-88-88H51.31l34.35,34.34a8,8,0,0,1-11.32,11.32l-48-48a8,8,0,0,1,0-11.32l48-48A8,8,0,0,1,85.66,61.66L51.31,96H128A104.11,104.11,0,0,1,232,200Z"/></svg></button>
+<button type="button" aria-label="More options"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M144,128a16,16,0,1,1-16-16A16,16,0,0,1,144,128ZM60,112a16,16,0,1,0,16,16A16,16,0,0,0,60,112Zm136,0a16,16,0,1,0,16,16A16,16,0,0,0,196,112Z"/></svg></button>
+</div>
+</div></div>
+<div class="qf-stage" id="light-picker"><div class="qf-msg" style="width:560px">
+<div class="qf-bubble qf-bubble--agent">Done: the three charts are the October numbers and the deck is saved. Want me to send it to Priya now, or do you want a look first?</div>
+<div class="qf-react" role="group" aria-label="Reactions">
+<button type="button" aria-label="React 👍">👍</button><button type="button" aria-label="React ❤️">❤️</button><button type="button" aria-label="React 😂">😂</button><button type="button" aria-label="React 😮">😮</button><button type="button" aria-label="React 😢">😢</button><button type="button" aria-label="React 🙏">🙏</button>
+<button type="button" class="more" aria-label="More reactions" disabled><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></svg></button>
+</div>
+</div></div>
+<div class="qf-stage" id="light-mine"><div class="qf-msg" style="width:560px">
+<div class="qf-bubble qf-bubble--agent">Sent to Priya. The deck is in the library under October review.</div>
+<button type="button" class="qf-reaction qf-reaction--mine" aria-label="Remove ❤️ reaction">❤️</button>
+</div></div>
+<div class="qf-stage" id="light-care"><div class="qf-msg qf-msg--user" style="width:560px">
+<div class="qf-bubble qf-bubble--user">Rough day. Thanks for carrying this one.</div>
+<span class="qf-reaction qf-reaction--agent qf-reaction--care" role="img" aria-label="Assistant reaction: care"><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z"/></svg></span>
+</div></div>
+<div class="qf-stage"><span class="qf-cap">Phone, 390. The ⋯ sheet on an agent message offers five reactions, More, Reply and Copy; on the person's own message, Reply and Copy only.</span></div>
+<div class="qf-stage" id="light-sheet-agent"><div class="qf-menu qf-menu--sheet" role="menu" aria-label="Message actions" style="position:relative;width:390px">
+<div class="qf-menu-head">Reactions</div>
+<div class="qf-react" role="group" aria-label="Reactions" style="box-shadow:none;background:transparent;padding:0 8px 6px"><button type="button" aria-label="React 👍">👍</button><button type="button" aria-label="React ❤️">❤️</button><button type="button" aria-label="React 😂">😂</button><button type="button" aria-label="React 😮">😮</button><button type="button" aria-label="React 🙏">🙏</button><button type="button" class="more" aria-label="More reactions" disabled><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></svg></button></div>
+<div class="qf-menu-sep"></div>
+<div class="qf-menu-item" role="menuitem"><span class="qf-menu-lead"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232,200a8,8,0,0,1-16,0,88.1,88.1,0,0,0-88-88H51.31l34.35,34.34a8,8,0,0,1-11.32,11.32l-48-48a8,8,0,0,1,0-11.32l48-48A8,8,0,0,1,85.66,61.66L51.31,96H128A104.11,104.11,0,0,1,232,200Z"/></svg></span><span class="qf-lbl">Reply</span></div>
+<div class="qf-menu-item" role="menuitem"><span class="qf-menu-lead"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></span><span class="qf-lbl">Copy</span></div>
+</div></div>
+<div class="qf-stage" id="light-sheet-own"><div class="qf-menu qf-menu--sheet" role="menu" aria-label="Message actions" style="position:relative;width:390px">
+<div class="qf-menu-item" role="menuitem"><span class="qf-menu-lead"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232,200a8,8,0,0,1-16,0,88.1,88.1,0,0,0-88-88H51.31l34.35,34.34a8,8,0,0,1-11.32,11.32l-48-48a8,8,0,0,1,0-11.32l48-48A8,8,0,0,1,85.66,61.66L51.31,96H128A104.11,104.11,0,0,1,232,200Z"/></svg></span><span class="qf-lbl">Reply</span></div>
+<div class="qf-menu-item" role="menuitem"><span class="qf-menu-lead"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></span><span class="qf-lbl">Copy</span></div>
+</div></div>
+</div>
+<div class="qf-vp" data-theme="dark" id="dark">
+<div class="qf-stage"><span class="qf-cap">Reactions (chat), dark. A chip hangs off the bubble's inner corner; the person's is a button that removes, the agent's an image that nothing changes.</span></div>
+<div class="qf-stage" id="dark-ack"><div class="qf-msg qf-msg--user" style="width:560px">
+<div class="qf-bubble qf-bubble--user">Can you pull the October numbers into the deck before the 3pm?</div>
+<span class="qf-reaction qf-reaction--agent" role="img" aria-label="Assistant reaction: 👍">👍</span>
+</div></div>
+<div class="qf-stage" id="dark-hover"><div class="qf-msg" style="width:560px">
+<div class="qf-bubble qf-bubble--agent">On it. I have the October export and the deck; I'll replace the three charts and leave the narrative slide as it is.</div>
+<div class="qf-msgact" role="toolbar" aria-label="Message actions">
+<button type="button" aria-label="React"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM80,108a12,12,0,1,1,12,12A12,12,0,0,1,80,108Zm96,0a12,12,0,1,1-12-12A12,12,0,0,1,176,108Zm-1.07,48c-10.29,17.79-27.4,28-46.93,28s-36.63-10.2-46.92-28a8,8,0,1,1,13.84-8c7.47,12.91,19.21,20,33.08,20s25.61-7.1,33.07-20a8,8,0,0,1,13.86,8Z"/></svg></button>
+<button type="button" aria-label="Reply"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232,200a8,8,0,0,1-16,0,88.1,88.1,0,0,0-88-88H51.31l34.35,34.34a8,8,0,0,1-11.32,11.32l-48-48a8,8,0,0,1,0-11.32l48-48A8,8,0,0,1,85.66,61.66L51.31,96H128A104.11,104.11,0,0,1,232,200Z"/></svg></button>
+<button type="button" aria-label="More options"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M144,128a16,16,0,1,1-16-16A16,16,0,0,1,144,128ZM60,112a16,16,0,1,0,16,16A16,16,0,0,0,60,112Zm136,0a16,16,0,1,0,16,16A16,16,0,0,0,196,112Z"/></svg></button>
+</div>
+</div></div>
+<div class="qf-stage" id="dark-picker"><div class="qf-msg" style="width:560px">
+<div class="qf-bubble qf-bubble--agent">Done: the three charts are the October numbers and the deck is saved. Want me to send it to Priya now, or do you want a look first?</div>
+<div class="qf-react" role="group" aria-label="Reactions">
+<button type="button" aria-label="React 👍">👍</button><button type="button" aria-label="React ❤️">❤️</button><button type="button" aria-label="React 😂">😂</button><button type="button" aria-label="React 😮">😮</button><button type="button" aria-label="React 😢">😢</button><button type="button" aria-label="React 🙏">🙏</button>
+<button type="button" class="more" aria-label="More reactions" disabled><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></svg></button>
+</div>
+</div></div>
+<div class="qf-stage" id="dark-mine"><div class="qf-msg" style="width:560px">
+<div class="qf-bubble qf-bubble--agent">Sent to Priya. The deck is in the library under October review.</div>
+<button type="button" class="qf-reaction qf-reaction--mine" aria-label="Remove ❤️ reaction">❤️</button>
+</div></div>
+<div class="qf-stage" id="dark-care"><div class="qf-msg qf-msg--user" style="width:560px">
+<div class="qf-bubble qf-bubble--user">Rough day. Thanks for carrying this one.</div>
+<span class="qf-reaction qf-reaction--agent qf-reaction--care" role="img" aria-label="Assistant reaction: care"><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z"/></svg></span>
+</div></div>
+<div class="qf-stage"><span class="qf-cap">Phone, 390. The ⋯ sheet on an agent message offers five reactions, More, Reply and Copy; on the person's own message, Reply and Copy only.</span></div>
+<div class="qf-stage" id="dark-sheet-agent"><div class="qf-menu qf-menu--sheet" role="menu" aria-label="Message actions" style="position:relative;width:390px">
+<div class="qf-menu-head">Reactions</div>
+<div class="qf-react" role="group" aria-label="Reactions" style="box-shadow:none;background:transparent;padding:0 8px 6px"><button type="button" aria-label="React 👍">👍</button><button type="button" aria-label="React ❤️">❤️</button><button type="button" aria-label="React 😂">😂</button><button type="button" aria-label="React 😮">😮</button><button type="button" aria-label="React 🙏">🙏</button><button type="button" class="more" aria-label="More reactions" disabled><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></svg></button></div>
+<div class="qf-menu-sep"></div>
+<div class="qf-menu-item" role="menuitem"><span class="qf-menu-lead"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232,200a8,8,0,0,1-16,0,88.1,88.1,0,0,0-88-88H51.31l34.35,34.34a8,8,0,0,1-11.32,11.32l-48-48a8,8,0,0,1,0-11.32l48-48A8,8,0,0,1,85.66,61.66L51.31,96H128A104.11,104.11,0,0,1,232,200Z"/></svg></span><span class="qf-lbl">Reply</span></div>
+<div class="qf-menu-item" role="menuitem"><span class="qf-menu-lead"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></span><span class="qf-lbl">Copy</span></div>
+</div></div>
+<div class="qf-stage" id="dark-sheet-own"><div class="qf-menu qf-menu--sheet" role="menu" aria-label="Message actions" style="position:relative;width:390px">
+<div class="qf-menu-item" role="menuitem"><span class="qf-menu-lead"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232,200a8,8,0,0,1-16,0,88.1,88.1,0,0,0-88-88H51.31l34.35,34.34a8,8,0,0,1-11.32,11.32l-48-48a8,8,0,0,1,0-11.32l48-48A8,8,0,0,1,85.66,61.66L51.31,96H128A104.11,104.11,0,0,1,232,200Z"/></svg></span><span class="qf-lbl">Reply</span></div>
+<div class="qf-menu-item" role="menuitem"><span class="qf-menu-lead"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></span><span class="qf-lbl">Copy</span></div>
+</div></div>
+</div>
+</body>
+</html>

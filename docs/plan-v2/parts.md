@@ -104,9 +104,49 @@ part of its own after this one.
 **Not in scope:** changing the reactions behaviour; any other cluster; the deletion of `docs/briefs/` (the PR after
 this one, once the contract stands on its own).
 
+## F21 Reactions: a person's own message takes no reaction
+
+**Read:** `docs/plan-v2/contracts/P1-reactions.md` (B-P1-10, Translation delta 6, T-P1-08),
+`packages/agent/src/http/app/message-actions.ts` (`openActions`, `holdable`), `test/workers/m29-message-actions.test.ts`,
+`test/evals/p1-reactions/surface-controls.task.ts`. The specimen `packages/agent/src/design/fletch/ds/specimens/reactions.html` (Kyle's look on it is UAT after the
+build, never a blocker). No one-way door.
+
+**Scope:** The ⋯ sheet and the 500 ms hold popover on the person's own message offer Reply and Copy and no reaction,
+as the hover row already does; on the agent's message they keep the reactions. The m29 assertion that the person's own
+message takes a reaction is replaced by its opposite. T-P1-08's own-message leg passes and its `it.fails` marker goes.
+The contract's D14 planted failing write (Fresh-session check): a page test under `test/evals/p1-reactions/` in which
+the reaction write fails and no chip is drawn, the chip appearing only once the store's frame carries the row.
+
+**Acceptance:** `test/evals/p1-reactions/surface-controls.test.ts` passes whole under `[F20]` with no known-failure
+marker; `test/workers/m29-message-actions.test.ts` asserts no reaction control on the person's own message at 390 and in
+the hold popover, with the planted page that offers one failing the check; the planted failing write draws no chip
+and the test fails when the page draws on the click instead of the frame; `ACCEPT F21: PASS`.
+
+**Not in scope:** the server side (`reactionRefusal` keeps accepting a mid of either side; the contract grades the
+surface); the `+` more control; any other delta of the contract.
+
+## F22 Reactions: the care register and a reaction on a win
+
+**Read:** `docs/plan-v2/contracts/P1-reactions.md` (B-P1-07, B-P1-11, finding 2 and the tier-2 table), `test/evals/p1-reactions/care-reaction.task.ts`
+and `test/evals/p1-reactions/react-like-a-friend.task.ts` (the two graders, unchanged), `packages/agent/src/chat/instructions.ts`
+(`REACTING`), `docs/runbooks/evals.md`. No one-way door. A live step: `pnpm evals` runs from Kyle's Mac on this
+worktree's slot (`pnpm preview up`); if no slot can be leased, that is a question, not a reason to skip.
+
+**Scope:** The agent's reacting instruction and its examples, so that on hard news the agent's reaction is 🫶 or none
+and its reply carries no emoji, and a small win gets exactly one 👍 while an instrument-style request after it gets
+none. The two tasks are the measure; their graders do not change. One harness gap the F20 verifier named goes with
+it: T-P1-03's harness (`test/evals/p1-reactions/harness.ts`, `thumbs-up-answers-question.task.ts`) asserts that the
+c2 reaction was stored, so the card leg cannot pass on a refused write (its hash moves; it is tier 1).
+
+**Acceptance:** `pnpm evals T-P1-06` and `pnpm evals T-P1-09` each `pass` (three of three), the table in the PR body and
+the results files committed; the tier-1 reactions tests still pass, T-P1-03's with the stored-reaction assertion and
+its new `version_hash` in the contract; `ACCEPT F22: PASS`.
+
+**Not in scope:** the surface (F21); any new task; a change to a grader or to the contract's clauses.
+
 ## Spine clusters
 
-Parts for each cluster are added here by the orchestrator, numbered from F21, once `contracts/P<n>-<slug>.md` has its
+Parts for each cluster are added here by the orchestrator, numbered from F23, once `contracts/P<n>-<slug>.md` has its
 translation. The order is by dependency (design §6): P2 loop, tools and deferral → P15 approvals and grants → P6
 memory with context assembly → P7 jobs, hooks and ledger → P5 and P3 activity, provenance and delegation. Folded in
 from the first plan: F7 (the address survives sign-in, and its one-way record) into P1's contract; F16 (the detail

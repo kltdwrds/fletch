@@ -3,7 +3,7 @@
 The loop (`2026-10-29-parity-framework-design.md` §3) is run by one Claude session on Fable, started from Kyle's
 Mac, that drives the whole thing on its own judgement: it interrogates Muse, writes contracts and parts, dispatches
 builder sessions or builds itself when that is faster, verifies, merges, records, and keeps going. Kyle is watching and
-checks in every few hours; what only he can do, and each surface specimen for his look (design §4.5), lands in `WAITING-ON-KYLE.md` and the loop carries on around it. The
+checks in every few hours; what only he can do, and each surface specimen for his look (design §4.5), lands in `WAITING-ON-KYLE.md` and the loop carries on around it. Each entry there gives Kyle enough context to decide from its paragraph (what, what was decided or found, what his answer changes, the recommended answer) and deep links to the artifact or section for a deep dive (his rule, 2026-10-29). The
 orchestrator is proactive and optimistic: when a path is open it takes it, when two are open it picks one and says
 which, and it asks only for what the hard lines below reserve for Kyle.
 

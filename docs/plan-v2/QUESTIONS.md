@@ -16,6 +16,26 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
+### Q11 (F18), 2026-10-29: two limits of the task kit, found by P1's Build
+
+**Blocks:** nothing. `defineTask`'s `collateral` keys a snapshot by exact id and reads any removed key as collateral, so
+a task cannot declare an expected removal (T-P1-07 removes a reaction and grades it instead), and a message id that
+depends on the tool-call count (a mid counts the agent's `react` as a row) cannot be declared statically, so P1's tasks
+key messages by `message:<chat>:<ordinal>:<kind>` (`docs/plan-v2/contracts/P1-reactions.md`, Build notes).
+
+**Recommended answer:** none from you; the orchestrator folds a `removes:` field and ordinal keys into the kit when a
+second cluster hits the same limit (AGENTS.md, "Raising a rule": twice, then one change).
+
+### Q12 (F20), 2026-10-29: the dump brief and the design's Muse counts are stale
+
+**Blocks:** nothing. The P1 interrogation (`docs/plan-v2/contracts/P1-reactions.md`, "Finding against the dump brief")
+found that every person reaction starts a Muse turn with a handoff block and a no-reply escape, where
+`docs/briefs/reactions-dump-2026-10-23.md` read reactions as ambient only; and that the live `tools.json` counts 109
+functions in 19 namespaces with 9 unavailable, not the 108 in 32 the design's §7 states, and holds no reaction function
+(the tool is injected per session). fletch's shipped gate (wake only on a pending question) is kept as a named delta.
+
+**Recommended answer:** none needed from you beyond a read: the briefs are deleted in the PR after F20 (design §5.1),
+and the orchestrator corrects §7's count in that PR. Say so if you would rather keep the briefs.
 ### Q10 (F19), 2026-10-29: Accept D-0015, tier-2 evals in CI with the slot token and a spend cap
 
 **Blocks:** nothing. The runner (`pnpm evals`, `docs/runbooks/evals.md`) runs from Kyle's Mac against the worktree's
