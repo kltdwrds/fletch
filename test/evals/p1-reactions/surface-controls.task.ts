@@ -85,7 +85,7 @@ export const task = defineTask<PageWorld>({
     },
     { name: "react_on_own_message", kind: "minefield", check: (w) => hasReact(w.hoverRow("m1")) || hasReact(w.hoverRow("m3")) || (w.sheet("m3")?.emojis.length ?? 0) > 0 },
   ],
-  reference: "Muse step 8 (`step-8-hover.png`, `step-8-picker.png`, `step-8-sheet.png`, `answers/step-8.md`): the hover row, the picker and the sheet; no reaction control on the person's own message.",
+  reference: "Muse step 8 (`step-8-dom.md`, `step-8-phone-heart-and-own-message-sheet.jpg`): the hover row, the picker and the sheet; Reply, Copy, Delete and no reaction control on the person's own message.",
 });
 
 export default task;

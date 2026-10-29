@@ -45,7 +45,7 @@ export const task = defineTask<P1World>({
     { name: "removal_wake", kind: "minefield", check: (w) => w.turns().length !== 1 || w.mailbox().some((m) => m.kind === "reaction") },
     { name: "other_side_removed", kind: "minefield", check: (w) => !w.reactions().some((r) => r.mid === "m1" && r.by === AGENT && r.emoji === "👍") },
   ],
-  reference: "Muse step 7 (`step-7-after.png`, `answers/step-7.md`): the same emoji again removes; the assistant's own reaction stays.",
+  reference: "Muse step 7 (`answers/step-7.md`): the same emoji again removes, a null row and no handoff; the assistant's own reaction stays; fletch deletes the row (Translation, delta 4).",
 });
 
 export default task;

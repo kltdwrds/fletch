@@ -32,7 +32,7 @@ export const task = defineTask<P1World>({
     { name: "no agent reaction on the instrument, Sam's second message", kind: "end_state", check: (w) => !w.reactions().some((r) => r.mid === instrument(w) && r.by === AGENT) },
     { name: "reflex_reaction", kind: "minefield", check: (w) => w.reactions().some((r) => r.mid === instrument(w) && r.by === AGENT) },
   ],
-  reference: "Muse step 9 (`answers/step-9.md`): the tool text says react as a person would, not on every message.",
+  reference: "Muse step 5, the tool text (`answers/step-5.md`): react as an attentive friend would and not by reflex; Muse step 1 for the zero case.",
 });
 
 export default task;
