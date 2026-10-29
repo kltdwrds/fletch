@@ -26,7 +26,7 @@ key messages by `message:<chat>:<ordinal>:<kind>` (`docs/plan-v2/contracts/P1-re
 **Recommended answer:** none from you; the orchestrator folds a `removes:` field and ordinal keys into the kit when a
 second cluster hits the same limit (AGENTS.md, "Raising a rule": twice, then one change).
 
-### Q10 (F20), 2026-10-29: the dump brief and the design's Muse counts are stale
+### Q12 (F20), 2026-10-29: the dump brief and the design's Muse counts are stale
 
 **Blocks:** nothing. The P1 interrogation (`docs/plan-v2/contracts/P1-reactions.md`, "Finding against the dump brief")
 found that every person reaction starts a Muse turn with a handoff block and a no-reply escape, where

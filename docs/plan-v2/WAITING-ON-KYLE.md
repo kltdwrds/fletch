@@ -42,12 +42,12 @@ Kyle's own lines go under `## Steering`.
   [`bundle.css`](../../packages/agent/src/design/fletch/ds/components/bundle.css); the check is
   `test/workers/f20-reactions-specimen.test.ts`; commit da209df.
 
-- [ ] 2026-10-29 question: **Q10, stale briefs and counts, a read not a decision.** The dump brief
+- [ ] 2026-10-29 question: **Q12, stale briefs and counts, a read not a decision.** The dump brief
   `docs/briefs/reactions-dump-2026-10-23.md` read reactions as ambient only, and the design's §7 counts Muse's tools
   as 108 in 32 namespaces where the live `tools.json` holds 109 in 19 with 9 unavailable and no reaction function. The
   recommended answer: the briefs are deleted in the PR after F20 (design §5.1) and §7's count is corrected there; say
   so only if you would rather keep the briefs. Deep dive:
-  [Q10](QUESTIONS.md#q10-f20-2026-10-29-the-dump-brief-and-the-designs-muse-counts-are-stale),
+  [Q12](QUESTIONS.md#q12-f20-2026-10-29-the-dump-brief-and-the-designs-muse-counts-are-stale),
   [design §5.1 and §7](2026-10-29-parity-framework-design.md).
 
 ## Steering
