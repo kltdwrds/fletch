@@ -192,3 +192,12 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
 - 2026-10-29 F18, the redaction gate allowlists by field name (`ALLOWLIST` and the `_id`/`_at` suffixes in
   `scripts/redact-capture.mjs`) and strips the rest to a shape; a request `path` keeps its path and loses its query
   (a setup link rides there). Rejected: an allowlist by value shape (an id and a short message look alike).
+- 2026-10-29 F19, the tier-2 runner lives in `scripts/evals/` with its slot client, and the world a tier-2 grader sees
+  (`SlotWorld`, `InfraError`, `TurnError`) in `test/support/evals.ts` so a task file imports no script. A trial stops
+  at its first infra failure and the task's verdict is `infra`; a `fail` anywhere is `fail`; `pass` needs all three.
+  The baseline is the last pass or fail for the same hash, so an infra run moves nothing. Rejected: retrying an infra
+  trial (no retries, KICKOFF.md), and counting two passes out of three as a pass (the design says every trial).
+- 2026-10-29 F19, the runner's session on a slot is the live exit test's software passkey, kept with its material
+  beside the lease file (`evals-<tag>.json`, mode 600) so a later run signs in instead of needing the one-time setup
+  token again; a fresh lease registers anew. Rejected: a session cookie alone (thirty days, then no way back in) and a
+  second registration route (the host's login contract is published, a one-way door).

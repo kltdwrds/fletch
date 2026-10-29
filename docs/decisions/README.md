@@ -66,4 +66,5 @@ After adding or changing a record, run `node scripts/check-decisions.mjs --write
 | [D-0012](0012-one-plan-on-the-parity-loop.md) | One plan with two entry points, on the parity loop: a part is one builder session under docs/plan-v2/, everything else a plain PR | accepted | two-way | 2026-10-29 | 2027-01-29 |
 | [D-0013](0013-private-repository-evidence-in-tree.md) | The repository is private while the spine is built; parity evidence lives in docs/plan-v2/evidence/; the public release is cut later by cherry-pick | superseded | two-way | 2026-10-29 | 2027-01-29 |
 | [D-0014](0014-public-repository-evidence-git-ignored.md) | The repository stays public; parity evidence lives git-ignored under docs/plan-v2/evidence/ on Kyle's Mac, with only its README and the content-free tier-2 results tracked | accepted | two-way | 2026-10-29 | 2027-01-29 |
+| [D-0015](0015-tier2-evals-in-ci.md) | Tier-2 evals run in CI on a PR touching the agent, with the slot token and a Workers AI spend cap as repository secrets | proposed | one-way | 2026-10-29 | 2026-12-31 |
 <!-- index:end -->
