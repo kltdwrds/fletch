@@ -192,3 +192,20 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
 - 2026-10-29 F18, the redaction gate allowlists by field name (`ALLOWLIST` and the `_id`/`_at` suffixes in
   `scripts/redact-capture.mjs`) and strips the rest to a shape; a request `path` keeps its path and loses its query
   (a setup link rides there). Rejected: an allowlist by value shape (an id and a short message look alike).
+- 2026-10-29 orchestrator, builders run in the Terminal panel as `claude --permission-mode auto -p "<the /goal line>"`
+  from a worktree on `main`, one per preview slot; an app-started session did not register the `/goal` as a goal, the
+  terminal run does (the transcript shows `Goal set`, the Stop hook and the evaluator's verdicts). Rejected:
+  `--dangerously-skip-permissions` (refused by the app's classifier) and app sessions (no goal evaluator).
+- 2026-10-29 P1 interrogation: a dedicated Muse side chat is the instrument (one thread, steps A to F and a reload),
+  never Kyle's main chat or sidebar, so no capture holds his content; raw captures wait in the session scratchpad
+  until the redaction gate exists and are stored only after `pnpm redact` (25 files, 0 failed). Request bodies are not
+  recorded: every chat action multiplexes through one endpoint and an auth endpoint's body carried a token.
+- 2026-10-29 P1 translation (`docs/plan-v2/contracts/P1-reactions.md`, deltas 1 to 5 and 7 kept as shipped): fletch
+  wakes the agent for a reaction only on a pending question and shows ambient reactions in the next envelope, where
+  Muse starts a turn per reaction with a no-reply escape; `react` keeps its optional target; rows are per (message,
+  reactor); removal deletes; the care register is 🫶. Rejected: a wake per reaction (model spend per ambient reaction,
+  and nothing observable gained). Delta 6 (a person can react to their own message at phone width) is a finding and a
+  part of its own (F21), not a change inside the dry run.
+- 2026-10-29: builder sessions (the terminal `claude -p "/goal …"` runs) use `--model opus` from now on, at Kyle's word in the
+  orchestrator session; the running F19 builder stays on the model it started with. The orchestrator itself keeps its own
+  model. Rejected: editing `GOAL-PROMPT.md`'s loop line (off-limits to the orchestrator; the flag rides on the command).
