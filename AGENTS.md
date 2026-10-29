@@ -96,7 +96,7 @@ reports; never skip it. `.claude/hooks/no-hook-bypass.mjs` refuses any command t
 
 ## Long sessions
 
-Auto-compaction runs near 500k tokens (`autoCompactWindow` in `.claude/settings.json`). Shortly before it,
+Auto-compaction runs near 350k tokens (`autoCompactWindow` in `.claude/settings.json`). Shortly before it,
 `.claude/hooks/handoff.mjs` says so once: finish the current phase, write the branch's handoff note with the
 handoff skill, and carry on. The hook prints the note back after each compaction and `/clear`. In a cloud session
 `.claude/hooks/session-start.mjs` first installs the `.tool-versions` Node (the image ships Node 22), pnpm, the
