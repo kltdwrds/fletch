@@ -7,9 +7,9 @@ import { ChatEngine, type EngineCtx } from "../../packages/agent/src/chat/engine
 import { ownerOnly } from "../../packages/agent/src/chat/protocol.ts";
 import { HOLD_MS, MESSAGE_TEXT } from "../../packages/agent/src/http/app/message-actions.ts";
 import { Ledger } from "../../packages/agent/src/objects/ledger.ts";
+import people from "../fixtures/people.json" with { type: "json" };
 import { FakeModel, type FakeStep } from "../support/fake-model.ts";
 import { harnessNamespace, ObjectHarness } from "../support/object-harness.ts";
-import people from "../fixtures/people.json" with { type: "json" };
 import { type El, page } from "./support/page-harness.ts";
 
 type Plant = Parameters<typeof page>[2];
@@ -24,10 +24,10 @@ async function threadPage(plant?: Plant) {
 }
 const pillOf = (n: El | undefined) => n?.children.find((c) => c.className === "reaction-pill")?.textContent ?? null;
 
-/** Ada's message m1 with the agent's 👍, then her 🙏, then the agent's taken off: the pill after each. */
+/** Ada's message m1 with the agent's 👍, then her 🙏, then the agent's taken off: the pill after each. m2 is the agent's answer. */
 async function collected(plant?: Plant) {
   const p = await threadPage(plant);
-  p.deliver(p.s, { type: "history", running: null, entries: [{ kind: "you", text: "Is the orchard walk on?", id: "a", mid: "m1", at: 1, reactions: [{ by: "agent", emoji: "👍" }] }] });
+  p.deliver(p.s, { type: "history", running: null, entries: [{ kind: "you", text: "Is the orchard walk on?", id: "a", mid: "m1", at: 1, reactions: [{ by: "agent", emoji: "👍" }] }, { kind: "agent", text: "Yes, Saturday at ten.", mid: "m2", at: 2 }] });
   const m1 = () => p.log.children[0];
   const pills = [pillOf(m1())];
   p.deliver(p.s, { type: "reaction", mid: "m1", by: "you", emoji: "🙏" });
@@ -41,10 +41,17 @@ describe("[F10] reactions on the page", () => {
   it("a bubble collects the agent's and the person's reaction in one pill, the person's own marks the picker, and taking one off leaves the other", async () => {
     const { p, m1, pills } = await collected();
     expect(pills).toEqual(["👍", "👍🙏", "🙏"]);
-    // The held-touch popover on m1 (all six; the phone sheet stops at five) marks Ada's own pick alone.
-    (m1.children.find((c) => c.className.startsWith("qf-bubble")) as El & { onpointerdown: (e: unknown) => void }).onpointerdown({ pointerType: "touch", clientX: 0, clientY: 0 });
-    p.t.fire(HOLD_MS);
-    const pressed = p.byId("msg-emos").children.filter((b) => b.attrs["aria-pressed"] === "true").map((b) => b.attrs["aria-label"]);
+    const hold = (n: El) => {
+      (n.children.find((c) => c.className.startsWith("qf-bubble")) as El & { onpointerdown: (e: unknown) => void }).onpointerdown({ pointerType: "touch", clientX: 0, clientY: 0 });
+      p.t.fire(HOLD_MS);
+      return p.byId("msg-emos").children.map((b) => [b.attrs["aria-label"], b.attrs["aria-pressed"] === "true"] as const);
+    };
+    // Ada's own message offers no reaction in the held-touch popover (F21), though its pill still draws.
+    expect(hold(m1)).toEqual([]);
+    p.key("Escape");
+    // On the agent's m2 the popover (all six; the phone sheet stops at five) marks Ada's own pick alone.
+    p.deliver(p.s, { type: "reaction", mid: "m2", by: "you", emoji: "🙏" });
+    const pressed = hold(p.log.children[1] as El).filter(([, on]) => on).map(([l]) => l);
     expect(pressed).toEqual([`${MESSAGE_TEXT.reactWith}folded hands`]);
   });
 

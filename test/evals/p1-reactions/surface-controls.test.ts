@@ -1,14 +1,11 @@
 // T-P1-08 under vitest: the shipped page script under the page harness's DOM (no Chromium: the graders read roles
 // and labels, which are DOM; the M29.4 Chromium suite covers geometry), one page per width, Sam's history of three
-// messages delivered by hand. The task is known to fail against shipped code on one leg (Translation, delta 6): the
-// phone sheet under Sam's own message offers reactions. The first test records that failure by its minefield's name,
-// so the day the sheet is fixed it fails and asks to be turned into a plain `runTask`; the second holds every other
-// grader to passing now.
-import { describe, expect, it } from "vitest";
+// messages delivered by hand. The own-message leg (Translation, delta 6) passes since F21: the phone sheet under
+// Sam's own message offers Reply and Copy and no reaction.
+import { describe } from "vitest";
 import { REACTIONS } from "../../../packages/agent/src/chat/reactions.ts";
 import { MESSAGE_MARKUP, MESSAGE_TEXT } from "../../../packages/agent/src/http/app/message-actions.ts";
-import { Seeded } from "../../support/seeded.ts";
-import { executeTask, type TaskHarness, type Turn } from "../../support/task.ts";
+import { runTask, type TaskHarness, type Turn } from "../../support/task.ts";
 import { type El, page } from "../../workers/support/page-harness.ts";
 import type { PageWorld, Picker, Sheet } from "./page-world.ts";
 import task, { HISTORY, SIX, WORDS } from "./surface-controls.task.ts";
@@ -109,14 +106,6 @@ async function play(world: SurfaceWorld, turn: Turn) {
 
 const harness: TaskHarness<SurfaceWorld> = { setup: () => SurfaceWorld.open(), play: (world, turn) => play(world, turn) };
 
-describe("[F20] finding: a person can react to their own message at phone width (Translation delta 6, F21)", () => {
-  it("T-P1-08 steps on react_on_own_message: the sheet under Sam's own message offers reactions", async () => {
-    await expect(executeTask(task, harness)).rejects.toThrow(/react_on_own_message/);
-  });
-
-  it("every other grader of T-P1-08 passes on the shipped page", async () => {
-    const world = await harness.setup(new Seeded(task.setup.seed), task);
-    for (const turn of task.turns) await harness.play(world, turn, new Seeded(task.setup.seed));
-    for (const g of task.graders) if (g.kind !== "minefield") expect(await g.check(world), g.name).toBe(true);
-  });
+describe("[F20] P1 reactions: the surface's controls, at 1440 and 390", () => {
+  runTask(task, harness);
 });
