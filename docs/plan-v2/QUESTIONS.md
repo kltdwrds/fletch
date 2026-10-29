@@ -36,6 +36,18 @@ functions in 19 namespaces with 9 unavailable, not the 108 in 32 the design's §
 
 **Recommended answer:** none needed from you beyond a read: the briefs are deleted in the PR after F20 (design §5.1),
 and the orchestrator corrects §7's count in that PR. Say so if you would rather keep the briefs.
+### Q10 (F19), 2026-10-29: Accept D-0015, tier-2 evals in CI with the slot token and a spend cap
+
+**Blocks:** nothing. The runner (`pnpm evals`, `docs/runbooks/evals.md`) runs from Kyle's Mac against the worktree's
+leased slot, and a part's PR body carries its table. Open decision O9 (design §10) was agreed in principle; F19 wrote
+the record, `docs/decisions/0015-tier2-evals-in-ci.md`, with the key's scope (the existing slot token, D-0008, as a
+repository secret in a `tier2` environment; no model key, since a slot's chat model is Workers AI through its binding),
+the spend cap (12 tasks of 3 trials per run, one job of 60 minutes, a 10 USD notification and a 25 USD stop per month)
+and the trigger (PRs touching `packages/agent/`, one comment, never a gate: O2).
+
+**Recommended answer:** accept D-0015 as proposed after the dry run (F20) shows stable verdicts, then the workflow
+file is a plain PR citing it and the three secrets are Kyle's to set. The alternative, keeping the runner on Kyle's Mac,
+costs nothing and leaves tier 2 to the orchestrator's sessions; it is the state today.
 
 ### Q6 (F4), 2026-10-23: D-0010 is a stub until the artifact record lands
 

@@ -64,8 +64,8 @@ creates it.
 ### test/
 
 `test/workers/` (Worker and Durable Object tests by milestone), `test/scenarios/` (behaviour, run twice by accept),
-`test/m0/` (the harness's own acceptance), `test/live/` (the live lane and its hermetic helpers), `test/support/`
-(the hermetic setup, fakes and shims), `test/fixtures/` (the only identities, in `test/fixtures/people.json`, and
+`test/m0/` (the harness's own acceptance), `test/evals/` (tasks as code, one folder per cluster), `test/live/` (the
+live lane and its hermetic helpers), `test/support/` (the hermetic setup, fakes and shims), `test/fixtures/` (the only identities, in `test/fixtures/people.json`, and
 the only planted secrets). The primitives' tests sit in their packages' `test/` folders. Every top-level `describe`
 carries a part tag, `[F<n>]` for fletch's own or `[M<n>]` for one inherited from qyvr-co; `pnpm accept` selects by it.
 
@@ -83,6 +83,7 @@ carries a part tag, `[F<n>]` for fletch's own or `[M<n>]` for one inherited from
 | `pnpm preview` | Leases a preview slot and deploys the working tree to it, from a laptop or a cloud session (`docs/runbooks/preview.md`). |
 | `pnpm create-fletch` | Sets up a deploy; see README.md and `docs/runbooks/`. |
 | `pnpm live-sweep` | Removes `fletch-ci-` leftovers from the throwaway account (`docs/runbooks/live-deploy.md`). |
+| `pnpm evals <P<n>\|T-P<n>-<nn>>` | The tier-2 runner: a cluster's tasks on this worktree's preview slot, three trials each, a results file per task hash and one Markdown table (`docs/runbooks/evals.md`). |
 | `pnpm redact <file>` | The redaction gate over a capture before it is stored under `docs/plan-v2/evidence/`: deletes it on a secret, strips values outside the allowlist (`scripts/redact-capture.mjs`). |
 | `pnpm ds` | Compiles the design tokens; the pre-commit hook refuses a stale `tokens.ts` or `icons.ts`. |
 | `pnpm release` | Builds the two primitives and publishes the changesets (CI only; `docs/runbooks/release.md`). |
