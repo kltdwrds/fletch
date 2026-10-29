@@ -544,6 +544,28 @@ body{background:var(--bg-primary);color:var(--text-primary);font-family:var(--fo
 .qf-fcard .kd{flex-shrink:0;color:var(--text-secondary);font:400 12px/16px var(--font-sans);text-transform:uppercase}
 .qf-fcard .pv{height:calc(8 * 18px + 8px);margin:0;padding:8px 12px 0;overflow:hidden;background:var(--fill-code-block);color:var(--text-secondary);font:400 12px/18px var(--font-mono,ui-monospace,monospace);white-space:pre} /* eight lines */
 
+/* ===== Reactions (chat), F20: the chips under a bubble, the picker and the phone sheet, from the muse.ai capture of
+   2026-10-29 (docs/plan-v2/contracts/P1-reactions.md, B-P1-10). Specimen: ds/specimens/reactions.html. It reuses the
+   hover row (.qf-msgact), the picker (.qf-react) and the sheet (.qf-menu--sheet) above rather than drawing a second
+   language; what is new is the chip. Two chips, one meaning each: the person's is a button that removes the reaction
+   (aria-label "Remove 👍 reaction"); the agent's is a labelled image (role="img", aria-label "Assistant reaction: 👍")
+   that no click changes. A chip hangs off the bubble's inner corner (the person's bubble's end, the agent's start),
+   raised on --elevation-1 so it reads as laid on the bubble, not part of it. The care register (.qf-reaction--care) is
+   the hands-heart glyph in the warning colour, never a plain emoji, so a person can tell it from a 🫶 they sent.
+   The hover row on a person's own message holds Reply and Copy and no React (F21 brings the sheet and the hold popover
+   to the same rule); the picker's six are 👍 ❤️ 😂 😮 😢 🙏 with a More control that is disabled until a full picker exists. */
+.qf-reaction{display:inline-flex;align-items:center;gap:4px;height:24px;margin-top:-12px;padding:0 8px;border:0;border-radius:var(--radius-full);background:var(--fill-primary);color:var(--text-primary);box-shadow:var(--elevation-1);font:400 14px/20px var(--font-sans)}
+.qf-reaction--mine{cursor:pointer}
+.qf-reaction--mine:hover{background:var(--fill-secondary-elevated)}
+.qf-reaction--mine:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.qf-reaction--agent{cursor:default}
+.qf-reaction--care{color:var(--text-warning)}
+.qf-reaction--care>svg{display:block;width:16px;height:16px}
+.qf-msg--user>.qf-reaction{margin-inline-end:12px}
+.qf-msg>.qf-reaction{align-self:flex-start;margin-inline-start:12px}
+.qf-msg--user>.qf-reaction{align-self:flex-end}
+.qf-msg>.qf-msgact,.qf-msg>.qf-react{align-self:flex-start;margin-inline-start:4px}
+
 /* Share targets */
 .qf-share{display:flex;gap:24px;padding:4px 0;justify-content:center;flex-wrap:wrap}
 .qf-share>div{display:flex;flex-direction:column;align-items:center;gap:8px;width:64px}
