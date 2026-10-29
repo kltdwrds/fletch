@@ -123,25 +123,25 @@ describe('the handoff nudge', () => {
   }
 
   it('is silent below the handoff point', () => {
-    const { file, session } = transcript([[100_000], [449_000]]);
+    const { file, session } = transcript([[100_000], [314_000]]);
     assert.equal(tool(file, session), '');
   });
 
   it('nudges once past it, and again only after the context has dropped below', () => {
-    const t = transcript([[460_000]]);
-    assert.match(tool(t.file, t.session), /context is at 460k tokens, past the handoff point \(450k\); auto-compaction runs near 500k\. Finish the current phase/);
+    const t = transcript([[320_000]]);
+    assert.match(tool(t.file, t.session), /context is at 320k tokens, past the handoff point \(315k\); auto-compaction runs near 350k\. Finish the current phase/);
     assert.equal(tool(t.file, t.session), '');
     writeFileSync(t.file, `${JSON.stringify({ type: 'assistant', message: { usage: { cache_read_input_tokens: 60_000 } } })}\n`);
     assert.equal(tool(t.file, t.session), '');
-    writeFileSync(t.file, `${JSON.stringify({ type: 'assistant', message: { usage: { cache_read_input_tokens: 470_000 } } })}\n`);
-    assert.match(tool(t.file, t.session), /at 470k tokens/);
+    writeFileSync(t.file, `${JSON.stringify({ type: 'assistant', message: { usage: { cache_read_input_tokens: 330_000 } } })}\n`);
+    assert.match(tool(t.file, t.session), /at 330k tokens/);
   });
 
   it('nudges at 90% of where compaction really runs: the percentage override, then a window from the environment', () => {
-    const t = transcript([[359_000]]);
+    const t = transcript([[251_000]]);
     assert.equal(tool(t.file, t.session, {}, { CLAUDE_AUTOCOMPACT_PCT_OVERRIDE: '80' }), '');
-    const u = transcript([[361_000]]);
-    assert.match(tool(u.file, u.session, {}, { CLAUDE_AUTOCOMPACT_PCT_OVERRIDE: '80' }), /past the handoff point \(360k\); auto-compaction runs near 400k/);
+    const u = transcript([[253_000]]);
+    assert.match(tool(u.file, u.session, {}, { CLAUDE_AUTOCOMPACT_PCT_OVERRIDE: '80' }), /past the handoff point \(252k\); auto-compaction runs near 280k/);
     const v = transcript([[181_000]]);
     assert.match(tool(v.file, v.session, {}, { CLAUDE_CODE_AUTO_COMPACT_WINDOW: '200000' }), /handoff point \(180k\)/);
   });
