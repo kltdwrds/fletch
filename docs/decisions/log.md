@@ -156,3 +156,6 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   shopping, booking, travel, tickets are P16, by pick; O6 connector types and flows are spine (P9 core), specific
   connectors per agent; O9 agreed in principle, the record comes with F19. O4 (P8) stays open. The sibling
   `fletch-parity` repository and the `FLETCH_PARITY_DIR` variable are gone from the plan.
+- 2026-10-29 O4 narrowed with Kyle: P8's side chats are P1 (a chat with its own transcript that a job can deliver to)
+  and its workers are P3 and P7 (the agent a job or hook spawns, and its completion report), all spine; P8 keeps only
+  group chats with outsiders, mapped and not built until Kyle rules whether fletch ever speaks in a room.

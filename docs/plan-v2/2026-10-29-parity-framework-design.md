@@ -167,14 +167,14 @@ Re-ordering happens at a scorecard review with Kyle, never mid-part.
 
 | # | Cluster | Covers | Spine? |
 |---|---|---|---|
-| P1 | Chat core and transcript | messages, history, replay, quotes, reactions, actions, threads, addresses | partly (transcript, replay) |
+| P1 | Chat core and transcript | messages, history, replay, quotes, reactions, actions, threads, addresses, side chats (a chat with its own transcript and title that jobs can deliver to) | partly (transcript, replay) |
 | P2 | Agent loop, tools and deferral | discovery, deferred namespaces, operating block, `send_to_user`, streaming, barriers, effects, cards | **yes** |
-| P3 | Subagents and delegation | spawn, steer, handoff, mailbox re-entry, interruption honesty, verifier, ceilings | **yes** |
+| P3 | Subagents and delegation | spawn, steer, handoff, mailbox re-entry, interruption honesty, verifier, ceilings; the worker a job or hook spawns and its completion report (with P7) | **yes** |
 | P4 | Artifacts and Library | records, creation, cards, viewer, previews, audit, edit, kinds | no (own track) |
 | P5 | Activity, provenance and audit | journal, activity drawer, step timelines, subagent traces, findings | **yes** |
 | P6 | Memory, goals and tracking | saved memory, daily notes, people, goals, tracked items, briefings | **yes** (memory); rest by pick |
 | P7 | Scheduling, hooks and proactivity | crons, hooks, checks, proactive briefs, feed | **yes** (jobs, hooks, ledger); rest by pick |
-| P8 | Side chats, groups and workers | external side chats, group chats, workers, per-chat discretion | design question first (O4) |
+| P8 | Group chats | a room with other people or agents in it (Muse's Buzz relay group): who the agent speaks for there, what of the owner's context it may reveal (per-chat discretion), how an inbound mention is fenced | mapped, not built, until Kyle rules (O4) |
 | P9 | Connectors, devices and accounts | mail, calendar, drive, GitHub, Linear, health, devices, vault logins | **yes**: the connector types and flows (API OAuth, raw credentials held in the vault, credential references, the observation/action gate); each specific connector per agent, by pick (O6) |
 | P10 | Search, browser, places and media | web search, fetch, places, image and video, social | by pick |
 | P11 | Files, documents and spreadsheets | library, render, sheets, decks, export, share links | by pick |
@@ -212,7 +212,7 @@ Conventional Commits with DCO sign-off; branch and PR, never straight to `main`.
 |---|---|---|---|
 | O1 | Home of private evidence | **Decided:** the repository is private and evidence lives in `docs/plan-v2/evidence/` (D-0013); the public release is a later cherry-picked repository. | two-way (no capture stored yet) |
 | O2 | Tier 2 comments or gates at first | **Decided:** comments until the dry run shows stable verdicts. | two-way |
-| O4 | P8 side chats, groups and workers in scope, under what discretion | **Open.** Mapped, not built, until Kyle rules. | one-way |
+| O4 | P8 group chats in scope, under what discretion | **Narrowed 2026-10-29:** side chats fold into P1 and workers into P3 and P7, both spine; only group chats with outsiders remain, mapped and not built until Kyle rules on whether fletch ever speaks in a room. | one-way |
 | O5 | Payments scope | **Decided:** wallet and payments are spine (P12, its own milestone); shopping, bookings, travel and tickets are higher-level behaviour (P16, by pick); purchase or flag-only per vertical is Kyle's when P16 is picked. | one-way per vertical, later |
 | O6 | Connector model | **Decided:** the connector types and flows are spine (P9 core: API OAuth, raw credentials in the vault, references, the gate); each specific connector is per agent, by pick, under one record per connector class. | one-way per class, later |
 | O9 | A live-model key and slot token in CI for tier 2 | **Agreed in principle.** F19 writes the record with the key's scope and spend cap; Kyle accepts it; the runner runs from his Mac until then. | one-way (spend, boundary) |
@@ -290,6 +290,6 @@ examples[]:    model prose, never asserted
 ## Kyle's answers to the open decisions (2026-10-29)
 
 O1: one private repository, evidence in a folder here, a public version cut later by cherry-pick (D-0013). O2: the
-default. O4: explained, still his to rule. O5: wallet and payments are a spine milestone of their own; shopping,
+default. O4: side chats and workers fold into P1, P3 and P7; group chats with outsiders stay his to rule. O5: wallet and payments are a spine milestone of their own; shopping,
 booking, travel and tickets are higher-level behaviour on it. O6: connector types and flows are spine, specific
 connectors are per agent. O9: fine; the record comes with F19.
