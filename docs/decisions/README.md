@@ -8,7 +8,7 @@ Why it is shaped this way: D-0007 and `docs/research/2026-10-22-decision-records
 
 - **Only `accepted` binds.** `proposed` is context, `superseded`, `rejected` and `deprecated` are history. When work
   contradicts an accepted record, stop: write a `proposed` record that supersedes it and a question in
-  `docs/plan/QUESTIONS.md`, and carry on only with what the conflict does not touch.
+  `docs/plan-v2/QUESTIONS.md`, and carry on only with what the conflict does not touch.
 - **Two-way doors** (cheap to reverse) are the agent's: a line in the log, or a record with `decider: agent` when
   others will rely on it. The merge ratifies it.
 - **One-way doors** (irreversible, spends money, a security boundary, a published package's contract, a storage
@@ -57,10 +57,13 @@ After adding or changing a record, run `node scripts/check-decisions.mjs --write
 | [D-0003](0003-primitives-never-depend-on-the-app.md) | The published primitives never import the agent, and @qyvr/host imports no platform | accepted | one-way | 2026-10-19 | 2026-11-21 |
 | [D-0004](0004-paid-bindings-are-opt-in.md) | Code Mode and Images are not in the base config; create-fletch --paid adds them | accepted | two-way | 2026-10-20 |  |
 | [D-0005](0005-create-fletch-deploys-from-a-checkout.md) | create-fletch deploys the agent from a fletch checkout, not from a published package | accepted | two-way | 2026-10-20 | 2027-01-20 |
-| [D-0006](0006-one-plan-two-entry-points.md) | One plan with two entry points: roadmap work is an `F<n>` part, everything else a plain PR | accepted | two-way | 2026-10-22 | 2027-01-22 |
+| [D-0006](0006-one-plan-two-entry-points.md) | One plan with two entry points: roadmap work is an `F<n>` part, everything else a plain PR | superseded | two-way | 2026-10-22 | 2027-01-22 |
 | [D-0007](0007-decision-records.md) | Binding decisions are records with a status, a ratifier, a confirmation and a review date, checked in pnpm check | accepted | two-way | 2026-10-22 | 2027-01-22 |
 | [D-0008](0008-preview-slots-on-a-per-worker-token.md) | Cloud sessions deploy to a fixed pool of preview slots with a token scoped to the slot Workers alone | accepted | one-way | 2026-10-22 |  |
 | [D-0009](0009-page-grammar.md) | Every page is a path in one grammar module both the server and the page script read; anything else is a 404 page | accepted | two-way | 2026-10-23 |  |
 | [D-0010](0010-artifact-collection-address.md) | Stub for Kyle's artifact record - artifacts live at `/library/artifacts/<slug>`, a collection of the page grammar | proposed | two-way | 2026-10-23 |  |
 | [D-0011](0011-subagent-transcript-read.md) | A sub-agent facet answers its parent's owner-checked read of its transcript, and nothing else reads it | accepted | one-way | 2026-10-26 |  |
+| [D-0012](0012-one-plan-on-the-parity-loop.md) | One plan with two entry points, on the parity loop: a part is one builder session under docs/plan-v2/, everything else a plain PR | accepted | two-way | 2026-10-29 | 2027-01-29 |
+| [D-0013](0013-private-repository-evidence-in-tree.md) | The repository is private while the spine is built; parity evidence lives in docs/plan-v2/evidence/; the public release is cut later by cherry-pick | superseded | two-way | 2026-10-29 | 2027-01-29 |
+| [D-0014](0014-public-repository-evidence-git-ignored.md) | The repository stays public; parity evidence lives git-ignored under docs/plan-v2/evidence/ on Kyle's Mac, with only its README and the content-free tier-2 results tracked | accepted | two-way | 2026-10-29 | 2027-01-29 |
 <!-- index:end -->

@@ -12,7 +12,7 @@ git-ignored and overwritten in place. `.claude/hooks/handoff.mjs` prints it back
 
 ## When
 
-- **The hook says the context passed the handoff point** (90% of the way to auto-compaction, near 500k). Finish
+- **The hook says the context passed the handoff point** (90% of the way to auto-compaction, near 350k). Finish
   the phase in hand (a task done, a PR opened, a review round answered, a ruling made), never stopping mid-task,
   then write the note and carry on. The compaction follows on its own; nothing waits for the user.
 - **You want a clean start now.** Write the note, then ask the user to run `/clear`; nothing needs pasting.

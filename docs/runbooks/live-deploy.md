@@ -23,7 +23,7 @@ memory round trip and the last-passkey rule, timed, then deleted. `test/live/f1-
 
    or as the last step of a part's acceptance: `pnpm accept F1` runs it when `QYVR_LIVE=1`, `CF_LIVE_ACCOUNT_ID` and
    `CF_LIVE_TOKEN` are all set, and prints `live: skipped (no account)` otherwise.
-3. Read the wall-clock time it prints, and record a pass in `docs/plan/PROGRESS.md` (F1's row) with that time.
+3. Read the wall-clock time it prints, and record a pass in `docs/plan-v2/PROGRESS.md` (F1's row) with that time.
 4. Sweep anything a cancelled or crashed run left (it touches only `fletch-ci-` names):
 
    ```

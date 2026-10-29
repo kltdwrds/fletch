@@ -6,7 +6,7 @@ door: one-way
 decided: 2026-10-22
 decider: Kyle
 confirmation: scripts/preview-token.test.mjs, scripts/preview-plan.test.mjs
-revisit-when: Cloudflare scopes bindings by token, or previews move to an account of their own (docs/plan/QUESTIONS.md, Q3)
+revisit-when: Cloudflare scopes bindings by token, or previews move to an account of their own (docs/plan-v2/QUESTIONS.md, Q3)
 ---
 Ruling: a cloud session deploys fletch only to the pool `fletch-pv-<n>` (`pnpm preview`, `docs/runbooks/preview.md`),
 with an account-owned token holding Individual Workers Editor on exactly the slot Workers, and reaches a slot's bucket

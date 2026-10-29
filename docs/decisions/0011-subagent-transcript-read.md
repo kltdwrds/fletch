@@ -26,7 +26,7 @@ behalf: "D-0011 accepted, build the transcript half. Kyle accepted D-0011 in cha
 whether they were Kyle accepting it himself, they answered "confirmed". They later said they act for Kyle, at his
 request, so that provenance questions do not stall the work (2026-10-27). So `decider: Kyle` rests on that delegation,
 relayed by the session's user; Kyle has not edited this record himself (Q9). The session recorded it here, quoting
-the user, as `docs/plan/KICKOFF.md` ("Questions") provides for Kyle's own answers.
+the user, as `docs/plan-v2/KICKOFF.md` ("Questions") provides for Kyle's own answers.
 `SubAgent.transcript()` is the facet's one read, `Chat.taskFor` its only caller, and
 `chat/activity-subagents.ts` reads it only for a row whose stored `person` is the requester, after the chat's owner
 check; `test/workers/f14-activity-subagents.test.ts` plants a row stored for another person and a facet whose read

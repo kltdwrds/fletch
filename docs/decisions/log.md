@@ -143,3 +143,40 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   "Handed off" (kind `handoff`) is the last assistant text of a `done` child's transcript; a failed child has none.
   `tasksOf` in `activity-steps.ts` reads a coordinator's `briefs` as workers', so its own launch step is titled from
   them. Confirming test: `test/workers/f14-activity-subagents.test.ts`.
+- 2026-10-29 The pare-down (parity framework v2, §5.1): the plan moved to `docs/plan-v2/` (`docs/plan/` deleted;
+  D-0012 supersedes D-0006 on the new paths), `docs/runbooks/muse-execution.md` deleted (the orchestrator is the
+  loop's subject, design §3), nine Muse-era briefs deleted (the three reactions briefs stay until F20 has used them),
+  F0–F17 closed in `PROGRESS.md` with F7, F16 and F17 folded into P1 and P5, Q7 and Q4 closed, the delegation-kernel
+  note and the hosted-isolation brief committed under `docs/plan-v2/`, `VISION.md` reworded for the spine, and
+  `scripts/check-agent-docs.mjs` repointed at `docs/plan-v2/`. Rejected: keeping `docs/plan/` beside the new folder
+  (two plans), and rewriting the briefs as contracts now (they are re-derived by interrogation when a cluster needs
+  them).
+- 2026-10-29 Kyle's answers to the framework's open decisions (design §10): O1 one private repository with evidence in
+  `docs/plan-v2/evidence/` (D-0013); O2 the default; O5 wallet and payments are spine (P12, own milestone) and
+  shopping, booking, travel, tickets are P16, by pick; O6 connector types and flows are spine (P9 core), specific
+  connectors per agent; O9 agreed in principle, the record comes with F19. O4 (P8) stays open. The sibling
+  `fletch-parity` repository and the `FLETCH_PARITY_DIR` variable are gone from the plan.
+- 2026-10-29 O4 narrowed with Kyle: P8's side chats are P1 (a chat with its own transcript that a job can deliver to)
+  and its workers are P3 and P7 (the agent a job or hook spawns, and its completion report), all spine; P8 keeps only
+  group chats with outsiders, mapped and not built until Kyle rules whether fletch ever speaks in a room.
+- 2026-10-29 The orchestrator framing, on a fresh Fable reviewer's note (reframe, not replace one open-ended goal):
+  `docs/plan-v2/ORCHESTRATOR.md` (its own `/goal`, 3,300 characters, and the restart wrapper), `WAITING-ON-KYLE.md`,
+  `scripts/check-plan.mjs` in `pnpm harness` (a scorecard level of 2 or more cites an existing evidence file and a PR;
+  every part from F21 names an existing contract file), and Q9 answered as option (a) by Kyle in this session.
+  Rejected: one long-running open-ended goal in a single session (the evaluator reads only the transcript, stops a
+  waiting session, and Locked needs Kyle's UAT); the orchestrator editing the scorecard directly (it lands as a PR).
+- 2026-10-29 The orchestrator goal made permissive on Kyle's read: the budget, time and three-strikes stops, the
+  two-builder cap, the owner-visible-surface merge rule and the per-cluster `go` before interrogating Muse are gone;
+  the orchestrator uses its own judgement and records it in the ledgers, and Kyle watches. The hard lines stay
+  (one-way doors, Kyle's own commits, guard-rail files, secrets, redaction before storage, previews only, no red
+  merges). Rejected: keeping the caps as defaults the orchestrator may raise (a cap it may raise is a prompt, not a
+  guard, and reads as a stop).
+- 2026-10-29 Back to a public repository within the hour: the private one (D-0013) could not run CI (Actions billing
+  refused the job). D-0014: evidence git-ignored under `docs/plan-v2/evidence/` on Kyle's Mac, its README and the
+  content-free tier-2 `results/` tracked so `check-plan` still holds a scorecard row to a results file in CI. The
+  superseded Muse spec's line naming three of Kyle's killed watches now names them generically, since it is public.
+- 2026-10-29 Surfaces follow muse.ai (design §4.5, Kyle): the browser capture is also the design capture, the
+  Translate stage makes a `ds/specimens/` specimen that reproduces the muse.ai surface in fletch's tokens, and the
+  orchestrator lists it for Kyle's look before any builder draws it. Not parity: Muse's name, brand, voice. Earlier
+  design artifacts are not inputs. Rejected: fletch's design system interpreting Muse's surfaces freely (a second
+  design loop beside the RE loop).

@@ -9,7 +9,7 @@ confirmation: review
 revisit-when: Kyle's record from the artifact thread lands; it replaces this file outright
 ---
 Ruling: an artifact's address is `/library/artifacts/<slug>`, its id in path segments, a collection under the page
-grammar (D-0009) — because `docs/plan/parts.md` (F4 to F7, from the 2026-10-23 router audit) cites D-0010 for exactly
+grammar (D-0009) — because `docs/plan-v2/parts.md` (F4 to F7, from the 2026-10-23 router audit) cites D-0010 for exactly
 this and `scripts/check-decisions.mjs` fails a citation of a record that is not here — if wrong, Kyle's record says
 otherwise and this stub goes.
 

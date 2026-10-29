@@ -1,7 +1,7 @@
 # Free-plan spike: Code Mode and Images
 
 Decides whether `create-fletch` adds the Worker Loader (`LOADER`) and Images (`IMAGES`) bindings by default or only
-with `--paid` (D-0004 holds the current answer, `--paid` only; the question is Q2 in `docs/plan/QUESTIONS.md`). Whatever
+with `--paid` (D-0004 holds the current answer, `--paid` only; the question is Q2 in `docs/plan-v2/QUESTIONS.md`). Whatever
 the result, the agent already behaves correctly: `LOADER?` and `IMAGES?` are optional in `packages/agent/src/env.d.ts`,
 and without them Code Mode refuses with `HOST_CODE_UNAVAILABLE` and a HEIC upload with `HOST_IMAGES_UNAVAILABLE`.
 
