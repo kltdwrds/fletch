@@ -175,3 +175,8 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   refused the job). D-0014: evidence git-ignored under `docs/plan-v2/evidence/` on Kyle's Mac, its README and the
   content-free tier-2 `results/` tracked so `check-plan` still holds a scorecard row to a results file in CI. The
   superseded Muse spec's line naming three of Kyle's killed watches now names them generically, since it is public.
+- 2026-10-29 Surfaces follow muse.ai (design §4.5, Kyle): the browser capture is also the design capture, the
+  Translate stage makes a `ds/specimens/` specimen that reproduces the muse.ai surface in fletch's tokens, and the
+  orchestrator lists it for Kyle's look before any builder draws it. Not parity: Muse's name, brand, voice. Earlier
+  design artifacts are not inputs. Rejected: fletch's design system interpreting Muse's surfaces freely (a second
+  design loop beside the RE loop).

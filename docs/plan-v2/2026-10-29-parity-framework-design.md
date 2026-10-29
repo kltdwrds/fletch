@@ -50,8 +50,9 @@ A cluster's level is the minimum over its must-have sub-capabilities. A task tha
 not (a refusal by name where Muse fails silently; a stronger property in §4.3) is allowed; its reference is the
 contract, not Muse.
 
-**Not parity:** Muse's wording; UI chrome, billing and plans except where a capability shows through them;
-internal tool names unless user-visible; killed features (listed with date and reason, never revived).
+**Not parity:** Muse's wording and voice; its name, logo and brand colours; billing and plans except where a
+capability shows through them; internal tool names unless user-visible; killed features (listed with date and
+reason, never revived). Its surfaces *are* parity (§4.5).
 
 ## 3. The loop
 
@@ -64,7 +65,7 @@ stops by name only when nothing is left to move.
 | Stage | Who | Does | Exit test |
 |---|---|---|---|
 | **Interrogate** | orchestrator, with Muse by browser | Writes the scenario; asks Muse to do each step and report (§4.1); reads the dump and `muse.db` for what changed; captures the surface. Writes the cluster's **contract** (§A): behaviour clauses, task set, property rows. | Every clause cites a dump row, a `muse.db` row or a capture; every task has a reference answer Muse gave or the contract requires. A clause with only Muse's word behind it is tagged `[attested]` and is a question, not a rule. |
-| **Translate** | orchestrator | Surveys fletch seam-first (store, tool, route, draw, effect path, the file and function where it lands, the host constraint, each quoted). Writes the **translation** into the contract: Muse mechanism → Cloudflare mechanism per step; property verdicts; named deltas; tier and graders per task; one-way doors as `proposed` records. | A fresh session, given the contract alone, lists the tasks and the assertion each needs; the list matches the contract's task table, and every gap is named. |
+| **Translate** | orchestrator | Surveys fletch seam-first (store, tool, route, draw, effect path, the file and function where it lands, the host constraint, each quoted). Writes the **translation** into the contract: Muse mechanism → Cloudflare mechanism per step; property verdicts; named deltas; tier and graders per task; one-way doors as `proposed` records; for an owner-visible surface, the specimen that reproduces muse.ai's (§4.5), listed for Kyle's look. | A fresh session, given the contract alone, lists the tasks and the assertion each needs; the list matches the contract's task table, and every gap is named. |
 | **Build** | a builder session per part; a fresh verifier | Tier 1 first: hermetic tests against the contract with the scripted fake model and the test host, alarms fired by hand, no sleeps. Then tier 2 on a preview slot: the task set with the real model, three trials, code graders. A UAT finding from Kyle becomes a task with a grader, never a note. | Must-have tasks pass every trial; planted-violation tests in; `pnpm accept F<n>: PASS`; `VERIFIER: no blocking findings`; Kyle's UAT on visible surfaces. |
 | **Lock** | orchestrator | Tasks graduate into the regression suite and gate CI; the scorecard row goes to Locked with its evidence; a clause that proved wrong is corrected in the contract first, then the prompt, then graded again. | The row cites a PR, the accept line and the verifier line. |
 
@@ -116,6 +117,18 @@ slices and Muse's answers live under `docs/plan-v2/evidence/`, git-ignored, on K
 runs, and a contract cites them by path; only the folder's README and the content-free tier-2 results
 (`evidence/results/`) are tracked, so a scorecard row can be held to a results file in CI. The gate runs on
 everything stored there all the same.
+
+### 4.5 Surfaces: muse.ai is the design reference
+
+Muse is the inspiration for the functional spine, and muse.ai is the de-facto design of fletch's surfaces. The
+browser capture (§4.2) is also the design capture: for each surface a cluster touches, a screenshot at desktop and
+phone width per state, and a DOM note of roles, labels, order and cards. The Translate stage turns that into a
+**specimen** in `ds/specimens/`, built from `bundle.css` and the tokens alone, that reproduces the muse.ai surface's
+layout, components, states and interaction in fletch's own tokens (the F11 → F15 loop: specimen, Kyle's look,
+then the part that draws it live). The orchestrator lists each specimen in `WAITING-ON-KYLE.md` as a `look` item
+before any builder draws the surface; Kyle's "fine" or his notes on the specimen are the steer. fletch's own name,
+brand and wording stay its own; everything else on the screen follows muse.ai until Kyle says otherwise. Design
+artifacts made earlier (Claude Design mock-ups, old briefs) are not inputs; the source is.
 
 ## 5. Phase 0: the framework, and the pare-down
 
@@ -310,3 +323,9 @@ goal and wrapper), `WAITING-ON-KYLE.md` (the hand-off), `scripts/check-plan.mjs`
 and a PR; every part from F21 names a contract file), and Q9 answered as option (a). Kyle's second read made it
 permissive: no budget, time or strike stops, no builder cap, no surface rule, no per-cluster `go` for Muse; the
 orchestrator decides those, says what it decided in the ledgers, and Kyle watches.
+
+## Surfaces (Kyle, 2026-10-29)
+
+Muse is the inspiration for the functional spine, so muse.ai is the de-facto design of fletch's surfaces (§4.5):
+captured by browser, reproduced in fletch's design system as a specimen Kyle sees before a builder draws it. Earlier
+design artifacts are not inputs.
