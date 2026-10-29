@@ -1,348 +1,284 @@
-# Parity framework: reverse-engineering Muse onto the fletch core (design)
+# Parity framework: reverse-engineering Muse onto the fletch spine (design, v2)
 
-**Status:** design spec for Kyle's review. Not a plan; the plan follows approval.
-**Date:** 2026-10-29.
-**Supersedes, as process:** the Muse-authored master parity spec of 2026-10-26. Its inventory (§8 here), parity levels, translation principles and anti-patterns are carried over; its evidence model and execution topology are replaced.
-**Companion:** the delegation-kernel note in the qyvr project (`claude/delegation-kernel.md`), which defines the spine this spec builds to.
+**Status:** design for Kyle's review. Not a plan; the plan follows approval.
+**Date:** 2026-10-29 (v2 the same day, after Kyle's review of the first draft; the changes are listed at the end).
+**Replaces:** the Muse-authored parity spec of 2026-10-26 (not in any checkout; its inventory is carried in §7 and
+its levels in §2), the first draft of this document, and `docs/runbooks/muse-execution.md` (deleted in Phase 0).
+**Companion:** the delegation-kernel note (`docs/plan-v2/delegation-kernel.md`, untracked in Kyle's checkout; Phase 0
+commits it), which names the twelve pieces of the spine.
 
 ---
 
 ## 0. Framing
 
-Three sentences that every later decision answers to:
+1. **The spine is the product.** The delegation kernel (identity, scope, grants, the observation/action gate,
+   credential references, context assembly, memory, skills, delegation, jobs, audit, sandbox) is the core every
+   later agent is built on. Higher-level behaviours are poured into it; they never rebuild it.
+2. **Muse is the bar and the subject-matter expert.** Its behaviours are the most complete set of personal-agent
+   behaviours we can measure. We read its dump, ask it questions in its own chat, have it run things and extend
+   the dump, and write down what it does. It never briefs, builds or judges.
+3. **fletch proves the spine.** fletch is the agent that exercises every kernel capability and the higher-level
+   behaviours in practice, on Cloudflare. Muse runs on a persistent per-user VM; fletch runs on Durable Objects,
+   R2, SQLite, isolates and alarms. Same observable contract, different mechanism, and the difference is written
+   down per property (§4.3), because that is where the case for the Cloudflare shape is made.
 
-1. **The spine is the product.** The delegation kernel (identity, scope, grants, observation/action gate, credential references, context assembly, memory, skills, delegation, jobs, audit, sandbox) is the core any offspring agent is forked from. Teams pour domain tasks and behaviours into it; they do not rebuild it.
-2. **Muse parity is the north star, not the deliverable.** The behaviours and tasks Muse can perform are the bar the spine is held to, because they are the most complete set of personal-agent behaviours we can measure. Full parity is documented as a map; the spine and the clusters Kyle picks are what get built.
-3. **fletch is the first offspring.** It is the qyvr flagship: the same core, with the qyvr content-network tasks and behaviours poured in.
+No timing or capacity estimates. Sequencing is by dependency and by Kyle's pick.
 
-Corollary for the architecture: Muse runs on a persistent per-user VM; fletch runs on Durable Objects, R2/SQLite, isolates and alarms. Same observable contracts, different mechanisms, different security arguments. The difference is a first-class input (the property ledger, §4.5), not a caveat, and it is where the eventual cost/deploy/blast-radius case against VM-shaped agents is made.
+## 1. What this fixes
 
-No timing or capacity estimates appear in this document or its plan. Sequencing is by dependency and by Kyle's pick.
+Reimplementations landed at "almost works" and cost days of tuning, because every stage exited on a reading (a
+dump read, a survey read, a diff read, a UAT read) and nothing between "Muse does X" and "fletch does X" was
+machine-checkable. The last 20% (failure words, async shape, approval default, state after reload) was found by
+hand. Second cause: Muse was the author, the briefer and the judge of its own copy.
 
----
-
-## 1. The problem this framework fixes
-
-fletch's reimplementations have landed at "almost works" and cost days of double-click tuning. Root cause, stated as a design claim: every stage of the previous loop exited on a *reading* (a dump read, a survey read, a diff read, a UAT read). Nothing between "Muse does X" and "fletch does X" was machine-checkable, so the last 20% — failure words, async timing shape, approval default, state after reload — was discovered by hand.
-
-Second cause: the oracle was the subject. Muse introspecting itself produced the dumps, briefed the builds, and judged the results. The one leg that could have corrected it (the live app) was blocked.
-
-The framework gives each stage an executable exit criterion and makes Muse an instrument and a baseline arm instead of an author.
-
----
+The fix: each stage exits on an executable test; Muse answers questions and is never the author; one orchestrator
+runs the loop end to end.
 
 ## 2. Definition of done
 
-### 2.1 Three tiers, documented together, executed in order
-
-| Tier | Meaning | Done when |
-|---|---|---|
-| **Spine** | The kernel clusters: loop/tools/deferral, approvals and grants, context assembly and memory, jobs/hooks/ledger, activity/provenance and delegation | Each is at Level 3 (§2.2) with its property-ledger rows verified. Always in scope; built first. |
-| **Daily-use replacement** | Clusters Kyle picks from the inventory (§8), informed by the usage analysis (§4.6) | Picked clusters at Level 3. Kyle can do a normal day in fletch without opening Muse for those clusters. |
-| **Full-clone map** | Every remaining cluster | At least an interrogation (M.1) and a scorecard row with evidence; out-of-scope rows carry reason and date. Nothing built unless picked. |
-
-### 2.2 Parity levels (carried from the Muse spec, with executable tests added)
+**Two tiers.** The **spine** is always in scope and built first: each kernel cluster reaches Locked (below). Every
+other cluster is **mapped**: an interrogation and a scorecard row with evidence; it is built only when Kyle picks it.
 
 | Level | Name | Test |
 |---|---|---|
 | 0 | Absent | No equivalent; refusal, fallback or silence. |
-| 1 | Partial | Something exists; the observable contract differs in a way a user can hit. **Any silent drop caps a cluster at 1.** |
-| 2 | Equivalent | The cluster's task set passes two-armed (§5.3) at the threshold set in its translation record, on a preview. |
-| 3 | Locked | Level 2 **plus** the tasks are in the regression suite and gate CI, **plus** planted-violation tests, **plus** Kyle's UAT on user-visible surfaces, **plus** the scorecard row cites its evidence. |
+| 1 | Partial | Something exists; the observable contract differs in a way a user can hit. Any silent drop caps a cluster at 1 (D-0001). |
+| 2 | Equivalent | The cluster's must-have tasks pass on a preview slot with the real model, every trial of three. |
+| 3 | Locked | Equivalent, plus the tasks gate CI, the planted-violation tests are in, Kyle's UAT passed on user-visible surfaces, and the scorecard row cites its evidence. |
 
-A cluster's score is the minimum over its must-have sub-capabilities.
+A cluster's level is the minimum over its must-have sub-capabilities. A task that fletch should pass and Muse does
+not (a refusal by name where Muse fails silently; a stronger property in §4.3) is allowed; its reference is the
+contract, not Muse.
 
-### 2.3 Not parity
+**Not parity:** Muse's wording; UI chrome, billing and plans except where a capability shows through them;
+internal tool names unless user-visible; killed features (listed with date and reason, never revived).
 
-Muse's voice and wording; UI chrome, billing and plans except where a capability surfaces through them; internal tool names unless user-visible; killed features (listed with date and reason, never revived); anything whose contract cannot be reproduced against the oracle (§4.4).
+## 3. The loop
 
----
+One **orchestrator** (a Claude session on Fable, running from the repo with Kyle watching and steering) runs
+every cluster through four stages. Each stage ends on its test, and no stage begins without the previous stage's
+artifact in the repo.
 
-## 3. The three stages and their exit tests
-
-| Stage | Input | Exit artifact | Executable exit test |
+| Stage | Who | Does | Exit test |
 |---|---|---|---|
-| **RE** | Muse under instruction (§4.1), refreshed dump (§4.2), browser capture (§4.3) | a **contract**: scenario script + golden trace (§A) + behaviour clauses (§D) + task set (§E) + property-ledger rows (§F) | the scenario replays against Muse on a second day and reproduces its own golden trace; every task has a reference solution that passes against Muse |
-| **Translation** | the contract + fletch survey (seam-first) + the CF constraint set | a **translation record** (§C): Muse mechanism → CF mechanism, property preserved, named deltas, tier per task, one-way doors proposed | a fresh reviewer, given the record alone, derives the fletch acceptance tests; if they cannot, the record is ambiguous |
-| **Reimplementation** | the translation record | code + the same scenario in `test/scenarios/` + task results | the task set passes two-armed in CI at the record's threshold (pass^k, §5.3), planted-violation tests pass, `pnpm accept` PASS, Kyle UAT on visible surfaces |
+| **Interrogate** | orchestrator, with Muse by browser | Writes the scenario; asks Muse to do each step and report (§4.1); reads the dump and `muse.db` for what changed; captures the surface. Writes the cluster's **contract** (§A): behaviour clauses, task set, property rows. | Every clause cites a dump row, a `muse.db` row or a capture; every task has a reference answer Muse gave or the contract requires. A clause with only Muse's word behind it is tagged `[attested]` and is a question, not a rule. |
+| **Translate** | orchestrator | Surveys fletch seam-first (store, tool, route, draw, effect path, the file and function where it lands, the host constraint, each quoted). Writes the **translation** into the contract: Muse mechanism → Cloudflare mechanism per step; property verdicts; named deltas; tier and graders per task; one-way doors as `proposed` records. | A fresh session, given the contract alone, lists the tasks and the assertion each needs; the list matches the contract's task table, and every gap is named. |
+| **Build** | a builder session per part; a fresh verifier | Tier 1 first: hermetic tests against the contract with the scripted fake model and the test host, alarms fired by hand, no sleeps. Then tier 2 on a preview slot: the task set with the real model, three trials, code graders. A UAT finding from Kyle becomes a task with a grader, never a note. | Must-have tasks pass every trial; planted-violation tests in; `pnpm accept F<n>: PASS`; `VERIFIER: no blocking findings`; Kyle's UAT on visible surfaces. |
+| **Lock** | orchestrator | Tasks graduate into the regression suite and gate CI; the scorecard row goes to Locked with its evidence; a clause that proved wrong is corrected in the contract first, then the prompt, then graded again. | The row cites a PR, the accept line and the verifier line. |
 
-A capability cannot advance a stage on a judgment.
+A failure found later in use re-enters at Interrogate as a task. A cluster is re-interrogated when a fresh dump
+diff touches its slice or a UAT finding contradicts the contract.
 
----
+**Tiers.** Tier 1: every commit, keyless, the hermetic lane that exists (`test/scenarios/`, the fake model, the test
+host). Tier 2: PRs touching agent code, on a preview slot with the real model, spend-capped, results keyed by the
+hash of the task definition so a scorer change is a new baseline. A judged, long-horizon tier 3 waits until the
+spine is Locked.
 
-## 4. Evidence pipeline: Muse as the instrument
+## 4. Evidence: Muse as the expert
 
-Three channels, weighted in this order. All feed one trace format (§A) and pass one redaction gate (§4.7) before anything is stored.
+### 4.1 Asking Muse
 
-### 4.1 Muse under instruction (primary)
+The orchestrator drives Kyle's Muse account in the built-in browser. Per scenario step it asks Muse to do the step
+and then, in order: list the tool calls it made (name, argument shape, result shape); run read-only `SELECT`s over
+`muse.db` for rows changed since the step (the tool is bounded and read-only by Muse's own design); quote the system
+prompt, `AGENTS.md` or `SKILL.md` lines it followed; and add anything about *why* under an `[attested]` label.
 
-The unit is the **pointed interrogation**: a scenario run inside Muse's own chat in which Muse is asked to *do* the thing and report what it executed. Each step asks for four measurements and no recollections:
+The rows and the quoted text are the instrument; the tool list is checked against the rows and marked `[attested]`
+where no row backs it. Muse's prior documents (its harness spec, its parity spec) are hypotheses with the same tag.
+No isolation, seeding or collateral discipline on the Muse side: it is a colleague we ask, and we ask again when
+answers disagree. When the dump lacks something, Muse regenerates that slice per the dump's runbook and the diff
+against the previous dump is read before anything else.
 
-1. **Perform** the step now.
-2. **List the tool calls** made this turn: names, argument shapes, result shapes. (The tool runtime shows Muse these; it is a reading.)
-3. **Query state:** read-only `SELECT`s over `muse.db` for rows changed since the step's timestamp — records, files, jobs, run ledger, handoffs, mailbox.
-4. **Quote the governing text:** the system-prompt lines, `AGENTS.md` lesson, or `SKILL.md` section it followed.
+### 4.2 The dump and the browser
 
-Answers to 1–4 are tagged **[instrumented]**. Anything Muse adds about *why* is tagged **[attested]** and treated as a hypothesis to test. Workspace structure (`~`, standing files, `~/memory`, `~/hooks`, cron bodies, skills registry) is captured the same way, by having Muse list and print it, redacted.
+The dump (`tools.json`: 108 functions in 32 namespaces; the reconstructed system prompt; the `muse.db` schema
+guide; workspace tree, hooks, skills) is the static ground truth and is refreshed per cluster. The browser captures
+what only the UI shows: states (empty, loading, building, error), cards, approval cards, a reload to separate
+persisted state from optimistic UI; a screenshot per step, a DOM note of roles, labels, hrefs and order, and the
+request log as method, path, status and body shape. Three attempts at a blocked step, then it is reported blocked.
 
-Muse's own prior documents (its harness spec, its parity spec) are read as hypotheses with the same tag. They never enter a contract directly.
+### 4.3 The property ledger
 
-### 4.2 The dump, refreshed per milestone
+For each contract, the security or workspace property Muse's VM provides (process isolation, filesystem
+persistence, vault-at-egress, external-content fencing, approval finality, run idempotency, polling-only background
+work, browser as a separate machine), the Cloudflare mechanism that provides it in fletch, a verdict
+(stronger, weaker, different, with the argument) and the test or canary that proves it. This is the translation
+checklist and, later, the comparison document.
 
-Static ground truth: `tools.json` (108 functions, 19 namespaces), the reconstructed system prompt, the `muse.db` schema (185 envelopes), workspace tree, hooks, skills. Each milestone opens with a fresh dump of its cluster's slice (Muse can regenerate it per the existing runbook) and a diff against the previous one. That diff is the re-dump trigger made mechanical.
+### 4.4 Redaction and where evidence lives
 
-### 4.3 Browser capture (scoped)
+Everything captured passes an automated gate before it is stored: the repository's secret scan, value stripping on
+bodies with an allowlist of fields that keep values (ids, enums, status codes, failure words), personal content
+removed. A capture that fails is deleted, not fixed by hand. Captures, dumps and Muse's answers live in the private
+repo `fletch-parity` (O1); contracts, scorecard and tasks live in fletch, public, and reference evidence by id only.
+CI without the evidence repo runs tier 1 alone.
 
-Built-in browser against Kyle's signed-in account, for what only the UI shows: surfaces, states (empty, loading, building, error), cards, viewers, drawers, approval cards as rendered; API and WebSocket frame shapes where frontend parity needs them. Per scripted step: screenshot at desktop width and, where the surface differs, phone width; a DOM note scoped to roles, labels, hrefs and order; network log as method, path, status and body *shape*; WebSocket frames via an injected wrapper that logs frame shapes; a reload-and-re-read to separate persisted state from optimistic UI. Blocked steps (bot wall, passkey-only, policy page) are reported blocked after three attempts, never retried endlessly.
+## 5. Phase 0: the framework, and the pare-down
 
-### 4.4 Golden traces and replay
+### 5.1 Pare the repository down to what serves the loop
 
-A trace is golden only after the scenario runs against Muse on two different days and the contract fields (§A) match. Differences are classified: model-text variance (ignored by design; prose is stored as example, never asserted), contract variance (the script is under-specified; fix it), or genuine non-determinism (recorded as a tolerance). A contract that cannot be reproduced is not a target.
+The first Phase 0 part. Everything below is a two-way door and lands as one PR Kyle reads.
 
-### 4.5 Atlases and the property ledger
+| Area | Fate |
+|---|---|
+| `docs/plan/` (parts, PROGRESS, QUESTIONS, KICKOFF, GOAL-PROMPT, VERIFIER-PROMPT) | **Rework.** `parts.md` is rewritten from the spine clusters (F0–F17 close as a history table in PROGRESS; F7, F16, F17 fold into their clusters: addresses into P1, the activity drawer and its eval into P5). KICKOFF shrinks to the builder's protocol (tests first, accept, verifier, PR). GOAL-PROMPT keeps its mechanism with the new ledgers. VERIFIER-PROMPT and QUESTIONS stay; stale questions close. The folder moves to `docs/plan-v2/` and `docs/plan/` goes. |
+| `docs/runbooks/muse-execution.md` | **Delete.** Superseded by §3. |
+| `docs/runbooks/` (preview, live-deploy, release, free-plan-spike) | **Keep.** Mechanics the loop uses. |
+| `docs/briefs/` (twelve Muse-era briefs) | **Delete**, after the three reactions briefs have served the dry run (§5.3). Anything still needed is re-derived as a contract. |
+| `docs/research/2026-10-22-decision-records.md` | **Keep** (cited by D-0007). |
+| `docs/decisions/` | **Keep** the machinery and the accepted records. D-0006 is reworded for the new plan; D-0010 stays a stub until the artifacts track owns it. |
+| `VISION.md` | **Rework** in one pass: fletch is the reference agent on the published spine, one owner on their own account; the "built from parts anyone can reuse" promise becomes the spine promise; "not a platform for teams" and "no service in the middle" stay as fletch's shape and stop implying the spine cannot serve a hosted agent later. Kyle approves the text. |
+| `AGENTS.md`, `README.md` | **Rework** the "Start here" and plan references to `docs/plan-v2/`; the design rules stand. |
+| `skills/handoff`, `.claude/hooks/`, `scripts/`, `test/`, `packages/` | **Keep.** Unchanged by this design. |
+| `docs/briefs/hosted-isolation-brief-2026-10-25.md` (untracked) | **Keep** as the first property-ledger input; commit under `docs/plan-v2/`. |
 
-Generated from captures and the dump by checked-in generators; never hand-typed.
+### 5.2 Build the kit
 
-- **Agent contract atlas:** tools mapped to clusters; prompt rules decomposed into clauses with cluster tags; `muse.db` schema as an entity/relationship model; workspace layout; scheduler and hook semantics; skills registry.
-- **Property ledger (§F):** for each contract, the security or workspace property Muse's VM shape provides (process isolation, filesystem persistence, vault-at-egress, external-content fencing, approval finality, run idempotency, polling-only background work, browser as a separate machine), the CF mechanism that provides it in fletch, and whether the guarantee is stronger, weaker or differently shaped. This is the engineering checklist for translation and, later, the comparison document.
-- **Surface atlas:** routes, screens and states.
-- **API atlas:** only where frontend parity needs it.
+- **Contract file** (§A): one Markdown file per cluster, clauses, tasks, property rows and the translation in it.
+- **Trace schema** (§B): one JSON document per scenario run; the tier-1 scenario runner learns to emit it.
+- **Interrogation protocol** (§4.1) as a checklist the orchestrator follows; the dump-refresh and diff procedure.
+- **Redaction gate** (§4.4) as a script, planted-violation test beside it.
+- **Tier-2 runner:** tasks against a preview slot, three trials, code graders, results per task hash, a PR comment.
+  Its CI key is a one-way door (O9) and ships as a `proposed` record; until accepted, tier 2 runs from Kyle's Mac.
 
-### 4.6 Usage analysis
+### 5.3 Acceptance
 
-A script over the `muse.db` chat, run and job envelopes producing per-cluster frequency and recency. It informs Kyle's pick from the inventory; it does not make the pick.
+One dry run on a shipped sub-capability, reactions (a dump, a survey and merged code exist, so the kit is tested
+against known ground truth): a reactions contract whose clauses cite evidence; the translation written into it;
+a fresh session deriving the tasks from it; the tasks run on a preview and gave verdicts; a scorecard row. No
+cluster starts before that.
 
-### 4.7 Redaction gate
+## 6. Sequencing (order, not dates)
 
-Modeled on the dump's existing redaction manifest: secret-pattern scan; value stripping on bodies with an allowlist of fields that may keep values (ids, enums, status codes, failure words); personal content removed. A capture that fails redaction is deleted, not fixed by hand. The gate runs before any write to `fletch-parity`.
+1. Phase 0: the pare-down, the kit, the dry run.
+2. Spine clusters in dependency order: loop, tools and deferral → approvals and grants → context assembly and
+   memory → jobs, hooks and ledger → activity, provenance and delegation.
+3. Picked clusters. The artifacts and Library track continues on its own seams.
+4. The remaining clusters mapped.
+5. The kernel extracted: when the spine is Locked, its interfaces and the harness are published beside
+   `@qyvr/host` and fletch is re-read as the first agent on them. Triggered, not scheduled.
 
----
+Re-ordering happens at a scorecard review with Kyle, never mid-part.
 
-## 5. The per-milestone loop
-
-After Phase 0 (§6), every milestone is one cluster or sub-cluster Kyle picks. Four phases; each exits on its test.
-
-### 5.1 M.1 Interrogate (RE)
-
-Write the scenario script from the inventory row. Run the pointed interrogation (§4.1) and browser capture (§4.3). From the golden traces write, each item citing trace steps:
-
-- the cluster's **behaviour clauses** (§D): short, with IDs, each with its paired failure modes (over-cautious / over-bold);
-- the **task set** (§E): tasks drawn from the traces and from Kyle's real Muse failures, each with end-state checks, required facts, minefields and collateral-damage checks, and a reference solution;
-- the cluster's **property-ledger rows** (§F).
-
-Exit: traces replay (§4.4); every task's reference solution passes against Muse. Muse is the baseline arm: a task Muse cannot pass is a broken task.
-
-### 5.2 M.2 Translate
-
-Fletch survey, seam-first: store, tool, route, draw, effect/card path, bones that already match, the one file + function where the behaviour lands, and the host/plan constraint that bounds it, each quoted not paraphrased. Then the **translation record** (§C): mechanism mapping, property preserved per the ledger, named deltas with cost/benefit, tier per task (§5.3), graders per task (code-first; a judge only where output is short and the rubric cites a clause), threshold, and one-way doors proposed for Kyle (`proposed`, never `decider: Kyle` written by the agent).
-
-Exit: a fresh reviewer session derives the acceptance tests from the record alone.
-
-### 5.3 M.3 Implement against the evals
-
-Tier 1 first: hermetic tests against the contract using fletch's scripted fake model and test host, with backdated job rows and explicit alarm firing for anything scheduled; no sleeps. Then the tier-2 loop on a preview slot:
-
-- the task set runs **two-armed** — Muse's golden result and fletch's run — through the same graders;
-- infrastructure failures are separated from agent failures;
-- N trials per task; must-haves are measured as pass^k (all k trials pass), not pass@k;
-- the verdict per task is `improved / regressed / unchanged / inconclusive`; results are keyed by a hash of the task definition so a scorer change is a new baseline, never a moved goalpost.
-
-Kyle's steer lands here, and only in one form: **a UAT finding becomes a task with a grader**, never a prose note. The next iteration is measured against it. Tier 3 (live, judged, long-horizon) produces a report, not a gate.
-
-Exit: must-have tasks at the record's pass^k threshold; planted-violation tests in (a test that fails if the defect the part fixes is reintroduced); `pnpm accept F<n>: PASS` plus the independent verifier; Kyle UAT on visible surfaces.
-
-### 5.4 M.4 Lock and learn
-
-Passing tasks graduate into the regression suite and gate CI. Scorecard row to Level 3 with evidence cited. Property-ledger rows marked verified. Behaviour clauses that proved wrong are corrected in the spec, never patched around in the prompt. Failures found later in use re-enter at M.1 as tasks. Re-interrogate when the dump diff shows the cluster's slice changed, when a UAT finding contradicts the trace, or when a capture shows a surface the trace never described.
-
-### 5.5 Tiers
-
-| Tier | Runs | Model | Purpose |
-|---|---|---|---|
-| 1 | every commit, keyless | scripted fake | transport, retry, streaming, compaction, scheduling, storage, grants engine, journal |
-| 2 | PRs touching agent code; maintainer-only; spend-capped | live via AI Gateway with an eval-tagged key, egress otherwise denied | task sets, two-armed, trials, verdicts |
-| 3 | nightly or on `main` | live, pinned judge, cost cap | simulated user, long-horizon memory, proactive triggers, injection; report artefact |
-
----
-
-## 6. Phase 0: the framework build
-
-### 6.1 Components
-
-| Layer | Components | Status |
-|---|---|---|
-| Interrogation kit | built-in-browser capture kit; interrogation protocol templates; dump-refresh procedure with diff; redaction gate; contract-trace schema (§A); replay check; atlas generators; usage-analysis script | new, in `fletch-parity` |
-| Translation kit | survey template; translation-record template (§C) with ledger rows (§F) and delta register; tier and grader assignment; fresh-reviewer check | templates new; decision-record machinery exists (`docs/decisions/`, `scripts/check-decisions.mjs`) |
-| Outer harness | tier 1: fletch's hermetic lane (`test/scenarios/`, scripted fake model, test host) extended to emit contract traces; tier 2: task runner against preview slots, graders library, two-arm comparison, results keyed by task hash; tier 3: live judged runs; behaviour-spec format (§D); scorecard (§G) | tier 1 mostly exists; the rest new |
-
-### 6.2 Where things live: the core/domain split made physical
-
-- **Core (public, forkable):** kernel packages and the outer-harness framework — runner, graders, comparison, trace schema, behaviour-spec format, scorecard tooling. In fletch now; published alongside `@qyvr/host` when the kernel is extracted (§7, step 5; consistent with qyvr B10). A fork inherits the suite and adds domain tasks.
-- **Domain (public, fletch):** fletch's behaviour clauses, task sets, skills, connectors and surface — the qyvr content-network agent. Scenario files reference golden traces by id only.
-- **Evidence (private, `fletch-parity`):** golden traces, captures, dumps, atlases, usage analysis, anything derived from Kyle's account. Never imported by code. The comparison runner reads it at eval time through a configured path or token; CI without it runs tier 1 only.
-- **Design docs:** this spec and its successors in `fletch/docs/plan-v2/` (the privacy scan carves this path out for dump references). The delegation-kernel note stays in the qyvr project and is cited as the spine's definition.
-
-### 6.3 Phase 0 acceptance
-
-One end-to-end dry run of the full loop on a deliberately small, already-shipped sub-capability (reactions: a dump, a survey and merged code exist, so the framework is tested against known ground truth). Phase 0 is done when that sub-capability has: a golden trace that replays; a translation record a fresh reviewer derived tests from; a task set that ran two-armed on a preview and produced verdicts; a scorecard row with evidence. No cluster milestone starts before that.
-
----
-
-## 7. Sequencing (order, not dates)
-
-1. **Phase 0** — framework, proven on the dry run.
-2. **Spine milestones**, in dependency order: loop/tools/deferral → approvals and grants → context assembly and memory → jobs, hooks and ledger → activity/provenance and delegation. Each is a kernel piece with Muse's behaviour as the bar and the property ledger as the security translation.
-3. **Picked milestones** from the inventory, informed by the usage analysis. The artifacts/Library track continues in parallel on its own seams.
-4. **Full-clone documentation** — every remaining cluster gets an M.1 interrogation and a scorecard row.
-5. **Kernel extraction** — when the spine milestones are at Level 3, the kernel interfaces and the harness framework are published as the core and fletch is re-read as its first fork. Triggered, not scheduled.
-
-Re-ordering happens at a scorecard review with Kyle's call, never mid-part.
-
----
-
-## 8. Inventory (carried from the Muse spec; Phase 0 verifies, it does not score from memory)
+## 7. Inventory (from the Muse spec; Phase 0 verifies it against the dump)
 
 | # | Cluster | Covers | Spine? |
 |---|---|---|---|
-| P1 | Chat core & transcript | messages, history, replay, quotes, reactions, message actions, threads, side chats as surface | partly (transcript, replay) |
-| P2 | Agent loop, tools & deferral | tool discovery, deferred namespaces, operating block, `send_to_user`, streaming, barriers, effect buffer, cards | **yes** |
-| P3 | Subagents & delegation | spawn, steer, handoff, mailbox re-entry, interruption honesty, verifier, depth/token ceilings | **yes** |
-| P4 | Artifacts & Library | records, creation, cards, viewer, previews, audit, edit, data, kinds | no (own track) |
-| P5 | Activity, provenance & audit | journal, activity drawer, step timelines, subagent traces, audit findings | **yes** |
-| P6 | Memory, goals & tracking | saved memory, daily notes, people/groups, goals, tracked items, briefings | **yes** (memory); goals/tracking by pick |
-| P7 | Scheduling, hooks & proactivity | crons, hooks, scheduled checks, proactive briefs, feed units | **yes** (jobs/hooks/ledger); feed/briefs by pick |
-| P8 | Side chats, groups & workers | external side chats, group chats, worker agents, per-chat discretion | design question before build |
-| P9 | Connectors, devices & accounts | mail, calendar, drive, GitHub, Linear, health, paired devices, vault logins | **yes** (vault/credential refs, observation/action gate); each connector by pick and one-way decision |
-| P10 | Search, browser, places & media | web search, page fetch, places, image/video, social search | by pick |
-| P11 | Files, documents & spreadsheets | file library, render, spreadsheets, decks, export, share links | by pick |
-| P12 | Payments, shopping & bookings | wallet, checkout, shopping, flights, hotels, tickets | by pick; flag-only vs purchase per vertical is Kyle's |
-| P13 | Voice, audio & podcasts | voice notes, TTS, podcast generation, audio artifacts | by pick |
-| P14 | Identity, avatar, profile & settings | avatar, profile, passkeys, settings | **yes** (identity, via crest); avatar/settings by pick |
-| P15 | Safety, approvals, grants & discretion | approval cards, grants matrix, per-chat discretion, secure vault, CAPTCHA policy, rate limits | **yes** |
+| P1 | Chat core and transcript | messages, history, replay, quotes, reactions, actions, threads, addresses | partly (transcript, replay) |
+| P2 | Agent loop, tools and deferral | discovery, deferred namespaces, operating block, `send_to_user`, streaming, barriers, effects, cards | **yes** |
+| P3 | Subagents and delegation | spawn, steer, handoff, mailbox re-entry, interruption honesty, verifier, ceilings | **yes** |
+| P4 | Artifacts and Library | records, creation, cards, viewer, previews, audit, edit, kinds | no (own track) |
+| P5 | Activity, provenance and audit | journal, activity drawer, step timelines, subagent traces, findings | **yes** |
+| P6 | Memory, goals and tracking | saved memory, daily notes, people, goals, tracked items, briefings | **yes** (memory); rest by pick |
+| P7 | Scheduling, hooks and proactivity | crons, hooks, checks, proactive briefs, feed | **yes** (jobs, hooks, ledger); rest by pick |
+| P8 | Side chats, groups and workers | external side chats, group chats, workers, per-chat discretion | design question first (O4) |
+| P9 | Connectors, devices and accounts | mail, calendar, drive, GitHub, Linear, health, devices, vault logins | **yes** (credential refs, the gate); each connector by pick (O6) |
+| P10 | Search, browser, places and media | web search, fetch, places, image and video, social | by pick |
+| P11 | Files, documents and spreadsheets | library, render, sheets, decks, export, share links | by pick |
+| P12 | Payments, shopping and bookings | wallet, checkout, shopping, travel, tickets | by pick; flag-only until Kyle rules per vertical (O5) |
+| P13 | Voice, audio and podcasts | voice notes, TTS, podcasts, audio artifacts | by pick |
+| P14 | Identity, avatar, profile and settings | avatar, profile, passkeys, settings | **yes** (identity); rest by pick |
+| P15 | Safety, approvals, grants and discretion | approval cards, grants matrix, discretion, vault, CAPTCHA policy, rate limits | **yes** |
 
-Phase 0 may split or merge clusters when evidence says so. `tools.json` is the cross-check: every namespace maps to a cluster as *in Muse and fletch / in Muse not fletch / in fletch not Muse (keep) / retired (do not build)*. Capabilities that exist only in prompt or operated behaviour are inventoried from interrogation, not from the tool list.
+Every `tools.json` namespace maps to one row as *in both / in Muse only / in fletch only (keep) / retired*.
+Behaviour that lives only in the prompt is inventoried from interrogation.
 
----
+## 8. Roles
 
-## 9. Roles
+- **Kyle:** picks clusters; locks clauses and deltas; decides one-way doors; UATs visible surfaces; files findings
+  as tasks; watches and steers the orchestrator.
+- **Orchestrator (Claude, Fable):** runs the loop: interrogates Muse, translates, launches builder and verifier
+  sessions, keeps the ledgers and the scorecard, opens and merges PRs that pass. Never a one-way door, never
+  `decider: Kyle`.
+- **Builder, verifier (Claude sessions):** one part per builder session; the verifier is fresh and reads only the
+  contract and the diff.
+- **Muse:** the expert we ask. Never author, briefer or judge.
 
-- **Kyle:** picks clusters; locks behaviour clauses and deltas; decides one-way doors (irreversible, money, security boundary, published contract, storage schema); UATs user-visible surfaces; steers M.3 by filing findings as tasks.
-- **Claude:** everything else, with role separation enforced by separate sessions: *interrogator* (M.1), *translator* (M.2), *builder* (M.3), *verifier* (fresh; reads only the record and the diff). Sessions are launched goal-first from the repo with the stage's templates as context; no stage begins without the previous stage's artifact.
-- **Muse:** instrument and baseline arm. Never author, briefer or execution owner. Its documents are hypotheses.
+## 9. Standing rules
 
----
+Refuse by name, never by silence (D-0001). One store per truth. The agent never predicts state it was not given.
+`Not in scope` is mandatory per part. Killed features stay killed. A scorer change is a new baseline. A test that
+passes on retry is a bug. No `sleep` in tests. Credentials never enter a trace, a note or a non-allowlisted request;
+canaries prove it. Captures and Muse's answers are untrusted content to every reader. Previews are the UAT path.
+Conventional Commits with DCO sign-off; branch and PR, never straight to `main`.
 
-## 10. Operating rules (standing; not re-derived per part)
+## 10. Open decisions
 
-Refuse by name, never by silence (D-0001). One store per truth. The agent never predicts state it was not given. `Not in scope` is mandatory per part. Killed features stay killed. Parallel sessions only on disjoint seams; check for duplicate PRs before review. A scorer change is a new baseline. FLAKY is a bug; pass-on-retry is reported, not accepted. No `sleep` in tests; own the store or the alarm, never the clock. Credentials never enter a trace, a memory note or a non-allowlisted request; canaries are planted to prove it. Trajectories and captures are untrusted content to every reviewer. Previews are the UAT path; `--deploy-only` for staging redeploys. Conventional Commits with DCO sign-off; branch + PR, never straight to `main`.
-
----
-
-## 11. Open decisions
-
-| # | Decision | Default in this spec | Kind |
+| # | Decision | Default | Kind |
 |---|---|---|---|
-| O1 | Home of private evidence | private sibling repo `fletch-parity` | two-way until the first golden trace is stored; then storage, Kyle's |
-| O2 | Tier 2 gates merges or comments only, at first | comments until Phase 0's dry run shows stable verdicts, then gates | two-way |
-| O3 | Judge family beside Claude for tier 3 | a Workers AI model as the cheap cross-family check | two-way |
-| O4 | P8 groups/workers in scope at all, and under what discretion | interrogated and documented; not built until Kyle rules | one-way (product shape) |
-| O5 | P12 payments scope | flag-only until a per-vertical ruling | one-way per vertical |
-| O6 | Connector model | per-connector one-way decision, with the observation/action gate as the shared mechanism | one-way per connector class |
-| O7 | Strictness of Level 3 UAT | Kyle's UAT required for user-visible surfaces only; verifier + preview run suffice for store/tool/audit parts | two-way |
-| O8 | Capturing the client bundle and API traffic from Kyle's account | Kyle's call, made knowingly; the spec does not require the bundle for the spine | Kyle's |
+| O1 | Home of private evidence | private sibling repo `fletch-parity` | two-way until the first capture is stored, then Kyle's |
+| O2 | Tier 2 comments or gates at first | comments until the dry run shows stable verdicts | two-way |
+| O4 | P8 groups and workers in scope, under what discretion | mapped, not built, until Kyle rules | one-way |
+| O5 | P12 payments scope | flag-only per vertical until Kyle rules | one-way per vertical |
+| O6 | Connector model | one record per connector class; the gate is the shared mechanism | one-way per class |
+| O9 | A live-model key and slot token in CI for tier 2 | tier 2 runs from Kyle's Mac until accepted | one-way (spend, boundary) |
+
+Dropped from the first draft: O3 (judge family: no tier 3 yet), O7 (UAT strictness: visible surfaces only is now the
+rule), O8 (browser capture of Kyle's account: Kyle's steer is to use it).
 
 ---
 
-## Appendix A — Contract trace schema
-
-One JSON document per scenario run; the fletch scenario runner emits the same shape so the diff is mechanical.
+## Appendix A — Contract file (`docs/plan-v2/contracts/P<n>-<slug>.md`)
 
 ```
-trace:
-  scenario_id, cluster, arm: muse | fletch, run_at, source: {dump_version, preview_slot?}
-  steps[]:
-    action:      { kind, input_class, actor: user | agent | schedule | event }
-    observed:    { surface, cards[], text_class, notification: none | chat | push }
-    state_delta: { records[], files[], jobs[], reactions[], other[] }   # ids and kinds, never content
-    failure:     { code, user_words } | null
-    approval:    { asked: bool, scope, default, finality: final | retryable } | null
-    timing:      immediate | async_building | scheduled | event_driven
-    provenance:  { record_kind, inspectable_at }
-    tags:        [instrumented | attested | captured | verify]
-    tolerance?:  { field, kind }                                           # recorded non-determinism
+# P<n> <cluster> — contract
+Evidence: dump <version>; captures <ids>; interrogation <date>
+
+## Clauses
+B-P<n>-01: <one sentence, imperative, verifiable>
+  over-cautious: <under-acting looks like>     over-bold: <over-acting looks like>
+  evidence: <row | capture | prompt line>       tags: [instrumented | attested]
+  tasks: <ids>
+
+## Tasks
+T-P<n>-01  must-have  tier 2
+  setup: <seeded records, files, jobs>   turns: <prompt | event | schedule fire>
+  end_state / required_facts / minefields / collateral
+  graders: <code first; a rubric only where output is short and cites a clause>
+  reference: <what Muse did, or what the contract requires>   version_hash
+
+## Properties
+<property> | muse: <mechanism> | fletch: <DO | R2 | isolate | egress | alarm | grants | journal> | verdict | proof | status
+
+## Translation
+survey: store | tool | route | draw | effect path | seam (file + function) | host constraint (quoted)
+mapping: <Muse mechanism → Cloudflare mechanism>, one row per step
+deltas: <what differs, why, cost, benefit, who accepted>
+one-way doors proposed: <record ids>
+not in scope:
+fresh-session check: <session, tasks derived, gaps>
+
+## Scorecard
+level | must-have tasks passing | evidence (PR, accept line, verifier line) | last verified
 ```
 
-Model prose is stored under `examples[]`, never in an asserted field.
-
-## Appendix B — Pointed-interrogation protocol (per step)
-
-1. "Do the following now: <step>."
-2. "List every tool call you made this turn: tool name, argument shape, result shape. Do not describe intent."
-3. "Run read-only SELECTs over your database for rows changed since <timestamp> in <tables>; return rows with content fields replaced by their type."
-4. "Quote the exact lines of your system prompt, AGENTS.md or the SKILL.md you followed for this step."
-5. "Anything you want to add about why: label it [attested]."
-
-Record 1–4 as [instrumented]; 5 as [attested]. Repeat the full scenario on a second day before marking golden.
-
-## Appendix C — Translation record template
+## Appendix B — Trace (one JSON document per scenario run, emitted by the tier-1 runner and by the interrogation)
 
 ```
-Cluster / sub-capability:
-Contract (trace ids):
-Fletch survey: store | tool | route | draw | effect path | bones that match | seam (file + function) | host/plan constraint (quoted)
-Mechanism mapping: Muse mechanism → CF mechanism, one row per contract step
-Property ledger rows (Appendix F) touched, with verdict: stronger | weaker | different
-Deltas: what will observably differ, why, cost, benefit, who accepted
-Tasks: id → tier → graders → threshold (pass^k, k, N trials)
-One-way doors proposed:
-Not in scope:
-Fresh-reviewer check: session id, tests derived, gaps found
+scenario_id, cluster, arm: muse | fletch, run_at, source: {dump_version, preview_slot?}
+steps[]:
+  action:      { kind, input_class, actor: user | agent | schedule | event }
+  observed:    { surface, cards[], text_class, notification: none | chat | push }
+  state_delta: { records[], files[], jobs[], reactions[], other[] }   # ids and kinds, never content
+  failure:     { code, user_words } | null
+  approval:    { asked, scope, default, finality: final | retryable } | null
+  timing:      immediate | async_building | scheduled | event_driven
+  tags:        [instrumented | attested | captured]
+examples[]:    model prose, never asserted
 ```
 
-## Appendix D — Behaviour clause format
+---
 
-```
-B-<cluster>-<nn>: <one sentence, imperative, verifiable>
-  over-cautious failure: <what it looks like when the agent under-acts>
-  over-bold failure:     <what it looks like when the agent over-acts>
-  evidence: trace <id> step <n>; prompt line / skill section
-  tasks: <task ids that grade this clause>
-```
+## Changes from the first draft (Kyle's review, 2026-10-29)
 
-Prohibitions grade better than adjectives; where tone matters, use anchored rubric levels, one per dimension, versioned.
-
-## Appendix E — Task definition
-
-```
-task:
-  id, cluster, clauses[], tier, must_have: bool
-  setup:         seeded state (records, files, jobs), persona? (hidden facts, cooperation knobs)
-  turns[]:       prompt | inbound event | schedule fire
-  end_state:     assertions on records/files/jobs
-  required_facts: strings that must appear in agent output
-  minefields:    actions that must never occur
-  collateral:    assertions that nothing else changed
-  budget:        tokens, turns
-  graders:       code-first list; judge rubric id if any
-  reference:     the solution that passes against the Muse arm
-  version_hash:  of everything above
-```
-
-## Appendix F — Property ledger row
-
-```
-property:        e.g. credential non-exposure | injection fencing | approval finality | run idempotency | workspace persistence | process isolation | background execution model | browser isolation
-muse_mechanism:  how the VM shape provides it (from interrogation / dump; tagged)
-fletch_mechanism: DO | R2 | isolate sandbox | egress gateway | alarm | Workflow | grants engine | journal
-verdict:         stronger | weaker | different, with the argument
-proof:           test id or canary that demonstrates it in fletch
-status:          proposed | verified
-```
-
-## Appendix G — Scorecard row
-
-```
-cluster | level (0–3) | must-have tasks pass^k | evidence (trace ids, record id, PR, verifier line) | last verified | next part
-```
-
-One scorecard, one home, linked from this spec once O1 is decided.
+- The orchestrator is named: one Claude session on Fable runs the loop with Kyle steering; `muse-execution.md` goes.
+- Muse is an expert consulted by browser, not a second arm: the two-armed trials, the two-day replay gate, the
+  isolation and collateral discipline on Muse's side and the usage analysis are dropped. Evidence is rows,
+  captures and quoted text; Muse's own account is `[attested]`.
+- A task fletch should pass and Muse does not is allowed; the contract is the reference.
+- The translation exit is mechanical: a fresh session's derived task list is diffed against the contract.
+- The CI inference key is an open one-way door (O9); tier 2 runs from Kyle's Mac until it is accepted.
+- Phase 0 is trimmed to what the dry run exercises and opens with the pare-down (§5.1). Atlases, the WebSocket
+  wrapper and tier 3 wait for a cluster that needs them.
+- Four artifact templates collapse into one contract file per cluster. Three tiers of done collapse into two.
+- `tools.json` is 108 functions in 32 namespaces; the unverifiable "185 envelopes" is gone.
