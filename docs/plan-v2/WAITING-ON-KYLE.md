@@ -56,7 +56,20 @@ Kyle's own lines go under `## Steering`.
   `gh pr edit`) for builder sessions in the project's permission settings, which only you may change; until then
   the orchestrator opens every builder's PR, which costs one wait per part and nothing else. Deep dive:
   [Q13](QUESTIONS.md#q13-f21-2026-10-29-the-f21-draft-pr-could-not-be-opened-from-the-session),
-  [PR #29](https://github.com/kltdwrds/fletch/pull/29).
+  [PR #29](https://github.com/kltdwrds/fletch/pull/29). Update 2026-10-29: the F22 builder, same command and mode,
+  opened [PR #31](https://github.com/kltdwrds/fletch/pull/31) itself without a refusal, so the classifier is not
+  consistent; the question stands until a setting makes it so.
+
+- [ ] 2026-10-29 uat: **F22, the care register: a reaction on a win, a heart on hard news.** On main since
+  [PR #31](https://github.com/kltdwrds/fletch/pull/31). What changed: the agent's `REACTING` guidance names three
+  registers with an example each: a win (👍 first, then a short reply), hard news (🫶 or no reaction, a reply with no
+  emoji in the text), a plain request (no reaction). Tier 2 on fletch-pv-1 went from 0 of 3 to 3 of 3 on both
+  nice-to-have tasks (T-P1-06 the win, T-P1-09 hard news). What to try on a preview or your deploy: tell it some good
+  news in one line and some bad news in one line; the win should get a 👍 chip on your bubble before the reply, the
+  bad news a 🫶 or nothing and never a 👍. Report anything that reads wrong as a line under Steering; nothing is
+  blocked on this. Deep dive: [F22 in parts.md](parts.md#f22-reactions-the-care-register-and-a-reaction-on-a-win),
+  [PROGRESS.md F22](PROGRESS.md), `test/evals/p1-reactions/reacting-registers.test.ts`, the `REACTING` block in
+  `packages/agent/src/`.
 
 ## Steering
 
