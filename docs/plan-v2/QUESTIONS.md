@@ -16,6 +16,9 @@ the session's permission classifier ("Create Public Surface").
 claude/f21-own-message-reactions-31e59c`, titled "F21: a person's own message takes no reaction in the ⋯ sheet or
 hold popover"), or allow `gh pr create --draft` for builder sessions so the next part can open its own.
 
+Orchestrator, 2026-10-29: PR #29 opened from the orchestrator session, so F21 is not blocked; what stays open is the
+permission for builder sessions, listed in `WAITING-ON-KYLE.md`.
+
 ### Q1 (F1), 2026-10-22: A throwaway account for the live exit test
 
 **Blocks:** F1's last acceptance claim, one passing run of `test/live/f1-deploy.live.test.ts`, and the tag `v0.1.0`.
