@@ -8,3 +8,4 @@ verifier and evals lines it rests on (`ORCHESTRATOR.md`).
 
 | cluster | level | must-have tasks passing | evidence (PR, accept line, verifier line) | last verified |
 |---|---|---|---|---|
+| P1 reactions | 1 | tier 1: 7 of 8 (T-P1-08's own-message leg fails: F21); tier 2: T-P1-02 3 of 3 | `contracts/P1-reactions.md`; `pnpm evals P1` 2026-10-29, results `evidence/results/33ce7e13e0d3…json`; PR #26 (F20, Lock); accept and verifier lines in PROGRESS.md F20 | 2026-10-29 |
