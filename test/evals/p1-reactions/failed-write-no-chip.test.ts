@@ -29,7 +29,7 @@ async function check(plant?: (js: string) => string) {
   const first = connectFrame(sam.email, chat.owner(), () => chat.history());
   if (!first.ok) throw new Error(`P1_CONNECT_REFUSED: ${first.code}`);
   p.deliver(s, first.frame);
-  const agent = p.log.children.find((c) => c.msg?.who === "agent");
+  const agent = p.log.children.find((c) => (c as El & { msg?: { who: string } }).msg?.who === "agent");
   if (!agent) throw new Error("P1_NO_AGENT_MESSAGE");
   const mid = agent.dataset.mid as string;
   const chip = () => agent.children.find((c) => c.className === "reaction-pill")?.textContent ?? null;
