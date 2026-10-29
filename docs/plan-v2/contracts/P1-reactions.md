@@ -131,7 +131,8 @@ T-P1-01  must-have  tier 1
   collateral: reactions +1, messages as declared
   graders: code (store rows, frame order, history after evict)
   reference: Muse step 2, `runtime.message_reactions:de8e3334-8b53-415c-b17e-463ad84254f8` set at seq 52 before any
-  other call   version_hash: fab42fff8af4
+  other call
+  version_hash: fab42fff8af4
   file: test/evals/p1-reactions/ack-at-work-start.task.ts
 
 T-P1-02  must-have  tier 2
@@ -142,7 +143,8 @@ T-P1-02  must-have  tier 2
   minefields: reflex_reaction (any reaction row on Sam's message)
   collateral: messages only
   graders: code (rows, reply text matches /\d+/)
-  reference: Muse step 1, 0 rows (`answers/step-1.md` 2a)   version_hash: 33ce7e13e0d3
+  reference: Muse step 1, 0 rows (`answers/step-1.md` 2a)
+  version_hash: 33ce7e13e0d3
   file: test/evals/p1-reactions/quick-task-no-ack.task.ts
 
 T-P1-03  must-have  tier 1
@@ -156,7 +158,8 @@ T-P1-03  must-have  tier 1
   collateral: reactions +2, turns +1, messages +1 (the untyped reaction row)
   graders: code (mailbox rows, turn count, card state, no "you" bubble frame)
   reference: Muse step 3 (`answers/step-3.md`): the 👍 woke a turn that did the thing asked; the property row's
-  rule for the card is the contract's, Muse's question was a read   version_hash: 4e5551fb9418
+  rule for the card is the contract's, Muse's question was a read
+  version_hash: 4e5551fb9418
   file: test/evals/p1-reactions/thumbs-up-answers-question.task.ts
 
 T-P1-04  must-have  tier 1
@@ -169,7 +172,8 @@ T-P1-04  must-have  tier 1
   collateral: reactions +1, turns +1 (Sam's prompt only)
   graders: code (turn count before the prompt, envelope text, transcript rows)
   reference: Muse step 4: a woken turn whose only call was the no-reply escape (`answers/step-4.md`); fletch does not
-  wake at all (Translation, delta 1): the observable outcome is the same, silence   version_hash: 75dd7decdeba
+  wake at all (Translation, delta 1): the observable outcome is the same, silence
+  version_hash: 75dd7decdeba
   file: test/evals/p1-reactions/ambient-reaction-silent.task.ts
 
 T-P1-05  must-have  tier 1
@@ -193,7 +197,8 @@ T-P1-06  nice-to-have  tier 2
   minefields: celebratory_reaction (🎉, 😂, 🚀 or ❤️ on the news)
   collateral: reactions ≤ 1
   graders: code (row emoji in the allowed set)
-  reference: Muse step 6 (`answers/step-6.md`) and the tool text on hard news   version_hash: 550090e2c7a4
+  reference: Muse step 6 (`answers/step-6.md`) and the tool text on hard news
+  version_hash: 550090e2c7a4
   file: test/evals/p1-reactions/care-reaction.task.ts
 
 T-P1-07  must-have  tier 1
@@ -206,7 +211,7 @@ T-P1-07  must-have  tier 1
   collateral: reactions -1
   graders: code (rows, frames, history after evict, turn and mailbox counts)
   reference: Muse step 7 (`answers/step-7.md`): null row, no handoff; fletch deletes the row (Translation, delta 4)
-  version_hash: 8d5470aa3a5f
+  version_hash: 30076ea5534f
   file: test/evals/p1-reactions/remove-reaction.task.ts
 
 T-P1-08  must-have  tier 1 (page)
@@ -220,7 +225,8 @@ T-P1-08  must-have  tier 1 (page)
   collateral: none (page only)
   graders: code (DOM roles and labels)
   reference: Muse `step-8-dom.md` and `step-8-phone-heart-and-own-message-sheet.jpg`: Reply, Copy, Delete on one's
-  own message. Expected to fail against F10 (Translation, delta 6): the finding is recorded below   version_hash: c91022560caa
+  own message. Expected to fail against F10 (Translation, delta 6): the finding is recorded below
+  version_hash: 2641d7494d30
   file: test/evals/p1-reactions/surface-controls.task.ts
 
 T-P1-09  nice-to-have  tier 2
@@ -232,7 +238,8 @@ T-P1-09  nice-to-have  tier 2
   collateral: reactions ≤ 1
   graders: code (rows per message)
   reference: the tool text (`answers/step-5.md`), "If an attentive friend reading this message would tap a reaction,
-  do it" and "do not react by reflex"; Muse step 1 for the zero case   version_hash: 0ec8e079b898
+  do it" and "do not react by reflex"; Muse step 1 for the zero case
+  version_hash: 35f8abe744e4
   file: test/evals/p1-reactions/react-like-a-friend.task.ts
 
 T-P1-10  must-have  tier 1
@@ -245,7 +252,8 @@ T-P1-10  must-have  tier 1
   collateral: reactions +1
   graders: code (refusal absent, row emoji, history after evict)
   reference: Muse step 6 (`answers/step-6.md`): the identifier is stored literally and drawn as its own glyph; fletch's
-  register is 🫶 (Translation, delta 5)   version_hash: bdc47c838702
+  register is 🫶 (Translation, delta 5)
+  version_hash: bdc47c838702
   file: test/evals/p1-reactions/care-register-stored.task.ts
 
 T-P1-11  must-have  tier 1
@@ -259,7 +267,8 @@ T-P1-11  must-have  tier 1
   collateral: reactions +1, turns +1, messages +1
   graders: code (the fake model's recorded request, tool calls)
   reference: the Properties row "external-content fencing": Muse quotes the text in the handoff, fletch passes the id
-  and fences the quote (`reactionSignal`, Translation)   version_hash: 278d346237c5
+  and fences the quote (`reactionSignal`, Translation)
+  version_hash: 278d346237c5
   file: test/evals/p1-reactions/reaction-input-fenced.task.ts
 
 ## Properties
@@ -407,14 +416,14 @@ Tier 2 (2026-10-29, `pnpm evals P1` on `fletch-pv-1`, three trials each; results
 |---|---|---|---|---|---|---|
 | T-P1-06 | `550090e2c7a4` | fail (GRADER_FAILED) | fail (GRADER_FAILED) | fail (GRADER_FAILED) | **fail** | nice-to-have; grader "the reply is plain" |
 | T-P1-02 | `33ce7e13e0d3` | pass | pass | pass | **pass** | must-have |
-| T-P1-09 | `0ec8e079b898` | fail (GRADER_FAILED) | fail (GRADER_FAILED) | pass | **fail** | nice-to-have; grader "one agent reaction on the win, m1" |
+| T-P1-09 | `35f8abe744e4` | fail (GRADER_FAILED) | fail (GRADER_FAILED) | fail (GRADER_FAILED) | **fail** | nice-to-have; grader "one agent reaction on the win, m1" (the task's first version, `0ec8e079b898`, came 1 of 3) |
 
 Findings against F10 as shipped (each a part of its own, per F20's acceptance):
 
 1. A person can react to their own message from the phone's ⋯ sheet and hold popover (delta 6; T-P1-08's own-message
    leg fails): F21.
 2. The model does not hold the care register or react to a win: on hard news the reply itself carries an emoji
-   (T-P1-06, 0 of 3), and a 👍 on a small win comes 1 of 3 (T-P1-09). Both nice-to-have; the fix is the agent's
+   (T-P1-06, 0 of 3), and a 👍 on a small win comes 0 of 3 (T-P1-09; 1 of 3 on its first version). Both nice-to-have; the fix is the agent's
    `REACTING` instruction and its examples, measured by the same two tasks: F22.
 
 ## Scorecard

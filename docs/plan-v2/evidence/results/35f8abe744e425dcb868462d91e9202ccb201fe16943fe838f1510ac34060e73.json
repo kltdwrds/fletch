@@ -1,0 +1,38 @@
+{
+  "task_id": "T-P1-09",
+  "cluster": "P1",
+  "version_hash": "35f8abe744e425dcb868462d91e9202ccb201fe16943fe838f1510ac34060e73",
+  "runs": [
+    {
+      "run_at": "2026-10-29T22:19:14.028Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "one agent reaction on the win, m1",
+          "started_at": "2026-10-29T22:19:14.029Z",
+          "finished_at": "2026-10-29T22:19:25.248Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "one agent reaction on the win, m1",
+          "started_at": "2026-10-29T22:19:25.248Z",
+          "finished_at": "2026-10-29T22:19:36.350Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "one agent reaction on the win, m1",
+          "started_at": "2026-10-29T22:19:36.350Z",
+          "finished_at": "2026-10-29T22:19:44.675Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}
