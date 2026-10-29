@@ -16,6 +16,27 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
+### Q6 (F4), 2026-10-23: D-0010 is a stub until the artifact record lands
+
+**Blocks:** nothing. `docs/plan-v2/parts.md` cites D-0010 (the artifact plan's record, "proposed on Kyle's thread") in the
+F4 to F7 preamble and in F4's and F6's rulings, but the record was never in this repository, so
+`node scripts/check-decisions.mjs` failed at 391af92 and with it every `pnpm check`. F4 added
+`docs/decisions/0010-artifact-collection-address.md`, a `proposed` stub that states only what the plan cites it for
+(`/library/artifacts/<slug>`, the id in segments) and binds nothing.
+
+**Recommended answer:** replace the stub with the record from the artifact thread, keeping the id D-0010, before F6
+starts (F6 must leave that collection free). The alternative, rewording the plan's citations, edits other parts' text
+and loses the link.
+
+### Q2 (F1), 2026-10-22: Run the free-plan spike for Code Mode and Images
+
+**Blocks:** nothing yet; it decides whether `create-fletch` adds `LOADER` and `IMAGES` by default or only with
+`--paid` (D-0004).
+
+**Recommended answer:** run it on the Q1 account (`docs/runbooks/free-plan-spike.md`) and paste the table.
+
+## Answered
+
 ### Q9 (F14), 2026-10-27: May a session record Kyle's acceptance relayed by the person orchestrating for him?
 
 **Blocks:** nothing now. F14 is DONE under an override, and this question decides whether that override stands as
@@ -37,26 +58,12 @@ Context, so the one-way door rests on his hand, not on a relay. Then he picks on
 
 Until he does, a verifier on any part with a session-recorded acceptance will flag it again.
 
-### Q6 (F4), 2026-10-23: D-0010 is a stub until the artifact record lands
-
-**Blocks:** nothing. `docs/plan-v2/parts.md` cites D-0010 (the artifact plan's record, "proposed on Kyle's thread") in the
-F4 to F7 preamble and in F4's and F6's rulings, but the record was never in this repository, so
-`node scripts/check-decisions.mjs` failed at 391af92 and with it every `pnpm check`. F4 added
-`docs/decisions/0010-artifact-collection-address.md`, a `proposed` stub that states only what the plan cites it for
-(`/library/artifacts/<slug>`, the id in segments) and binds nothing.
-
-**Recommended answer:** replace the stub with the record from the artifact thread, keeping the id D-0010, before F6
-starts (F6 must leave that collection free). The alternative, rewording the plan's citations, edits other parts' text
-and loses the link.
-
-### Q2 (F1), 2026-10-22: Run the free-plan spike for Code Mode and Images
-
-**Blocks:** nothing yet; it decides whether `create-fletch` adds `LOADER` and `IMAGES` by default or only with
-`--paid` (D-0004).
-
-**Recommended answer:** run it on the Q1 account (`docs/runbooks/free-plan-spike.md`) and paste the table.
-
-## Answered
+**Answered (Kyle, 2026-10-29):** option (a). Asked in this session whether to settle Q9 as option (a) while building the
+orchestrator framing, Kyle answered "Yes: add the orchestrator goal, the wrapper, WAITING-ON-KYLE.md, the scorecard and
+contract-path checks to the plan on plan/phase-0-v2, and settle Q9 as option (a)." So: a one-way record's acceptance,
+and a BLOCKED question's move to Answered, are Kyle's own commits; a session or the orchestrator never writes either,
+and the verifier flags one in a part's diff (`KICKOFF.md` "Questions", `VERIFIER-PROMPT.md` question 4,
+`ORCHESTRATOR.md`). D-0011's confirmation by his own commit is the first item in `WAITING-ON-KYLE.md`.
 
 ### Q8 (F14), 2026-10-26: Accept D-0011, the parent's owner-checked read of a sub-agent facet's transcript
 

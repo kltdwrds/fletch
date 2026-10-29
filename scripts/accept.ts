@@ -170,6 +170,7 @@ const HARNESS_CHECKS = [
   "scripts/check-test-hygiene.mjs",
   "scripts/check-agent-docs.mjs",
   "scripts/check-decisions.mjs",
+  "scripts/check-plan.mjs",
   "scripts/check-shell.mjs",
 ];
 

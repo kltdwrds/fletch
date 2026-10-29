@@ -159,3 +159,9 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
 - 2026-10-29 O4 narrowed with Kyle: P8's side chats are P1 (a chat with its own transcript that a job can deliver to)
   and its workers are P3 and P7 (the agent a job or hook spawns, and its completion report), all spine; P8 keeps only
   group chats with outsiders, mapped and not built until Kyle rules whether fletch ever speaks in a room.
+- 2026-10-29 The orchestrator framing, on a fresh Fable reviewer's note (reframe, not replace one open-ended goal):
+  `docs/plan-v2/ORCHESTRATOR.md` (its own `/goal`, 3,300 characters, and the restart wrapper), `WAITING-ON-KYLE.md`,
+  `scripts/check-plan.mjs` in `pnpm harness` (a scorecard level of 2 or more cites an existing evidence file and a PR;
+  every part from F21 names an existing contract file), and Q9 answered as option (a) by Kyle in this session.
+  Rejected: one long-running open-ended goal in a single session (the evaluator reads only the transcript, stops a
+  waiting session, and Locked needs Kyle's UAT); the orchestrator editing the scorecard directly (it lands as a PR).

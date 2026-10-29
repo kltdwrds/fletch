@@ -16,7 +16,9 @@ fletch is built one way with two entry points (D-0012).
 - **Everything else is a plain PR**: a bug fix, a small change, a harness tweak. No part id and no plan entry; it
   passes `pnpm verify` and review. A change too big to describe in a PR body becomes a part first.
 
-Is there a part for what you were asked? Follow `docs/plan-v2/KICKOFF.md`. If not, it is a normal PR.
+Is there a part for what you were asked? Follow `docs/plan-v2/KICKOFF.md`. If not, it is a normal PR. The loop that
+writes and dispatches parts is one orchestrator session (`docs/plan-v2/ORCHESTRATOR.md`); what waits on Kyle is in
+`docs/plan-v2/WAITING-ON-KYLE.md`.
 
 ## Product contract
 
@@ -73,7 +75,7 @@ carries a part tag, `[F<n>]` for fletch's own or `[M<n>]` for one inherited from
 |---|---|
 | `pnpm install` | Installs dependencies and the git hooks (simple-git-hooks through `prepare`). |
 | `pnpm check` | The fast gate, about 20 s: Biome lint, `pnpm harness`, then the typecheck. The pre-push hook runs it. |
-| `pnpm harness` | The harness checks (boundaries, the file-size ratchet, test hygiene, agent docs, decision records, shellcheck) and both scans. |
+| `pnpm harness` | The harness checks (boundaries, the file-size ratchet, test hygiene, agent docs, decision records, the plan's ledgers, shellcheck) and both scans. |
 | `pnpm test` | The gate scripts' own tests (`node --test`), then the hermetic vitest suite, about 90 s. |
 | `pnpm verify` | `check` then `test`: what CI runs on every push and PR, and the release before it publishes. |
 | `pnpm accept F<n>` | A part's acceptance: lint, the tests tagged up to the part, the dry-run bundle, the scans, the harness checks, typecheck and, for F1 with an account, the live lane. Ends with one `ACCEPT` line. |

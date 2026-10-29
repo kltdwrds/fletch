@@ -55,9 +55,11 @@ internal tool names unless user-visible; killed features (listed with date and r
 
 ## 3. The loop
 
-One **orchestrator** (a Claude session on Fable, running from the repo with Kyle watching and steering) runs
-every cluster through four stages. Each stage ends on its test, and no stage begins without the previous stage's
-artifact in the repo.
+One **orchestrator** (a Claude session on Fable, started from Kyle's Mac under its own `/goal`, `ORCHESTRATOR.md`)
+runs every cluster through four stages: it interrogates, translates, dispatches builder sessions, verifies their
+output and records the result, and never builds. Each stage ends on its test, and no stage begins without the
+previous stage's artifact in the repo. What needs Kyle lands in `WAITING-ON-KYLE.md`; the loop carries on with what
+those items do not touch, and stops by name when nothing is left.
 
 | Stage | Who | Does | Exit test |
 |---|---|---|---|
@@ -191,9 +193,11 @@ Behaviour that lives only in the prompt is inventoried from interrogation.
 
 - **Kyle:** picks clusters; locks clauses and deltas; decides one-way doors; UATs visible surfaces; files findings
   as tasks; watches and steers the orchestrator.
-- **Orchestrator (Claude, Fable):** runs the loop: interrogates Muse, translates, launches builder and verifier
-  sessions, keeps the ledgers and the scorecard, opens and merges PRs that pass. Never a one-way door, never
-  `decider: Kyle`.
+- **Orchestrator (Claude, Fable):** runs the loop under `ORCHESTRATOR.md`: interrogates Muse (after Kyle's `go` for
+  the cluster), translates, launches builder and verifier sessions, keeps the ledgers, merges a builder's PR when it
+  changed no owner-visible surface and its must-have tasks pass, and routes everything else to `WAITING-ON-KYLE.md`.
+  Its own plan and scorecard edits land as PRs Kyle reads. Never a one-way door, never `decider: Kyle`, never an
+  acceptance or an Answered move (Q9). `scripts/check-plan.mjs` holds the two ledger rules it could bend.
 - **Builder, verifier (Claude sessions):** one part per builder session; the verifier is fresh and reads only the
   contract and the diff.
 - **Muse:** the expert we ask. Never author, briefer or judge.
@@ -293,3 +297,11 @@ O1: one private repository, evidence in a folder here, a public version cut late
 default. O4: side chats and workers fold into P1, P3 and P7; group chats with outsiders stay his to rule. O5: wallet and payments are a spine milestone of their own; shopping,
 booking, travel and tickets are higher-level behaviour on it. O6: connector types and flows are spine, specific
 connectors are per agent. O9: fine; the record comes with F19.
+
+## The orchestrator framing (reviewer's note and Kyle's go, 2026-10-29)
+
+A fresh Fable reviewer, asked whether one open-ended goal should replace this plan, answered reframe, not replace:
+`/goal`'s evaluator reads the transcript only and stops a session that waits, and Locked needs Kyle's UAT, so no
+unattended condition can end at "parity". The shape it recommended is now `ORCHESTRATOR.md` (the orchestrator's own
+goal and wrapper), `WAITING-ON-KYLE.md` (the hand-off), `scripts/check-plan.mjs` (a scorecard level cites its evidence
+and a PR; every part from F21 names a contract file), and Q9 answered as option (a).

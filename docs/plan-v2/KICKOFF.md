@@ -68,8 +68,9 @@ stage. Work that is not a part is a plain PR (AGENTS.md, "Start here"); none of 
 
 Each question in `QUESTIONS.md` is `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommended answer:** and,
 once given, **Answered (Kyle, <date>):**. A question that stops the target goes under `BLOCKED (open)`; Kyle moves it
-to Answered, and the loop resumes. When Kyle's answer settles a proposed record, he sets it to `accepted` with
-`decider: Kyle` in his own commit (Q9 decides whether a session may do it quoting him).
+to Answered in his own commit, and the loop resumes. When his answer settles a proposed record, he sets it to
+`accepted` with `decider: Kyle`, also in his own commit (Q9, answered: a session never does either, however it heard
+him). What waits on him is listed in `WAITING-ON-KYLE.md`; the orchestrator (`ORCHESTRATOR.md`) keeps that list.
 
 ## Long sessions, cost, rules
 

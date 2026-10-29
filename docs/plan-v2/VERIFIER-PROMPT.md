@@ -21,7 +21,9 @@ output of `pnpm accept <id>`. Answer five questions, each with evidence quoted f
    that removes, narrows or softens a check, a test, a question, a constraint or a stop signal is a blocking
    finding, whoever wrote it. Did the diff take a one-way decision (irreversible, money, a security boundary, a
    published contract, a storage schema) that no accepted record in docs/decisions/ with decider Kyle holds? Did it
-   write `decider: Kyle` into a record, or change an accepted record's Ruling line instead of superseding it?
+   write `decider: Kyle` into a record, set a one-way record to accepted, move a question under `BLOCKED (open)`
+   to Answered (all three are Kyle's own commits, Q9), or change an accepted record's Ruling line instead of
+   superseding it?
 5. Quote from attachment (3) the TREE line, the per-step counts, and the final `ACCEPT <id>: PASS` line. If any is
    missing, that is a blocking finding.
 

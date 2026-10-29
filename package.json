@@ -16,7 +16,7 @@
     "ds": "node scripts/ds-tokens.ts",
     "lint": "biome lint .",
     "typecheck": "pnpm --dir packages/agent exec wrangler types --strict-vars=false && tsc -p tsconfig.json && tsc -p tsconfig.hosts.json && tsc -p packages/agent/tsconfig.json && tsc -p packages/create-fletch/tsconfig.json",
-    "harness": "node scripts/check-boundaries.mjs && node scripts/check-file-sizes.mjs && node scripts/check-test-hygiene.mjs && node scripts/check-agent-docs.mjs && node scripts/check-decisions.mjs && node scripts/check-shell.mjs && node scripts/scans.ts secret && node scripts/scans.ts privacy",
+    "harness": "node scripts/check-boundaries.mjs && node scripts/check-file-sizes.mjs && node scripts/check-test-hygiene.mjs && node scripts/check-agent-docs.mjs && node scripts/check-decisions.mjs && node scripts/check-plan.mjs && node scripts/check-shell.mjs && node scripts/scans.ts secret && node scripts/scans.ts privacy",
     "test": "node --test scripts/*.test.mjs && QYVR_HERMETIC=1 vitest run",
     "check": "pnpm lint && pnpm harness && pnpm typecheck",
     "verify": "pnpm check && pnpm test",
