@@ -28,11 +28,37 @@ export class TurnError extends Error {
   }
 }
 
+/** A history entry as the socket's `history` frame carries it: the fields a grader reads. */
+export interface SlotEntry {
+  kind: string;
+  mid?: string;
+  text?: string;
+  reactions?: Array<{ by: "you" | "agent"; emoji: string }>;
+}
+
+/** One reaction row as a grader reads it: the agent's under `"agent"`, the owner's under their email. */
+export interface SlotReaction {
+  mid: string;
+  by: string;
+  emoji: string;
+}
+
+/** The reaction rows the history carries, the agent's first on each message as the frame orders them. */
+export function reactionsOf(entries: SlotEntry[], owner: string): SlotReaction[] {
+  const out: SlotReaction[] = [];
+  for (const e of entries) for (const r of e.reactions ?? []) if (e.mid) out.push({ mid: e.mid, by: r.by === "agent" ? "agent" : owner, emoji: r.emoji });
+  return out;
+}
+
 export interface SlotWorld extends ScenarioWorld {
   /** The chat this trial runs in. */
   readonly chatId: string;
   /** The agent's reply to each prompt so far, in order; the last is what the last turn said. */
   readonly replies: string[];
+  /** The history as the page draws it, read from the socket's `history` frame after the last turn ended. */
+  entries(): SlotEntry[];
+  /** The reaction rows of that history (`reactionsOf`). */
+  reactions(): SlotReaction[];
   /** Sends one prompt as the slot's owner and resolves with the reply once the turn is done; rejects with a `TurnError`. */
   send(text: string): Promise<string>;
   /** Reads an app route with the trial's session. */
