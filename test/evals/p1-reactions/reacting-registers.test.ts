@@ -8,6 +8,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { REACTING } from "../../../packages/agent/src/chat/instructions.ts";
 import { parseContract } from "../../support/contract.ts";
+import { Seeded } from "../../support/seeded.ts";
 import { repoRoot } from "../../support/temp-repo.ts";
 import care, { PROMPT as HARD_NEWS } from "./care-reaction.task.ts";
 import { p1Harness } from "./harness.ts";
@@ -51,8 +52,9 @@ function staleHashes(contract: string): string[] {
 describe("[F22] P1 reactions: the care register and a 👍 on a win", () => {
   it("every chat turn's request carries the registers: 👍 on a win, 🫶 or nothing on hard news with no emoji in the reply, none on a plain request", async () => {
     const harness = p1Harness({ script: [{ text: "I am so sorry." }] });
-    const world = await harness.setup();
-    await harness.play(world, care.turns[0]!);
+    const rng = new Seeded(care.setup.seed);
+    const world = await harness.setup(rng, care);
+    await harness.play(world, care.turns[0]!, rng);
     const system = world
       .requests()[0]!
       .messages.filter((m) => m.role === "system")
