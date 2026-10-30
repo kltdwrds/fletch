@@ -12,9 +12,10 @@ import type { P9Page, P9View } from "./p9-slot.ts";
 /** Sam's bubbles (the "you" side) as the log draws them. */
 const YOURS = '[...document.getElementById("log").children].filter((c) => /\\byou\\b/.test(c.className)).map((c) => c.textContent ?? "")';
 
-/** The chat's composer, its log and its socket are ready once the composer is drawn and the history frame has been read. */
-async function ready(p: Page): Promise<void> {
+/** The chat's composer and log are drawn and, for a chat with entries (`drawn`), the history frame has filled the log. */
+async function ready(p: Page, drawn = true): Promise<void> {
   await p.waitForFunction('!!document.getElementById("t") && !!document.getElementById("log")', null, { timeout: WAIT_MS });
+  if (drawn) await p.waitForFunction('document.getElementById("log").children.length > 0', null, { timeout: WAIT_MS });
   await settledLog(p);
 }
 
@@ -71,8 +72,9 @@ export function p9Page(base: string, cookie: string): P9Page {
       session(async (open) => {
         const a = await open(DESKTOP, chat(chatId));
         const b = await open(DESKTOP, chat(chatId));
-        await ready(a);
-        await ready(b);
+        // A fresh chat draws no entry before the send.
+        await ready(a, false);
+        await ready(b, false);
         await a.evaluate(`(() => { document.getElementById("t").value = ${JSON.stringify(text)}; document.getElementById("f").requestSubmit(); })()`);
         await settled();
         // Both tabs draw the turn's frames: Sam's bubble and the agent's reply, with nothing still running.
