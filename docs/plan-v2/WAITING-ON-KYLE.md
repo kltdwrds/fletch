@@ -439,7 +439,7 @@ Kyle's own lines go under `## Steering`.
   is the settings pane, the grouped rows, the status pill and the prompt card as they are. Say "fine" or what to
   change under Steering before F36 starts; F35 runs meanwhile and draws none of it.
 
-- [ ] 2026-10-30 do: **sign the built-in browser back in to Muse, so P12 (wallet and payments) can be interrogated.**
+- [x] 2026-10-30 do (done 2026-10-30, Kyle signed in; the interrogator relaunched at step 2): **sign the built-in browser back in to Muse, so P12 (wallet and payments) can be interrogated.**
   The P12 interrogator (an Opus agent under the orchestrator's `evidence/p12-wallet/scenario.md`, ten steps, read-only
   but for one add-method page to raise and close and one purchase ask at `https://shop.example.invalid`) ran step 0 (the
   dump refresh: `wallet` has five read functions over `stripe-link` and `shop-pay`; no orders, receipts, budget or
@@ -475,6 +475,27 @@ Kyle's own lines go under `## Steering`.
   ("No page came back from"); the handoff says an unpassed verdict in words and what each finding rests on; a steer
   mid-run closes the child and starts another (Q28: the first task may read Running for ever, known). Say what reads
   wrong; nothing here blocks.
+
+- [ ] 2026-10-30 uat: **connections and credentials after F35 and F36** (F37's slot once its builder has deployed, see
+  `pnpm preview list`; the three slots were reclaimed on 2026-10-30 after their PRs merged, so every earlier uat address
+  now needs `pnpm preview up` on main, which carries F24 to F36). Ask the agent to connect a service or save a key:
+  the reply gives the capture link and ends (no form in the chat); the capture item in the bubble says the host and
+  how the key is sent, with Open the form and Dismiss (Dismiss voids that link, `VAULT_REF_INVALID`); type a
+  secret-shaped string in chat: the sending tab shows its reference, not the text, after reload too; Connections >
+  Yours: every row has a status word and its last use, a key the provider rejected reads `rejected`; a connection's
+  page lists what it sent, the refused call among them, and Disconnect says what stays; Permissions lists every grant
+  once with Revoke; a one-time code arrives as a card with Use it once and Not now. Say what reads wrong; nothing here
+  blocks. Specimen: https://claude.ai/artifact/YVffjTDwaXgpZ7nrH9M92W.
+  [F36 in parts.md](parts.md#f36-connections-the-person-can-see-and-end-the-capture-item-a-rows-status-and-last-use-disconnect-every-grant-in-one-pane-the-codes-card-and-the-audit-read); [F37 in parts.md](parts.md#f37-credentials-say-what-happened-p9s-tier-2-on-a-slot);
+  [PR #62](https://github.com/kltdwrds/fletch/pull/62), [PR #66](https://github.com/kltdwrds/fletch/pull/66).
+- [ ] 2026-10-30 question: **Q30: F36's four reversible choices, for your read, blocking nothing.** `vault_events` gains
+  `dismissed` and `rejected` kinds (no schema change); an expired credential is refused `VAULT_CRED_INACTIVE` at egress
+  and fill (the contract's code; the verifier made the builder conform the code rather than the grader); Permissions
+  lists every grant once in place of "What others can ask"; the four surface tasks declare the Vault rows their own
+  turns write and their harness counts lifecycle events, so a revocation is an added row. The builder put them in
+  QUESTIONS.md because `docs/decisions/log.md` is at its 40 KB cap, which only you prune (the orchestrator shortens
+  lines there; it does not delete). Say if any reads as softening, or if the log's cap should move.
+  [Q30](QUESTIONS.md#q30-f36-2026-10-30-f36s-two-way-choices-recorded-here-because-the-decision-log-is-at-its-cap).
 
 ## Steering
 

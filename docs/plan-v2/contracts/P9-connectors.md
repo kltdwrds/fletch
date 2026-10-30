@@ -724,6 +724,6 @@ the connector page), `step-8-permissions.png` (the Permissions counts), made by 
 
 ## Scorecard
 
-level 1 | tier 1 and tier 2 not yet run: 18 tasks (13 must-have) written, hashes unset | `contracts/P9-connectors.md`;
+level 1 | tier 1: 13 of 13 under vitest since F35 (PR #62) and F36 (PR #66), hashes filled; tier 2 not yet run, F37 on a slot | `contracts/P9-connectors.md`;
 interrogation 2026-10-30Z by an Opus agent under the orchestrator's scenario, `evidence/p9-connectors/trace.json`
 validates (13 steps), 95 files through `pnpm redact`; F35, F36 and F37 in `parts.md`; D-0016 proposed | 2026-10-30
