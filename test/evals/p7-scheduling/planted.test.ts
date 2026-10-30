@@ -118,6 +118,16 @@ describe("[F29] the P7 graders, planted", () => {
     const own = asked.engine(MORNING.id).status()!;
     await asked.decide();
     expect(await asked.engine(MORNING.id).update({ owner: sam.email, by: sam.email, def: { ...own.def, instructions: "Sam's own words." } })).toMatchObject({ ok: true, status: "active" });
+    // A change of time alone or of the stop alone is decided again too, and a job waiting on its card is not changed
+    // under it, so the card never names a stale job.
+    const e = asked.engine(MORNING.id);
+    const agent = `agent:${sam.email}`;
+    const later = { ...e.status()!.def, timing: { schedule: { kind: "daily" as const, at: "10:00" }, zone: "Europe/London" } };
+    expect(await e.update({ owner: sam.email, by: agent, def: later })).toMatchObject({ ok: true, status: "needs_enable" });
+    expect(await e.update({ owner: sam.email, by: agent, def: { ...later, title: "p7 probe: renamed on its card" } })).toMatchObject({ ok: false, code: "JOB_AWAITING_DECISION" });
+    expect(e.status()?.def.title).toBe(MORNING.title);
+    await e.enable(sam.email);
+    expect(await e.update({ owner: sam.email, by: agent, def: { ...e.status()!.def, stop: { kind: "after_runs", runs: 2 } } })).toMatchObject({ ok: true, status: "needs_enable" });
     const putJob = honest.putJob;
     JobStore.prototype.putJob = function (this: JobStore, j, now) {
       return putJob.call(this, { ...j, history: [] }, now);

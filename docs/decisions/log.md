@@ -337,9 +337,11 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   card; rejected: a run-time card); remove ends what the job has in flight (Muse left the run and card; rejected:
   refusing the remove); no proactivity editions or feed in P7 (no seam; a store is a one-way door; Q21; rejected: a feed
   as a recurring job); a job is changed in place by `jobs_update` with its history kept (rejected: remove and recreate).
-- 2026-10-30, F29 jobs as they are, the builder's, all two-way: an agent's `jobs_update` that changes an active job's
-  instructions, gate or steps turns it back to waiting on its card, as `jobs_create` does (rejected: an edit that
-  keeps the approval, which would let the agent rewrite an approved job); a time or stop change keeps its status; a
+- 2026-10-30, F29 jobs as they are, the builder's, all two-way: any agent `jobs_update` of an active job, its time and
+  stop included, turns it back to waiting on its card, as `jobs_create` does, since the person decides a job and its
+  time on one card (QYVR-165), and a job still waiting on its card is refused `JOB_AWAITING_DECISION` (rejected: an
+  edit that keeps the approval, which would let the agent rewrite an approved job or stretch a one-shot into a
+  standing job); the owner's own edit keeps its status; a
   job's earlier definitions (the last 20) ride in the Job object's existing definition JSON, no new column; a stop or
   a remove in flight ends the run failed `JOB_STOPPED_BY_OWNER` or `JOB_ARCHIVED` with one line in its chat, unless the
   run's result is already queued, and a late step is discarded (one outcome per run); a one-shot is spent by its first
