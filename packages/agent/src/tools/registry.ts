@@ -93,17 +93,9 @@ export const IDENTITY_TOOL_WORDS: readonly string[] = ["identity", "setting", "s
 export const IDENTITY_TOOL_OFFER =
   /\b(passkeys?|recovery codes?|log ?out|sign[- ]?out|delete (?:the |your |an )?account|export (?:the |your |all )?(?:data|account)|(?:change|set|switch|update|toggle|turn (?:on|off)) (?:a |the |your |their )?(?:settings?|theme|language|notifications?|profile|avatar|password|e-?mail address|agent'?s name))\b/i;
 
-/**
- * Tools whose name says `login` of another site, never fletch's sign-in (F41): `browse_save_login` keeps a website's
- * login sealed in the person's vault (M24.3), registered only where a browser is bound, so no hermetic world built it
- * and the guard refused every turn on a deploy with one. Only the word `login` is let through, and only for these.
- */
-export const SITE_LOGIN_TOOLS: readonly string[] = ["browse_save_login"];
-
 /** The identity word a tool's name holds or its description offers, or null: the guard `ToolRegistry` applies. */
 export function identityReach(spec: Pick<ToolSpec, "name" | "description">): string | null {
-  const site = SITE_LOGIN_TOOLS.includes(spec.name);
-  const word = spec.name.split("_").find((w) => IDENTITY_TOOL_WORDS.includes(w) && !(site && w === "login"));
+  const word = spec.name.split("_").find((w) => IDENTITY_TOOL_WORDS.includes(w));
   return word ?? IDENTITY_TOOL_OFFER.exec(spec.description)?.[0]?.toLowerCase() ?? null;
 }
 

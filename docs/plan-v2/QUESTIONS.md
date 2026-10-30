@@ -174,30 +174,31 @@ every passkey with no person filter and only the owner registers one, so "Pat se
 Pat being told only the owner manages passkeys. (c) The host refuses a recovery session's page load
 (`PASSKEY_REQUIRED`, 403), so the recovery scenario is a recovery sign-in in another tab: the cookie is swapped under
 an open Settings page and Security opened from General; the refused load is asserted too. (d) The pane keeps its list
-while it redraws and marks the card `aria-busy` until the answer is in, so a Remove never blanks the list first.
-(e) On a slot, each P14 trial adds one inert fixture passkey for Sam when she holds fewer than two, so Settings >
-Security lists two (T-P14-11); its public key is fixed bytes, so nothing signs in with it. For your UAT: remove it, not
-your own, or a removed real passkey leaves only the inert one, and signing in then needs recovery. (f) On a slot,
-"the agent mailed" reads Sam's `mail.*` journal rows that are done, and "the models used" the Ledger's chat-route calls
+while it redraws and marks the card `aria-busy` until the answer is in, so a Remove never blanks the list first. (e)
+On a slot, each P14 trial adds one inert fixture passkey for Sam when she holds fewer than two, so Settings > Security
+lists two (T-P14-11); its public key is fixed bytes, so nothing signs in with it. For your UAT: remove it, not your
+own, or a removed real passkey leaves only the inert one, and signing in then needs recovery. (f) On a slot, "the
+agent mailed" reads Sam's `mail.*` journal rows that are done, and "the models used" the Ledger's chat-route calls
 since the trial began; the test host keeps every system message of a chat request (P3's and P5's first-message read
 unchanged), since the envelope that names the model is its own system message. (g) The page script stores the mode
 under `qyvr-mode` as its own constant, held equal to `MODE_KEY` by a test, because the Node script cannot load the
-Worker module that exports it. (h) On fletch-pv-1 every chat turn failed with `TOOL_IDENTITY_REFUSED: browse_save_login reaches
-"login"`: F40's guard refuses a tool whose name holds `login`, and the site-login tool (M24.3, a website's login kept in
-the vault) is registered only where a browser is bound, so no hermetic world had built it; main has the same fault on
-any deploy with a browser. F41 lets the word `login` through for that one tool (`SITE_LOGIN_TOOLS` in
-`packages/agent/src/tools/registry.ts`; every other word and the description offer still checked), and
-`test/workers/f41-identity-guard.test.ts` builds the browse namespace with a browser's every dependency and reads every
-tool name in the sources against the guard. The rejected alternative was renaming the tool, which changes a name the
-model already uses. (i) Each P14 trial on a slot writes every standing file back to its seed, MEMORY.md
-included, because a memory line one trial wrote ("you go by Sam") made the next trial answer "already noted"; the
-op's read is one pure function (`p14Read` in `scripts/preview-slot/test-host-p14.mjs`) that the tier-1 world's test
-reads too, so the slot's state and the fake's cannot drift. (j) Four instruction lines in `WORK_WORDS`
+Worker module that exports it. (h) On fletch-pv-1 every chat turn failed with `TOOL_IDENTITY_REFUSED:
+browse_save_login reaches "login"`: F40's guard refuses a tool whose name holds `login`, and the site-login tool
+(M24.3, a website's login kept in the vault) is registered only where a browser is bound, so no hermetic world had
+built it; main has the same fault on any deploy with a browser. F41 renames the tool `browse_keep_site`
+(`packages/agent/src/browse/tools.ts`), a name with no identity word, and leaves F40's guard as it was;
+`test/workers/f41-identity-guard.test.ts` builds the browse namespace with a browser's every dependency, reads every
+tool name in the sources against the guard, and plants the old name to see it refused. The rejected alternative was
+letting `login` through the guard for that one tool, which the verifier refused as a narrowed security check that no
+scope line or record holds. (i) Each P14 trial on a slot writes every standing file back to its seed, MEMORY.md
+included, because a memory line one trial wrote ("you go by Sam") made the next trial answer "already noted"; the op's
+read is one pure function (`p14Read` in `scripts/preview-slot/test-host-p14.mjs`) that the tier-1 world's test reads
+too, so the slot's state and the fake's cannot drift. (j) Four instruction lines in `WORK_WORDS`
 (`packages/agent/src/chat/instructions.ts`) were sharpened, each for a must-have that failed on the slot on its reply
 words, by giving the exact sentence in these words (Q18's pattern): the name line for T-P14-10 (said only about the
 agent's own name, never on "call me Sam"), the sign-in line for T-P14-11 (four sentences), and the write-as and
-call-me lines for T-P14-12 (the whole write-as sentence, no gendered pronoun even in a denial; memory_write before
-the one reply). No line was added for T-P14-14, a nice-to-have that fails 0/3 on the mail's label and address.
+call-me lines for T-P14-12 (the whole write-as sentence, no gendered pronoun even in a denial; memory_write before the
+one reply). No line was added for T-P14-14, a nice-to-have that fails 0/3 on the mail's label and address.
 
 ### Q35 (F39), 2026-10-30: T-P12-12 and T-P12-13 fail on the slot on their reply words; and F39's two-way choices
 

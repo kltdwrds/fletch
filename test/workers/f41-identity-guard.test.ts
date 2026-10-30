@@ -1,11 +1,12 @@
 // F41: the identity guard (F40's delta 5) over every tool production registers. On fletch-pv-1 every chat turn failed
-// with `TOOL_IDENTITY_REFUSED: browse_save_login reaches "login"`: the site-login tool is registered only where a
-// browser is bound, so no hermetic world built it. The browse namespace is built here with every dependency a deploy
+// with `TOOL_IDENTITY_REFUSED: browse_save_login reaches "login"`: the site-login tool (M24.3) is registered only where
+// a browser is bound, so no hermetic world built it. The guard stays as F40 wrote it; the tool is renamed
+// `browse_keep_site`, a name with no identity word. The browse namespace is built here with every dependency a deploy
 // gives it, and every tool name in the sources is read against the guard, so a production tool the guard refuses
 // fails here rather than on a deploy.
 import { describe, expect, it } from "vitest";
 import { browseNamespace } from "../../packages/agent/src/browse/tools.ts";
-import { identityReach, SITE_LOGIN_TOOLS, ToolRegistry } from "../../packages/agent/src/tools/registry.ts";
+import { identityReach, ToolRegistry } from "../../packages/agent/src/tools/registry.ts";
 import { sources } from "../evals/p14-identity/sources.ts";
 
 const refused = () => {
@@ -26,24 +27,22 @@ const browse = () =>
 describe("[F41] the identity guard over every production tool", () => {
   it("the browse namespace with a browser's every dependency builds a registry, the site-login tool in it", () => {
     const ns = browse();
-    expect(ns.tools.map((t) => t.name)).toContain("browse_save_login");
+    expect(ns.tools.map((t) => t.name)).toContain("browse_keep_site");
     expect(() => new ToolRegistry([ns])).not.toThrow();
   });
 
   it("every tool named in the sources passes the guard by its name", () => {
     const names = sources().flatMap((f) => [...f.text.matchAll(/\bname: "([a-z][a-z0-9_]+)",\s*\n\s*kind: "/g)].map((m) => m[1] as string));
-    expect(names).toContain("browse_save_login");
+    expect(names).toContain("browse_keep_site");
     expect(names.length).toBeGreaterThan(20);
     expect(names.filter((name) => identityReach({ name, description: "" }) !== null)).toEqual([]);
   });
 
-  it("only the word login is let through, and only for a site-login tool: planted, the rest is refused", () => {
-    expect(SITE_LOGIN_TOOLS).toEqual(["browse_save_login"]);
-    // Planted: the same tool under another name, or the exemption leaning on a description that reaches sign-in.
-    expect(identityReach({ name: "fletch_save_login", description: "Keep a login." })).toBe("login");
-    expect(identityReach({ name: "browse_save_login", description: "Remove a passkey of the person's." })).toBe("passkey");
+  it("planted: the site-login tool under its old name, or any name holding login, is refused as F40 wrote it", () => {
     const ns = browse();
-    const save = ns.tools.find((t) => t.name === "browse_save_login")!;
-    expect(() => new ToolRegistry([{ ...ns, tools: [{ ...save, name: "browse_login_reset" }] }])).toThrow('TOOL_IDENTITY_REFUSED: browse_login_reset reaches "login"');
+    const keep = ns.tools.find((t) => t.name === "browse_keep_site")!;
+    expect(identityReach({ name: "browse_save_login", description: keep.description })).toBe("login");
+    expect(() => new ToolRegistry([{ ...ns, tools: [{ ...keep, name: "browse_save_login" }] }])).toThrow('TOOL_IDENTITY_REFUSED: browse_save_login reaches "login"');
+    expect(identityReach({ name: "browse_keep_site", description: "Remove a passkey of the person's." })).toBe("passkey");
   });
 });
