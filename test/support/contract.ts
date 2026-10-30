@@ -103,6 +103,8 @@ export interface TaskLoader {
   exists(file: string): boolean;
   /** The task module's definition, or null when it cannot be loaded. */
   load(file: string): Promise<{ id: string; clauses: string[] } | null>;
+  /** Whether a task of another cluster has a block in its own contract (a clause graded elsewhere, F27). */
+  foreign?(id: string): boolean;
 }
 
 const sorted = (xs: string[]) => [...new Set(xs)].sort();
@@ -118,7 +120,7 @@ export async function checkContract(c: ParsedContract, loader: TaskLoader): Prom
   const taskIds = new Set(c.tasks.map((x) => x.id));
   for (const cl of c.clauses) {
     if (!EVIDENCE_ID.test(cl.evidence) && !EVIDENCE_ROW.test(cl.evidence) && !cl.tags.includes("[attested]")) out.push({ code: "CONTRACT_CLAUSE_NO_EVIDENCE", id: cl.id, detail: `line ${cl.line}: no evidence id or row, and not [attested]` });
-    for (const t of cl.tasks) if (!taskIds.has(t)) out.push({ code: "CONTRACT_TASK_UNKNOWN", id: cl.id, detail: `line ${cl.line}: tasks names ${t}, which has no block` });
+    for (const t of cl.tasks) if (!taskIds.has(t) && !loader.foreign?.(t)) out.push({ code: "CONTRACT_TASK_UNKNOWN", id: cl.id, detail: `line ${cl.line}: tasks names ${t}, which has no block` });
   }
   for (const t of c.tasks) {
     if (!t.file) {

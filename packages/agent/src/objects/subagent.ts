@@ -4,13 +4,12 @@
 // parent's; it holds the sub-agent's transcript, which it answers through one read, `transcript()`, called only by
 // its parent `Chat` after matching the child's row to the requesting person (D-0011). Its parent decides everything else.
 import { DurableObject } from "cloudflare:workers";
-import { egressFor, type VaultEgress } from "../connectors/egress.ts";
-import { personMemory } from "../memory/rpc.ts";
 import type { Message } from "@earendil-works/pi-ai";
-import { readTranscript, runSubAgent, type SubAgentInput, type SubAgentResult } from "../subagents/run.ts";
-import { subAgentReads } from "../subagents/namespaces.ts";
+import { egressFor, type VaultEgress } from "../connectors/egress.ts";
 import { migrateObject, probeObject } from "../migrations/catalog.ts";
 import { modelConfig } from "../model/routes.ts";
+import { subAgentReads } from "../subagents/namespaces.ts";
+import { readTranscript, runSubAgent, type SubAgentInput, type SubAgentResult } from "../subagents/run.ts";
 
 export class SubAgent extends DurableObject<Env> {
   private readonly schema = migrateObject(this.ctx, "subagent");
@@ -31,7 +30,7 @@ export class SubAgent extends DurableObject<Env> {
       models: modelConfig(env),
       ledger: env.LEDGER.get(env.LEDGER.idFromName(env.TENANT_ID)),
       tenant: env.TENANT_ID,
-      namespaces: (person) => subAgentReads({ person, memory: personMemory(env, person), egress: egressFor(vault, person), source: `subagent:${input.id}` }),
+      namespaces: (person) => subAgentReads({ egress: egressFor(vault, person) }),
       now: () => Date.now(),
       wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
     }, input);

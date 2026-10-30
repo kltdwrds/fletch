@@ -1,22 +1,22 @@
 // One sub-agent's run, inside its facet (M7.2): the facet's own SQLite holds its transcript, so a
 // coordinator that waited on its workers continues where it stopped. A sub-agent inherits the
 // platform's safety block and the person's authority and cannot delegate around either: it reads
-// with the person's non-mutating observations, every other call is refused by its gate, it never
+// with the person's non-mutating observations but never their memory, every other call is refused by its gate, it never
 // speaks to the person (its final answer is the handoff, returned fenced to the parent), and it
 // may only ask for sub-agents, which the parent decides from its own record (`depth.ts`).
 import type { AgentTool, AgentToolResult } from "@earendil-works/pi-agent-core";
 import { type AssistantMessage, type Message, Type } from "@earendil-works/pi-ai";
-import { assemble } from "../context/assemble.ts";
-import { fence } from "../context/fence.ts";
 import { PLATFORM_INSTRUCTIONS } from "../chat/instructions.ts";
 import { EffectBuffer } from "../chat/tools.ts";
 import { MAX_STEPS_PER_TURN, runTurnLoop } from "../chat/turn.ts";
+import { assemble } from "../context/assemble.ts";
+import { fence } from "../context/fence.ts";
+import type { LedgerSink } from "../ledger/types.ts";
 import { createStreamFn } from "../model/adapter.ts";
 import { type ModelConfig, modelFor } from "../model/routes.ts";
-import type { LedgerSink } from "../ledger/types.ts";
 import { toolReference } from "../tools/reference.ts";
 import { type Gate, type Namespace, ToolRegistry, ToolSession, type ToolSpec } from "../tools/registry.ts";
-import { MAX_FANOUT, type SpawnRequest, spawnDecision, type SubAgentRole } from "./depth.ts";
+import { MAX_FANOUT, type SpawnRequest, type SubAgentRole, spawnDecision } from "./depth.ts";
 
 /** Tokens one sub-agent run may spend, reasoning included, before it is stopped. */
 export const SUBAGENT_RUN_TOKENS = 120_000;
@@ -68,12 +68,17 @@ export const SUBAGENT_TASK = [
 
 const text = (t: string, details: Record<string, unknown> = {}): AgentToolResult<unknown> => ({ content: [{ type: "text", text: t }], details });
 
-/** A sub-agent's gate: plain observations run; actions, company reads and writes are refused. */
+/** The person's memory tools (`memory/tools.ts`): a sub-agent's gate refuses every one (P6 delta 5). */
+export const isMemoryTool = (name: string): boolean => name.startsWith("memory_");
+
+/** A sub-agent's gate: plain observations run; memory, actions, company reads and writes are refused. */
 export const subAgentGate: Gate = {
   call: async (spec, _id, _args, run) =>
-    spec.kind === "observation" && spec.subject === undefined && !spec.mutates
-      ? run()
-      : text(`SUBAGENT_ACTION_REFUSED: sub-agents observe and report; ${spec.name} is for the main agent, under the person's grants`, { code: "SUBAGENT_ACTION_REFUSED" }),
+    isMemoryTool(spec.name)
+      ? text(`SUBAGENT_MEMORY_REFUSED: sub-agents get no memory; what ${spec.name} would read belongs in the brief the main agent writes`, { code: "SUBAGENT_MEMORY_REFUSED" })
+      : spec.kind === "observation" && spec.subject === undefined && !spec.mutates
+        ? run()
+        : text(`SUBAGENT_ACTION_REFUSED: sub-agents observe and report; ${spec.name} is for the main agent, under the person's grants`, { code: "SUBAGENT_ACTION_REFUSED" }),
 };
 
 /** The one sub-agent tool: ask for sub-agents. The parent decides from its record; this only answers early. */

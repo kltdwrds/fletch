@@ -24,6 +24,9 @@ export type RefereeVerdict = { verdict: "promote"; reason: string; tokens: numbe
 
 /** Credentials, one-time codes and identifiers (M8): none may enter a shared scope or memory. */
 const SECRET_SHAPES: ReadonlyArray<[string, RegExp]> = [
+  // Before the card shape, so a passport's sixteen digits are named for what they are (F27, B-P6-07).
+  ["a government ID number", /\b(?:passport|driver'?s? licen[cs]e|national id|social security|ssn|tax id)\b[^.\n]{0,40}?\b[A-Za-z]{0,3}[ -]?(?:\d[ -]?){5,}\d\b/i],
+  ["a government ID number", /\b\d{3}-\d{2}-\d{4}\b/],
   ["an API key", /\b(?:sk|pk|rk|ghp|gho|ghs|github_pat|xox[abp])[-_][A-Za-z0-9_-]{12,}/],
   ["a bearer token", /\bbearer\s+[A-Za-z0-9._~+/-]{16,}/i],
   ["a private key", /-----BEGIN [A-Z ]*PRIVATE KEY-----/],
@@ -35,9 +38,16 @@ const SECRET_SHAPES: ReadonlyArray<[string, RegExp]> = [
 const EMAIL = /\b[a-z0-9._+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)+\b/i;
 const PHONE = /(?:\+\d{1,3}[ -]?)?\(?\d{3}\)?[ -]?\d{3}[ -]?\d{4}\b/;
 
+/** A credential, a code, a card, an account or a government ID number, by code: what no memory line may hold (F27), or null. */
+export function credentialContent(text: string): string | null {
+  for (const [what, re] of SECRET_SHAPES) if (re.test(text)) return what;
+  return null;
+}
+
 /** What a shared scope must never hold, by code: the first shape found, or null. */
 export function forbiddenContent(text: string): string | null {
-  for (const [what, re] of SECRET_SHAPES) if (re.test(text)) return what;
+  const secret = credentialContent(text);
+  if (secret) return secret;
   if (EMAIL.test(text)) return "an email address";
   if (PHONE.test(text)) return "a phone number";
   return null;
