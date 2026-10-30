@@ -269,3 +269,50 @@ in the contract matches; `ACCEPT F26: PASS`; `VERIFIER: no blocking findings`.
 
 **Not in scope:** solving or retrying a challenge; a live browser; a card expiry (delta 1); connectors and the wallet;
 a change to a clause.
+
+## F27 Memory as it is: the P6 contract check, fourteen task files and tier 1 on what is shipped
+
+**Read:** `docs/plan-v2/contracts/P6-memory.md` (every clause, the task table, the Properties rows, deltas 2, 3, 5,
+6 and 7), `docs/plan-v2/evidence/p6-memory/answers/step-2.md` to `step-8.md` and `step-11.md` on Kyle's Mac if
+reachable (the contract stands without them), `packages/agent/src/memory/tools.ts`, `packages/agent/src/memory/forget.ts`,
+`packages/agent/src/memory/store.ts`, `packages/agent/src/memory/entities.ts`, `packages/agent/src/context/assemble.ts`,
+`test/workers/m2-memory.test.ts`, `test/workers/m2-memory-chat.test.ts`, `test/workers/m25-4-forget-producers.test.ts`,
+`test/support/task.ts`, F25's `test/m0/f25-contract.test.ts` as the model for the contract check. No one-way door.
+
+**Scope:** (1) `test/m0/f27-contract.test.ts` holds P6 as F25's holds P15: fifteen clauses, fourteen tasks, every task
+file loads with its id and clause ids, every `version_hash` in the contract matches `versionHash()` once written.
+(2) The fourteen `.task.ts` files under `test/evals/p6-memory/` as the contract's task table names them, with their
+`.test.ts` beside each. (3) Tier 1 passes with its planted faults for T-P6-01, 02, 05, 06, 07, 08, 10 and 11 under a
+`[F27]` describe: the refusal of a credential-class value at `memory_write` by code with a stable code (T-P6-06;
+the class is the referee's `forbiddenContent` list or a sibling of it), a memory search that never reads a chat's
+transcript (T-P6-06 `number_in_search`), the forget plan scoped to the claim, its lines, chunks, index rows and
+producers with a confirmation that only the owner's session passes (T-P6-07), and a sub-agent's memory tools refused
+by code (T-P6-08). (4) The tier-2 tasks (T-P6-03, 04, 09, 12, 13, 14) load and run under the scripted fake, their hashes
+written, their real-model runs left to F28. (5) The contract's hashes filled for every file written.
+
+**Acceptance:** the `[F27]` tests pass with their planted failures; `pnpm accept F27`; `ACCEPT F27: PASS`;
+`VERIFIER: no blocking findings`.
+
+**Not in scope:** instruction lines for the reply's words (F28); a tier-2 run; goals, tracked items and briefings
+(delta 4, Q19); a change to a clause; any change to the transcript store.
+
+## F28 Memory says what it did: an unasked save is announced, a refusal and a forget are described, and P6's tier 2
+
+**Read:** `docs/plan-v2/contracts/P6-memory.md` (B-P6-04, B-P6-05, B-P6-07, B-P6-09, deltas 1 and 3, the tier-2
+tasks), the F27 world and tasks under `test/evals/p6-memory/`, `packages/agent/src/chat/instructions.ts`,
+`docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q18 (a reply's required words are instruction lines, not
+harness sentences, until Kyle rules otherwise). No one-way door. A live step: `pnpm evals` runs from Kyle's Mac on
+this worktree's slot (`pnpm preview up`); if no slot can be leased, that is a question, not a reason to skip.
+
+**Scope:** (1) Instruction lines in `instructions.ts` for: a save made in a turn is named in that turn's reply with
+the citation the tool returned (delta 1); a refused value is refused by name and the kept part named (B-P6-07); after
+a forget the reply says what was removed and what still holds the words, never that every copy is gone (B-P6-09);
+"no record" with no guess (B-P6-04). (2) Tier 2 on the slot: T-P6-03 and T-P6-04 (must-have), T-P6-09, T-P6-12, T-P6-13 and T-P6-14,
+three trials each, the results files committed, the table in the PR body. (3) The tier-1 scripted run of T-P6-04
+grades the fake's path with the new line. (4) Every P6 hash in the contract matches.
+
+**Acceptance:** `pnpm evals T-P6-03` and `pnpm evals T-P6-04` `pass` (three of three); T-P6-09, T-P6-12, T-P6-13 and T-P6-14 run and
+their results recorded whatever the verdict; `ACCEPT F28: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** goals and tracking (Q19); a background summariser or relationships loop (deltas 6, 7); a code-written
+reply line (Q18); a change to a clause.

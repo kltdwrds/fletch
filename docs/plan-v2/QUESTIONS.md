@@ -92,6 +92,30 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
+### Q19 (P6), 2026-10-30: goals and tracked items have no fletch seam; four attested clauses; one reload finding
+
+**Blocks nothing.** The P6 interrogation (`contracts/P6-memory.md`, evidence under `evidence/p6-memory/` on Kyle's
+Mac) leaves three things for Kyle's eye.
+
+1. **Goals, tracked items and briefings (B-P6-14, B-P6-15).** Muse creates a goal on the ask with no card (a
+   `goals.goals` row, a seeded workspace, a Goals tab row, entries on later asks), tracks an item as the same row with
+   `source = 'assistant_tracking'` and a first entry from a live read, and writes briefings as background letters on a
+   system schedule. A tracked item has no producer of later entries, so it goes stale silently. fletch has no store, tool
+   or surface for any of this, and a new store is a storage schema, a one-way door the orchestrator may only propose.
+   The clauses stand with no task. Recommended answer: a later cluster ("P6b goals and tracking") after the spine, with a
+   proposed record for the store when it is translated; until then a goal is not a memory line (a tracked item with no
+   producer is a note, not a watch). Say so if you want it folded into P6 now instead.
+2. **Attested, not instrumented:** who reads memory besides a chat (a sub-agent inherits `MEMORY.md` at spawn, a browser
+   worker sees only its brief, B-P6-13); what a confirmed forget leaves behind (the run stopped at the plan because every
+   Muse forget also resets the feed's learned interests, B-P6-08); the daily note's author and timing (a background
+   upkeep worker, B-P6-10); the people-page producer (a background relationships loop, B-P6-11). fletch's translation
+   does not rest on any of them (deltas 2, 5, 6, 7 are fletch's own choices); they are re-asked only if a later cluster
+   needs the mechanism.
+3. **A reload finding.** After a cold reload of thread A, its oldest fourteen items drew as person bubbles only, with no
+   assistant reply between them, though earlier reloads had shown them (`step-12.png`). Cause undetermined (a history
+   window or lazy paging). Nothing in fletch rests on it; recorded so the P6 capture set is read with that in mind.
+
+
 ### Q17 (P15), 2026-10-29: one attested clause and four findings from the P15 interrogation
 
 **Blocks:** nothing. (1) `contracts/P15-approvals.md` B-P15-15 (what follows an Allow once and a Deny: the action
