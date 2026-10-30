@@ -491,6 +491,12 @@ export class Company extends DurableObject<Env> {
     return { ok: true as const, memberPagesInExport: this.settings.view().memberPagesInExport, members };
   }
 
+  /** Whether the person may leave, asked before offboarding builds a bundle or purges anything (F40, P14 delta 3). */
+  async mayDepart(person: string) {
+    const r = this.members.mayDepart(person);
+    return r.ok ? r : { ok: false as const, code: r.code, reason: r.code === "LAST_OWNER" ? "the last owner cannot leave" : "not a member" };
+  }
+
   /**
    * The seat is released once the person's scope is purged (M11): their membership, their teams with
    * it, and their proposals that never became the company's (unapproved, rejected or declined) go, and
