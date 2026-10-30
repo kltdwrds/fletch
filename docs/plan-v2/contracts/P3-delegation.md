@@ -737,6 +737,8 @@ specimen first, listed for Kyle as a look item.
 
 ## Scorecard
 
-level 1 | tier 1 and tier 2 not yet run: 17 tasks (14 must-have) written, hashes unset | `contracts/P3-delegation.md`;
-interrogation 2026-10-30Z by an Opus agent under the orchestrator's scenario, `evidence/p3-delegation/trace.json`
-validates (13 steps), 106 files through `pnpm redact`; F33 and F34 in `parts.md` | 2026-10-30
+level 1 | tier 1: 17 of 17 under vitest since F33 (PR #58); tier 2 on fletch-pv-3 (F34, PR #64, at 91cc684): T-P3-14
+3 of 3, T-P3-16 2 of 3 then 3 of 3 in a second run, T-P3-17 3 of 3, T-P3-15 2 of 3; held at level 1 until Q29 is
+answered and one declared run each of T-P3-14 and T-P3-16 passes | `ACCEPT F33: PASS` (TREE ca0cde87f1a6…) and
+`ACCEPT F34: PASS` (TREE 5249ec4d4cf9…, 1544 tests; verifier: two blocking findings, Q29); interrogation 2026-10-30Z,
+`evidence/p3-delegation/trace.json` validates (13 steps), 106 files through `pnpm redact` | 2026-10-30
