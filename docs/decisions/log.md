@@ -3,8 +3,13 @@
 Two-way doors: dated one-liners with their reason, for choices nobody else has to obey. When a line starts mattering
 to others, promote it into a record (README.md) and delete it here. Capped at 40 KB by `scripts/check-decisions.mjs`.
 
+- 2026-10-20 WebAuthn uses `@simplewebauthn/server` 14.0.3: it bundles under `nodejs_compat`, so there is no
+  hand-rolled fallback.
+- 2026-10-20 `@noble/hashes` 2.4.0 provides synchronous SHA-256 in the passkey stores.
 - 2026-10-20 `create-fletch` sets `MASTER_KEY` and `SETUP_TOKEN` (32 random bytes, base64url) each only when the Worker
   lacks it: a fresh account gets two secret puts, a second run none (D-0002).
+- 2026-10-20 `tokenScopes(cf, accountId)` takes the account id, which the per-scope probes and the account-token
+  verify endpoint need.
 - 2026-10-22 `pnpm check` is the fast gate (lint, harness checks and scans, typecheck; about 20 s, run by the pre-push
   hook) and `pnpm verify` adds the tests (CI and the release). Rejected: tests in the pre-push hook, too slow for every
   push and refused beside a cloud shell's credentials.
@@ -376,5 +381,3 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   child and verifier calls; the delegate schemas drop `maxItems` so the gate's SUBAGENT_FANOUT_CAP answers. Agent.
 - 2026-10-30 P9 translated (`contracts/P9-connectors.md`): a setup item with Dismiss; a refused plan's audit row;
   OAuth proposed as D-0016. Orchestrator.
-- 2026-10-30 F36: `vault_events` gains `dismissed` (detail: the link's setup id) and `rejected` (a provider's 401 or
-  403; audit stays `resolved`); Permissions lists every grant once; T-P9-08 grades `EGRESS_CRED_EXPIRED` (Q28). Agent.

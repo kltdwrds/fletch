@@ -107,7 +107,11 @@ their own turns write to the Vault (a dismissal, a 401's `rejected` row, a revoc
 exactly those, and their harness (`test/evals/p9-connectors/harness-surface.ts`) snapshots the Vault's append-only
 event log and audit rows, so a revocation is an added row rather than a row gone. Nothing undeclared passes. Say if
 either reads as softening (as Q16 asked of F24). Evidence: `test/evals/p9-connectors/status-is-stored-and-said.task.ts`,
-`planted-surface.test.ts`; `contracts/P9-connectors.md` T-P9-08.
+`planted-surface.test.ts`; `contracts/P9-connectors.md` T-P9-08. (c) Two-way choices F36 made, here because the decision log is at its
+40 KB cap (`scripts/check-decisions.mjs`; pruning it is for its owner): `vault_events` gains `dismissed` (detail:
+the link's setup id, so a later ask's link still works) and `rejected` (a provider's 401 or 403; the audit outcome
+stays `resolved`, as T-P9-07 needs), with no schema change; Permissions lists every grant once, replacing "What
+others can ask"; the Connected "Yours" rows keep expired and spent keys and leave out held codes and typed secrets.
 
 ### Q27 (P9), 2026-10-30: the OAuth door D-0016, a playlist left in your music account, and nine Muse credential findings fletch already rules out
 
