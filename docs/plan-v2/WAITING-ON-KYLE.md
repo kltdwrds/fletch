@@ -337,6 +337,34 @@ Kyle's own lines go under `## Steering`.
   [Q23](QUESTIONS.md#q23-p7-f29-2026-10-30-b-p7-01-says-no-card-fletchs-agent-made-job-waits-on-one-and-paused-jobs-sit-under-off),
   `packages/agent/src/chat/instructions.ts` (`JOB_WORDS`), `docs/plan-v2/contracts/P7-scheduling.md`, the four P7
   results files under `docs/plan-v2/evidence/results/`.
+- [ ] 2026-10-30 look: **the P3 delegation contract and its eight deltas from Muse.** The interrogation of muse.ai (one
+  side chat, 13 steps, 14 probe children, one probe schedule and its run, 106 files through `pnpm redact`, no setting
+  or grant touched, Stop pressed once on a probe child's parent) found that every Muse child inherits the parent's
+  whole context (129 items for a one-line read, 5.66 million input tokens across 14 children); `subagent.list` in a
+  new side chat lists other chats' and schedules' children; a steer reaches a child by `subagent.send` but the
+  per-page progress it promised never came; the composer's Stop ends only the parent's sentence and the child runs
+  on and re-answers the stopped question; there is no verifier (a check only when asked, as the parent's own
+  fetches); five children start at once with no cap but depth; a scheduled run spawns parentless worker roots and
+  writes its own "Delivered" claim; a failed child is stored Complete; a delegation writes memory sections and
+  reactions unasked; a bare "391." renders as a list marker with no text. The contract translates each into fletch's
+  rule (a child starts from its brief; a steer is a close and a new delegation said so; a Stop settles the children
+  it stopped, Q25; every handoff labelled by the verifier; six ceilings refused by code and the refusal said; no
+  spawn from a run; a child's failed read is a failed step and a count, not a Complete; tokens per child in the
+  section; only readable stores written; a number is text) with the rejected alternative beside each; no one-way
+  door. F33 (tier 1, two instruction lines, the child's failed count and tokens in the section, the renderer fix,
+  the drawer specimen) and F34 (tier 2 on a slot) follow. What to read: the Clauses and the Deltas; say under
+  Steering if a delta reads wrong, in particular delta 2 (no send into a running child: the parent closes it and
+  starts another, and says so) and delta 3 (a Stop ends the stopped turn's children, F31's choice under Q25). Deep
+  dive: [contract](contracts/P3-delegation.md),
+  [Q26](QUESTIONS.md#q26-p3-2026-10-30-six-muse-delegation-findings-fletch-already-rules-out-recorded-for-kyles-read),
+  [F33 and F34 in parts.md](parts.md#f33-delegation-as-it-is-the-p3-contract-check-seventeen-task-files-the-steer-and-refusal-words-a-childs-failed-count-and-tokens-a-bare-number-as-text-and-tier-1),
+  [SCORECARD P3](SCORECARD.md), evidence on your Mac under `docs/plan-v2/evidence/p3-delegation/` (`answers/step-0.md`
+  to `step-12.md`; `step-2-rows.json` the 129 inherited items; `step-3-detail.png` a cut wait drawn Completed;
+  `step-5-stopped.png` the stop the child outlived; `step-7-depth-detail.png` the grandchild drawn flat;
+  `step-8-card-after.png` the run's card still in the future tense; `step-9-detail.png` a failed child badged
+  Complete; `step-4-dom.md` the `<ol start="391">`; `answers/step-12.md` "Left behind in Muse": thread A
+  `74d0a08b-d735-41eb-b98a-c5c3dd987c34`, 18 agent rows, the schedule `p3-probe-example-title-in-5-min` and run
+  `87fac3d0`, 5 reaction rows, memory sections L311 to L440 of `~/memory/2026-10-30.md`, none removable by the tools).
 
 ## Steering
 
