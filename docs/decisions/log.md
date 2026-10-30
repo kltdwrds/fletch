@@ -374,7 +374,7 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   stopped (F31, Q25). No one-way door. Orchestrator.
 - 2026-10-30 F33: the drawer's Stop draws a stopped entry and tells the next turn (`haltNote`); task usage counts
   child and verifier calls; the delegate schemas drop `maxItems` so the gate's SUBAGENT_FANOUT_CAP answers. Agent.
-- 2026-10-30 F34: the slot's P3 probe page has its own title (`probeTitle`), since the real verifier doubts a child
-  reporting example.com's "Example Domain"; T-P3-16's grader hears `WORK_WORDS`' failed-read words; the launch line
-  says its reply is written once, after the call, and ends the turn (T-P3-14); a slot request waits for every
-  group's handoff. Agent.
+- 2026-10-30 F34: the slot's probe page has its own title (`probeTitle`), neither "Example Domain" nor its
+  address, which the real verifier doubts; T-P3-16 hears `WORK_WORDS`' failed-read words; for T-P3-14 the launch
+  reply is written once and ends the turn, the handoff reply says an unpassed verdict, and a child's handoff says
+  what each finding rests on (`SUBAGENT_TASK`). Agent.

@@ -27,6 +27,113 @@
         }
       ],
       "status": "pass"
+    },
+    {
+      "run_at": "2026-10-30T14:01:55.763Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply gives the first title and says the second page could not be read and has no title",
+          "started_at": "2026-10-30T14:01:55.764Z",
+          "finished_at": "2026-10-30T14:02:49.935Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T14:02:49.935Z",
+          "finished_at": "2026-10-30T14:03:58.954Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T14:03:58.954Z",
+          "finished_at": "2026-10-30T14:05:36.583Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
+    },
+    {
+      "run_at": "2026-10-30T14:12:26.501Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T14:12:26.501Z",
+          "finished_at": "2026-10-30T14:14:06.637Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T14:14:06.637Z",
+          "finished_at": "2026-10-30T14:14:55.216Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T14:14:55.216Z",
+          "finished_at": "2026-10-30T14:15:58.848Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    },
+    {
+      "run_at": "2026-10-30T14:20:29.007Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T14:20:29.007Z",
+          "finished_at": "2026-10-30T14:21:12.980Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T14:21:12.980Z",
+          "finished_at": "2026-10-30T14:22:17.929Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T14:22:17.929Z",
+          "finished_at": "2026-10-30T14:23:26.193Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-10-30T14:27:49.474Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T14:27:49.474Z",
+          "finished_at": "2026-10-30T14:29:06.593Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply gives the first title and says the second page could not be read and has no title",
+          "started_at": "2026-10-30T14:29:06.594Z",
+          "finished_at": "2026-10-30T14:30:55.933Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T14:30:55.933Z",
+          "finished_at": "2026-10-30T14:32:04.164Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
     }
   ]
 }

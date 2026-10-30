@@ -52,7 +52,7 @@ export function subagentsNamespace(view: SubAgentsView, o: { effects: EffectBuff
           const d = spawnDecision({ role: "main", depth: 0 }, requests, view.open());
           if (!d.ok) return text(`${d.code}: ${d.reason}`, { code: d.code });
           o.effects.push({ kind: "delegate", id, requests });
-          return text(`delegated ${requests.length} sub-agent${requests.length > 1 ? "s" : ""} as ${id}; they start after this step, and their handoff arrives in this chat when all have returned`, { delegated: id });
+          return text(`delegated ${requests.length} sub-agent${requests.length > 1 ? "s" : ""} as ${id}; they start after this step, and their handoff arrives in this chat when all have returned`, { delegated: id, endsTurnIfSaid: true });
         },
       },
       {

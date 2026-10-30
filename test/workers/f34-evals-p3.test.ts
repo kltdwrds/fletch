@@ -181,7 +181,7 @@ describe("[F34] P3 on a slot: the probe pages, the requests, the rows, the reade
     expect(requestText({ query: { messages: [{ role: "user", content: "routed" }] } })).toBe("routed");
     expect(requestText({ text: ["embed"] })).toBeNull();
     const kept: Array<[string, unknown]> = [];
-    await recordingAi({ run: async () => "ok" }, async (p: string, b: unknown) => void kept.push([p, b])).run("m", body, {});
+    await recordingAi({ run: async (..._: unknown[]) => "ok" }, async (p: string, b: unknown) => void kept.push([p, b])).run("m", body, {});
     expect(kept).toEqual([["You are fletch.", body]]);
     const long = "x".repeat(CHUNK * 2 + 5);
     const store = new Map<string, string>();
