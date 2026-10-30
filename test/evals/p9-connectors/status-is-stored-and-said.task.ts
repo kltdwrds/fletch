@@ -3,7 +3,7 @@
 // draws a status word and the last use per row (delta 5, F36). The first reply counts the pane's rows and names each
 // host with its word; after the 401 the reply says the provider rejected the key and only Sam can reconnect it, and
 // the row shows that outcome and its time; the expired key's read is refused `VAULT_CRED_INACTIVE` and said so; nothing
-// reconnects on its own. Graded over `P9SurfaceWorld`: skipped by name until F36.
+// reconnects on its own. Graded over `P9SurfaceWorld` (`harness-surface.ts`, F36).
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P9SurfaceWorld } from "./world.ts";
 import { API_HOST, OLD_HOST } from "./world.ts";
@@ -50,7 +50,7 @@ export const task = defineTask<P9SurfaceWorld>({
   end_state: graders.filter((g) => g.kind === "end_state").map((g) => g.name),
   required_facts: graders.filter((g) => g.kind === "required_fact").map((g) => g.name),
   minefields: graders.filter((g) => g.kind === "minefield").map((g) => g.name),
-  collateral: {},
+  collateral: { vault: [`audit:${API_HOST}:resolved`, `audit:${OLD_HOST}:VAULT_CRED_INACTIVE`] },
   graders,
   reference: "Muse's 12 rows with no word against 10 then 6 connected, the connection dropped unsaid (B-P9-08).",
 });

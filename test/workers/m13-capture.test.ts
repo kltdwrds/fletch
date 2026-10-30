@@ -42,7 +42,7 @@ describe("[M13] capture form", () => {
   it("the redaction is the guard: the same misplaced post, rendered without it, shows the value", async () => {
     const { captureForm } = await import("../../packages/agent/src/http/vault-routes.ts");
     const w = vaultWorld();
-    const html = captureForm({ ref: "cred://x", label: `key ${w.token}`, host: "", methods: "GET", header: "authorization", prefix: "", fills: false, permission: "standing", kind: "secret" }, { code: "VAULT_HOST_INVALID", reason: "a host is a DNS name" });
+    const html = captureForm({ ref: "cred://x", label: `key ${w.token}`, host: "", methods: "GET", header: "authorization", prefix: "", fills: false, permission: "standing", kind: "secret", setup: "" }, { code: "VAULT_HOST_INVALID", reason: "a host is a DNS name" });
     expect(html).toContain(w.token);
   });
 
@@ -119,7 +119,7 @@ describe("[M13] one-time codes", () => {
     expect(await w.vault().approveOneTimeCode({ ref, host: SHOP_LOGIN }, by(ada.email))).toMatchObject({ ok: true, grant: { oneShot: true, fill: true } });
     expect(await w.fill(other.email, ref, SHOP_LOGIN, OTP_FIELD)).toMatchObject({ ok: false, code: "EGRESS_CRED_UNKNOWN" });
     w.clock.now += 10 * 60_000;
-    expect(await w.fill(ada.email, ref, SHOP_LOGIN, OTP_FIELD)).toMatchObject({ ok: false, code: "EGRESS_CRED_EXPIRED" });
+    expect(await w.fill(ada.email, ref, SHOP_LOGIN, OTP_FIELD)).toMatchObject({ ok: false, code: "VAULT_CRED_INACTIVE" });
     expect(w.vault().list(ada.email).find((c) => c.ref === ref)).toMatchObject({ kind: "one-time-code", status: "expired" });
     expect(w.typed).toEqual([]);
   });

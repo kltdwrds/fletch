@@ -48,6 +48,10 @@ export function vaultWorld(name = "vault-m13") {
     approveOneTimeCode: async (i, w) => vault().approveOneTimeCode(i, w),
     list: async (p) => vault().list(p),
     grants: async (p) => vault().grants(p),
+    // This world has no `Person`, so no authority grant names a credential (F36's disconnect reads none here).
+    revokeNaming: async () => ({ ok: true, revoked: [] }),
+    dismissCapture: async (r, w, s) => vault().dismissCapture(r, w, s),
+    captureState: async (p, r, s) => vault().captureState(p, r, s),
   };
   const origin = `https://${TENANT}.example`;
   /** One request to the agent script as `as`; `from` is the page's origin unless a test plants another. */

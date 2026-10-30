@@ -3,7 +3,9 @@
 // and no response carries it back (every page is redacted of the submitted value before it leaves, so
 // a value typed into the wrong field is not echoed either). The registry entries are written by the
 // same act, as the signed-in person; the model has no route here (egress refuses platform hosts) and
-// no tool that writes. Writes must come from the page's own origin.
+// no tool that writes. Writes must come from the page's own origin. From F36 (P9 deltas 1 and 6) the chat's capture
+// item reads a setup's state here and its Dismiss voids the link, and a revoke (the Connected row's Disconnect) also
+// ends the person's grants that name the credential, in their `Person`; a part of that which fails is said by code.
 import { redact } from "../egress/policy.ts";
 import type { CredentialInfo, GrantInfo, PutResult, Refused } from "../vault/core.ts";
 import type { HostEntry, Writer } from "../vault/hosts.ts";
@@ -13,6 +15,10 @@ export interface VaultDirectory {
   registerHost(input: unknown, writer: Writer): Promise<{ ok: true; entry: HostEntry } | Refused>;
   removeHost(ref: string, host: string, writer: Writer): Promise<{ ok: true } | Refused>;
   revoke(ref: string, writer: Writer): Promise<{ ok: true } | Refused>;
+  /** The person's grants that name a credential, ended in their `Person` when it is revoked (F36). */
+  revokeNaming(ref: string, person: string): Promise<{ ok: true; revoked: string[] } | { ok: false; code: string }>;
+  dismissCapture(ref: string, writer: Writer, setup?: string): Promise<{ ok: true } | Refused>;
+  captureState(person: string, ref: string, setup?: string): Promise<{ state: "pending" | "entered" | "dismissed"; at: number | null }>;
   issueGrant(input: { ref: string; hosts: string[]; methods?: string[]; fill?: boolean; oneShot?: boolean; expiresInMs?: number }, writer: Writer): Promise<{ ok: true; grant: GrantInfo } | Refused>;
   revokeGrant(nonce: string, writer: Writer): Promise<{ ok: true } | Refused>;
   approveOneTimeCode(input: { ref: string; host: string }, writer: Writer): Promise<{ ok: true; grant: GrantInfo } | Refused>;
@@ -41,9 +47,11 @@ interface Fields {
   fills: boolean;
   permission: string;
   kind: string;
+  /** The link's setup id (`credential_request`), carried to the submit so a dismissed setup saves nothing. */
+  setup: string;
 }
 
-const EMPTY: Fields = { ref: "", label: "", host: "", methods: "GET", header: "authorization", prefix: "Bearer ", fills: false, permission: "standing", kind: "secret" };
+const EMPTY: Fields = { ref: "", label: "", host: "", methods: "GET", header: "authorization", prefix: "Bearer ", fills: false, permission: "standing", kind: "secret", setup: "" };
 
 export function captureForm(f: Fields, message?: { code: string; reason: string } | { saved: string; hosts: string }): string {
   const note = !message
@@ -67,8 +75,12 @@ export function captureForm(f: Fields, message?: { code: string; reason: string 
 <label for="kind">Kind</label><select id="kind" name="kind">${opt("kind", "secret", "API key or token")}${opt("kind", "login", "Login password")}</select>
 <label for="permission">Use</label><select id="permission" name="permission">${opt("permission", "standing", "My agent may use it at this host")}${opt("permission", "grant", "Only under a grant I give each time")}</select>
 <label for="value">Value</label><input id="value" name="value" type="password" required autocomplete="off" spellcheck="false">
-<button type="submit">Save</button></form></body></html>`;
+${f.setup ? `<input type="hidden" name="setup" value="${esc(f.setup)}">` : ""}<button type="submit">Save</button></form></body></html>`;
 }
+
+/** A dismissed setup's link: it says so, and opens no form. */
+const voidPage = (ref: string) =>
+  `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Link no longer open</title></head><body><h1>Link no longer open</h1><p role="alert"><strong>VAULT_REF_INVALID</strong>: the setup for <code>${esc(ref)}</code> was dismissed in the chat. Nothing was saved; ask your agent for a new link.</p></body></html>`;
 
 const page = (html: string, status = 200) => new Response(html, { status, headers: { ...SECURE_HEADERS, "content-type": "text/html; charset=utf-8" } });
 
@@ -77,6 +89,7 @@ function fieldsOf(form: FormData | URLSearchParams): Fields {
   return {
     ref: get("ref").trim(), label: get("label").trim(), host: get("host").trim(), methods: get("methods") || EMPTY.methods, header: get("header") || EMPTY.header,
     prefix: form.has("prefix") ? get("prefix") : EMPTY.prefix, fills: get("fills") === "on", permission: get("permission") || EMPTY.permission, kind: get("kind") || EMPTY.kind,
+    setup: get("setup").trim(),
   };
 }
 
@@ -89,8 +102,14 @@ export async function vaultRoutes(request: Request, url: URL, person: string, di
   const writer = (via: Writer["via"]): Writer => ({ kind: "person", person, via });
 
   if (url.pathname === "/vault/capture" && request.method === "GET") {
-    // A link may prefill the name and host (the agent can ask for a credential); only the person submits it.
+    // A link may prefill the name and host (the agent can ask for a credential); only the person submits it. A link
+    // whose setup the person dismissed in the chat is void: it opens no form.
+    const ref = url.searchParams.get("ref");
+    if (ref && (await dir.captureState(person, ref, url.searchParams.get("setup") ?? "")).state === "dismissed") return page(voidPage(ref), 410);
     return page(captureForm({ ...EMPTY, ...fieldsOf(url.searchParams), fills: url.searchParams.get("fills") === "on" }));
+  }
+  if (url.pathname === "/vault/capture/state" && request.method === "GET") {
+    return json({ ok: true, ...(await dir.captureState(person, url.searchParams.get("ref") ?? "", url.searchParams.get("setup") ?? "")) });
   }
   if (url.pathname === "/vault/capture" && request.method === "POST") {
     if (!sameOrigin(request, url)) return page(captureForm(EMPTY, { code: "VAULT_FORM_ORIGIN", reason: "the form is submitted from this site's own page" }), 403);
@@ -100,7 +119,7 @@ export async function vaultRoutes(request: Request, url: URL, person: string, di
     const value = String(form.get("value") ?? "");
     const methods = f.methods.split(/[\s,]+/).filter(Boolean);
     const r = await dir.capture(
-      { ref: f.ref, value, label: f.label, kind: f.kind === "login" ? "login" : "secret", permission: f.permission === "grant" ? "grant" : "standing", hosts: [{ host: f.host, methods, header: f.header, prefix: f.prefix, fills: f.fills }] },
+      { ref: f.ref, ...(f.setup ? { setup: f.setup } : {}), value, label: f.label, kind: f.kind === "login" ? "login" : "secret", permission: f.permission === "grant" ? "grant" : "standing", hosts: [{ host: f.host, methods, header: f.header, prefix: f.prefix, fills: f.fills }] },
       writer("capture-form"),
     );
     const html = r.ok ? captureForm({ ...EMPTY }, { saved: r.ref, hosts: f.host }) : captureForm(f, { code: r.code, reason: r.reason });
@@ -119,8 +138,16 @@ export async function vaultRoutes(request: Request, url: URL, person: string, di
       return answer(await dir.registerHost(body, writer("settings")), 201);
     case "/vault/hosts/remove":
       return answer(await dir.removeHost(String(body.ref ?? ""), String(body.host ?? ""), writer("settings")));
-    case "/vault/revoke":
-      return answer(await dir.revoke(String(body.ref ?? ""), writer("settings")));
+    case "/vault/revoke": {
+      const ref = String(body.ref ?? "");
+      const r = await dir.revoke(ref, writer("settings"));
+      if (!r.ok) return answer(r);
+      // The credential is revoked; a grant still naming it would be a permission for nothing, so a failure is said.
+      const named = await dir.revokeNaming(ref, person).catch(() => ({ ok: false as const, code: "GRANTS_NOT_REVOKED" }));
+      return named.ok ? json({ ok: true, grantsRevoked: named.revoked.length }) : json({ ok: false, code: named.code, revoked: ref }, 502);
+    }
+    case "/vault/capture/dismiss":
+      return answer(await dir.dismissCapture(String(body.ref ?? ""), writer("settings"), String(body.setup ?? "")));
     case "/vault/grants":
       return answer(
         await dir.issueGrant(

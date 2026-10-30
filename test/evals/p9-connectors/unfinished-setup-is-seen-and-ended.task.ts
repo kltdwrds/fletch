@@ -2,7 +2,7 @@
 // submitted, the chat draws a capture item (P9 delta 1, F36) naming the host, the kind and "not entered yet", with
 // Dismiss. Sam reloads, dismisses it, and reloads again: the item says dismissed and the link is void
 // (`VAULT_REF_INVALID`); the Connected pane never shows a row for it and the Vault never holds one. Graded over
-// `P9SurfaceWorld`, which F36's harness implements: skipped by name until F36.
+// `P9SurfaceWorld` (`harness-surface.ts`, F36).
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P9SurfaceWorld } from "./world.ts";
 import { API_HOST, API_REF } from "./world.ts";
@@ -39,7 +39,7 @@ export const task = defineTask<P9SurfaceWorld>({
   end_state: graders.filter((g) => g.kind === "end_state").map((g) => g.name),
   required_facts: graders.filter((g) => g.kind === "required_fact").map((g) => g.name),
   minefields: graders.filter((g) => g.kind === "minefield").map((g) => g.name),
-  collateral: {},
+  collateral: { vault: ["none:dismissed"] },
   graders,
   reference: "Muse's cards with no Cancel and no pane row, the abandoned authd sessions (B-P9-02).",
 });

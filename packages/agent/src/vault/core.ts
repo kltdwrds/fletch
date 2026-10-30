@@ -16,9 +16,10 @@
 // opaque surrogate for a credential (`surrogate`), swapped back to its reference here at egress for its
 // person alone, and a host the agent proposed is written only by the person's approval of its card.
 import { type AuditRow, type EgressContext, type EgressResult, egressFetch, egressFill, type FillResult, type Revealed } from "../egress/module.ts";
-import { CRED_REF, type EgressFailure, type HostRule, type OutboundRequest, PUBLIC_HOSTS, redact } from "../egress/policy.ts";
+import { CRED_REF, type EgressFailure, type HostRule, type OutboundRequest, redact } from "../egress/policy.ts";
 import { hasSurrogate, mintSurrogate, SURROGATE, surrogateHash } from "../egress/surrogate.ts";
 import { checkUse, type CredentialGrant, GRANT_MAX_MS, type GrantUseCode, mostTelling, newNonce, sign, type StoredGrant } from "./grants.ts";
+import { auditOf, auditRows, type CaptureState, captureState, grantInfoOf, type LastUse, lastUses, policyRefusal, revokeGrantsOf, SETUP } from "./connections.ts";
 import { checkCardWriter, checkEntry, checkHost, checkWriter, type HostEntry, publicHostFor, rulesFor, type Writer } from "./hosts.ts";
 import { OTP_FIELD, OTP_TTL_MS } from "./otp.ts";
 import { CARD_GRANT_MS, TYPED_TTL_MS } from "./typed.ts";
@@ -82,6 +83,7 @@ const refuse = (code: VaultCode, reason: string): Refused => ({ ok: false, code,
 type GrantInput = { ref: string; hosts: string[]; methods?: string[]; fill?: boolean; oneShot?: boolean; expiresInMs?: number };
 
 export class VaultCore extends SealedVault {
+  private readonly reads = (q: string, ...b: unknown[]) => this.sql(q, ...b);
   private vapidInstance?: VapidKeys;
   /** The tenant's VAPID key pair (M14.1), sealed under the same data key; it signs and never reveals. */
   get vapid(): VapidKeys {
@@ -103,11 +105,23 @@ export class VaultCore extends SealedVault {
    * with the hosts it may go to. The registry entries are written with it; the value is sealed and
    * never returned, and a failure says what was wrong without the value.
    */
-  async capture(input: { ref: string; value: string; label?: string; kind?: Kind; permission?: Permission; hosts: unknown[] }, writer: unknown): Promise<PutResult> {
+  async capture(input: { ref: string; value: string; label?: string; kind?: Kind; permission?: Permission; hosts: unknown[]; setup?: string }, writer: unknown): Promise<PutResult> {
     const w = checkWriter(writer);
     if (!w.ok) return w;
+    if (input?.setup !== undefined && this.captureState(w.value.person, String(input.ref ?? ""), input.setup).state === "dismissed") return refuse("VAULT_REF_INVALID", "this setup was dismissed; ask for a new link");
     return this.store(w.value.person, input, w.value);
   }
+
+  /** The person ends a setup they never submitted (F36, P9 delta 1): its link is void from then on. */
+  dismissCapture(ref: string, writer: unknown, setup = ""): { ok: true } | Refused {
+    const w = checkWriter(writer);
+    if (!w.ok) return w;
+    if (!SETUP.test(setup) || this.captureState(w.value.person, ref, setup).state !== "pending") return refuse("VAULT_REF_INVALID", `${ref} is not a setup waiting on you`);
+    this.event(w.value.person, ref, "dismissed", w.value.person, `setup ${setup}`);
+    return { ok: true };
+  }
+
+  captureState = (person: string, ref: string, setup = ""): CaptureState => captureState(this.reads, person, ref, setup);
 
   private async store(owner: string, input: { ref: string; value: string; label?: string; kind?: Kind; permission?: Permission; hosts: unknown[] }, w: Writer): Promise<PutResult> {
     const i = input ?? ({} as typeof input);
@@ -209,14 +223,15 @@ export class VaultCore extends SealedVault {
     return { ok: true };
   }
 
-  /** The person revokes their own credential: it stays sealed for redaction, and never resolves again. */
+  /** The person revokes their own credential, on settings or a card (F36): sealed for redaction, never resolved again, its grants ended, its audit kept. */
   revoke(ref: string, writer: unknown): { ok: true } | Refused {
-    const w = checkWriter(writer);
+    const w = checkWriter(writer).ok ? checkWriter(writer) : checkCardWriter(writer);
     if (!w.ok) return w;
     const owner = w.value.person;
     if (!this.sql("SELECT ref FROM secrets WHERE owner = ? AND ref = ?", owner, ref).length) return refuse("VAULT_CRED_UNKNOWN", `${ref} is not one of your credentials`);
     this.sql("UPDATE secrets SET revoked_at = ? WHERE owner = ? AND ref = ? AND revoked_at IS NULL", this.deps.now(), owner, ref);
-    this.event(owner, ref, "revoked", owner, w.value.via);
+    revokeGrantsOf(this.reads, owner, ref, this.deps.now());
+    this.event(owner, ref, "revoked", owner, "card" in w.value ? `card ${w.value.card}` : w.value.via);
     return { ok: true };
   }
 
@@ -251,12 +266,17 @@ export class VaultCore extends SealedVault {
     return out;
   }
 
+  /** The newest use of each of the person's credentials (F36): the Connected row's last use and its outcome. */
+  lastUses = (person: string): Record<string, LastUse> => lastUses(this.reads, person);
+
+  /** One credential's audit rows for its person, newest first (F36): the connector's page reads them. */
+  auditOf(person: string, ref: string) {
+    return auditOf(this.reads, person, ref);
+  }
+
   /** The audit rows, newest first; never a value. */
   audit(limit = 100): AuditRow[] {
-    return this.sql("SELECT at, ref, host, method, path, person, purpose, outcome, grant_nonce AS \"grant\" FROM egress_audit ORDER BY id DESC LIMIT ?", limit).map((r) => {
-      const { grant, ...row } = r;
-      return { ...row, ...(grant ? { grant: String(grant) } : {}) } as unknown as AuditRow;
-    });
+    return auditRows((q, ...b) => this.sql(q, ...b), limit);
   }
 
   /** Capture, revocation, host and grant events for one owner, newest first. */
@@ -276,10 +296,12 @@ export class VaultCore extends SealedVault {
     return put;
   }
 
-  /** Removes a company connector's credential; true when there was one. */
-  removeCompany(connector: string): boolean {
+  /** Removes a company connector's credential, its grants with it and a `revoked` event by `by`; true when there was one. */
+  removeCompany(connector: string, by = "company"): boolean {
     const ref = companyRef(connector);
     const had = this.sql("SELECT ref FROM company_refs WHERE ref = ?", ref).length > 0;
+    revokeGrantsOf(this.reads, COMPANY, ref, this.deps.now());
+    if (had) this.event(COMPANY, ref, "revoked", by, "removed");
     this.sql("DELETE FROM secrets WHERE owner = ? AND ref = ?", COMPANY, ref);
     this.sql("DELETE FROM credential_hosts WHERE owner = ? AND ref = ?", COMPANY, ref);
     this.sql("DELETE FROM company_refs WHERE ref = ?", ref);
@@ -342,11 +364,7 @@ export class VaultCore extends SealedVault {
   }
 
   protected grantInfo(r: Row): GrantInfo {
-    const g = JSON.parse(String(r.body)) as CredentialGrant;
-    return {
-      nonce: g.nonce, ref: g.secret_ref, hosts: g.scope.hosts, methods: g.scope.methods, fill: g.scope.fill, oneShot: g.one_shot, expiresAt: g.expires_at,
-      issuedAt: Number(r.issued_at), revokedAt: r.revoked_at === null ? null : Number(r.revoked_at), usedAt: r.used_at === null ? null : Number(r.used_at),
-    };
+    return grantInfoOf(r);
   }
 
   grants(person: string): GrantInfo[] {
@@ -419,7 +437,8 @@ export class VaultCore extends SealedVault {
    * already keep a login that fills. The code's registry entry is written by that approval.
    */
   async approveOneTimeCode(input: { ref: string; host: string }, writer: unknown): Promise<{ ok: true; grant: GrantInfo } | Refused> {
-    const w = checkWriter(writer);
+    const card = checkCardWriter(writer); // or the `credentials.otp` card the person pressed (F36, P9 delta 8)
+    const w = card.ok ? { ok: true as const, value: { kind: "person" as const, person: card.value.person, via: "settings" as const } } : checkWriter(writer);
     if (!w.ok) return w;
     const owner = w.value.person;
     const ref = String(input?.ref ?? "");
@@ -429,7 +448,7 @@ export class VaultCore extends SealedVault {
     if (!host.ok) return host;
     if (!this.entries(owner).some((e) => e.host === host.value && e.fills && !e.ref.startsWith("cred://otp-"))) return refuse("VAULT_OTP_HOST_UNKNOWN", `you keep no login that fills on ${host.value}`);
     this.writeEntry(owner, { ref, host: host.value, methods: [], header: "authorization", prefix: "", fills: true }, owner, w.value.via);
-    return this.issueGrant({ ref, hosts: [host.value], fill: true, oneShot: true, expiresInMs: OTP_TTL_MS }, writer);
+    return this.issue(owner, w.value.via, { ref, hosts: [host.value], fill: true, oneShot: true, expiresInMs: OTP_TTL_MS });
   }
 
   /**
@@ -478,7 +497,7 @@ export class VaultCore extends SealedVault {
       const row = this.sql("SELECT kind, permission, expires_at, revoked_at, used_at FROM secrets WHERE owner = ? AND ref = ?", owner, ref)[0];
       if (!row) return { ok: false, code: "EGRESS_CRED_UNKNOWN", reason: `${ref} is not in the vault for ${ctx.person || "this person"}` };
       const status = this.status(row);
-      if (status !== "active") return { ok: false, code: status === "revoked" ? "EGRESS_CRED_REVOKED" : status === "spent" ? "EGRESS_CRED_SPENT" : "EGRESS_CRED_EXPIRED", reason: `${ref} is ${status}` };
+      if (status !== "active") return { ok: false, code: status === "revoked" ? "EGRESS_CRED_REVOKED" : status === "spent" ? "EGRESS_CRED_SPENT" : "VAULT_CRED_INACTIVE", reason: `${ref} is ${status}` };
       const entry = this.entries(owner).find((e) => e.ref === ref && e.host === host);
       if (!entry || (method === "FILL" ? !entry.fills : !entry.methods.includes(method))) return { ok: false, code: "EGRESS_CRED_HOST_DENIED", reason: `${ref} is not registered for ${method} on ${host}` };
       let grant: string | undefined;
@@ -500,16 +519,7 @@ export class VaultCore extends SealedVault {
 
   /** A registry entry the policy cap now refuses is refused by name, not passed over as unknown. */
   private policyRefusal(url: string): EgressResult | null {
-    let host: string;
-    try {
-      host = new URL(url).hostname.toLowerCase();
-    } catch {
-      return null;
-    }
-    if (PUBLIC_HOSTS.some((h) => h.host === host)) return null;
-    const listed = this.sql("SELECT host FROM credential_hosts WHERE host = ? LIMIT 1", host).length > 0;
-    const capped = checkHost(host);
-    return listed && (!capped.ok || capped.value !== host) ? { ok: false, code: "EGRESS_HOST_POLICY", reason: `${host} is refused by the platform policy${capped.ok ? "" : `: ${capped.reason}`}`, host } : null;
+    return policyRefusal(url, (host) => this.sql("SELECT host FROM credential_hosts WHERE host = ? LIMIT 1", host).length > 0);
   }
 
   /** Performs one outbound request through the egress module. */
@@ -528,7 +538,14 @@ export class VaultCore extends SealedVault {
     const refused = this.policyRefusal(String(req?.url ?? ""));
     if (refused) return refused;
     const used = new Set<string>();
-    const result = await egressFetch({ fetch: this.deps.fetch, reveal: this.revealFor(who, used), hosts: this.hostRules(who.person), audit: (r) => this.writeAudit(r), now: this.deps.now, publicHost: publicHostFor(who.purpose) }, req, who);
+    const sent: string[] = [];
+    const audit = (r: AuditRow) => {
+      this.writeAudit(r);
+      if (r.outcome === "resolved") sent.push(r.ref);
+    };
+    const result = await egressFetch({ fetch: this.deps.fetch, reveal: this.revealFor(who, used), hosts: this.hostRules(who.person), audit, now: this.deps.now, publicHost: publicHostFor(who.purpose) }, req, who);
+    // The provider refused the key it was sent (F36, P9 delta 5): the Connected row says so at the use that found it.
+    if (result.ok && (result.status === 401 || result.status === 403)) for (const ref of sent) this.event(this.connectorOf(ref) !== null ? COMPANY : who.person, ref, "rejected", "provider", `HTTP ${result.status}`);
     const connector = [...used][0];
     return result.ok && connector ? { ...result, scope: { kind: "company", connector } } : result;
   }
@@ -556,7 +573,7 @@ export class VaultCore extends SealedVault {
       } catch {}
       if (!this.sql("SELECT ref FROM credential_hosts WHERE owner = ? AND ref = ? AND host = ?", who.person, req.ref, host).length) {
         this.writeAudit({ at: this.deps.now(), ref: req.ref, host, method: "FILL", path: "", person: who.person, purpose: who.purpose, outcome: "EGRESS_GRANT_REQUIRED" });
-        return { ok: false, code: "EGRESS_GRANT_REQUIRED", reason: `approve ${req.ref} for ${host} in settings first`, host };
+        return { ok: false, code: "EGRESS_GRANT_REQUIRED", reason: `the person approves ${req.ref} for ${host} first, on the card credential_code_use raises`, host };
       }
     }
     const owner = this.connectorOf(String(req?.ref ?? "")) !== null ? COMPANY : who.person;

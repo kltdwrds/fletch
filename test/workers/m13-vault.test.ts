@@ -176,8 +176,9 @@ describe("[M13] credential host registry", () => {
     const w = vaultWorld();
     await seedShop(w);
     const ns = credentialsNamespace({ list: async () => w.vault().list(ada.email) });
-    // M25.1: the one tool that can add a host is an action of the fresh-card kind, written only under the person's card approval.
-    expect(ns.tools.map((t) => [t.name, t.kind, t.mutates ?? false, t.actionKind ?? null])).toEqual([["credential_list", "observation", false, null], ["credential_request", "observation", false, null], ["credential_host_propose", "action", false, "credentials.host"]]);
+    // M25.1: the one tool that can add a host is an action of the fresh-card kind, written only under the person's card approval;
+    // F36's disconnect and mailed-code use are the same: actions of fresh-card kinds, nothing done before the card.
+    expect(ns.tools.map((t) => [t.name, t.kind, t.mutates ?? false, t.actionKind ?? null])).toEqual([["credential_list", "observation", false, null], ["credential_request", "observation", false, null], ["credential_host_propose", "action", false, "credentials.host"], ["credential_revoke", "action", false, "credentials.revoke"], ["credential_code_use", "action", false, "credentials.otp"]]);
     await expect(ns.tools[2]!.execute("c0", { ref: "cred://shop-api", host: "attacker.example" } as never)).rejects.toThrow(/^HOST_NOT_APPROVED: /);
     const out = await ns.tools[1]!.execute("c1", { host: "attacker.example", name: "attacker-login", login: true } as never);
     const said = out.content.map((c) => ("text" in c ? c.text : "")).join("");

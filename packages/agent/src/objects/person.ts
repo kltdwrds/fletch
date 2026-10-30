@@ -356,6 +356,11 @@ export class Person extends Agent<Env> {
     return this.authority.revoke(by, id);
   }
 
+  /** A disconnect (F36): the person's grants that name the credential end with it. */
+  async revokeGrantsNaming(by: string, ref: string) {
+    return this.authority.revokeNaming(by, ref);
+  }
+
   async listGrants(by: string): Promise<Grant[] | null> {
     return this.authority.list(by);
   }

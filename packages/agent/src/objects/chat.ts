@@ -95,7 +95,14 @@ export class Chat extends Agent<Env> {
       egress: (person) => egressFor(this.env.VAULT.get(this.env.VAULT.idFromName(this.env.TENANT_ID)) as unknown as VaultEgress, person),
       credentials: (person) => {
         const vault = () => this.env.VAULT.get(this.env.VAULT.idFromName(this.env.TENANT_ID));
-        return { list: () => vault().list(person), addApprovedHost: (input, writer) => vault().addApprovedHost(input, writer) };
+        return {
+          list: () => vault().list(person),
+          addApprovedHost: (input, writer) => vault().addApprovedHost(input, writer),
+          // A disconnect and a code's use, each under the person's card (F36): the Vault checks the writer again.
+          revoke: (ref, writer) => vault().revoke(ref, writer),
+          revokeNaming: async (ref) => (await getAgentByName(this.env.PERSON, person)).revokeGrantsNaming(person, ref),
+          approveCode: (input, writer) => vault().approveOneTimeCode(input, writer),
+        };
       },
       secrets: (person, text) => holdTypedSecrets(text, (value) => this.env.VAULT.get(this.env.VAULT.idFromName(this.env.TENANT_ID)).holdTyped({ person, value, source: "chat" })),
       ...(this.browserBinding() ? { browse: this.browseHook(this.browserBinding() as BrowserBinding) } : {}),

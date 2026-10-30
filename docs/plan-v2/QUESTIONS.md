@@ -132,6 +132,20 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
+### Q30 (F36), 2026-10-30: F36's two-way choices, recorded here because the decision log is at its cap
+
+**Blocks nothing; for your read.** The decision log is at its 40 KB cap (`scripts/check-decisions.mjs`; pruning it
+is for its owner), so F36's reversible choices are here. (a) `vault_events` gains `dismissed` (its detail names the
+link's setup id, so a later ask's link for the same name still works) and `rejected` (a provider's 401 or 403, by
+`provider`; the audit outcome stays `resolved`, as T-P9-07 needs); no schema change. (b) An expired credential is
+refused `VAULT_CRED_INACTIVE` at the egress and the fill too, as T-P9-08 names it; `EGRESS_CRED_EXPIRED` is gone.
+(c) Permissions lists every grant once, replacing "What others can ask"; the Connected "Yours" rows keep expired and
+spent keys and leave out held codes and typed secrets. (d) The four surface tasks declare the Vault rows their own
+turns write, within their contract lines (T-P9-02 a dismissal, T-P9-08 the audit rows of its three uses, T-P9-09 the
+revocation); their harness (`test/evals/p9-connectors/harness-surface.ts`) counts the Vault's lifecycle events and
+audit rows, so a revocation is an added row rather than a row gone. Recommended answer: none needed; move any of these
+into a record if others come to rely on it.
+
 ### Q28 (P3, P5, F34), 2026-10-30: a task whose delegation the model closed reads Running for ever
 
 **Blocks nothing.** Found while building F34's slot settle. When a steer closes a running child (`subagents_close`,

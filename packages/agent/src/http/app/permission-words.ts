@@ -44,8 +44,6 @@ export const AVAILABLE_CONNECTORS = [
 
 export const PERMISSIONS_TEXT = {
   title: "Permissions",
-  standing: "What others can ask of your agent",
-  standingEmpty: "Nobody can ask your agent for anything on their own.",
   intro: "What your agent does on its own and when it asks first.",
   connectors: "Connectors",
   allConnectors: "All connectors",
@@ -154,27 +152,13 @@ const askWords = (g: Grant): string => {
   return hit ? hit[1] : ASK_FALLBACK;
 };
 
-export interface StandingNote {
-  /** The grant id, so Revoke can name it; never drawn. */
-  id: string;
-  title: string;
-  at: number;
-  until: number | null;
-}
-
-/** The grants the person signed that let someone else's request through, live now, as sentences. */
-export function standingNotes(grants: readonly Grant[], nameOf: (email: string) => string, now: number): StandingNote[] {
-  return grants
-    .filter((g) => g.grantor.kind === "person" && g.grantee.kind !== "own-agent" && inForce(g, now))
-    .sort((a, b) => b.created_at - a.created_at || a.id.localeCompare(b.id))
-    .map((g) => {
-      const who =
-        g.grantee.kind === "person" ? nameOf(g.grantee.id ?? "")
-        : g.grantee.kind === "agent-of-person" ? `${nameOf(g.grantee.id ?? "")}'s agent`
-        : g.grantee.kind === "team" ? "Your team"
-        : "Anyone in your company";
-      const what = askWords(g);
-      const title = g.mode === "deny" ? `${who} cannot ask your agent to ${what}` : g.mode === "ask" ? `${who} can ask your agent to ${what}; it checks with you first` : `${who} can ask your agent to ${what}`;
-      return { id: g.id, title, at: g.created_at, until: g.expires_at ?? null };
-    });
+/** A grant that lets someone else ask, as a sentence: who, what, and whether it checks first. */
+export function standingTitle(g: Grant, nameOf: (email: string) => string): string {
+  const who =
+    g.grantee.kind === "person" ? nameOf(g.grantee.id ?? "")
+    : g.grantee.kind === "agent-of-person" ? `${nameOf(g.grantee.id ?? "")}'s agent`
+    : g.grantee.kind === "team" ? "Your team"
+    : "Anyone in your company";
+  const what = askWords(g);
+  return g.mode === "deny" ? `${who} cannot ask your agent to ${what}` : g.mode === "ask" ? `${who} can ask your agent to ${what}; it checks with you first` : `${who} can ask your agent to ${what}`;
 }

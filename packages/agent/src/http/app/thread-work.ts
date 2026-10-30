@@ -13,6 +13,7 @@
 // The script runs inside the chat's (CHAT_SCRIPT interpolates it), so it shares that scope: `add`, `thinking`,
 // `endThinking`, `el`, `icon`, `filePath`, `go` and `getJson`. Text is always set as text, never as markup.
 import { NOT_STEPS } from "../../chat/activity-steps.ts";
+import { CAPTURE_ITEM_SCRIPT } from "./capture-item.ts";
 
 /** What the status line says while each tool runs: the activity in words, never the tool's identifier. */
 export const STATUS_WORDS: Record<string, string> = {
@@ -97,9 +98,10 @@ function fileCard(path) {
 // The agent's words with their links drawn (F24): an http(s) link an anchor, a stored file's a card where the link
 // stood, anything else left as written. A message with no link is left as it was drawn.
 const LINK = /\\[([^\\]\\n]+)\\]\\(([^)\\s]+)\\)/g;
-function linked(d) {
+${CAPTURE_ITEM_SCRIPT}function linked(d) {
   const text = d.raw, b = d.bubble;
-  if (!b || typeof text !== "string" || !text.match(LINK)) return;
+  // A capture link (F36) is drawn as its item after the words, whatever else the bubble holds.
+  if (!b || typeof text !== "string" || !text.match(LINK)) return captureItems(d);
   b.textContent = ""; b.replaceChildren(); delete b.dataset.flow;
   let at = 0;
   for (const m of text.matchAll(LINK)) {
@@ -111,5 +113,6 @@ function linked(d) {
     else b.append(m[0]);
   }
   if (at < text.length) b.append(text.slice(at));
+  captureItems(d);
 }
 `;

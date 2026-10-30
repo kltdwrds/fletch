@@ -22,7 +22,7 @@ export interface CompanyConnector {
 /** The Vault's half: it holds the value and answers with a code, never the value. */
 export interface CompanyVault {
   putCompany(input: { connector: string; value: string; hosts: string[]; by: string }): Promise<{ ok: true; ref: string } | { ok: false; code: string; reason: string }>;
-  removeCompany(connector: string): Promise<boolean>;
+  removeCompany(connector: string, by?: string): Promise<boolean>;
   /** A departing member's credentials, grants and saved logins (M24.3, `Company.depart`). */
   purgePerson(person: string): Promise<{ ok: true; credentials: number }>;
 }
@@ -94,7 +94,7 @@ export class CompanyConnectors {
   async remove(by: string, id: string, vault: CompanyVault): Promise<{ ok: true } | Refusal> {
     if (!isAdminRole(this.members.lookup(by)?.role)) return notAdmin;
     if (!this.has(id)) return { ok: false, code: "CONNECTOR_UNKNOWN", reason: `no company connector ${id}` };
-    await vault.removeCompany(id);
+    await vault.removeCompany(id, normalizeEmail(by));
     this.sql.exec("DELETE FROM company_connectors WHERE id = ?", id);
     return { ok: true };
   }

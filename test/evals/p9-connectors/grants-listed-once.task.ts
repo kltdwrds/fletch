@@ -2,7 +2,7 @@
 // grants (a one-shot for five minutes, a standing one for thirty days), one code grant, and two authority grants (an
 // allow-once spent, a standing one). Asked what she has allowed, the reply lists the same grants the Permissions pane
 // draws (delta 7, F36), each with what it covers, its lifetime and when it was made; each count on the pane is the
-// rows'. Graded over `P9SurfaceWorld`: skipped by name until F36.
+// rows'. Graded over `P9SurfaceWorld` (`harness-surface.ts`, F36).
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P9SurfaceWorld } from "./world.ts";
 

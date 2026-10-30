@@ -164,7 +164,7 @@ export class BrowserStateVault extends VaultCore {
     const secret = this.sql("SELECT kind, expires_at, revoked_at, used_at FROM secrets WHERE owner = ? AND ref = ?", person, row.ref)[0];
     if (secret?.kind !== "browser-state") return refuse("EGRESS_CRED_UNKNOWN", `no saved login for ${site.value}`);
     const status = this.status(secret);
-    if (status !== "active") return refuse(status === "revoked" ? "EGRESS_CRED_REVOKED" : "EGRESS_CRED_EXPIRED", `the saved login for ${site.value} is ${status}`);
+    if (status !== "active") return refuse(status === "revoked" ? "EGRESS_CRED_REVOKED" : "VAULT_CRED_INACTIVE", `the saved login for ${site.value} is ${status}`);
     const grant = await this.grantFor(person, row.ref, site.value, RESTORE, person);
     if (!grant.ok) {
       this.event(person, row.ref, "restore-refused", `agent:${person}`, grant.code);

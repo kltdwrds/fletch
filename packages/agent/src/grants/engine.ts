@@ -18,8 +18,11 @@ export function isPurchaseKind(kind: string): boolean {
   return kind === "purchase" || kind.startsWith("purchase.") || kind.endsWith(".purchase");
 }
 
-/** Kinds that run only under the person's fresh approval card, every time: a public share link (M24.3), a host the agent proposed for a credential (M25.1). */
-export const FRESH_CARD_KINDS: readonly string[] = ["files.share", "credentials.host"];
+/**
+ * Kinds that run only under the person's fresh approval card, every time: a public share link (M24.3), a host the agent
+ * proposed for a credential (M25.1), a disconnect asked in chat and a mailed code used once (F36, P9 deltas 6 and 8).
+ */
+export const FRESH_CARD_KINDS: readonly string[] = ["files.share", "credentials.host", "credentials.revoke", "credentials.otp"];
 export function needsFreshCard(kind: string): boolean {
   return FRESH_CARD_KINDS.includes(kind);
 }
