@@ -21,7 +21,8 @@ jobs:
       # The pull request's whole diff from the merge base decides what runs. Docs (under docs/, or a Markdown or
       # LICENSE file at the root) run `pnpm check` alone. A cluster contract (docs/plan-v2/contracts/) adds the tests
       # related to the test files that name it (`vitest related`, so a world.ts that names it brings its tasks).
-      # Anything else, or an empty diff, runs `pnpm verify`.
+      # Anything else, an empty diff or a base not in the clone runs `pnpm verify`. --no-renames lists a moved file's
+      # old path too, so code moved under docs/ still counts as code (scripts/ci-classify.test.mjs).
       - name: Classify the diff
         id: scope
         env:
@@ -38,7 +39,7 @@ jobs:
               *) echo code ;;
             esac
           }
-          files=$(git diff --name-only "$PR_BASE...$PR_HEAD") || files=""
+          files=$(git diff --name-only --no-renames "$PR_BASE...$PR_HEAD") || files=""
           code="" contracts=""
           while IFS= read -r f; do
             [ -n "$f" ] || continue
