@@ -10,6 +10,9 @@ export const STOP_CODE = "TURN_STOPPED";
 /** The chat-meta key a requested stop is kept under, so an instance that resumes the turn honours it. */
 export const stopKey = (turnId: string) => `stop:${turnId}`;
 
+/** The chat-meta key of a task stopped after its turn ended, its delegation still out (F31's drawer Stop): the thread draws that turn as stopped (F33, B-P3-06). */
+export const haltKey = (turnId: string) => `halt:${turnId}`;
+
 const label = (tool: string) => tool.replaceAll("_", " ");
 /** A message's words cut to 80 characters, for a line that names it. */
 export const clip = (text: string) => (text.length > 80 ? `${text.slice(0, 79)}…` : text);
@@ -48,4 +51,10 @@ export function stopNote(dropped: Effect[]): string {
   const said = dropped.filter((e) => e.kind === "deliver").length;
   const parts = [...calls, ...(said ? [`${said} message(s) to the person`] : [])];
   return `(From the harness.) The person stopped this turn here.${parts.length ? ` What its last step proposed was not done: ${parts.join("; ")}.` : ""}`;
+}
+
+/** The note the agent reads next after a Stop of a task whose turn had ended (F33, B-P3-06): the delegations it ended, which never hand off and are never resumed. */
+export function haltNote(groups: readonly string[]): string {
+  const named = groups.length ? ` (delegation ${groups.join(", ")})` : "";
+  return `(From the harness.) The person stopped this task while its sub-agents were still out. What did not run: the sub-agents it started${named} were ended before they reported, and their handoff will not arrive. An ended sub-agent is never resumed; that work is a new delegation, started only if the person asks.`;
 }

@@ -69,7 +69,7 @@ describe("[F14] sub-agent sections and the launch step", () => {
     expect(t.subagents).toHaveLength(1);
     expect(t.subagents[0]).toMatchObject({ n: "01", grp, launchStep: launch.n });
     // Queued: it has not run, so it has no steps yet, and its facet is not made by the read.
-    expect(t.subagents[0]?.rows).toEqual([{ id: `${grp}.1`, role: "worker", depth: 1, parent: "main", brief: BRIEF, status: "queued", code: null, verdict: null, verdictReason: null, steps: [] }]);
+    expect(t.subagents[0]?.rows).toEqual([{ id: `${grp}.1`, role: "worker", depth: 1, parent: "main", brief: BRIEF, status: "queued", code: null, verdict: null, verdictReason: null, tokens: 0, failed: 0, words: "Queued", steps: [] }]);
     expect(w.transcriptReads).toEqual([]);
     expect(launch.detail.prose).toBe(`Started 1 sub-agent on parts of this task. Sub-agent 1 is a worker with the brief "${BRIEF}". It is queued, and its results are not back yet. ${VERIFIER_CONTRACT}`);
     // The briefs stay blocks as F13 drew them; no verdict step before the handoff.

@@ -18,7 +18,7 @@ import { coreNamespace } from "../tools/search.ts";
 import { reactTool } from "./agent-reaction.ts";
 import { compact, type Compacted } from "./compact-turn.ts";
 import { type CompactionRecord, ChatStore } from "./store.ts";
-import { type TaskRecord, taskOf, tasksOf, taskSteps, taskStop, taskUsage } from "./activity.ts";
+import { childIds, type TaskRecord, taskOf, tasksOf, taskSteps, taskStop, taskUsage } from "./activity.ts";
 import { Approvals, type DecideResult, requestReply } from "./approvals.ts";
 import { addTally, replyToColleague, tallyOf } from "./approval-ports.ts";
 import { CardStore, type CardView, type Choice, pauseWords } from "./cards.ts";
@@ -46,7 +46,7 @@ import { pendingQuestion, reactionRow } from "./reaction-input.ts";
 import { noteOpenTodos } from "./todo.ts";
 import type { ViewResult } from "../views/select.ts";
 import { chatNamespaces } from "./session.ts";
-import { endStopped, placedEntries, queryOwnedView, recordTurnEnd, stoppedEntry } from "./steering.ts";
+import { endStopped, haltTurn, placedEntries, queryOwnedView, recordTurnEnd, stoppedEntry } from "./steering.ts";
 
 export type { ChatView, EngineCtx, EngineHooks, Wakeup } from "./hooks.ts";
 export type { RequestInput, SendInput } from "./inputs.ts";
@@ -370,10 +370,10 @@ export class ChatEngine {
   tasksFor(person: string): TaskRecord[] | null { return this.owner() === person ? tasksOf(this.store, this.mailbox, this.chatId()) : null; }
   taskFor(person: string, id: string): TaskRecord | null { return this.owner() === person ? (taskOf(this.store, this.mailbox, this.chatId(), id) ?? null) : null; }
   async stepsFor(person: string, task: TaskRecord) { return this.owner() === person ? taskSteps(this.store, task, await (this.ledger() as LedgerSink & { journalRows(f: { principal: string }): Promise<JournalRow[]> }).journalRows({ principal: person })) : null; }
-  usageFor(person: string, task: TaskRecord) { return taskUsage(async () => (this.owner() === person ? (this.ledger() as LedgerSink & { modelCalls(f: { person: string }): Promise<ModelCallRow[]> }).modelCalls({ person }) : []), task); }
+  usageFor(person: string, task: TaskRecord) { return taskUsage(async () => (this.owner() === person ? (this.ledger() as LedgerSink & { modelCalls(f: { person: string }): Promise<ModelCallRow[]> }).modelCalls({ person }) : []), task, childIds(this.hooks.subagents?.status() ?? [], task)); }
   async stopTask(person: string, id: string): Promise<StopResult> {
-    const s = taskStop(this.taskFor(person, id), this.owner() === person, this.store.runningTurn()?.id);
-    if ("halt" in s) this.store.transaction(() => this.store.setMeta(stopKey(s.halt), String(this.now()))), this.hooks.subagents?.stopped?.(s.halt);
+    const task = this.taskFor(person, id), s = taskStop(task, this.owner() === person, this.store.runningTurn()?.id);
+    if ("halt" in s) this.store.transaction(() => haltTurn(this.store, s.halt, task?.groups ?? [], this.now())), this.hooks.subagents?.stopped?.(s.halt);
     return "halt" in s ? { ok: true, turn: s.halt } : "turn" in s ? this.stop(person) : s;
   }
 

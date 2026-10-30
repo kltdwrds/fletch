@@ -7,7 +7,7 @@ import type { ViewResult } from "../views/select.ts";
 import { VIEW_OWNER } from "../views/tool.ts";
 import type { PlacedEntry } from "./history.ts";
 import { clientIdOf, type Mailbox } from "./mailbox.ts";
-import { effectWords, STOP_CODE, stopNote, stoppedText } from "./stop.ts";
+import { effectWords, haltKey, haltNote, STOP_CODE, stopKey, stopNote, stoppedText } from "./stop.ts";
 import type { ChatStore } from "./store.ts";
 import type { Effect } from "./tools.ts";
 
@@ -21,6 +21,17 @@ export function endStopped(store: ChatStore, mailbox: Mailbox, turnId: string, d
   store.endTurn(turnId, "stopped", STOP_CODE, at);
 }
 
+/**
+ * Stops a task whose turn had ended with its delegation still out (F31's drawer Stop), inside the caller's transaction:
+ * the stop kept on the turn, the note the agent reads next naming the delegations ended (F33), and the turn drawn as
+ * stopped in the thread.
+ */
+export function haltTurn(store: ChatStore, turnId: string, groups: readonly string[], at: number): void {
+  store.setMeta(stopKey(turnId), String(at));
+  store.setMeta(haltKey(turnId), String(at));
+  store.appendMessage(`stop:${turnId}`, { role: "user", content: haltNote(groups), timestamp: at });
+}
+
 /** A stopped turn's words: stopped, never done, with what it had committed already. */
 export function stoppedEntry(store: ChatStore, mailbox: Mailbox, turnId: string): { text: string; effects: string[] } {
   const effects = store.committed(turnId).map((r) => effectWords(JSON.parse(r.payload) as Effect));
@@ -30,7 +41,9 @@ export function stoppedEntry(store: ChatStore, mailbox: Mailbox, turnId: string)
 /** The person's mailbox messages the transcript does not draw, and the stopped turns. */
 export function placedEntries(store: ChatStore, mailbox: Mailbox): PlacedEntry[] {
   const mail = mailbox.drawn().map((r): PlacedEntry => ({ kind: "you", text: r.text, at: r.acceptedAt, ...((id) => (id ? { id } : {}))(clientIdOf(r)), mid: `q${r.ordinal}`, seq: r.seq }));
-  const stopped = store.turns().filter((t) => t.status === "stopped").map((t): PlacedEntry => ({ kind: "stopped", ...stoppedEntry(store, mailbox, t.id), at: t.ended_at ?? t.started_at, turn: t.id, seq: null }));
+  // A turn stopped while it ran, and one whose task was stopped after it ended with its delegation out (F33).
+  const halted = (id: string) => Number(store.meta(haltKey(id)) || 0) || null;
+  const stopped = store.turns().filter((t) => t.status === "stopped" || halted(t.id)).map((t): PlacedEntry => ({ kind: "stopped", ...stoppedEntry(store, mailbox, t.id), at: halted(t.id) ?? t.ended_at ?? t.started_at, turn: t.id, seq: null }));
   return [...mail, ...stopped];
 }
 

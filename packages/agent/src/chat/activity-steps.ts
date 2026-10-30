@@ -231,7 +231,7 @@ export function journalOf(journal: readonly JournalRow[], chatId: string, turnId
  * `toolResult` of the same call id. `chatId` is the journal ids' prefix. A call with journal rows is a gated action,
  * titled by its card's label and in the state its latest row says; every other call is titled from `STEP_WORDS`.
  */
-export function stepsOf(rows: readonly TranscriptRow[], journal: readonly JournalRow[], o: { chatId: string }): StepRecord[] {
+export function stepsOf(rows: readonly TranscriptRow[], journal: readonly JournalRow[], o: { chatId: string; child?: boolean }): StepRecord[] {
   const results = new Map<string, Result>();
   for (const { message: m } of rows) {
     if (m.role !== "toolResult") continue;
@@ -242,7 +242,8 @@ export function stepsOf(rows: readonly TranscriptRow[], journal: readonly Journa
   for (const { turnId, message: m } of rows) {
     if (m.role !== "assistant" || !Array.isArray(m.content)) continue;
     for (const part of m.content) {
-      if (part.type !== "toolCall" || NOT_STEPS.has(part.name)) continue;
+      // A sub-agent has no chat (F33, T-P3-03): its send or reaction is a call of its own, drawn as a step.
+      if (part.type !== "toolCall" || (NOT_STEPS.has(part.name) && !o.child)) continue;
       const call = part as unknown as Call;
       const args = (call.arguments && typeof call.arguments === "object" ? call.arguments : {}) as Args;
       const result = results.get(call.id) ?? null;

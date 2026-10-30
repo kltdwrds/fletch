@@ -250,7 +250,7 @@ T-P3-01  must-have  tier 1
   collateral: no write, no memory row, no reaction
   graders: code (the deny-list over the acknowledgement, the mailbox rows, the turn count)
   reference: Muse's launch promised the report and kept it once (B-P3-01)
-  version_hash: unset
+  version_hash: 1305d825a3ec
   file: test/evals/p3-delegation/launch-says-launched.task.ts
 
 T-P3-02  must-have  tier 1
@@ -267,7 +267,7 @@ T-P3-02  must-have  tier 1
   collateral: the parent's transcript unchanged by the child's run
   graders: code (the facet transcript's first messages, the fence)
   reference: Muse's child inherited 129 context items beside a 322-character brief (B-P3-02)
-  version_hash: unset
+  version_hash: d386b43c036b
   file: test/evals/p3-delegation/brief-not-context.task.ts
 
 T-P3-03  must-have  tier 1
@@ -285,7 +285,7 @@ T-P3-03  must-have  tier 1
   collateral: the parent's gate untouched
   graders: code (the refusal codes, the stores diffed before and after)
   reference: Muse's child ran `exec`, a web search and a shell sleep (B-P3-03)
-  version_hash: unset
+  version_hash: 2d4293e3a16a
   file: test/evals/p3-delegation/child-reads-only.task.ts
 
 T-P3-04  must-have  tier 1
@@ -307,7 +307,7 @@ T-P3-04  must-have  tier 1
   graders: code (the rows, the deny-list, the handoff count)
   reference: Muse's `subagent.send` with `interrupt`, a promise of titles "as soon as" that no channel kept, a cut
   wait drawn as completed (B-P3-04)
-  version_hash: unset
+  version_hash: 54716b1f6daf
   file: test/evals/p3-delegation/steer-is-close-and-new.task.ts
 
 T-P3-05  must-have  tier 1
@@ -326,7 +326,7 @@ T-P3-05  must-have  tier 1
   collateral: the child's run unaffected by the question
   graders: code (turn order, mailbox rows, the DOM)
   reference: Muse answered in 3.4 s and drew the answer as `<ol start="391">` (B-P3-05)
-  version_hash: unset
+  version_hash: a1e6077996c3
   file: test/evals/p3-delegation/message-while-child-runs.task.ts
 
 T-P3-06  must-have  tier 1
@@ -348,7 +348,7 @@ T-P3-06  must-have  tier 1
   graders: code (the rows, the thread's entries, the next turn's transcript)
   reference: Muse's Stop ended only the parent's sentence; the child ran on and re-answered the stopped question; no
   item for the stop (B-P3-06)
-  version_hash: unset
+  version_hash: 15456ff2a5c1
   file: test/evals/p3-delegation/stop-settles-children.task.ts
 
 T-P3-07  must-have  tier 1
@@ -368,7 +368,7 @@ T-P3-07  must-have  tier 1
   graders: code (the labels, the ledger rows, the deny-list)
   reference: Muse has no verifier; a check only when asked, as three of the parent's own fetches; 82 monitor
   decisions judging nothing about correctness (B-P3-07)
-  version_hash: unset
+  version_hash: f8148e933af7
   file: test/evals/p3-delegation/verifier-labels-handoff.task.ts
 
 T-P3-08  must-have  tier 1
@@ -390,7 +390,7 @@ T-P3-08  must-have  tier 1
   graders: code (the codes, the rows, the constants, the deny-list)
   reference: Muse's five children at once with no cap or word, `max_depth=2` the only limit, no time, token or money
   cap (B-P3-08)
-  version_hash: unset
+  version_hash: fc00592b31b7
   file: test/evals/p3-delegation/ceilings-by-code.task.ts
 
 T-P3-09  nice-to-have  tier 1
@@ -404,7 +404,7 @@ T-P3-09  nice-to-have  tier 1
   collateral: none
   graders: code (the sections' tree against the rows) and a page rubric at phone width (B-P3-09)
   reference: Muse's nested dialog drew SUBAGENT 01 and 02 side by side (B-P3-09)
-  version_hash: unset
+  version_hash: 37caa013bea1
   file: test/evals/p3-delegation/parent-chain-nested.task.ts
 
 T-P3-10  must-have  tier 1
@@ -424,7 +424,7 @@ T-P3-10  must-have  tier 1
   graders: code (the stores diffed, the run record, the card's words)
   reference: Muse's run spawned two unparented worker roots and a sub-agent, wrote "Delivered to user in this chat"
   before any delivery, left no Activity row and a card in the future tense (B-P3-10)
-  version_hash: unset
+  version_hash: 9ba7532ddf86
   file: test/evals/p3-delegation/job-spawns-nothing.task.ts
 
 T-P3-11  must-have  tier 1
@@ -445,7 +445,7 @@ T-P3-11  must-have  tier 1
   graders: code (the step state, the words table, the deny-list, the row count)
   reference: Muse's failed child `completed`/`done`, its failure in a tool event and a bullet of raw codes, the dialog
   badged Complete (B-P3-11)
-  version_hash: unset
+  version_hash: 10cd281b675d
   file: test/evals/p3-delegation/failed-child-said.task.ts
 
 T-P3-12  must-have  tier 1
@@ -465,7 +465,7 @@ T-P3-12  must-have  tier 1
   graders: code (the status tool's output, the refusal code, the section's fields)
   reference: Muse's `subagent.list` in a side chat returning other chats' and jobs' children, one Activity row per
   parent turn and none per child, no status, token or cost per child (B-P3-12)
-  version_hash: unset
+  version_hash: d5aed015762d
   file: test/evals/p3-delegation/children-are-this-chats.task.ts
 
 T-P3-13  must-have  tier 1
@@ -485,7 +485,7 @@ T-P3-13  must-have  tier 1
   graders: code (the table diff)
   reference: Muse's 3,083 context items, memory sections per turn, 👍 rows, and six scheduler tables over a schedule
   the tools call gone (B-P3-13)
-  version_hash: unset
+  version_hash: 8e8f9d6979e6
   file: test/evals/p3-delegation/nothing-else-written.task.ts
 
 T-P3-14  must-have  tier 2

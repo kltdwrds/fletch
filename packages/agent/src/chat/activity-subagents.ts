@@ -6,8 +6,11 @@
 // in its facet's transcript, read through the facet's one read (D-0011) only for a row whose stored `person` is the
 // requester, the parent's row being the authority and never the request; they are F13's `stepsOf` over that
 // transcript with no journal (a sub-agent's gate refuses every action), then "Handed off" with its final text. A read
-// that fails is refused by name, never answered as an empty list (D-0001).
+// that fails is refused by name, never answered as an empty list (D-0001). Each row carries its tokens as its row
+// stores them and its failed-step count beside its status in the one words table (F33, P3 deltas 4 and 5): a child whose
+// read failed but reported is `Done, 1 step failed`, never `failed`.
 import type { Message } from "@earendil-works/pi-ai";
+import { rowWords } from "../obs/activity-words.ts";
 import type { SubAgentRow, SubAgentStore } from "../subagents/store.ts";
 import type { TaskRecord } from "./activity.ts";
 import { type StepRecord, stepsOf } from "./activity-steps.ts";
@@ -30,6 +33,12 @@ export interface SubAgentSectionRow {
   code: string | null;
   verdict: SubAgentRow["verdict"];
   verdictReason: string | null;
+  /** Tokens the child's run spent, from its row (`subagents.tokens`). */
+  tokens: number;
+  /** Its own steps that failed or were refused; 0 when its steps could not be read. */
+  failed: number;
+  /** Its status and failed count in `ROW_STATUS`'s words (`rowWords`): the section head and its line say this. */
+  words: string;
   steps: ChildSteps;
 }
 
@@ -103,7 +112,7 @@ export function childSteps(row: Pick<SubAgentRow, "id" | "status">, messages: re
     const code = m.role === "toolResult" ? (m.details as { code?: unknown } | undefined)?.code : undefined;
     if (m.role === "toolResult" && typeof code === "string") refused.set(m.toolCallId, code);
   }
-  const steps = stepsOf(messages.map((message, i) => ({ seq: i + 1, turnId: row.id, message })), [], { chatId: "" }).map((s) => {
+  const steps = stepsOf(messages.map((message, i) => ({ seq: i + 1, turnId: row.id, message })), [], { chatId: "", child: true }).map((s) => {
     const code = refused.get(s.callId);
     return code && s.state === "done" ? { ...s, state: "refused" as const, code, title: `${s.title}: not done (${code})`, detail: { ...s.detail, result: s.detail.result && { ...s.detail.result, ok: false, code } } } : s;
   });
@@ -176,7 +185,11 @@ export async function subagentSections(store: SubAgentRows, person: string, task
   for (const s of sections) {
     const launch = steps.find((x) => x.callId !== "" && groupIdOf(x.turnId, x.callId) === s.grp);
     const rows: SubAgentSectionRow[] = [];
-    for (const r of nested(s.rows)) rows.push({ id: r.id, role: r.role, depth: r.depth, parent: r.parent, brief: r.brief, status: r.status, code: r.code, verdict: r.verdict, verdictReason: r.verdictReason, steps: await stepsOfRow(store, person, r) });
+    for (const r of nested(s.rows)) {
+      const steps = await stepsOfRow(store, person, r);
+      const failed = Array.isArray(steps) ? steps.filter((x) => x.state === "failed" || x.state === "refused").length : 0;
+      rows.push({ id: r.id, role: r.role, depth: r.depth, parent: r.parent, brief: r.brief, status: r.status, code: r.code, verdict: r.verdict, verdictReason: r.verdictReason, tokens: r.tokens, failed, words: rowWords({ status: r.status, code: r.code, failed }), steps });
+    }
     subagents.push({ n: s.n, grp: s.grp, launchStep: launch?.n ?? null, rows });
   }
   return { steps, subagents };

@@ -144,12 +144,16 @@ export function taskSteps(store: ChatStore, task: TaskRecord, journal: readonly 
   return timelineOf(store.rowsOfTurns(task.turnIds), journal.filter((r) => turnIds.has(r.runId)), { chatId: task.chatId, doneTurnIds: done, finished: task.status !== "running" && task.status !== "waiting" }).steps;
 }
 
-/** A task's model calls, tokens and money (F31, P5 delta 7): the Ledger's rows of the task's own turns, by run id. */
+/**
+ * A task's model calls, tokens and money (F31, P5 delta 7): the Ledger's rows of the task's own turns, by run id, and
+ * of the sub-agents its delegations started and their verifier calls (`subagent:<id>`, `verifier:<id>`, F33), so the
+ * head counts a child's calls in the task's.
+ */
 export type TaskUsage = { ok: true; calls: number; tokens: number; costMicros: number; models: string[] } | { ok: false; code: "USAGE_UNREAD" };
 
 /** Sums the Ledger rows keyed by the task's turn ids; a Ledger that cannot be read is said by code, never as zero. */
-export async function taskUsage(rows: () => Promise<Array<{ runId: string; model: string; inputTokens: number; outputTokens: number; costMicros?: number }>>, task: TaskRecord): Promise<TaskUsage> {
-  const turns = new Set(task.turnIds);
+export async function taskUsage(rows: () => Promise<Array<{ runId: string; model: string; inputTokens: number; outputTokens: number; costMicros?: number }>>, task: TaskRecord, children: readonly string[] = []): Promise<TaskUsage> {
+  const turns = new Set([...task.turnIds, ...children.flatMap((id) => [`subagent:${id}`, `verifier:${id}`])]);
   let all: Awaited<ReturnType<typeof rows>>;
   try {
     all = await rows();
@@ -159,6 +163,9 @@ export async function taskUsage(rows: () => Promise<Array<{ runId: string; model
   const mine = all.filter((r) => turns.has(r.runId));
   return { ok: true, calls: mine.length, tokens: mine.reduce((n, r) => n + r.inputTokens + r.outputTokens, 0), costMicros: mine.reduce((n, r) => n + (r.costMicros ?? 0), 0), models: [...new Set(mine.map((r) => r.model))] };
 }
+
+/** The ids of the sub-agents a task's delegations started, from the chat's stored rows (`<grp>.<n>`, and below). */
+export const childIds = (rows: ReadonlyArray<{ id: string }>, task: Pick<TaskRecord, "groups">): string[] => rows.map((r) => r.id).filter((id) => task.groups.some((g) => id.startsWith(`${g}.`)));
 
 type Owned = {
   owner(): string | null;
