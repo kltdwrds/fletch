@@ -2,7 +2,8 @@
 // packages/host-cloudflare) are type-checked by tsconfig.hosts.json over the Workers types; the agent by
 // packages/agent/tsconfig.json over its `wrangler types` output, together with the tests that load Worker
 // code (test/workers/, test/scenarios/, test/support/object-harness.ts, the test host, test/support/host*.ts, and the
-// P2 and P15 test-host fixtures, test/support/p2-fixtures.ts and test/support/p15-fixtures.ts, checked there through
+// P2, P9 and P15 test-host fixtures, test/support/p2-fixtures.ts, test/evals/p9-connectors/fixture-connector.ts and
+// test/support/p15-fixtures.ts, checked there through
 // the eval harnesses and runs that import them).
 // The live exit test (test/live/) deploys through create-fletch, so create-fletch's project type-checks it, and the
 // tier-2 runner's slot client (scripts/evals.ts, scripts/evals/slot.ts), which signs in with the same software passkey.
@@ -10,5 +11,5 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": { "types": ["node"] },
   "include": ["scripts/**/*.ts", "test/**/*.ts", "vitest.config.ts"],
-  "exclude": ["test/workers/**", "test/scenarios/**", "test/evals/**/*.test.ts", "test/evals/**/harness.ts", "test/evals/**/harness-*.ts", "test/evals/**/runs.ts", "test/evals/**/runs-*.ts", "test/support/object-harness.ts", "test/support/p2-fixtures.ts", "test/support/p15-fixtures.ts", "test/support/host.ts", "test/support/host.setup.ts", "test/support/soft-authenticator.ts", "test/live/f1-deploy.live.test.ts", "scripts/live-sweep.ts", "scripts/evals.ts", "scripts/evals/slot.ts", "node_modules"]
+  "exclude": ["test/workers/**", "test/scenarios/**", "test/evals/**/*.test.ts", "test/evals/**/harness.ts", "test/evals/**/harness-*.ts", "test/evals/**/runs.ts", "test/evals/**/runs-*.ts", "test/evals/**/fixture-connector.ts", "test/support/object-harness.ts", "test/support/p2-fixtures.ts", "test/support/p15-fixtures.ts", "test/support/host.ts", "test/support/host.setup.ts", "test/support/soft-authenticator.ts", "test/live/f1-deploy.live.test.ts", "scripts/live-sweep.ts", "scripts/evals.ts", "scripts/evals/slot.ts", "node_modules"]
 }

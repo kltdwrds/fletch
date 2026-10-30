@@ -3,15 +3,15 @@
 // connector's credential resolves only when the `Company` says the person holds a company grant (M10.2).
 import { DurableObject } from "cloudflare:workers";
 import { browserOf, captureState, injectField, restoreState } from "../browse/binding.ts";
+import { vapidSubject } from "../delivery/webpush.ts";
 import type { EgressContext, EgressResult, FillResult } from "../egress/module.ts";
 import { egressNetwork } from "../egress/outbound.ts";
 import type { OutboundRequest } from "../egress/policy.ts";
-import type { CredentialInfo, GrantInfo, PutResult, VaultCore } from "../vault/core.ts";
-import { BrowserStateVault } from "../vault/browser-state.ts";
-import type { CardWriter, Writer } from "../vault/hosts.ts";
-import { migrateObject, probeObject } from "../migrations/catalog.ts";
 import { hostOf } from "../host.ts";
-import { vapidSubject } from "../delivery/webpush.ts";
+import { migrateObject, probeObject } from "../migrations/catalog.ts";
+import { BrowserStateVault } from "../vault/browser-state.ts";
+import type { CredentialInfo, GrantInfo, PutResult, VaultCore } from "../vault/core.ts";
+import type { CardWriter, Writer } from "../vault/hosts.ts";
 
 export class Vault extends DurableObject<Env> {
   private readonly schema = migrateObject(this.ctx, "vault");
@@ -27,7 +27,7 @@ export class Vault extends DurableObject<Env> {
       keys: hostOf(this.env).keys,
       // Push services reach the deploy's owner, never a contact of someone else's (RFC 8292 `sub`).
       ...(vapidSubject(this.env.OWNER_EMAIL) ? { vapidSubject: vapidSubject(this.env.OWNER_EMAIL) } : {}),
-      fetch: egressNetwork,
+      fetch: this.network(),
       now: () => Date.now(),
       entitled: (person, connector, purpose) => this.env.COMPANY.get(this.env.COMPANY.idFromName(this.env.TENANT_ID)).connectorEntitled(person, connector, purpose),
       ...(browser ? { inject: (session: string, selector: string, value: string) => injectField(browser, session, selector, value) } : {}),
@@ -35,6 +35,14 @@ export class Vault extends DurableObject<Env> {
       ...(browser ? { browserState: { capture: (session: string) => captureState(browser, session), restore: (session: string, state) => restoreState(browser, session, state) } } : {}),
     });
     return this.coreInstance;
+  }
+
+  /**
+   * The egress module's network (M25.1): `egressNetwork` on a deploy. A preview slot's test host
+   * (`scripts/preview-slot/test-host.mjs`, F37) answers the P9 probe host instead; nothing else overrides it.
+   */
+  protected network(): (url: string, init: RequestInit) => Promise<Response> {
+    return egressNetwork;
   }
 
   /** The capture form and settings (`http/vault-routes.ts`) write as the signed-in person; nothing the model calls reaches these. */
