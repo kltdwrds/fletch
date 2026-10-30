@@ -17,6 +17,16 @@ export function statusWords(t: { status: keyof typeof ACTIVITY_TEXT.status; code
   return ACTIVITY_TEXT.failedSteps[t.failed === 1 ? 0 : 1].replace("{status}", base).replace("{n}", String(t.failed));
 }
 
+/** A sub-agent row's status in its section (F14), and with its failed-step count (F33, P3 delta 4) in the same table's words. */
+export const ROW_STATUS = { queued: "Queued", running: "Running", waiting: "Waiting", done: "Done", failed: "Failed: {code}" } as const;
+
+/** A sub-agent row's status said once for its section head and its line: `ROW_STATUS`, then the count as `failedSteps` says it. */
+export function rowWords(r: { status: keyof typeof ROW_STATUS; code: string | null; failed: number }): string {
+  const base = ROW_STATUS[r.status].replace("{code}", r.code ?? "SUBAGENT_FAILED");
+  if (r.failed <= 0) return base;
+  return ACTIVITY_TEXT.failedSteps[r.failed === 1 ? 0 : 1].replace("{status}", base).replace("{n}", String(r.failed));
+}
+
 /**
  * A finished task's summary step in code's words (F31, P5 delta 1): what it did by count, from the steps' states and
  * never from a model's words, then the reply quoted under `reply`. Each group says its count and how many of it failed;

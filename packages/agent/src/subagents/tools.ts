@@ -20,13 +20,15 @@ export interface SubAgentsView {
   close(person: string, ids: string[]): Promise<CloseResult>;
 }
 
+// No `maxItems`: `spawnDecision` refuses a request wider than MAX_FANOUT with SUBAGENT_FANOUT_CAP and its reason
+// (F33, B-P3-08); a schema bound answered first with a validation error that carried no code.
 export const DelegateParams = Type.Object({
   tasks: Type.Array(
     Type.Object({
       role: Type.Union([Type.Literal("worker"), Type.Literal("coordinator")], { description: "worker: does one part and reports; coordinator: may split its part among workers" }),
       brief: Type.String({ minLength: 1, description: "Everything the sub-agent needs: the part of the task, what to report, and what not to do." }),
     }),
-    { minItems: 1, maxItems: MAX_FANOUT },
+    { minItems: 1 },
   ),
 });
 

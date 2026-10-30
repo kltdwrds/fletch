@@ -88,7 +88,7 @@ export function delegateRequestSpec(self: { role: SubAgentRole; depth: number },
     kind: "observation",
     label: "start sub-agents",
     description: `Ask for up to ${MAX_FANOUT} workers, each with a brief, for parts of this task. Only a coordinator may; their handoffs come back to you in your next round.`,
-    parameters: Type.Object({ briefs: Type.Array(Type.String({ minLength: 1 }), { minItems: 1, maxItems: MAX_FANOUT }) }),
+    parameters: Type.Object({ briefs: Type.Array(Type.String({ minLength: 1 }), { minItems: 1 }) }), // the cap is the gate's code (F33)
     execute: async (_id, params) => {
       const requests = (params as { briefs: string[] }).briefs.map((brief) => ({ role: "worker" as const, brief }));
       const d = spawnDecision(self, requests, 0);

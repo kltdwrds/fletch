@@ -11,7 +11,7 @@
 
 import type { TaskStatus } from "../../chat/activity.ts";
 import type { StepRecord } from "../../chat/activity-steps.ts";
-import { ACTIVITY_TEXT as STATUS_WORDS, USAGE_WORDS } from "../../obs/activity-words.ts";
+import { ROW_STATUS, ACTIVITY_TEXT as STATUS_WORDS, USAGE_WORDS } from "../../obs/activity-words.ts";
 import { type IconName, ic } from "./icons.ts";
 import { SCRIPT_GLYPHS } from "./shell.ts";
 
@@ -39,8 +39,8 @@ export const ACTIVITY_TEXT = {
   section: "SUBAGENT {n}",
   /** A step's state, beside its title in the detail pane. */
   state: { started: "Started, no answer yet", done: "Done", failed: "Failed", waiting: "Waiting on you", refused: "Refused" },
-  /** A sub-agent row's status. */
-  rowStatus: { queued: "Queued", running: "Running", waiting: "Waiting", done: "Done", failed: "Failed: {code}" },
+  /** A sub-agent row's status, F33's table cited; the route sends each row's `words` with its failed count. */
+  rowStatus: ROW_STATUS,
   verdict: "Verdict: {verdict}",
   noVerdict: "No verdict yet",
   stepsUnavailable: "Could not read this sub-agent's own steps just now. Refresh to try again.",
@@ -95,6 +95,7 @@ export const ACTIVITY_CSS = `
 .qf-task-list .qf-items-head span:last-child { margin-left: auto; text-transform: none; font-weight: 500; }
 .task-sub { margin: 0 0 8px; color: var(--text-secondary); font: 400 13px/18px var(--font-sans); }
 .task-sub-note { margin: 0 0 16px 30px; color: var(--text-secondary); font: 400 13px/18px var(--font-sans); }
+.task-sub[data-depth="2"], .task-sub[data-depth="2"] + .qf-tl, .task-sub[data-depth="2"] + .task-sub-note { margin-left: 24px; }
 .task-caption { margin: 0; color: var(--text-tertiary); font: 500 12px/16px var(--font-sans); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #task-pane { display: flex; flex-direction: column; gap: 12px; }
 #task-pane .task-result[data-code]:not([data-code=""]) { color: var(--status-error); }
@@ -189,13 +190,16 @@ function drawSteps(t) {
   for (const sec of t.subagents || []) {
     const lead = sec.rows[0];
     const head = el("div"); head.className = "qf-items-head"; head.dataset.section = sec.n;
-    // The head says the lead row's status and verdict; each row's own line below repeats them with its reason.
+    // The head says the lead row's status with its failed count, its tokens and its verdict (F33); each row's own line
+    // below repeats them with its reason.
     const verdictOf = (r) => (r.verdict ? fill(TASK.verdict, { verdict: r.verdict }) : TASK.noVerdict);
-    head.append(el("span", fill(TASK.section, { n: sec.n })), el("span", lead ? fill(TASK.rowStatus[lead.status] || lead.status, { code: lead.code }) + " · " + verdictOf(lead) : ""));
+    const wordsOf = (r) => r.words || fill(TASK.rowStatus[r.status] || r.status, { code: r.code });
+    const tokensOf = (r) => counted(TASK.usage.token, r.tokens || 0);
+    head.append(el("span", fill(TASK.section, { n: sec.n })), el("span", lead ? [wordsOf(lead), tokensOf(lead), verdictOf(lead)].join(" · ") : ""));
     box.append(head);
     for (const r of sec.rows) {
-      const sub = el("p"); sub.className = "task-sub"; sub.dataset.row = r.id;
-      sub.append(el("span", [TASK.subAgent + " " + r.id.split(".").slice(1).join("."), r.role, fill(TASK.rowStatus[r.status] || r.status, { code: r.code }), verdictOf(r) + (r.verdict && r.verdictReason ? ": " + r.verdictReason : "")].join(" · ")));
+      const sub = el("p"); sub.className = "task-sub"; sub.dataset.row = r.id; sub.dataset.depth = String(r.depth); // a worker sits under its coordinator (F33)
+      sub.append(el("span", [TASK.subAgent + " " + r.id.split(".").slice(1).join("."), r.role, wordsOf(r), tokensOf(r), verdictOf(r) + (r.verdict && r.verdictReason ? ": " + r.verdictReason : "")].join(" · ")));
       box.append(sub);
       // A child's steps are drawn when the answer carries them; refused, they are said by code, never an empty list.
       if (Array.isArray(r.steps)) { const ol = tl(box, true); for (const s of r.steps) stepLi(ol, s, sec.n + "/" + r.id + "/" + s.n); }
