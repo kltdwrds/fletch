@@ -17,6 +17,8 @@ import { join } from "node:path";
 import { EMPTY_SNAPSHOT, InfraError, reactionsOf, type SlotEntry, type SlotWorld, TurnError } from "../../test/support/evals.ts";
 import type { ChatLabel } from "../../test/evals/p6-memory/world.ts";
 import { type P6Call, p6Slot } from "./p6-slot.ts";
+import { p7Page } from "./p7-page.ts";
+import { type P7Slot, p7Slot, ZONE } from "./p7-slot.ts";
 import { type TestHostState, testHostReaders } from "./test-host.ts";
 import { type SavedPasskey, softAuthenticator } from "../../test/support/soft-authenticator.ts";
 import { origin as originOf, ownerTag, SLOT_OWNER, slotPlan } from "../preview-plan.mjs";
@@ -183,7 +185,7 @@ export function history(base: string, chatId: string, cookie: string, timeoutMs 
 }
 
 /** One turn over the chat socket, as the live exit test does it: resolves with the reply on `turn_done`, rejects with a TurnError otherwise. */
-export function turn(base: string, chatId: string, cookie: string, text: string, timeoutMs = TURN_TIMEOUT_MS): Promise<string> {
+export function turn(base: string, chatId: string, cookie: string, text: string, timeoutMs = TURN_TIMEOUT_MS, timeZone = "UTC"): Promise<string> {
   const wsUrl = `${base.replace(/^http/, "ws")}/chats/${chatId}/ws`;
   // Node's WebSocket (undici) takes request headers in its init object; the session is the cookie.
   const Socket = WebSocket as unknown as new (url: string, init: { headers: Record<string, string> }) => WebSocket;
@@ -206,7 +208,7 @@ export function turn(base: string, chatId: string, cookie: string, text: string,
     };
     ws.addEventListener("error", () => fail(new InfraError("SLOT_UNREACHABLE", `the chat socket failed: ${wsUrl}`)));
     ws.addEventListener("close", () => fail(new TurnError("SOCKET_CLOSED", "the chat socket closed before the turn ended")));
-    ws.addEventListener("open", () => ws.send(JSON.stringify({ type: "send", text, id, timeZone: "UTC" })));
+    ws.addEventListener("open", () => ws.send(JSON.stringify({ type: "send", text, id, timeZone })));
     ws.addEventListener("message", (event) => {
       let frame: { type: string; text?: string; code?: string; messages?: { who: string; text: string }[] };
       try {
@@ -228,6 +230,9 @@ export function turn(base: string, chatId: string, cookie: string, text: string,
     });
   });
 }
+
+/** How far into a minute a P7 trial's first prompt may be sent before it waits for the next minute. */
+const MINUTE_EARLY_MS = 15_000;
 
 /** How long a decision may take to start the turn it continues before the runner reads on without one. */
 const CONTINUE_START_MS = 20_000;
@@ -274,6 +279,65 @@ export function decide(base: string, chatId: string, cookie: string, card: strin
         started = true;
         if (quiet) clearTimeout(quiet);
       } else if (frame.type === "turn_done") finish();
+      else if (frame.type === "turn_failed") finish(new TurnError(`TURN_FAILED:${frame.code ?? "UNKNOWN"}`));
+      else if (frame.type === "turn_stopped") finish(new TurnError("TURN_STOPPED"));
+    });
+  });
+}
+
+/** How often a tick's run is read again while it runs, and how long it may take. */
+const TICK_POLL_MS = 2_000;
+
+/**
+ * A P7 tick (F30): with a socket open first, the job's next alarm fired by the test host, then its state read until a
+ * new run is done and its notices delivered, then the turn a notice wakes (F24) seen to its end, or none started within
+ * CONTINUE_START_MS. Rejects with a TurnError when no run is done within the turn's time.
+ */
+export function settleTick(base: string, chatId: string, cookie: string, p7: P7Slot, title: string | undefined, timeoutMs = TURN_TIMEOUT_MS): Promise<void> {
+  const wsUrl = `${base.replace(/^http/, "ws")}/chats/${chatId}/ws`;
+  const Socket = WebSocket as unknown as new (url: string, init: { headers: Record<string, string> }) => WebSocket;
+  const ws = new Socket(wsUrl, { headers: { cookie } });
+  return new Promise<void>((resolve, reject) => {
+    let settled = false;
+    let started = false;
+    let ran = false;
+    let quiet: ReturnType<typeof setTimeout> | undefined;
+    const timer = setTimeout(() => finish(new TurnError("TURN_TIMEOUT", `the tick's run and its turn did not end in ${Math.round(timeoutMs / 1000)} s`)), timeoutMs);
+    const finish = (error?: Error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (quiet) clearTimeout(quiet);
+      ws.close();
+      if (error) reject(error);
+      else resolve();
+    };
+    const runDone = async () => {
+      const { id, before } = await p7.tick(title);
+      while (!settled) {
+        await new Promise((r) => setTimeout(r, TICK_POLL_MS));
+        await p7.refresh();
+        const runs = p7.runsOf(id);
+        const outbox = p7.readers.outbox().filter((o) => o.state === "pending" || o.state === "delivering");
+        if (runs.length > before && runs.every((r) => r.phase === "done") && !outbox.length) break;
+      }
+      ran = true;
+      if (!started) quiet = setTimeout(() => finish(), CONTINUE_START_MS);
+    };
+    ws.addEventListener("error", () => finish(new InfraError("SLOT_UNREACHABLE", `the chat socket failed: ${wsUrl}`)));
+    ws.addEventListener("close", () => finish(started ? new TurnError("SOCKET_CLOSED", "the chat socket closed before the woken turn ended") : undefined));
+    ws.addEventListener("message", (event) => {
+      let frame: { type: string; code?: string };
+      try {
+        frame = JSON.parse(String(event.data));
+      } catch {
+        return;
+      }
+      if (frame.type === "history") runDone().catch((e: Error) => finish(e));
+      else if (frame.type === "turn_started") {
+        started = true;
+        if (quiet) clearTimeout(quiet);
+      } else if (frame.type === "turn_done" && ran) finish();
       else if (frame.type === "turn_failed") finish(new TurnError(`TURN_FAILED:${frame.code ?? "UNKNOWN"}`));
       else if (frame.type === "turn_stopped") finish(new TurnError("TURN_STOPPED"));
     });
@@ -359,12 +423,34 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
             )
           : null;
       if (p6 && task) await p6.begin(task.id);
-      const after = async (label: ChatLabel) => {
+      // A scheduling task (F30): Sam's jobs reset and the task's made, read again after each turn; the page in Chromium.
+      const page = task?.cluster === "P7" ? p7Page(base, cookie) : null;
+      const p7 =
+        task?.cluster === "P7" && page
+          ? p7Slot(
+              async (call) => {
+                const r = await testHostOp(base, lease, { op: "p7", person: OWNER, chat: chatId, call });
+                if (!r) throw new InfraError("SLOT_MISSING", "this slot serves no test host; `pnpm preview up` deploys one");
+                return r.answer as Record<string, unknown>;
+              },
+              () => chatId,
+              () => entriesOf(),
+              async (path) => {
+                const r = await http(base, "GET", path, { cookie });
+                return { status: r.res.status, body: r.body };
+              },
+              page,
+            )
+          : null;
+      if (p7 && task) await p7.begin(task.id, Date.now());
+      let prompted = false;
+      const after = async (label: ChatLabel, turn = `prompt:${label}`) => {
         histories.set(label, await history(base, chats.get(label) as string, cookie));
         await refresh();
         await p6?.refresh(`prompt:${label}`);
+        await p7?.refresh(turn.startsWith("prompt") ? "prompt" : turn);
       };
-      return {
+      const world: SlotWorld = {
         chatId,
         replies,
         snapshot: () => EMPTY_SNAPSHOT,
@@ -375,24 +461,45 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
         async send(text, label = "c1") {
           const chat = label as ChatLabel;
           if (!chats.has(chat)) chats.set(chat, await openChat());
-          const reply = await turn(base, chats.get(chat) as string, cookie, text);
+          // A P7 prompt is sent early in a minute, so a time it asks for "in five minutes" resolves in the minute it was
+          // asked (a turn's first tool call comes seconds later); the trial starts when it is sent.
+          if (p7 && !prompted) {
+            const into = Date.now() % 60_000;
+            if (into > MINUTE_EARLY_MS) await new Promise((r) => setTimeout(r, 60_000 - into + 500));
+            p7.started(Date.now());
+          }
+          prompted = true;
+          const reply = await turn(base, chats.get(chat) as string, cookie, text, TURN_TIMEOUT_MS, p7 ? ZONE : "UTC");
           replies.push(reply);
           await after(chat);
           return reply;
         },
         async event(name, payload) {
+          if (p7 && name === "tick") {
+            await settleTick(base, chatId, cookie, p7, payload.job);
+            await after("c1", "event:tick");
+            return;
+          }
+          if (p7 && name === "reload") {
+            await after("c1", "event:reload");
+            return;
+          }
           if (name !== "decide") throw new TurnError("EVENT_UNSUPPORTED", name);
           const cards = entriesOf().filter((e) => e.kind === "card" && e.card);
-          const card = payload.card === "first" ? cards[0]?.card : cards.find((e) => e.card?.id === payload.card)?.card;
+          // Unnamed (F30), the one pending card, as the tier-1 harnesses decide every pending card.
+          const card = payload.card === "first" ? cards[0]?.card : payload.card === undefined ? cards.find((e) => e.card?.state === "pending")?.card : cards.find((e) => e.card?.id === payload.card)?.card;
           if (!card) throw new TurnError("DECIDE_NO_CARD", `the chat has no card ${payload.card ?? ""} to decide`);
           await decide(base, chatId, cookie, card.id, payload.choice ?? "");
-          await after("c1");
+          await after("c1", "event:decide");
         },
         async read(path) {
           const r = await http(base, "GET", path, { cookie });
           return { status: r.res.status, body: r.body };
         },
       };
+      // The P7 readers keep their getters (an unread one throws when read, not when the world is made).
+      if (p7) Object.defineProperties(world, Object.getOwnPropertyDescriptors(p7.readers));
+      return world;
     },
   };
   return slot;

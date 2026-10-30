@@ -70,8 +70,10 @@ export interface SlotWorld extends ScenarioWorld {
   read(path: string): Promise<{ status: number; body: unknown }>;
   /**
    * Plays an event as the owner would (`SLOT_EVENTS` in `scripts/evals/runner.ts`): `decide` posts the decision on a
-   * card of this chat (payload `card`: its id, or `first` for the chat's first card; `choice`) through the page's
-   * route, then waits out the turn the decision continues. Rejects with a `TurnError` when there is nothing to decide.
+   * card of this chat (payload `card`: its id, `first` for the chat's first card, or unset for its pending card; `choice`)
+   * through the page's route, then waits out the turn the decision continues. Rejects with a `TurnError` when there is
+   * nothing to decide. A P7 world (F30) also plays `tick` (payload `job`: a title; the job's next alarm fired by the test
+   * host, waited out to its run's end and the turn its notice wakes) and `reload` (the world read again).
    */
   event(name: string, payload: Record<string, string>): Promise<void>;
 }

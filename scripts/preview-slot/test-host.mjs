@@ -8,11 +8,18 @@
 // - `Person`, `Ledger` and `Vault` add a read of their own tables, for a grader's leak scan, and the Vault its audit.
 // - `testHost(body, env)` answers `/__preview/test-host`, which ./ops.mjs serves only to the lease's holder: `reset`
 //   reopens the fixture sites in a person's browse memory before a trial; `state` reads a chat's log and the stores;
-//   `p6` is the memory world's call (F28, ./test-host-p6.mjs) with the named chats' stored rows.
+//   `p6` is the memory world's call (F28, ./test-host-p6.mjs) with the named chats' stored rows; `p7` the scheduling
+//   world's (F30, ./test-host-p7.mjs).
+// - `Job` reads the probe page from a fixture and keeps a clock the `p7` op's `tick` moves (./test-host-p7.mjs).
 import { getAgentByName } from 'agents';
-import { Chat as AgentChat, Ledger as AgentLedger, Person as AgentPerson, Vault as AgentVault } from '../../packages/agent/src/index.ts';
+import { egressFor } from '../../packages/agent/src/connectors/egress.ts';
+import { Chat as AgentChat, Job as AgentJob, Ledger as AgentLedger, Person as AgentPerson, Vault as AgentVault } from '../../packages/agent/src/index.ts';
+import { jobToolSpecs } from '../../packages/agent/src/jobs/job-tools.ts';
+import { personMemory } from '../../packages/agent/src/memory/rpc.ts';
+import { jobName } from '../../packages/agent/src/objects/job.ts';
 import { shareNamespace } from '../../test/support/p15-fixtures.ts';
 import { chatRows, p6Person } from './test-host-p6.mjs';
+import { clockedStorage, p7Op, probeGet, skewToNext } from './test-host-p7.mjs';
 import { SITES, testHostBinding } from './test-host-sites.mjs';
 
 const LOG = 'test-host:log';
@@ -63,6 +70,62 @@ export class Chat extends AgentChat {
   async testHostRows() {
     return chatRows(this.ctx.storage.sql);
   }
+
+  /** The notices drawn in this chat, with their source (`job:<id>`) (F30). */
+  async testHostNotices() {
+    return this.ctx.storage.sql.exec('SELECT source, text, at FROM notices ORDER BY at, id').toArray();
+  }
+}
+
+const SKEW = 'test-host:skew';
+const EGRESS = 'test-host:egress';
+
+export class Job extends AgentJob {
+  #skew = 0;
+  #chain = Promise.resolve();
+
+  constructor(ctx, env) {
+    super(ctx, env);
+    ctx.blockConcurrencyWhile(async () => {
+      this.#skew = (await ctx.storage.get(SKEW)) ?? 0;
+    });
+  }
+
+  jobHost() {
+    return { storage: clockedStorage(this.ctx.storage, () => this.#skew) };
+  }
+
+  deps() {
+    const get = probeGet((e) => {
+      this.#chain = this.#chain.then(async () => this.ctx.storage.put(EGRESS, [...((await this.ctx.storage.get(EGRESS)) ?? []), e]));
+      return this.#chain;
+    });
+    const vault = this.env.VAULT.get(this.env.VAULT.idFromName(this.env.TENANT_ID));
+    return {
+      ...super.deps(),
+      now: () => Date.now() + this.#skew,
+      get: () => get,
+      tools: (owner, jobId) => jobToolSpecs({ owner, jobId, get, memory: personMemory(this.env, owner), egress: egressFor(vault, owner), bucket: this.env.AGENT_BUCKET }),
+    };
+  }
+
+  /** Moves the clock to the job's next alarm and fires it now, as the runtime fires any alarm (F30). */
+  async testHostTick() {
+    const alarm = await this.ctx.storage.getAlarm();
+    const skew = skewToNext(this.#skew, alarm, Date.now());
+    if (skew === null) return { ok: false, code: 'P7_NO_ALARM', reason: 'the job has no alarm armed' };
+    this.#skew = skew;
+    await this.ctx.storage.put(SKEW, skew);
+    await this.ctx.storage.setAlarm(Date.now());
+    return { ok: true };
+  }
+
+  /** The job's clock: its armed alarm and now, both in its own time, and every request its network was sent. */
+  async testHostClock() {
+    await this.#chain;
+    const alarm = await this.ctx.storage.getAlarm();
+    return { alarmAt: alarm === null ? null : alarm + this.#skew, now: Date.now() + this.#skew, egress: (await this.ctx.storage.get(EGRESS)) ?? [] };
+  }
 }
 
 export class Person extends AgentPerson {
@@ -74,11 +137,22 @@ export class Person extends AgentPerson {
   async testHostP6(call) {
     return p6Person(this, call);
   }
+
+  /** An empty job list and the home zone saved as `zone`, before a P7 trial (F30). */
+  async testHostP7Reset(zone) {
+    this.ctx.storage.sql.exec('DELETE FROM job_index');
+    this.ctx.storage.sql.exec("INSERT OR REPLACE INTO job_settings (k, v) VALUES ('home_zone', ?)", zone);
+  }
 }
 
 export class Ledger extends AgentLedger {
   async testHostDump() {
     return tables(this.ctx.storage.sql);
+  }
+
+  /** Every model call's person, run and route (F30: a job's model calls are its route's). */
+  async testHostCalls() {
+    return this.ctx.storage.sql.exec('SELECT person, run_id, route FROM model_calls ORDER BY id').toArray();
   }
 }
 
@@ -140,6 +214,18 @@ export async function testHost(body, env) {
     const rows = {};
     for (const c of chats) rows[c] = await (await getAgentByName(env.CHAT, c)).testHostRows();
     return { status: 200, body: { answer, rows } };
+  }
+  if (body.op === 'p7') {
+    // F30: the P7 world (./test-host-p7.mjs): Sam's jobs reset, defined, ticked and read, with the chat's notices.
+    if (body.chat !== undefined && (typeof body.chat !== 'string' || !CHAT_ID.test(body.chat))) return { status: 400, body: { error: { code: 'invalid', message: 'name the chat' } } };
+    const call = { ...(body.call ?? {}), ...(body.chat ? { chat: body.chat } : {}) };
+    const h = {
+      person,
+      job: (id) => env.JOB.get(env.JOB.idFromName(jobName(body.person, id))),
+      chat: (id) => getAgentByName(env.CHAT, id),
+      ledger: env.LEDGER.get(env.LEDGER.idFromName(env.TENANT_ID)),
+    };
+    return { status: 200, body: { answer: await p7Op(call, body.person, h) } };
   }
   return { status: 404, body: { error: { code: 'not_found', message: 'no such test-host op' } } };
 }

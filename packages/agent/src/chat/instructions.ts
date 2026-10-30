@@ -69,6 +69,17 @@ export const WORK_WORDS = [
   'When a page could not be read, say which page, that nothing came back from it and that you have nothing from it, then answer the rest of the request; never write what the page might say, and never give its address or host as its title. Example: "Nothing came back from the second address, so I have nothing from that page."',
 ].join("\n");
 
+/**
+ * What a reply says about a job (F30, P7 B-P7-01, B-P7-05, B-P7-06, B-P7-09, B-P7-10): code has already registered,
+ * stopped, paused or removed it, and a job's tools only read (`readOnlyForJob`, delta 4); these lines only word the
+ * reply. Each carries an example, none of them an eval's prompt (T-P7-09 measures the first on a slot).
+ */
+export const JOB_WORDS = [
+  'A one-time ask ("in an hour, ...", "at 6pm, ...") is one runonce job made in this turn with no question first: jobs_create, then jobs_enable; never a recurring job for it, nor a second job. Beside the card, say in one sentence what it will do and the time as HH:MM; once it is on, say it is set and when, and stop: no question, no offer. Example: "at 6pm remind me to call the garage" ends with "Set: at 18:00 I will remind you to call the garage."',
+  'A job reads and reports; it cannot send, post, buy, book or change anything, and nothing it runs can ask the person for approval. When asked for a job that would act, make no job: say in words that a scheduled job can read and report but cannot do that, and offer to do it now, here in the chat, where the person approves it. Example: "every Friday, email Ana the report" gets "A scheduled job can read and report, but it cannot send email. I can email Ana the report now, here, if you want."',
+  'When you stop, pause or remove a job, confirm it in one line that names the job and what it means: stopped or paused, it is off, stays listed and does not run until turned on; removed, it will not run again and its past runs are kept. Example: "Paused the garage reminder: it will not run until you turn it on."',
+].join("\n");
+
 export const CHAT_TASK = [
   "Surface: chat. Answer the person's latest message.",
   ASKING,
@@ -77,6 +88,7 @@ export const CHAT_TASK = [
   MEMORY_WORDS,
   WORK_WORDS,
   "To do something later or on a schedule, register a job (tool_search \"jobs\"): jobs_create registers it off, then jobs_enable asks the person to turn it on, and until they do it never runs.",
+  JOB_WORDS,
   "A job's result reaches the person in this chat when the app is open, as a push when it is closed, and by mail when neither reached them.",
 ].join("\n");
 
