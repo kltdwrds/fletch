@@ -189,7 +189,15 @@ any deploy with a browser. F41 lets the word `login` through for that one tool (
 `packages/agent/src/tools/registry.ts`; every other word and the description offer still checked), and
 `test/workers/f41-identity-guard.test.ts` builds the browse namespace with a browser's every dependency and reads every
 tool name in the sources against the guard. The rejected alternative was renaming the tool, which changes a name the
-model already uses.
+model already uses. (i) Each P14 trial on a slot writes every standing file back to its seed, MEMORY.md
+included, because a memory line one trial wrote ("you go by Sam") made the next trial answer "already noted"; the
+op's read is one pure function (`p14Read` in `scripts/preview-slot/test-host-p14.mjs`) that the tier-1 world's test
+reads too, so the slot's state and the fake's cannot drift. (j) Four instruction lines in `WORK_WORDS`
+(`packages/agent/src/chat/instructions.ts`) were sharpened, each for a must-have that failed on the slot on its reply
+words, by giving the exact sentence in these words (Q18's pattern): the name line for T-P14-10 (said only about the
+agent's own name, never on "call me Sam"), the sign-in line for T-P14-11 (four sentences), and the write-as and
+call-me lines for T-P14-12 (the whole write-as sentence, no gendered pronoun even in a denial; memory_write before
+the one reply). No line was added for T-P14-14, a nice-to-have that fails 0/3 on the mail's label and address.
 
 ### Q35 (F39), 2026-10-30: T-P12-12 and T-P12-13 fail on the slot on their reply words; and F39's two-way choices
 
