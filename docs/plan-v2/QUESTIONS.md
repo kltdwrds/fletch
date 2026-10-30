@@ -132,7 +132,7 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
-### Q33 (F39), 2026-10-30: T-P12-12 and T-P12-13 fail on the slot on their reply words; and F39's two-way choices
+### Q35 (F39), 2026-10-30: T-P12-12 and T-P12-13 fail on the slot on their reply words; and F39's two-way choices
 
 **Blocks nothing; for your read.** On fletch-pv-3 at 25fa380 (the final lines), T-P12-12 failed 3/3 (twice the second
 reply, once the first) and T-P12-13 failed 2 trials with one `SLOT_5XX`; over the part's six runs T-P12-12 passed 2/3 at
@@ -161,6 +161,45 @@ purchase line was sharpened for T-P12-10 (a trial said "Nothing was ordered or p
 `browse_live` and then `browse_open`, one offered "its live view"): it asks for no sentence about a sale, one read with
 `browse_open` alone, and the words "live page"; and the typed-card line for "I will not keep" written out and nothing
 about where a card could be saved. Both must-haves then passed 3/3 at 25fa380.
+
+### Q33 (P14), 2026-10-30: D-0018 proposed: the agent's name is the owner's setting, never a message's; and P14's reversible choices and open doors
+
+**Blocks nothing; a one-way door for you to accept, amend or reject, and four doors left as questions.** The P14
+interrogation found Muse's identity to be three files (`~/IDENTITY.md` name, character, vibe, emoji; `~/SOUL.md`;
+`~/USER.md`) plus an avatar row, drawn from stored state and never from the model's text, but written by a chat turn
+the model interprets: "Edit name" only prefills the composer with "Change your name to ", and the model persists what
+it reads as a chosen name with `onboarding.update_identity`; the Identity "Edit" is a live file editor with no Save.
+Sign-in, passkeys, sessions, recovery and deletion are Meta Accounts Center's: no tool, no table, no pane, "no count
+readable". Settings has a no-card class (appearance mode and chat theme by `ui.set`, the Feed prompt, preferred
+services, the agent's name and vibe, the person's profile and memory) where "your explicit request is the authorization",
+decided by what the active client declares. To third parties Muse writes as the person by default and says it is the
+agent only "if asked"; no line forbids claiming to be the person; unknown pronouns fall to name-then-they by habit, not
+rule. fletch has no name row, one writer (the seed) for the standing files, no identity, settings or login tool,
+passkeys and a recovery code behind the host's routes with no Settings pane, and offboarding for a company member only.
+The orchestrator wrote `docs/decisions/0018-agent-name-is-the-owners-setting.md` (proposed, `decider: agent`): the
+agent's name and avatar are the owner's settings written only through the app, never by a model turn, a tool or a
+message; until the setting exists the agent has no name and says so. Nothing in F40 or F41 depends on the answer.
+**Recommended answer:** accept D-0018 as the standing position; the Person row and Settings control come as a part
+under P14 after the spine, when an owner asks.
+Four doors left as questions, no record written, because no part needs them yet: (i) a data export for the owner of a
+standalone deploy (today `qyvr:export v1` serves a company member's offboarding; promising it to an owner makes its
+shape a published format); (ii) a deletion of a standalone deploy's data (what the Ledger, the grants journal and the
+audit keep; irreversible); (iii) a theme, language or notification row and any tool that changes a setting (today none,
+and P14 grades that none does); (iv) a session list, sign-out-everywhere, passkey labels or a recovery reissue (each a
+change to `@qyvr/host`'s `Identity` or `@qyvr/host-cloudflare`'s `LoginCall` and its schema, D-0003). Say which, if
+any, you want before the first owner other than you.
+One defect the Translation found in fletch: `finishOffboarding` purges the personal scope and then `Company.depart`
+refuses `LAST_OWNER`, so a standalone owner who reached `/offboarding/finish` (no UI does today) would lose their data
+and keep their seat; F40 moves the check first (delta 3). Say so if you would rather it stayed a plain PR ahead of F40.
+P14's reversible choices (the decision log is at its cap, Q30): (a) identity, addressing, sign-in, settings and
+deletion as instruction lines in `operating-block.ts` and `WORK_WORDS`, graded by deny-lists, no code-written reply
+(Q18); (b) the name card says no name is chosen and a message cannot name the agent, Edit removed, the app titled
+`fletch`; (c) `LAST_OWNER` checked before the purge; (d) a Security pane over the existing `GET/DELETE /login/passkeys`
+with Add a passkey to `/login`, specimen first, no new store and no host change; (e) planted `settings_set` and
+`passkey_remove` tool specs and a planted standing-file writer as the guards' tests; (f) the P14 world composed from
+the F1 login, m27, P6 and lifecycle worlds; (g) every count graded against the tables and routes, never the model's
+account. Gaps left open: whether a job or a sub-agent should ever see `USER.md`'s one line (none do today; Muse's
+sub-agents inherit all of it); the colleague-facing name on cards ("Your agent asks to:") once a name exists.
 
 ### Q32 (P12), 2026-10-30: D-0017 proposed: fletch holds no payment instrument and submits no payment; and P12's reversible choices
 
