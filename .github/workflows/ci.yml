@@ -22,6 +22,12 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      # The pull request's whole diff from the merge base decides what runs. Docs (under docs/, or a Markdown or
+      # LICENSE file at the root) run `pnpm check` alone. Docs the tests read (a cluster contract, a committed eval
+      # result) add the tests related to the files under test/ that name the file, or its folder when nothing names
+      # the file (`vitest related`, so a world.ts that names it brings its tasks).
+      # Anything else, an empty diff or a base not in the clone runs `pnpm verify`. --no-renames lists a moved file's
+      # old path too, so code moved under docs/ still counts as code (scripts/ci-classify.test.mjs).
       - name: Classify the diff
         id: scope
         env:
@@ -31,14 +37,14 @@ jobs:
           set -euo pipefail
           kind() {
             case "$1" in
-              docs/plan-v2/contracts/*) echo contract ;;
+              docs/plan-v2/contracts/* | docs/plan-v2/evidence/results/*) echo contract ;;
               docs/*) echo docs ;;
               */*) echo code ;;
               *.md | LICENSE | LICENSE.*) echo docs ;;
               *) echo code ;;
             esac
           }
-          files=$(git diff --name-only "$PR_BASE...$PR_HEAD") || files=""
+          files=$(git diff --name-only --no-renames "$PR_BASE...$PR_HEAD") || files=""
           code="" contracts=""
           while IFS= read -r f; do
             [ -n "$f" ] || continue
@@ -55,12 +61,22 @@ jobs:
             printf '%s' "$code" | sed 's/^/  /'
             echo "class=code" >> "$GITHUB_OUTPUT"
           elif [ -n "$contracts" ]; then
+            # git grep exits 1 for no match; anything above that is an error, never "nothing names it".
+            naming() {
+              local rc=0
+              git grep -l -F "$1" -- test || rc=$?
+              [ "$rc" -le 1 ] || exit "$rc"
+            }
             named=""
             while IFS= read -r c; do
-              if [ -n "$c" ]; then named+="$(git grep -l -F "$c" -- test || true)"$'\n'; fi
+              if [ -n "$c" ]; then
+                hits=$(naming "$c")
+                [ -n "$hits" ] || hits=$(naming "$(dirname "$c")")
+                named+="$hits"$'\n'
+              fi
             done <<< "$contracts"
             named=$(printf '%s' "$named" | sed '/^$/d' | sort -u | tr '\n' ' ')
-            echo "Judged: contracts. Running check and the tests related to the files that name them. The contracts:"
+            echo "Judged: contracts. Running check and the tests related to the files that name them. The files read:"
             printf '%s' "$contracts" | sed 's/^/  /'
             echo "The files that name them: ${named:-none}"
             echo "class=contracts" >> "$GITHUB_OUTPUT"
@@ -86,22 +102,35 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # The contracts path can bring a browser test (P14's world.ts is imported by one), so it installs Chromium.
+      - name: Playwright version
+        if: needs.scope.outputs.class == 'contracts'
+        id: pw
+        run: echo "version=$(pnpm exec playwright-core --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6
+        if: needs.scope.outputs.class == 'contracts'
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+      - name: Install Chromium for the UI tests
+        if: needs.scope.outputs.class == 'contracts'
+        run: pnpm exec playwright-core install --with-deps chromium
       # The file-size ratchet compares with the merge base of origin/main, which fetch-depth 0 brings.
       - name: Check (pnpm check)
         run: pnpm check
       - name: The gate scripts' tests (node --test)
         if: needs.scope.outputs.class == 'code'
         run: node --test scripts/*.test.mjs
-      - name: Contract tests (vitest related to the files that name a changed contract)
+      - name: Contract tests (vitest related to the files that name a changed contract or result)
         if: needs.scope.outputs.class == 'contracts'
         env:
           NAMED: ${{ needs.scope.outputs.named }}
           QYVR_HERMETIC: "1"
         run: |
           set -euo pipefail
-          if [ -z "${NAMED// /}" ]; then echo "No test names a changed contract; nothing to run."; exit 0; fi
-          # shellcheck disable=SC2086 # NAMED is a space-separated list of paths without spaces
-          pnpm exec vitest related --run $NAMED
+          read -r -a named <<< "$NAMED"
+          if [ "${#named[@]}" -eq 0 ]; then echo "No test names a changed file or its folder; nothing to run."; exit 0; fi
+          pnpm exec vitest related --run "${named[@]}"
       - name: DCO sign-off
         env:
           PR_BASE: ${{ github.event.pull_request.base.sha }}
@@ -156,7 +185,7 @@ jobs:
   # One status for the pull request: check passed, and test passed or was skipped for a docs or contracts diff.
   ci:
     needs: [scope, check, test]
-    if: always()
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - name: Every job passed or was skipped by the classification
@@ -167,5 +196,10 @@ jobs:
           set -euo pipefail
           read -r scope check test <<< "$RESULTS"
           echo "class=$CLASS scope=$scope check=$check test=$test"
-          [ "$scope" = success ] && [ "$check" = success ] || exit 1
-          if [ "$CLASS" = code ]; then [ "$test" = success ]; else [ "$test" = skipped ]; fi
+          [ "$scope" = success ] || exit 1
+          [ "$check" = success ] || exit 1
+          case "$CLASS" in
+            code) [ "$test" = success ] ;;
+            docs | contracts) [ "$test" = skipped ] ;;
+            *) echo "::error::scope gave no class"; exit 1 ;;
+          esac
