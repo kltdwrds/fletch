@@ -17,7 +17,9 @@ merged, while both serve the F37 and F39 trees for your UAT (`WAITING-ON-KYLE.md
 **Recommended answer:** when a slot is free (pv-2 once PR #72's session releases it, or pv-1 or pv-3 once their UAT
 is done and you release it), resume F41 on its branch: `pnpm preview up`, `pnpm evals P14`, commit the results files,
 add any instruction line a failing must-have needs, then the verifier and the DONE row. No code change is expected
-before the run; the inert passkey the `p14` op seeds is described in Q36 (c).
+before the run; the inert passkey the `p14` op seeds is described in Q36 (e).
+
+Orchestrator, 2026-10-30: fletch-pv-1 released from F37's merged branch at 21:20Z and leased to F41, so F41 is not blocked.
 
 ### Q34 (F40), 2026-10-30: The F40 draft PR could not be opened from the session
 
@@ -180,7 +182,14 @@ your own, or a removed real passkey leaves only the inert one, and signing in th
 since the trial began; the test host keeps every system message of a chat request (P3's and P5's first-message read
 unchanged), since the envelope that names the model is its own system message. (g) The page script stores the mode
 under `qyvr-mode` as its own constant, held equal to `MODE_KEY` by a test, because the Node script cannot load the
-Worker module that exports it.
+Worker module that exports it. (h) On fletch-pv-1 every chat turn failed with `TOOL_IDENTITY_REFUSED: browse_save_login reaches
+"login"`: F40's guard refuses a tool whose name holds `login`, and the site-login tool (M24.3, a website's login kept in
+the vault) is registered only where a browser is bound, so no hermetic world had built it; main has the same fault on
+any deploy with a browser. F41 lets the word `login` through for that one tool (`SITE_LOGIN_TOOLS` in
+`packages/agent/src/tools/registry.ts`; every other word and the description offer still checked), and
+`test/workers/f41-identity-guard.test.ts` builds the browse namespace with a browser's every dependency and reads every
+tool name in the sources against the guard. The rejected alternative was renaming the tool, which changes a name the
+model already uses.
 
 ### Q35 (F39), 2026-10-30: T-P12-12 and T-P12-13 fail on the slot on their reply words; and F39's two-way choices
 
