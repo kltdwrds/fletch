@@ -1,12 +1,14 @@
 // T-P7-11 (B-P7-03): tier 2, a recurring job over the probe page told "if nothing changed, say nothing", run twice by
 // the real model on a slot (`pnpm evals P7`, F30) with the page unchanged: no message in c1, two runs that end
 // `nothing_to_report` certified by code, and the watermark committed. The job has no gate (its reason is on the card),
-// so each tick runs the model, which must read the page and certify its silence.
+// so each tick runs the model, which must read the page and certify its silence. The instructions name the page's
+// address and what it read when the job was made (F30): a real model has no other way to find it or to know "changed".
 import { defineTask, type Grader } from "../../support/task.ts";
 import { jobNamed, type P7World, runsOf } from "./world.ts";
 
 export const TITLE = "p7 probe: say nothing if unchanged";
-export const INSTRUCTIONS = "Read the p7 probe page. If nothing changed, say nothing.";
+export const INSTRUCTIONS =
+  'Read the p7 probe page, https://example.com/p7-probe. When this job was made it read "The p7 probe page. First paragraph. Second paragraph." If it still reads that, nothing changed: say nothing.';
 
 const graders: Grader<P7World>[] = [
   { name: "two runs nothing_to_report and the watermark committed", kind: "end_state", check: (w) => runsOf(w, TITLE).length === 2 && runsOf(w, TITLE).every((r) => r.signal === "nothing_to_report") && !!jobNamed(w, TITLE)?.mark },
@@ -21,7 +23,7 @@ export const task = defineTask<P7World>({
   clauses: ["B-P7-03"],
   priority: "must-have",
   tier: 2,
-  setup: { seed: 711, records: ["chat:c1 on the slot", "a recurring job every 30 minutes over https://example.com/p7-probe, no gate with its reason, on"], files: [], jobs: [TITLE] },
+  setup: { seed: 711, records: ["chat:c1 on the slot", "a recurring job every 30 minutes over https://example.com/p7-probe, no gate with its reason, on", "the slot's test host serves the page and fires each tick"], files: [], jobs: [TITLE] },
   turns: [
     { kind: "event", name: "tick", payload: { job: TITLE } },
     { kind: "event", name: "tick", payload: { job: TITLE } },

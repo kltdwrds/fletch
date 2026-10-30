@@ -6,7 +6,7 @@ import { DurableObject } from "cloudflare:workers";
 import { egressFor, type VaultEgress } from "../connectors/egress.ts";
 import type { JobDefinition } from "../jobs/body.ts";
 import type { JobEvent } from "../jobs/events.ts";
-import { type JobDeps, JobEngine } from "../jobs/engine.ts";
+import { type JobDeps, JobEngine, type JobHost } from "../jobs/engine.ts";
 import { jobToolSpecs } from "../jobs/job-tools.ts";
 import { completeForJob } from "../jobs/model.ts";
 import { personMemory } from "../memory/rpc.ts";
@@ -28,11 +28,17 @@ export class Job extends DurableObject<Env> {
   private readonly instance = crypto.randomUUID();
 
   private get engine(): JobEngine {
-    this.engineInstance ??= new JobEngine({ storage: this.ctx.storage }, this.deps());
+    this.engineInstance ??= new JobEngine(this.jobHost(), this.deps());
     return this.engineInstance;
   }
 
-  private deps(): JobDeps {
+  /** The engine's storage. A seam, as `Chat.browserBinding` is: a preview slot's test host moves the job's clock (F30). */
+  protected jobHost(): JobHost {
+    return { storage: this.ctx.storage };
+  }
+
+  /** What the engine reaches. A seam: a preview slot's test host serves the probe page and moves the clock (F30). */
+  protected deps(): JobDeps {
     const env = this.env;
     const ledger = env.LEDGER.get(env.LEDGER.idFromName(env.TENANT_ID)) as unknown as LedgerSink & { recordRun(row: RunRow): Promise<void> };
     const vault = env.VAULT.get(env.VAULT.idFromName(env.TENANT_ID)) as unknown as VaultEgress;

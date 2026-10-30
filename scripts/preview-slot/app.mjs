@@ -1,6 +1,6 @@
 // A fletch preview slot's Worker (docs/preview.md): the agent, with the slot's ops (./ops.mjs) answered first on
-// /__preview/, and the lease's Durable Object beside the agent's. The agent's `Chat`, `Person`, `Ledger` and `Vault`
-// are the test host's (./test-host.mjs, F26): the same objects with the fixture sites, the share fixture and the reads
+// /__preview/, and the lease's Durable Object beside the agent's. The agent's `Chat`, `Job`, `Person`, `Ledger` and
+// `Vault` are the test host's (./test-host.mjs, F26, F30): the same objects with the fixture sites, the share fixture and the reads
 // a tier-2 grader needs. Deployed only to a slot, by scripts/preview.mjs; create-fletch deploys
 // packages/agent/src/index.ts itself.
 import agent from '../../packages/agent/src/index.ts';
@@ -10,7 +10,7 @@ import { testHost } from './test-host.mjs';
 
 export * from '../../packages/agent/src/index.ts';
 export { PreviewLease } from './lease.mjs';
-export { Chat, Ledger, Person, Vault } from './test-host.mjs';
+export { Chat, Job, Ledger, Person, Vault } from './test-host.mjs';
 
 export default {
   ...agent,

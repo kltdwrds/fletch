@@ -48,7 +48,7 @@ describe("[F26] the tier-2 runner drives a decision, and the test host's readers
     const t = await trial(decideTask, { name: "fletch-pv-9", open: async () => world }, 1, () => new Date(0));
     expect(t.status).toBe("pass");
     const other = defineTask<SlotWorld>({ ...decideTask, turns: [{ kind: "event", name: "clock", payload: { ms: "1" } }] });
-    expect(driveable(other, sam.email)).toBe("EVALS_TASK_UNDRIVABLE: turn 1 of T-P0-21 is the event clock; the runner drives prompts and decide events only");
+    expect(driveable(other, sam.email)).toBe("EVALS_TASK_UNDRIVABLE: turn 1 of T-P0-21 is the event clock; the runner drives prompts and decide, tick, reload events only");
   });
 
   it("reads cards from the history, requests and egress from the test host, and the Vault's rows from the trial's start", async () => {
