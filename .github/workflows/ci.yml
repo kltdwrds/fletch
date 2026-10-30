@@ -15,7 +15,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       # The pull request's whole diff from the merge base decides what runs. Docs (under docs/, or a Markdown or
@@ -82,8 +82,8 @@ jobs:
             printf '%s\n' "$files" | sed 's/^/  /'
             echo "class=docs" >> "$GITHUB_OUTPUT"
           fi
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
@@ -93,7 +93,7 @@ jobs:
         if: steps.scope.outputs.class != 'docs'
         id: pw
         run: echo "version=$(pnpm exec playwright-core --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         if: steps.scope.outputs.class != 'docs'
         id: pw-cache
         with:
