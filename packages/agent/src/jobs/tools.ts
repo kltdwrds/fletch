@@ -293,7 +293,7 @@ export function jobsNamespace(api: JobsApi, o: JobsOptions): Namespace {
     kind: "observation",
     label: "Change a job",
     description:
-      "Change one of the person's jobs in place: its title, instructions, schedule, zone, gate or stop. It keeps its id and its past runs, and the definition before the change is kept on the job's record, which the person can read in its run history. Pass only what changes. Any change turns a job that is on off until the person turns it on again, since they decide a job and its time on one card: call jobs_enable with the id after. A job still waiting on its card is not changed (JOB_AWAITING_DECISION). To pause a job, use jobs_disable; to stop it for good, jobs_remove.",
+      "Change one of the person's jobs in place: its title, instructions, schedule, zone, gate or stop. It keeps its id and its past runs, and the definition before the change is kept on the job's record, which the person can read in its run history. Pass only what changes. Any change turns the job off until the person turns it on again, since they decide a job and its time on one card: call jobs_enable with the id after. A job still waiting on its card is not changed (JOB_AWAITING_DECISION). To pause a job, use jobs_disable; to stop it for good, jobs_remove.",
     parameters: Type.Object({
       id: Type.String({ description: "The job id." }),
       title: Type.Optional(Type.String({ minLength: 1, maxLength: 80 })),
@@ -331,7 +331,7 @@ export function jobsNamespace(api: JobsApi, o: JobsOptions): Namespace {
       const r = await api.update(o.principal, def);
       if (!r.ok) return fail(r.code, r.reason);
       const when = whenOf(def.timing);
-      const off = r.status === "needs_enable" && seen.job.status === "active" ? ` The person decides a changed job again, so it is off until they turn it on: call jobs_enable with id ${def.id}.` : "";
+      const off = r.status === "needs_enable" && seen.job.status !== "needs_enable" ? ` The person decides a changed job again, so it is off until they turn it on: call jobs_enable with id ${def.id}.` : "";
       return ok(`Changed job ${def.id} in place (${when}), currently ${statusWords(r.status)}. Its earlier definition is kept on its record.${off}`, { id: def.id, status: r.status, when });
     },
   };

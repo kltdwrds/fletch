@@ -200,7 +200,7 @@ export class JobEngine {
     const now = this.deps.now();
     // The person decides an agent's job and its time on one card (QYVR-165): any agent edit sends it back, and one still on its card is not changed under it.
     if (a.by !== a.owner && job.status === "needs_enable") return { ok: false, code: "JOB_AWAITING_DECISION", reason: "the job waits on the person's card; change it after they decide, or remove it" };
-    const status = a.by !== a.owner && job.status === "active" ? "needs_enable" : job.status;
+    const status = a.by !== a.owner ? "needs_enable" : job.status;
     this.store.transaction(() => {
       this.store.putJob({ id: job.id, owner: job.owner, def: a.def, history: [...job.history, { until: now, by: a.by, def: job.def }], sourcePath: job.sourcePath, sourceHash: job.sourceHash, status }, now);
       // `putJob` clears the status words; a job still off keeps saying why. Occurrences before the change are not its to run.

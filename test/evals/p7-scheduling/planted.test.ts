@@ -128,6 +128,13 @@ describe("[F29] the P7 graders, planted", () => {
     expect(e.status()?.def.title).toBe(MORNING.title);
     await e.enable(sam.email);
     expect(await e.update({ owner: sam.email, by: agent, def: { ...e.status()!.def, stop: { kind: "after_runs", runs: 2 } } })).toMatchObject({ ok: true, status: "needs_enable" });
+    // Whatever state an approved job is in (paused, blocked), an agent's edit is decided again before it runs.
+    await e.enable(sam.email);
+    await e.disable(sam.email);
+    expect(await e.update({ owner: sam.email, by: agent, def: { ...e.status()!.def, instructions: "Paused, then rewritten." } })).toMatchObject({ ok: true, status: "needs_enable" });
+    await e.enable(sam.email);
+    e.store.updateJob({ status: "blocked" }, asked.now());
+    expect(await e.update({ owner: sam.email, by: agent, def: { ...e.status()!.def, instructions: "Blocked, then rewritten." } })).toMatchObject({ ok: true, status: "needs_enable" });
     const putJob = honest.putJob;
     JobStore.prototype.putJob = function (this: JobStore, j, now) {
       return putJob.call(this, { ...j, history: [] }, now);
