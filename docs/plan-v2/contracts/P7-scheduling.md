@@ -262,7 +262,7 @@ T-P7-06  must-have  tier 1
   collateral: none
   graders: code (the job's definition history, the list, the alarm)
   reference: `cron_mutations` 124 to 126 on one id, `archived_path`, and `cron.update enabled:false` as the pause (B-P7-06)
-  version_hash: 2accc8795c30
+  version_hash: 4dc9085527bc
   file: test/evals/p7-scheduling/update-in-place.task.ts
 
 T-P7-07  must-have  tier 1
