@@ -50,6 +50,8 @@ export interface P9HarnessOptions {
   seed?: (w: P9Tier1World) => Promise<void>;
   /** Rewrites the shipped page script before the tabs run it (`planted.test.ts`). */
   plant?: (js: string) => string;
+  /** The status of each read of the Example API's probe in turn, 200 once they run out (T-P9-08: a 200, then a 401). */
+  probe?: number[];
 }
 
 /** The writer the capture form and settings pass for a signed-in person. */
@@ -61,14 +63,19 @@ const ORIGIN = `https://${TENANT}.example`;
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 
 /** The fake network: the probe API, GitHub's two repositories and Hacker News's top story; anything else fails loudly. */
-function fakeNetwork() {
+function fakeNetwork(probe: number[] = []) {
   const sent: SentView[] = [];
+  const statuses = [...probe];
   const fetch = async (url: string, init: RequestInit): Promise<Response> => {
     const method = String(init.method ?? "GET");
     sent.push({ url, method, redirect: String(init.redirect ?? "follow") });
     const u = new URL(url);
     if (u.hostname === API_HOST && u.pathname === "/p9-probe/count") return json({ count: COUNT, view: "all" });
     if (u.hostname === API_HOST && u.pathname === "/p9-probe/items" && method === "POST") return json({ id: "item-1", name: JSON.parse(String(init.body ?? "{}")).name }, 201);
+    if (u.hostname === API_HOST && u.pathname === "/p9-probe") {
+      const status = statuses.shift() ?? 200;
+      if (status !== 200) return json({ message: "Bad credentials" }, status);
+    }
     if (u.hostname === API_HOST && u.pathname === "/p9-probe") return new Response("p9 probe: the Example API answered.", { status: 200, headers: { "content-type": "text/plain" } });
     if (u.hostname === GITHUB_HOST && u.pathname === `/repos/${REPO}`) return json({ full_name: REPO, description: "the p9 probe repository", stargazers_count: 3, open_issues_count: 1, default_branch: "main", pushed_at: "2026-10-12T09:00:00Z", html_url: `https://github.com/${REPO}` });
     if (u.hostname === GITHUB_HOST && u.pathname === `/repos/${REPO_DENIED}`) return json({ message: "Bad credentials" }, 401);
@@ -80,7 +87,7 @@ function fakeNetwork() {
 }
 
 const Name = Type.Object({ name: Type.Optional(Type.String({ description: "The item's name." })) });
-const Url = Type.Object({ url: Type.String({ description: "The https address to read with the Example API key." }) });
+const Url = Type.Object({ url: Type.String({ description: "The https address to read with the Example API key." }), credential: Type.Optional(Type.String({ description: "Another of the person's keys by reference, in place of the Example API key." })) });
 const None = Type.Object({});
 const text = (t: string, details: Record<string, unknown> = {}) => ({ content: [{ type: "text" as const, text: t }], details });
 
@@ -103,7 +110,7 @@ function fixtureNamespace(egress: () => (req: { url: string; method?: string; he
     name: "fixture_read", kind: "observation", label: "Read with the Example API key", external: true, parameters: Url,
     description: "Read an https address with the person's Example API key and return what it says.",
     execute: async (_id, p) => {
-      const r = await egress()({ url: p.url, method: "GET", headers: auth }, "fixture_read");
+      const r = await egress()({ url: p.url, method: "GET", headers: p.credential ? [["authorization", `Bearer ${p.credential}`]] : auth }, "fixture_read");
       if (!r.ok) throw new Error(`${r.code}: ${r.reason}`);
       return text(`status ${r.status}\n${r.body}`);
     },
@@ -143,7 +150,7 @@ export class P9Tier1World extends P3Tier1World implements P9World {
 
   constructor(o: P9HarnessOptions) {
     const box: { w?: P9Tier1World } = {};
-    const net = fakeNetwork();
+    const net = fakeNetwork(o.probe);
     const now = () => box.w?.w.clock.now ?? T0;
     const vaultH = new ObjectHarness("vault", (ctx) => new VaultCore(ctx as never, { tenant: TENANT, keys: keysFor(TENANT, testMasterKey()), fetch: net.fetch, now, inject: (s, sel, v) => (box.w as P9Tier1World).browser.inject(s, sel, v) }), {});
     const vault = () => vaultH.instance;
@@ -155,10 +162,17 @@ export class P9Tier1World extends P3Tier1World implements P9World {
       world: () => ({
         vault: {
           egress: (p) => egressFor(vault(), p),
-          credentials: (p) => ({ list: async () => vault().list(p), addApprovedHost: async (input, writer) => vault().addApprovedHost(input, writer) }),
+          credentials: (p) => ({
+            list: async () => vault().list(p),
+            addApprovedHost: async (input, writer) => vault().addApprovedHost(input, writer),
+            revoke: async (ref, writer) => vault().revoke(ref, writer),
+            revokeNaming: async (ref) => (box.w as P9Tier1World).w.host(p).authority.revokeNaming(p, ref),
+            approveCode: async (input, writer) => vault().approveOneTimeCode(input, writer),
+          }),
         },
         secrets: (person, t) => holdTypedSecrets(t, (value) => vault().holdTyped({ person, value, source: "chat" })),
         credentials: async (p) => vault().list(p),
+        connections: { lastUses: async (p) => vault().lastUses(p), audit: async (p, r) => vault().auditOf(p, r), credentialGrants: async (p) => vault().grants(p) },
         namespaces: (owner) => [fixtureNamespace(() => egressFor(vault(), owner()))],
       }),
     });
@@ -204,6 +218,10 @@ export class P9Tier1World extends P3Tier1World implements P9World {
       approveOneTimeCode: async (i, w) => v().approveOneTimeCode(i, w),
       list: async (p) => v().list(p),
       grants: async (p) => v().grants(p),
+      // A disconnect ends the person's grants naming the credential in their real `Person` (F36), as `index.ts` wires it.
+      revokeNaming: async (r, p) => this.w.host(p).authority.revokeNaming(p, r),
+      dismissCapture: async (r, w, s) => v().dismissCapture(r, w, s),
+      captureState: async (p, r, s) => v().captureState(p, r, s),
     };
   }
 
@@ -234,7 +252,7 @@ export class P9Tier1World extends P3Tier1World implements P9World {
       const q = new URLSearchParams(link.replace(/[.)]+$/, ""));
       const value = seededToken();
       const label = p.label ?? "";
-      const form: Record<string, string> = { ref: q.get("ref") ?? "", host: q.get("host") ?? "", kind: q.get("kind") ?? "secret", header: q.get("header") ?? "authorization", prefix: q.get("prefix") ?? "Bearer ", methods: "GET", permission: "standing", label, value, ...(q.get("fills") ? { fills: "on" } : {}) };
+      const form: Record<string, string> = { ref: q.get("ref") ?? "", host: q.get("host") ?? "", kind: q.get("kind") ?? "secret", header: q.get("header") ?? "authorization", prefix: q.get("prefix") ?? "Bearer ", methods: "GET", permission: "standing", label, value, ...(q.get("fills") ? { fills: "on" } : {}), ...(q.get("setup") ? { setup: q.get("setup") as string } : {}) };
       const r = await this.vaultHttp("POST", "/vault/capture", { form });
       if (r.status !== 201) throw new Error(`P9_SUBMIT_REFUSED: ${r.status}`);
       this.submitted = { value, label };

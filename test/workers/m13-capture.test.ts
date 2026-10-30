@@ -42,7 +42,7 @@ describe("[M13] capture form", () => {
   it("the redaction is the guard: the same misplaced post, rendered without it, shows the value", async () => {
     const { captureForm } = await import("../../packages/agent/src/http/vault-routes.ts");
     const w = vaultWorld();
-    const html = captureForm({ ref: "cred://x", label: `key ${w.token}`, host: "", methods: "GET", header: "authorization", prefix: "", fills: false, permission: "standing", kind: "secret" }, { code: "VAULT_HOST_INVALID", reason: "a host is a DNS name" });
+    const html = captureForm({ ref: "cred://x", label: `key ${w.token}`, host: "", methods: "GET", header: "authorization", prefix: "", fills: false, permission: "standing", kind: "secret", setup: "" }, { code: "VAULT_HOST_INVALID", reason: "a host is a DNS name" });
     expect(html).toContain(w.token);
   });
 

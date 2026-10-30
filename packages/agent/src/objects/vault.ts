@@ -60,7 +60,7 @@ export class Vault extends DurableObject<Env> {
     return this.core.removeHost(ref, host, writer);
   }
 
-  async revoke(ref: string, writer: Writer) {
+  async revoke(ref: string, writer: Writer | CardWriter) {
     return this.core.revoke(ref, writer);
   }
 
@@ -81,7 +81,7 @@ export class Vault extends DurableObject<Env> {
     return this.core.captureOneTimeCode(input);
   }
 
-  async approveOneTimeCode(input: { ref: string; host: string }, writer: Writer) {
+  async approveOneTimeCode(input: { ref: string; host: string }, writer: Writer | CardWriter) {
     return this.core.approveOneTimeCode(input, writer);
   }
 
@@ -100,8 +100,28 @@ export class Vault extends DurableObject<Env> {
     return this.core.putCompany(input);
   }
 
-  async removeCompany(connector: string): Promise<boolean> {
-    return this.core.removeCompany(connector);
+  async removeCompany(connector: string, by?: string): Promise<boolean> {
+    return this.core.removeCompany(connector, by);
+  }
+
+  /** The person ends a setup they never submitted (F36): the capture link is void afterwards. */
+  async dismissCapture(ref: string, writer: Writer, setup?: string) {
+    return this.core.dismissCapture(ref, writer, setup);
+  }
+
+  /** A setup's state for the chat's capture item: pending, entered or dismissed (F36). */
+  async captureState(person: string, ref: string, setup?: string) {
+    return this.core.captureState(person, ref, setup);
+  }
+
+  /** The newest use of each of the person's credentials, for the Connected rows (F36). */
+  async lastUses(person: string) {
+    return this.core.lastUses(person);
+  }
+
+  /** One credential's audit rows, for its person alone, read-only (F36): the connector's page. */
+  async audit(person: string, ref: string) {
+    return this.core.auditOf(person, ref);
   }
 
   /** The tenant's VAPID public key, which the app subscribes with (M14.1). */

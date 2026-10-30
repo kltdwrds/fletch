@@ -243,7 +243,7 @@ T-P9-02  nice-to-have  tier 1
   collateral: no grant, no audit row
   graders: code
   reference: Muse's cards with no Cancel and no pane row, the abandoned authd sessions (B-P9-02)
-  version_hash: unset
+  version_hash: fdbcb3125f71
   file: test/evals/p9-connectors/unfinished-setup-is-seen-and-ended.task.ts
 
 T-P9-03  must-have  tier 1
@@ -356,7 +356,7 @@ T-P9-08  must-have  tier 1
   collateral: audit rows for the three uses
   graders: code
   reference: Muse's 12 rows with no word against 10 then 6 connected, the connection dropped unsaid (B-P9-08)
-  version_hash: unset
+  version_hash: 80fe9dcbafca
   file: test/evals/p9-connectors/status-is-stored-and-said.task.ts
 
 T-P9-09  must-have  tier 1
@@ -374,7 +374,7 @@ T-P9-09  must-have  tier 1
   collateral: none
   graders: code
   reference: Muse's CLI disconnect on a chat ask and "what remains" inferred (B-P9-09)
-  version_hash: unset
+  version_hash: eda4e4ef9821
   file: test/evals/p9-connectors/disconnect-is-the-persons-and-says-what-remains.task.ts
 
 T-P9-10  nice-to-have  tier 1
@@ -390,7 +390,7 @@ T-P9-10  nice-to-have  tier 1
   collateral: none
   graders: code
   reference: Muse's Connectors 12 against 6, grants in a store the database cannot inspect (B-P9-10)
-  version_hash: unset
+  version_hash: 3404b5a38c63
   file: test/evals/p9-connectors/grants-listed-once.task.ts
 
 T-P9-11  must-have  tier 1

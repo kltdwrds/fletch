@@ -96,6 +96,19 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
+### Q28 (F36), 2026-10-30: may T-P9-08 grade `EGRESS_CRED_EXPIRED`, and may the four surface tasks declare their Vault changes?
+
+**Blocks nothing; F36 ran with the changes below, said in each file.** (a) The contract's T-P9-08 says the expired
+key's read "is refused `VAULT_CRED_INACTIVE`"; fletch's egress refuses a read with an expired key
+`EGRESS_CRED_EXPIRED` (`vault/core.ts`, the egress), and `VAULT_CRED_INACTIVE` is what issuing a grant on one gives.
+The grader now looks for `EGRESS_CRED_EXPIRED`: the same check, the code fletch says. Ask: change the contract line's
+code to match, or say the grant path is the one to grade. (b) Three of the four tasks had `collateral: {}` though
+their own turns write to the Vault (a dismissal, a 401's `rejected` row, a revocation, audit rows); each now declares
+exactly those, and their harness (`test/evals/p9-connectors/harness-surface.ts`) snapshots the Vault's append-only
+event log and audit rows, so a revocation is an added row rather than a row gone. Nothing undeclared passes. Say if
+either reads as softening (as Q16 asked of F24). Evidence: `test/evals/p9-connectors/status-is-stored-and-said.task.ts`,
+`planted-surface.test.ts`; `contracts/P9-connectors.md` T-P9-08.
+
 ### Q27 (P9), 2026-10-30: the OAuth door D-0016, a playlist left in your music account, and nine Muse credential findings fletch already rules out
 
 **Blocks nothing on the spine; two things are yours alone.** (a) `docs/decisions/0016-oauth-connectors.md` is a

@@ -15,6 +15,15 @@ export interface CompanyPort {
 
 const refuse = (code: string): Decision => ({ decision: "deny", step: "policy", code });
 
+/**
+ * The credentials a grant names (F36, P9 delta 6): a subject or a constrained resource `credential:<name>` (the form
+ * `credential_host_propose` and the credential tools put on a descriptor) or a `cred://<name>` reference.
+ */
+export function credentialsNamed(g: Pick<Grant, "subject" | "constraints">): string[] {
+  const refs = [g.subject.ref, ...(g.constraints?.resources ?? [])].map((r) => (r.startsWith("credential:") ? `cred://${r.slice("credential:".length)}` : r));
+  return [...new Set(refs.filter((r) => r.startsWith("cred://")))];
+}
+
 export class PersonAuthority {
   private readonly store: GrantStore;
   private readonly company: CompanyPort;
@@ -83,6 +92,14 @@ export class PersonAuthority {
   revoke(by: string, id: string): { ok: true } | { ok: false; code: string } {
     if (by !== this.person) return { ok: false, code: "GRANT_NOT_YOURS" };
     return this.store.revoke(id, this.now());
+  }
+
+  /** A disconnect (F36): every grant of the person's that names the credential ends with it; no other grant is touched. */
+  revokeNaming(by: string, ref: string): { ok: true; revoked: string[] } | { ok: false; code: string } {
+    if (by !== this.person) return { ok: false, code: "GRANT_NOT_YOURS" };
+    const ids = this.store.all().filter((g) => g.revoked_at === undefined && credentialsNamed(g).includes(ref)).map((g) => g.id);
+    for (const id of ids) this.store.revoke(id, this.now());
+    return { ok: true, revoked: ids };
   }
 
   list(by: string): Grant[] | null {

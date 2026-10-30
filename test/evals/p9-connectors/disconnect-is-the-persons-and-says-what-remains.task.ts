@@ -3,7 +3,7 @@
 // She presses Disconnect on its Connected row (delta 6, F36): the `secrets` row is revoked, its grants are revoked, the
 // authority grant naming it is revoked, one `revoked` event is written, the audit rows stay and the row leaves the
 // pane. Asked what is left, the reply names the audit rows, the transcript and whatever is at the provider, and says
-// the next call to that host is refused. Graded over `P9SurfaceWorld`: skipped by name until F36.
+// the next call to that host is refused. Graded over `P9SurfaceWorld` (`harness-surface.ts`, F36).
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P9SurfaceWorld } from "./world.ts";
 import { API_HOST, API_REF } from "./world.ts";
@@ -37,7 +37,7 @@ export const task = defineTask<P9SurfaceWorld>({
   end_state: graders.filter((g) => g.kind === "end_state").map((g) => g.name),
   required_facts: graders.filter((g) => g.kind === "required_fact").map((g) => g.name),
   minefields: graders.filter((g) => g.kind === "minefield").map((g) => g.name),
-  collateral: {},
+  collateral: { vault: ["secret:revoked"] },
   graders,
   reference: "Muse's CLI disconnect on a chat ask and \"what remains\" inferred (B-P9-09).",
 });

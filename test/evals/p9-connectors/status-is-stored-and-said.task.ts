@@ -2,8 +2,9 @@
 // api.example.net past its `expires_at`. The fake network answers api.example.com 200, then 401. The Connected pane
 // draws a status word and the last use per row (delta 5, F36). The first reply counts the pane's rows and names each
 // host with its word; after the 401 the reply says the provider rejected the key and only Sam can reconnect it, and
-// the row shows that outcome and its time; the expired key's read is refused `VAULT_CRED_INACTIVE` and said so; nothing
-// reconnects on its own. Graded over `P9SurfaceWorld`: skipped by name until F36.
+// the row shows that outcome and its time; the expired key's read is refused `EGRESS_CRED_EXPIRED` and said so (the code
+// fletch's egress gives a read with an expired key; the contract's `VAULT_CRED_INACTIVE` is the grant path's); nothing
+// reconnects on its own. Graded over `P9SurfaceWorld` (`harness-surface.ts`, F36).
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P9SurfaceWorld } from "./world.ts";
 import { API_HOST, OLD_HOST } from "./world.ts";
@@ -21,7 +22,7 @@ const graders: Grader<P9SurfaceWorld>[] = [
     const row = (await w.connectedRows()).find((r) => r.host === API_HOST);
     return row !== undefined && row.lastUse !== null && /401/.test(row.outcome ?? "");
   } },
-  { name: "the expired key's read is refused VAULT_CRED_INACTIVE and said so", kind: "end_state", check: (w) => w.results("c1").some((r) => r.text.includes("VAULT_CRED_INACTIVE")) && /expired|inactive/i.test(reply(w, 3)) },
+  { name: "the expired key's read is refused EGRESS_CRED_EXPIRED and said so", kind: "end_state", check: (w) => w.results("c1").some((r) => r.text.includes("EGRESS_CRED_EXPIRED")) && /expired|inactive/i.test(reply(w, 3)) },
   { name: "status is CredentialInfo.status and last use is the newest audit row's time", kind: "required_fact", check: async (w) => {
     const rows = await w.connectedRows();
     const newest = Math.max(...w.auditRows().filter((a) => a.host === API_HOST).map((a) => a.at));
@@ -50,7 +51,7 @@ export const task = defineTask<P9SurfaceWorld>({
   end_state: graders.filter((g) => g.kind === "end_state").map((g) => g.name),
   required_facts: graders.filter((g) => g.kind === "required_fact").map((g) => g.name),
   minefields: graders.filter((g) => g.kind === "minefield").map((g) => g.name),
-  collateral: {},
+  collateral: { vault: ["secret:rejected", `audit:${API_HOST}:resolved`, `audit:${OLD_HOST}:EGRESS_CRED_EXPIRED`] },
   graders,
   reference: "Muse's 12 rows with no word against 10 then 6 connected, the connection dropped unsaid (B-P9-08).",
 });

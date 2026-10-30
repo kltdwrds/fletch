@@ -3,10 +3,14 @@
 // agent is entitled to, the `Person` lists its own grants and chats and searches its own memory, and each `Chat`
 // searches its own thread for its owner (`search-route.ts`, F2), so nothing in a request names another person and whose rows these are is the owning store's answer. No answer carries a
 // credential value or a reference: a connector is a host, a label and a kind in words. The writes are not here:
-// Revoke is `/api/grants/<id>/revoke`, which the engine's own route and the `Person` decide.
+// Revoke is `/api/grants/<id>/revoke`, which the engine's own route and the `Person` decide. From F36 (P9 deltas 5 to 7)
+// a "Yours" row carries its stored status and its last use, a connection's page its audit rows and what a Disconnect
+// leaves (the Disconnect itself is `/vault/revoke`), and Permissions every grant once, credential and authority alike.
 import type { Grant } from "../grants/types.ts";
-import type { CredentialInfo } from "../vault/core.ts";
-import { AVAILABLE_CONNECTORS, BUILTIN_PAGES, CONNECTORS_TEXT, engineRow, GATE_DEFAULTS, type PermissionRow, standingNotes } from "./app/permission-words.ts";
+import type { LastUse } from "../vault/connections.ts";
+import type { CredentialInfo, GrantInfo } from "../vault/core.ts";
+import { connectionPage, connectionsOf, grantRows, yoursRows } from "./app/connection-words.ts";
+import { AVAILABLE_CONNECTORS, BUILTIN_PAGES, CONNECTORS_TEXT, engineRow, GATE_DEFAULTS, type PermissionRow } from "./app/permission-words.ts";
 import { type SearchReads, searchRoute } from "./search-route.ts";
 
 type Refusal = { ok: false; code: string; reason?: string };
@@ -17,6 +21,12 @@ export interface ConnectorReads extends SearchReads {
   credentials(person: string): Promise<CredentialInfo[]>;
   /** The company connectors this member's agent may use, and who connected each. */
   companyConnectors(person: string): Promise<{ ok: true; connectors: Array<{ id: string; hosts: string[]; connectedBy: string; at: number }> } | Refusal>;
+  /** The newest use of each of the person's credentials (F36): the Vault's audit and the provider's rejections. */
+  lastUses(person: string): Promise<Record<string, LastUse>>;
+  /** One of the person's credentials' audit rows, newest first (F36). */
+  audit(person: string, ref: string): Promise<Array<{ at: number; host: string; method: string; path: string; purpose: string; outcome: string }>>;
+  /** The person's credential grants, from the Vault (F36). */
+  credentialGrants(person: string): Promise<GrantInfo[]>;
   /** The person's own grants; null for anyone else. */
   grants(person: string): Promise<Grant[] | null>;
   names(): Promise<Array<{ email: string; name?: string }>>;
@@ -33,28 +43,16 @@ async function part<T>(read: () => Promise<T>): Promise<T | Refusal> {
   }
 }
 
-const KIND_WORDS: Record<string, string> = { secret: "API key or token", login: "Login password" };
-const USE_WORDS = { standing: "Your agent may use it at this host", grant: "Only under a grant you give each time" };
-
 interface Item { id: string; kind: "builtin" | "yours" | "company"; name: string; sub: string }
 
-/** The hosts of the person's own credentials, one connector per host. Revoked credentials are not connected. */
-function yoursOf(creds: CredentialInfo[]): Item[] {
-  const byHost = new Map<string, string[]>();
-  for (const c of creds) {
-    if (c.company || c.status !== "active") continue;
-    for (const h of c.hosts) byHost.set(h.host, [...(byHost.get(h.host) ?? []), c.label || KIND_WORDS[c.kind] || "Credential"]);
-  }
-  return [...byHost].sort(([a], [b]) => a.localeCompare(b)).map(([host, labels]) => ({ id: `host:${host}`, kind: "yours" as const, name: host, sub: `${CONNECTORS_TEXT.yours} · ${labels.join(", ")}` }));
-}
-
 async function connected(person: string, dir: ConnectorReads) {
-  const [creds, company, names] = await Promise.all([part(() => dir.credentials(person)), part(() => dir.companyConnectors(person)), part(() => dir.names())]);
+  const [creds, company, names, uses] = await Promise.all([part(() => dir.credentials(person)), part(() => dir.companyConnectors(person)), part(() => dir.names()), part(() => dir.lastUses(person))]);
   const nameOf = (email: string) => (Array.isArray(names) ? names.find((n) => n.email === email)?.name : undefined) ?? email;
   const builtin: Item[] = Object.entries(BUILTIN_PAGES).map(([id, p]) => ({ id, kind: "builtin", name: p.title, sub: CONNECTORS_TEXT.builtIn }));
-  const yours = Array.isArray(creds) ? yoursOf(creds) : (creds as Refusal);
+  // A row's last use is part of the row: an audit that could not be read leaves the rows unread, never "not used yet".
+  const yours = !Array.isArray(creds) ? (creds as Refusal) : failed(uses) ? (uses as Refusal) : yoursRows(creds, uses as Record<string, LastUse>);
   const shared = failed(company) ? (company as Refusal) : (company as { connectors: Array<{ id: string; hosts: string[]; connectedBy: string }> }).connectors.map((c): Item => ({ id: `company:${c.id}`, kind: "company", name: c.id, sub: CONNECTORS_TEXT.companyBy.replace("{name}", nameOf(c.connectedBy)) }));
-  return { builtin, yours, company: shared, creds, nameOf };
+  return { builtin, yours, company: shared, creds, nameOf, uses };
 }
 
 export async function connectorRoutes(request: Request, url: URL, person: string, dir: ConnectorReads | undefined): Promise<Response | null> {
@@ -79,12 +77,14 @@ export async function connectorRoutes(request: Request, url: URL, person: string
       return json({ ok: true, connector: { id, name: builtin.title, blurb: builtin.blurb, kind: "builtin" }, groups });
     }
     const c = await connected(person, dir);
-    if (id.startsWith("host:") && Array.isArray(c.creds)) {
+    if (id.startsWith("host:") && Array.isArray(c.creds) && !failed(c.uses)) {
       const host = id.slice("host:".length);
-      const mine = c.creds.filter((x) => !x.company && x.status === "active" && x.hosts.some((h) => h.host === host));
+      const mine = connectionsOf(c.creds).filter((x) => x.hosts.some((h) => h.host === host));
       if (mine.length) {
-        const rows = mine.map((x): PermissionRow => ({ id: `${x.kind}:${x.label}`, label: x.label || KIND_WORDS[x.kind] || "Credential", words: USE_WORDS[x.permission] }));
-        return json({ ok: true, connector: { id, name: host, blurb: `${CONNECTORS_TEXT.yours}. ${CONNECTORS_TEXT.neverShown}`, kind: "yours" }, groups: [{ label: "Use", rows }] });
+        const [grants, ...audits] = await Promise.all([dir.credentialGrants(person), ...mine.map((x) => dir.audit(person, x.ref).then((rows) => rows.map((r) => ({ ...r, ref: x.ref }))))]);
+        const audit = audits.flat().sort((a, b) => b.at - a.at);
+        const pageOf = connectionPage(host, mine, c.uses as Record<string, LastUse>, grants, audit, now);
+        return json({ ok: true, connector: { id, name: host, blurb: `${CONNECTORS_TEXT.yours}. ${CONNECTORS_TEXT.neverShown}`, kind: "yours" }, ...pageOf });
       }
     }
     if (id.startsWith("company:") && Array.isArray(c.company)) {
@@ -95,10 +95,12 @@ export async function connectorRoutes(request: Request, url: URL, person: string
   }
 
   if (url.pathname === "/app/permissions") {
-    const [grants, c] = await Promise.all([part(() => dir.grants(person)), connected(person, dir)]);
+    const [grants, credential, c] = await Promise.all([part(() => dir.grants(person)), part(() => dir.credentialGrants(person)), connected(person, dir)]);
     const count = c.builtin.length + (Array.isArray(c.yours) ? c.yours.length : 0) + (Array.isArray(c.company) ? c.company.length : 0);
-    const standing = Array.isArray(grants) ? { ok: true, notes: standingNotes(grants, c.nameOf, dir.now()) } : { ok: false, code: (grants as Refusal | null)?.code ?? "GRANTS_NOT_YOURS" };
-    return json({ ok: true, defaults: GATE_DEFAULTS, standing, connectors: count });
+    // Every grant once (F36, P9 delta 7): both stores read, or the list is not drawn; a half list is never shown whole.
+    const unread = !Array.isArray(grants) ? ((grants as Refusal | null)?.code ?? "GRANTS_NOT_YOURS") : !Array.isArray(credential) ? (credential as Refusal).code : null;
+    const all = unread ? { ok: false, code: unread } : { ok: true, ...grantRows(credential as GrantInfo[], grants as Grant[], c.nameOf, dir.now()) };
+    return json({ ok: true, defaults: GATE_DEFAULTS, grants: all, connectors: count });
   }
 
   if (url.pathname === "/app/search") return searchRoute(url, person, dir);

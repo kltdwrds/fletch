@@ -110,6 +110,8 @@ export interface WorldOptions {
   jobFetch?: (url: string, init: RequestInit) => Promise<Response>;
   /** The Vault's listing for the connectors page (M23.5): each person's own credentials and the company's, never a value. */
   credentials?: (person: string) => Promise<import("../../../packages/agent/src/vault/core.ts").CredentialInfo[]>;
+  /** The Vault's reads behind a connection's row and page and the Permissions list (F36): last uses, audit rows, credential grants. */
+  connections?: Pick<import("../../../packages/agent/src/http/connector-routes.ts").ConnectorReads, "lastUses" | "audit" | "credentialGrants">;
   /** The Renderer the chats' `documents` namespace reaches (M24.3); with it, each `Person` serves documents and signed links. */
   render?: (input: { markdown: string; to: string }) => Promise<RenderResult>;
   /** A model binding in place of the scripted fake: the live eval arms' gateway shim (M15.1). */
@@ -466,6 +468,9 @@ export function authorityWorld(o: WorldOptions = {}) {
     // The Connectors, Permissions and Search pages (M23.5): the Vault's listing, the Company's entitled connectors,
     // each person's own grants and memory, decided in the objects that own them.
     credentials: async (p) => (o.credentials ? o.credentials(p) : []),
+    lastUses: async (p) => (o.connections ? o.connections.lastUses(p) : {}),
+    audit: async (p, ref) => (o.connections ? o.connections.audit(p, ref) : []),
+    credentialGrants: async (p) => (o.connections ? o.connections.credentialGrants(p) : []),
     companyConnectors: async (p) => company().connectorsFor(p),
     grants: async (p) => host(p).authority.list(p),
     names: async () => company().directory(),

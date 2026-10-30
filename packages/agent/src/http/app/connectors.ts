@@ -6,7 +6,10 @@
 // its rows, and its groups with the words in force in the trailing slot. Permissions is the gates' defaults as
 // option rows with the check on the rule in force, the connectors list opening each connector's pane, and the
 // person's standing grants with Revoke. Every read is a route that answers for the session's person alone, and the
-// page draws what it says in words: never a credential, a reference or a code. Nothing here sets a mode.
+// page draws what it says in words: never a credential, a reference or a code. Nothing here sets a mode. From F36 (P9
+// deltas 5 to 7) a "Yours" row draws its status word as a pill and its last use, a connection's page its audit rows
+// and Disconnect with what it leaves, and Permissions every grant once under Grants, its count the rows'.
+import { CONNECTION_TEXT } from "./connection-words.ts";
 import { CONNECTORS_TEXT, PERMISSIONS_TEXT } from "./permission-words.ts";
 import { ic } from "./icons.ts";
 
@@ -44,6 +47,7 @@ export const CONNECTOR_PANE = `<div id="connector">
   <p id="connector-note" class="conn-note"></p>
   <div id="connector-revoke" class="qf-grpcard conn-hide"></div>
   <div id="connector-groups"></div>
+  <div id="connector-disconnect"></div>
 </div>`;
 
 /** The Permissions pane: the connectors list first, as the canvas has it, then the defaults and what others can ask. */
@@ -55,7 +59,7 @@ export const PERMISSIONS_PANE = `<div id="permissions">
     </div></div>
   <div id="perm-defaults"></div>
   <p class="conn-note">${PERMISSIONS_TEXT.defaultsNote}</p>
-  <div class="qf-grp"><h3>${PERMISSIONS_TEXT.standing}</h3><div id="perm-standing" class="qf-grpcard"></div></div>
+  <div class="qf-grp"><h3>${CONNECTION_TEXT.grants}<span id="perm-grants-count" class="qf-chip qf-chip--count"></span></h3><div id="perm-grants" class="qf-grpcard"></div></div>
   <p id="perm-note" class="conn-note"></p>
 </div>`;
 
@@ -78,11 +82,14 @@ export const CONNECT_DIALOG = `<div id="conn-connect" class="qf-dlg qf-dlg--512"
   </form>
 </div>`;
 
-export const CONNECTORS_SCRIPT = `const CONN = ${JSON.stringify(CONNECTORS_TEXT)}, PERM = ${JSON.stringify(PERMISSIONS_TEXT)};
+export const CONNECTORS_SCRIPT = `const CONN = ${JSON.stringify(CONNECTORS_TEXT)}, PERM = ${JSON.stringify(PERMISSIONS_TEXT)}, LINKS = ${JSON.stringify(CONNECTION_TEXT)};
 // The built-ins the canvas draws with a glyph rather than a letter.
 const CONN_GLYPH = { browser: "globe" };
 let connTab = "available", connData = null, connectorId = null;
 const connWhen = (ms) => new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+const connAt = (ms) => new Date(ms).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+// A status pill (the bundle's StatusPill): its tone and its word.
+function connPill(tone, word) { const p = el("span"); p.className = "qf-status qf-status--" + (tone || "done"); p.append(el("i"), word); return p; }
 // A group (SettingsDialog): its label over a card of rows.
 function setGroup(label, card) { const g = el("div"); g.className = "qf-grp"; const h = el("h3", label); card.className = "qf-grpcard"; g.append(h, card); return g; }
 // A connector's logo tile: its glyph, else its own one or two letters, else the name's first.
@@ -94,10 +101,13 @@ function connLogo(item) {
 }
 function connText(title, sub) { const t = el("span", title); t.className = "tx"; if (sub) { const s = el("span", sub); s.className = "sub"; t.append(s); } return t; }
 // A connector row (ListRow in a group card): the logo, the name over its line, the TextLink action.
+// A "Yours" row adds its last use to the line and its status word as a pill (F36).
 function connRow(item, label, run) {
   const row = el("div"); row.className = "qf-srow is-static"; row.dataset.id = item.id || "";
   const b = el("button", label); b.className = "qf-tlink"; b.setAttribute("aria-label", label + " " + item.name); b.onclick = run;
-  row.append(connLogo(item), connText(item.name, item.sub || ""), b);
+  const used = item.statusWord ? " · " + (item.lastUse ? LINKS.lastUsed + " " + connAt(Date.parse(item.lastUse)) + (item.outcome && item.outcome !== "sent" ? ", " + item.outcome : "") : LINKS.notUsed) : "";
+  row.append(connLogo(item), connText(item.name, (item.sub || "") + used));
+  if (item.statusWord) { const trail = el("span"); trail.className = "trail"; trail.append(connPill(item.tone, item.statusWord), b); row.append(trail); } else row.append(b);
   return row;
 }
 function connDraw() {
@@ -159,7 +169,7 @@ $("conn-connect-form").onsubmit = async (e) => {
 };
 function showConnector(id) { setGo("connector", id); }
 async function connectorPage() {
-  $("connector-groups").replaceChildren(); $("connector-revoke").replaceChildren(); $("connector-mono").replaceChildren(); $("connector-name").textContent = ""; $("connector-blurb").textContent = "";
+  $("connector-groups").replaceChildren(); $("connector-revoke").replaceChildren(); $("connector-disconnect").replaceChildren(); $("connector-mono").replaceChildren(); $("connector-name").textContent = ""; $("connector-blurb").textContent = "";
   coded($("connector-note"), CONN.reading, "");
   try {
     const c = await getJson("/app/connectors/" + encodeURIComponent(connectorId));
@@ -173,13 +183,35 @@ async function connectorPage() {
       // stop and wait on the person. A grant behind a row is revoked from the destructive row above the groups.
       for (const r of g.rows) {
         const row = el("div"); row.className = "qf-srow is-static"; row.dataset.row = r.id;
-        const trail = el("span"); trail.className = "trail"; const w = el("span", r.words); w.className = "val" + (r.asks ? " is-warn" : ""); trail.append(w);
-        row.append(connText(r.label), trail); card.append(row);
+        const trail = el("span"); trail.className = "trail";
+        if (r.tone) trail.append(connPill(r.tone, r.words)); else { const w = el("span", r.words); w.className = "val" + (r.asks ? " is-warn" : ""); trail.append(w); }
+        const sub = [r.sub, r.at ? connAt(r.at) : ""].filter(Boolean).join(" · ");
+        row.append(connText(r.label, sub), trail); card.append(row);
         if (r.grantId) { const b = el("button", CONN.revoke + ": " + r.label); b.className = "qf-srow is-danger"; b.dataset.grant = r.grantId; b.onclick = () => revokeGrantRow(r.grantId, $("connector-note"), CONN, connectorPage); $("connector-revoke").append(b); }
       }
       $("connector-groups").append(setGroup(g.label, card));
     }
+    if (c.disconnect) $("connector-disconnect").append(disconnectGroup(c.connector.name, c.disconnect));
   } catch (e) { couldNot($("connector-note"), "this connector", e); }
+}
+// Disconnect (F36, P9 delta 6): what it does and what stays, then the press revokes every credential of the person's
+// bound to this host through the Vault's own route, which also ends the grants that name it; the row leaves the
+// Connected list only when the Vault said it did.
+function disconnectGroup(host, d) {
+  const card = el("div"); const row = el("div"); row.className = "qf-srow is-static";
+  const b = el("button", d.label); b.className = "qf-btn qf-btn--destructive"; b.id = "connector-disconnect-go";
+  const trail = el("span"); trail.className = "trail"; trail.append(b);
+  row.append(connText(d.words, d.stays), trail); card.append(row);
+  b.onclick = async () => {
+    b.disabled = true;
+    try {
+      const v = await getJson("/vault");
+      const refs = v.credentials.filter((x) => !x.company && x.status !== "revoked" && x.hosts.some((h) => h.host === host)).map((x) => x.ref);
+      for (const ref of refs) { const r = await post("/vault/revoke", { ref }); if (!r.ok) { b.disabled = false; await failedTo($("connector-note"), LINKS.notDisconnected, r); return; } }
+      connTab = "connected"; setGo("connectors"); await connectors(); $("conn-note").textContent = LINKS.disconnected;
+    } catch (e) { b.disabled = false; couldNot($("connector-note"), "this connection", e); }
+  };
+  return setGroup(d.label, card);
 }
 // Revoke goes through the engine's own route, which the person's object decides; the row leaves only when it did.
 async function revokeGrantRow(id, note, words, reload) {
@@ -191,7 +223,7 @@ async function revokeGrantRow(id, note, words, reload) {
 async function permissions() {
   coded($("perm-note"), CONN.reading, "");
   let p;
-  try { p = await getJson("/app/permissions"); } catch (e) { $("perm-standing").replaceChildren(); $("perm-defaults").replaceChildren(); couldNot($("perm-note"), "your permissions", e); return; }
+  try { p = await getJson("/app/permissions"); } catch (e) { $("perm-grants").replaceChildren(); $("perm-defaults").replaceChildren(); couldNot($("perm-note"), "your permissions", e); return; }
   $("perm-note").textContent = "";
   $("perm-connectors-count").textContent = String(p.connectors);
   const defaults = $("perm-defaults"); defaults.replaceChildren();
@@ -208,15 +240,31 @@ async function permissions() {
     defaults.append(setGroup(d.label, card));
   }
   permConnectors();
-  const list = $("perm-standing"); list.replaceChildren();
-  if (!p.standing.ok) { coded($("perm-note"), PERM.notRead, p.standing.code); return; }
-  if (!p.standing.notes.length) { const none = el("div"); none.className = "qf-srow is-static"; none.append(connText(PERM.standingEmpty)); list.append(none); }
-  // A standing grant: who may ask what, when it was granted, and Revoke as the destructive TextLink.
-  for (const n of p.standing.notes) {
-    const row = el("div"); row.className = "qf-srow is-static"; row.dataset.grant = n.id;
-    const b = el("button", PERM.revoke); b.className = "qf-tlink"; b.setAttribute("style", "color:var(--text-destructive)"); b.setAttribute("aria-label", PERM.revoke + ": " + n.title); b.onclick = () => revokeGrantRow(n.id, $("perm-note"), PERM, permissions);
-    row.append(connText(n.title, PERM.granted + " " + connWhen(n.at) + (n.until ? " · " + PERM.until + " " + connWhen(n.until) : "")), b); list.append(row);
+  const list = $("perm-grants"); list.replaceChildren(); $("perm-grants-count").textContent = "";
+  if (!p.grants.ok) { coded($("perm-note"), PERM.notRead, p.grants.code); return; }
+  // Every grant once (F36, P9 delta 7): the count is the rows drawn; a credential grant and an authority grant alike
+  // say what they cover, one use or until you revoke it, when made and when they end; Revoke where it is still live.
+  $("perm-grants-count").textContent = String(p.grants.rows.length);
+  if (!p.grants.rows.length) { const none = el("div"); none.className = "qf-srow is-static"; none.append(connText(LINKS.grantsEmpty)); list.append(none); }
+  for (const g of p.grants.rows) {
+    const row = el("div"); row.className = "qf-srow is-static"; row.dataset.grant = g.id; row.dataset.kind = g.kind;
+    const sub = [g.kind === "credential" ? LINKS.credential : LINKS.action, g.lifetime, LINKS.made + " " + connWhen(Date.parse(g.made)), g.ends && !g.spent ? LINKS.ends + " " + connAt(g.ends) : ""].filter(Boolean).join(" · ");
+    row.append(connText(g.covers, sub));
+    if (g.spent) { const t = el("span"); t.className = "trail"; t.append(connPill("wait", LINKS.status.spent)); row.append(t); }
+    else {
+      const b = el("button", PERM.revoke); b.className = "qf-tlink"; b.setAttribute("style", "color:var(--text-destructive)"); b.setAttribute("aria-label", PERM.revoke + ": " + g.covers);
+      b.onclick = () => (g.kind === "credential" ? revokeCredentialGrant(g.id) : revokeGrantRow(g.id, $("perm-note"), PERM, permissions));
+      row.append(b);
+    }
+    list.append(row);
   }
+}
+// A credential grant is the Vault's: its own route ends it, and the row leaves only when it did.
+async function revokeCredentialGrant(nonce) {
+  const r = await post("/vault/grants/revoke", { nonce });
+  if (!r.ok) { await failedTo($("perm-note"), PERM.revoke, r); return; }
+  await permissions();
+  $("perm-note").textContent = PERM.revoked;
 }
 // The connectors list on Permissions: each opens its connector's pane, where its permissions are.
 async function permConnectors() {

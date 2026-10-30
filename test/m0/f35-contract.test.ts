@@ -1,9 +1,9 @@
 // F35: the P9 contract is checked against its own task files, as F33 holds P3 (`test/m0/f20-contract.test.ts` plants
 // each of the check's guards; they are not repeated here). Fourteen clauses and eighteen tasks, each task's file under
 // `test/evals/p9-connectors/`; every clause cites evidence, every file exists, loads and matches its block; and every
-// tier-1 task F35 runs (T-P9-01, 03 to 07, 11, 12 and 18) has its `version_hash` filled with its file's hash as the
-// tier-2 runner computes it (Q14). The four F36 runs (T-P9-02, 08, 09, 10) are hashed by F36, and the tier-2 tasks
-// (T-P9-13 to 17) when they are first graded on a slot (F37).
+// tier-1 task (F35's T-P9-01, 03 to 07, 11, 12 and 18, and F36's T-P9-02, 08, 09 and 10) has its `version_hash`
+// filled with its file's hash as the tier-2 runner computes it (Q14). The tier-2 tasks (T-P9-13 to 17) are hashed when
+// they are first graded on a slot (F37).
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -24,7 +24,8 @@ const disk: TaskLoader = {
 };
 
 const ids = (prefix: string, n: number) => Array.from({ length: n }, (_, i) => `${prefix}-${String(i + 1).padStart(2, "0")}`);
-const TIER1 = new Set(["01", "03", "04", "05", "06", "07", "11", "12", "18"].map((n) => `T-P9-${n}`));
+// F35's tier-1 runs and F36's four (T-P9-02, 08, 09, 10): every tier-1 task of the contract.
+const TIER1 = new Set(["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "18"].map((n) => `T-P9-${n}`));
 const tier1Stale = (contract: string) => staleHashes(contract).filter((l) => TIER1.has(l.split(" ")[0] as string));
 
 describe("[F35] the P9 contract", () => {
