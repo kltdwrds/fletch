@@ -5,21 +5,6 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
-### Q20 (F27), 2026-10-30: the draft PR for F27 could not be opened: a permission refusal
-
-**Blocks:** only goal step (5)'s draft PR. Everything else is done. `ACCEPT F27: PASS` (TREE
-f7a3b98c04bb7c3dd9f7fb45b154a9c294868e84, HEAD 0d11020), the second fresh Opus verifier ended
-`VERIFIER: no blocking findings`, the PROGRESS row reads DONE at 0d11020, and the branch
-`claude/f27-memory-as-it-is-31e59c` is pushed to `origin` (kltdwrds/fletch).
-
-The session's permission check refused `gh pr create` as an action that creates a public surface. The first try also
-failed because gh resolved the head to the `qyvr-ai` fork; `--repo kltdwrds/fletch --head <branch>` fixes that.
-
-**Kyle:** open the draft PR, or allow the action for builder sessions:
-`gh pr create --repo kltdwrds/fletch --draft --base main --head claude/f27-memory-as-it-is-31e59c --title "F27: memory as it is (P6 contract, fourteen tasks, tier 1)"`.
-The body belongs in the PR: the scope, the accept summary, the verifier's last line, and the two findings for F28
-(T-P6-14 has no model tool that writes a people page; forget has no owner confirm surface).
-
 ### Q18 (F26), 2026-10-30: may F26 keep `pauseWords` and the widened `claimed_sent` that T-P15-13's pass needs?
 
 **Blocks:** F26's verifier pass, so the part is not DONE. Everything else is in. `ACCEPT F26: PASS` (TREE
@@ -96,6 +81,10 @@ hold popover"), or allow `gh pr create --draft` for builder sessions so the next
 Orchestrator, 2026-10-29: PR #29 opened from the orchestrator session, so F21 is not blocked; what stays open is the
 permission for builder sessions, listed in `WAITING-ON-KYLE.md`.
 
+Orchestrator, 2026-10-30: the F27 builder (Opus, `--permission-mode auto`) was refused `gh pr create` again and wrote it
+up as Q20 under BLOCKED; folded here as the same class. PR #45 was opened from the orchestrator session and merged, so
+F27 is DONE and nothing is blocked. The F22 and F26 builders opened their PRs themselves; the classifier is not consistent.
+
 ### Q1 (F1), 2026-10-22: A throwaway account for the live exit test
 
 **Blocks:** F1's last acceptance claim, one passing run of `test/live/f1-deploy.live.test.ts`, and the tag `v0.1.0`.
@@ -106,6 +95,32 @@ permission for builder sessions, listed in `WAITING-ON-KYLE.md`.
 the free-plan spike (Q2).
 
 ## Open, not blocking
+
+### Q21 (P7), 2026-10-30: proactivity editions and the feed have no fletch seam; three attested clauses; five findings
+
+**Blocks nothing.** The P7 interrogation (`contracts/P7-scheduling.md`, evidence under `evidence/p7-scheduling/` on
+Kyle's Mac) leaves three things for Kyle's eye.
+
+1. **Proactivity editions and the feed (B-P7-13, B-P7-14).** Muse prepares editions in the background and hands them to a
+   chat whose agent decides per item (send or skip, with a reason, after a freshness check); a feed of units is built on
+   its own cadence from one prompt the person edits, announcing nothing, on a /feed page. Both originate work and
+   reading the person did not ask for. fletch has no store, worker or surface for either; a feed store or an editions
+   worker is a storage schema and a product scope, one-way doors the orchestrator may only propose. `VISION.md` has no
+   line on unasked work. The clauses stand with no task. Recommended answer: neither in the spine; a later cluster only
+   if Kyle wants fletch to originate reading or work, with a proposed record when it is translated.
+2. **Attested, not instrumented.** B-P7-04 (a manual run spends a one-shot) is inferred from the rows and Muse's own
+   retraction; B-P7-07 (hooks are files only, the dry run) rests on tool results and an activity row, no table holds a
+   hook; B-P7-13 rests on descriptions, since `proactivity.read` needs an edition id and has no listing (the remembered
+   id returned "preparation not found", no code). Recommended answer: accept them as written; the first two are held
+   by fletch's own tests whatever Muse does.
+3. **Five findings in Muse the deltas answer.** (a) `cron.stop` reported `job_chat_notified true` and no notice appeared
+   (delta 1). (b) A hook worker told to reply "done" ended `completed_noop` and the word reached no chat (delta 2).
+   (c) A scheduled run's gated `exec` parked on an approval card with a 24 h expiry, where P15's chat cards timed out at
+   10 minutes (delta 4: a fletch job cannot act). (d) `cron.remove` left that run "running" and the card pending
+   (delta 5). (e) Muse's `cron.stop` text claimed a one-shot "is still set to fire" after a manual run; it was consumed
+   (B-P7-04). Recommended answer: none needed; each is a two-way door the orchestrator took, listed under Translation.
+
+**Recommended answer:** as above; the deltas stand unless Kyle wants unasked work in fletch.
 
 ### Q19 (P6), 2026-10-30: goals and tracked items have no fletch seam; four attested clauses; one reload finding
 

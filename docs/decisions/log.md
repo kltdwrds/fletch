@@ -337,3 +337,12 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   passes them; `sentIn` on a slot is the chat's stored rows. Rejected: a separate slot per trial (three slots, nine
   leases a cluster); a line sending new facts to today's note and a MEMORY.md edit that cites its lines, both outside
   the scope (the verifier's finding), left for a later part.
+- 2026-10-30, P7 scheduling translated (`docs/plan-v2/contracts/P7-scheduling.md`), seven deltas, all two-way, the
+  orchestrator's: a stop in flight is said and ends the run as stopped (Muse's `cron.stop` promised a notice and drew
+  none; rejected: waiting for the run); silence is certified by code against the run's call log, never by the worker's
+  judgment (Muse's hook worker dropped a requested word; rejected: trusting the terminal signal); a poll is a gate on a
+  recurring job, code over one https url at five minutes or slower, not a script (rejected: a script lane); a job
+  cannot act, it reads and reports and the action is done in the chat before the person (Muse parks a run on a 24 h
+  card; rejected: a run-time card); remove ends what the job has in flight (Muse left the run and card; rejected:
+  refusing the remove); no proactivity editions or feed in P7 (no seam; a store is a one-way door; Q21; rejected: a feed
+  as a recurring job); a job is changed in place by `jobs_update` with its history kept (rejected: remove and recreate).

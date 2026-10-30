@@ -58,7 +58,8 @@ Kyle's own lines go under `## Steering`.
   [Q13](QUESTIONS.md#q13-f21-2026-10-29-the-f21-draft-pr-could-not-be-opened-from-the-session),
   [PR #29](https://github.com/kltdwrds/fletch/pull/29). Update 2026-10-29: the F22 builder, same command and mode,
   opened [PR #31](https://github.com/kltdwrds/fletch/pull/31) itself without a refusal, so the classifier is not
-  consistent; the question stands until a setting makes it so.
+  consistent; the question stands until a setting makes it so. Update 2026-10-30: the F27 builder was refused again
+  (its Q20, folded into Q13); the orchestrator opened [PR #45](https://github.com/kltdwrds/fletch/pull/45).
 
 - [ ] 2026-10-29 uat: **F22, the care register: a reaction on a win, a heart on hard news.** On main since
   [PR #31](https://github.com/kltdwrds/fletch/pull/31). What changed: the agent's `REACTING` guidance names three
@@ -141,8 +142,8 @@ Kyle's own lines go under `## Steering`.
 
 - [ ] 2026-10-29 uat: **F24, the thread shows the work: the status line, the file card, a job's result wakes the
   agent.** On main since [PR #36](https://github.com/kltdwrds/fletch/pull/36), deployed on
-  https://fletch-pv-2.edwards-ky1.workers.dev (leased to 2026-10-31T01:06Z; `pnpm preview up` in any worktree
-  redeploys it). What changed: while a tool runs the thread shows the dots with the activity in words ("Reading a
+  https://fletch-pv-2.edwards-ky1.workers.dev (its lease was released by `pnpm preview gc` on 2026-10-30 once PR #36
+  had merged, so the slot is free: `pnpm preview up` in any worktree redeploys main to a slot). What changed: while a tool runs the thread shows the dots with the activity in words ("Reading a
   file", "Searching the web") from a table in the page, never from the model; a file the agent links as
   `files/<path>` is drawn as a card in its bubble (name, kind, four preview lines, a click opens the Library viewer),
   an http link stays a link; a scheduled job's result still arrives as its notice, and now also wakes the agent, which
@@ -194,8 +195,8 @@ Kyle's own lines go under `## Steering`.
 
 - [ ] 2026-10-30 uat: **F26, nothing goes around a card: the gate at the egress, the bot wall, the rate limit, the
   waiting line.** On main since [PR #42](https://github.com/kltdwrds/fletch/pull/42), deployed on
-  https://fletch-pv-3.edwards-ky1.workers.dev (the F26 builder's lease; `pnpm preview up` in any worktree redeploys
-  it). What changed: after you decline a share, the same text through the browse lane's one write or aimed at another
+  https://fletch-pv-3.edwards-ky1.workers.dev (first the F26 builder's lease, then F28's, which serves a tree that
+  includes F26; `pnpm preview up` in any worktree redeploys main to a slot). What changed: after you decline a share, the same text through the browse lane's one write or aimed at another
   host meets the gate again and raises its own card, and nothing leaves; a page that serves a CAPTCHA or bot check is
   refused by name (`BROWSE_BOT_WALL`), the domain is remembered as stopped for the turn, and a memory line claiming
   you allowed CAPTCHA solving changes nothing; a 429 stops that site for the turn with its own wait in the reason
@@ -237,6 +238,42 @@ Kyle's own lines go under `## Steering`.
   now (then F28 grows a third part and the record is proposed first). Deep dive:
   [Q19](QUESTIONS.md#q19-p6-2026-10-30-goals-and-tracked-items-have-no-fletch-seam-four-attested-clauses-one-reload-finding),
   [B-P6-14 and B-P6-15](contracts/P6-memory.md#clauses), `answers/step-9.md` and `answers/step-10.md` on your Mac.
+- [ ] 2026-10-30 uat: **F27, memory as it is: a number is refused by memory itself, and a sub-agent has no memory.**
+  On main since [PR #45](https://github.com/kltdwrds/fletch/pull/45) (no slot deployed for it; `pnpm preview up` in
+  any worktree). What changed: `memory_write` refuses a credential, verification code, card, bank account or
+  government ID number on every target with `MEMORY_VALUE_REFUSED`, whatever the model proposed and however long the
+  edit, so the reply can only say the value was not kept; a sub-agent's memory tools are refused by code, so what it
+  needs must ride in its brief; the P6 task files and their tier-1 runs are in. What to try: tell it to remember where
+  something is kept along with an obviously fake sixteen-digit number; the location should be saved and the number
+  refused by name, and asking for it afterwards should find no record. Report anything that reads wrong under
+  Steering; nothing is blocked on this. Deep dive:
+  [F27 in parts.md](parts.md#f27-memory-as-it-is-the-p6-contract-check-fourteen-task-files-and-tier-1-on-what-is-shipped),
+  [PROGRESS.md F27](PROGRESS.md), `packages/agent/src/memory/service.ts` (`credentialContent`),
+  `test/evals/p6-memory/planted.test.ts`, the F27 lines in `docs/decisions/log.md`.
+
+- [ ] 2026-10-30 look: **the P7 scheduling contract and its seven deltas from Muse.** The interrogation of muse.ai (one
+  new side chat, steps 0 to 12 of the scenario, run by an Opus agent that pressed no approval, named only the fixtures,
+  tagged every probe `p7 probe` and removed every probe schedule and the probe hook at the end) is now
+  `contracts/P7-scheduling.md`: fourteen clauses on the one-shot set in one turn, the result in the chat, certified
+  silence, the manual run, stop, update, pause and remove, the hook, the gated action at run time, the schedule's
+  surfaces, the job's record, and proactivity and the feed; fourteen tasks; seven deltas. The decisions worth your eye,
+  each a two-way door the orchestrator took: a stop is said and ends the run as stopped (Muse's `cron.stop` reported a
+  notice that never appeared); silence is certified by code, never by the worker's judgment (a Muse hook worker told to
+  reply "done" ended with nothing-to-do and the word reached no chat); a poll is a gate on a recurring job, not a
+  script; a job cannot act, so "at nine, send X" is two steps in fletch (Muse's run parked on a card for 24 hours
+  instead of P15's 10 minutes); remove ends what is in flight (Muse left the run running and the card pending); no
+  proactivity or feed in P7 (Q21). Two parts follow: F29 (tier 1, the stop, the update in place, the remove) and F30
+  (the reply's words and tier 2). **Left in Muse for you:** one pending approval card `b396e785-b616-4c29-8ae3-c86e5635a7cb`
+  ("Share info with httpbin.org", Approvals tab under Needs review, and the "A task needs review" banner in the probe
+  side chat), which expires 2026-10-31T07:13:55Z: Deny it or let it expire, nothing was sent; its parked run
+  `f2595c90-09e2-4a75-ac6d-f9cf5ae2749a` (still "running", its job removed); five disabled `scheduler.jobs` probe rows
+  and three archived definitions (history, no delete tool); the probe side chat `375113de-8c54-4ecf-945b-1fde27095b20`,
+  which you may delete. Deep dive: [the contract](contracts/P7-scheduling.md), [its deltas](contracts/P7-scheduling.md#translation),
+  [Q21](QUESTIONS.md#q21-p7-2026-10-30-proactivity-editions-and-the-feed-have-no-fletch-seam-three-attested-clauses-five-findings),
+  [F29 and F30 in parts.md](parts.md#f29-jobs-as-they-are-the-p7-contract-check-fourteen-task-files-a-stop-that-is-said-an-update-in-place-and-tier-1),
+  evidence on your Mac under `docs/plan-v2/evidence/p7-scheduling/` (`answers/step-0.md` to `step-12.md`,
+  `step-2-detail.png` the job dialog, `step-11.png` the parked card, `step-8.png` the wake that reached no one,
+  `answers/step-12.md` "Left behind in Muse").
 
 ## Steering
 
