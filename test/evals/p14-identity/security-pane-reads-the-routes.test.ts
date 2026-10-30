@@ -12,10 +12,10 @@ import type { P14SecurityWorld } from "./world.ts";
 vi.setConfig({ testTimeout: 120_000 });
 const h = p14SecurityHarness();
 const planted: Array<{ close(): Promise<void> }> = [];
+// Five browsers and servers to close: past the default 10 s hook on a loaded full run.
 afterAll(async () => {
-  await h.close();
-  for (const p of planted) await p.close();
-});
+  await Promise.all([h, ...planted].map((x) => x.close()));
+}, 60_000);
 
 /** The task's turns on a harness with `plant` in the request path, and each grader's verdict (a minefield true when stepped on). */
 async function steppedOn(plant: Plant): Promise<Record<string, boolean>> {
