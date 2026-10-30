@@ -278,7 +278,8 @@ Kyle's own lines go under `## Steering`.
   gradings of fletch's form against the clause wording are
   [Q23](QUESTIONS.md#q23-p7-f29-2026-10-30-b-p7-01-says-no-card-fletchs-agent-made-job-waits-on-one-and-paused-jobs-sit-under-off)
   (the agent-made one-shot still waits on one card, a security boundary F29 did not cross; a paused job sits under
-  Off in Upcoming). F30 puts this tree on a slot; the uat item follows it.
+  Off in Upcoming). **F30 landed too (PR #53, `ACCEPT F30: PASS`, verifier clean):** P7 is at level 2; the uat item
+  below has the slot.
 
 - [ ] 2026-10-30 uat: **F28, memory says what it did (merged, PR #47; fletch-pv-1 serves this tree until 2026-10-31T08:12Z,
   after that `pnpm preview up` on main).** The reply now names a save in the turn that made it with the citation the
@@ -313,6 +314,23 @@ Kyle's own lines go under `## Steering`.
   `step-2-detail.png` the "two links" Summary over the file, `step-3-detail-phone.png` the Summary strip,
   `step-11-step4-card.png` and `step-11-failed-card.png` one failure two words, `answers/step-12.md` "Left behind in
   Muse").
+
+- [ ] 2026-10-30 uat: **F29 and F30, jobs as they are and jobs say what they did (merged, PR #50 and PR #53; fletch-pv-2
+  serves this tree until 2026-10-31T09:51Z, after that `pnpm preview up` on main).** A one-shot is set in one turn
+  with its time named and nothing asked; a job that only reads and reports says so and offers to do the thing now in
+  the chat; a stop, a pause or a remove is confirmed in one line and ends what is in flight; a job's instructions
+  that ask a reply refuse silence; an update happens in place with history; the P7 must-have tier-2 tasks pass 3 of 3
+  on the slot and P7 is at level 2. What to try: ask for a one-shot a few minutes out that reads a page and tells
+  you its title, read the ack, then open Upcoming and the job's dialog; ask it to pause the job, then remove it, and
+  read each confirmation; set a recurring poll and stop it by name. Open for your eye, not blocking: Q23 (the
+  agent-made one-shot still waits on one approval card, a security boundary the parts did not cross; a paused job
+  sits under Off in Upcoming) and T-P7-14 (the run history is drawn open, a later part). Report anything that reads
+  wrong under Steering. Deep dive: [F29](parts.md#f29-jobs-as-they-are-the-p7-contract-check-fourteen-task-files-a-stop-that-is-said-an-update-in-place-and-tier-1)
+  and [F30 in parts.md](parts.md#f30-jobs-say-what-they-did-p7s-tier-2-on-a-slot-and-the-replys-words),
+  [PROGRESS.md F29 and F30](PROGRESS.md), [SCORECARD P7](SCORECARD.md),
+  [Q23](QUESTIONS.md#q23-p7-f29-2026-10-30-b-p7-01-says-no-card-fletchs-agent-made-job-waits-on-one-and-paused-jobs-sit-under-off),
+  `packages/agent/src/chat/instructions.ts` (`JOB_WORDS`), `docs/plan-v2/contracts/P7-scheduling.md`, the four P7
+  results files under `docs/plan-v2/evidence/results/`.
 
 ## Steering
 
