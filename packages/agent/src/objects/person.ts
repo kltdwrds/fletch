@@ -261,7 +261,7 @@ export class Person extends Agent<Env> {
       bucket: this.env.AGENT_BUCKET,
       files: { dump: () => this.files.dump(), purgeAll: () => this.files.purgeAll() },
       work: { purge: () => purgeWork(treeOf(this.ctx.storage, this.name), this.attachments, this.links) },
-      company: { propose: (p, i) => company.promotionPropose(p, i), offboardingPolicy: (p) => company.offboardingPolicy(p), depart: (p) => company.depart(p) },
+      company: { propose: (p, i) => company.promotionPropose(p, i), offboardingPolicy: (p) => company.offboardingPolicy(p), mayDepart: (p) => company.mayDepart(p), depart: (p) => company.depart(p) },
       // The host's provisioning (M11.2): a standalone tenant for the departing person, where the host offers one.
       converter: hostOf(this.env).provisioning,
       pending: new ConversionState(this.ctx.storage),

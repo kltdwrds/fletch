@@ -66,8 +66,8 @@ export const PANEL_TEXT = {
   runSending: "reported, not delivered yet",
   runManual: "manual",
   runScheduled: "scheduled",
-  edit: "Edit",
-  editLater: "Naming comes later",
+  /** The name card's words (F40, P14 delta 2): what is true today, with no control and no promise. */
+  nameNote: "No name is chosen for your agent, and a chat message cannot name it.",
   soul: "SOUL",
   memory: "MEMORY",
   withCare: "ACCESS WITH CARE",
@@ -164,7 +164,7 @@ ${PANEL_TABS.map((k) => `      <button id="panel-tab-${k}" class="tab" role="tab
       <div id="panel-upcoming" class="panel-body" hidden><p id="jobs-note" class="panel-note"></p><div id="job-list" class="panel-body"></div></div>
       <div id="panel-identity" hidden>
         <p id="profile-note" class="panel-note"></p>
-        <div class="qf-idname"><h3>${PANEL_TEXT.title}</h3><button id="profile-edit" class="qf-btn qf-btn--secondary qf-btn--icon-start" disabled title="${PANEL_TEXT.editLater}">${ic("pencil", "xs")}${PANEL_TEXT.edit}</button></div>
+        <div class="qf-idname"><h3>${PANEL_TEXT.title}</h3><p id="profile-name-note" class="panel-note">${PANEL_TEXT.nameNote}</p></div>
         <div class="qf-idgrid">${idCard("soul", "soul")}${idCard("memory", "mem")}</div>
       </div>
     </div>

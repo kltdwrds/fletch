@@ -292,14 +292,16 @@ describe("[M27.4] the Upcoming tab", () => {
 });
 
 describe("[M27.4] the Identity tab", () => {
-  it("is the name card and the SOUL and MEMORY cards, each opening its own file in the viewer; SOUL says what the file is", async () => {
+  it("is the name card (no name chosen, no Edit) and the SOUL and MEMORY cards, each opening its own file in the viewer; SOUL says what the file is", async () => {
     const w = authorityWorld({ script: [] });
     const profile = (await w.http(ada.email, "GET", "/app/profile")).body as Record<"soul" | "memory", { ok: boolean; lines: Array<{ text: string }> }>;
     const p = await pageOf(w, ada.email);
     await tab(p, "identity");
     expect(APP_PAGE).toContain('<button id="tile-soul" class="qf-idcard qf-idcard--soul"');
     expect(APP_PAGE).toContain('<button id="tile-memory" class="qf-idcard qf-idcard--mem"');
-    expect(APP_PAGE).toMatch(/<div class="qf-idname"><h3>Your agent<\/h3><button id="profile-edit"[^>]* disabled/);
+    // The name card says what is true (F40, P14 delta 2): no name is chosen and a chat message cannot name the agent; no Edit.
+    expect(APP_PAGE).toContain(`<div class="qf-idname"><h3>Your agent</h3><p id="profile-name-note" class="panel-note">${PANEL_TEXT.nameNote}</p></div>`);
+    expect(APP_PAGE).not.toContain('id="profile-edit"');
     for (const [k, file, about] of [["soul", "SOUL.md", true], ["memory", "MEMORY.md", false]] as const) {
       await click(p.byId(`tile-${k}`));
       const f = profile[k];
