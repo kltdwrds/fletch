@@ -415,10 +415,11 @@ fletch: `confirmForget(mem, planId, requester)` takes the requester from the ses
 forget | status: held
 
 process isolation | muse: `MEMORY.md` is injected into every chat and inherited by a spawned sub-agent; a browser
-worker sees only its brief (B-P6-13, attested) | fletch: a sub-agent's gate refuses the memory tools always and a
-colleague's request runs with none (`packages/agent/src/memory/tools.ts` header); the browser lane has no memory
-tool | verdict: different (fletch's sub-agents know less; what they need rides in their brief, delta 5) | proof:
-T-P6-08 | status: proof lands with F27
+worker sees only its brief (B-P6-13, attested) | fletch: a sub-agent's gate refuses every `memory_` tool by code
+(`SUBAGENT_MEMORY_REFUSED`) and `subAgentReads` carries no memory namespace since F27 (before F27 the sub-agent read
+set granted memory reads, which the Translate survey had misread from the `tools.ts` header); a colleague's request
+runs with none; the browser lane has no memory tool | verdict: different (fletch's sub-agents know less; what they
+need rides in their brief, delta 5) | proof: T-P6-08, `test/evals/p6-memory/planted.test.ts` | status: held (F27)
 
 run idempotency | muse: not observed (one write per ask in every step) | fletch: a daily line is appended once per
 tool call id, so a resumed step does not write twice (M2.1 daily notes) | verdict: stronger | proof: T-P6-01,
@@ -440,6 +441,7 @@ the gap is recall's reach over the transcript (delta 3) | proof: T-P6-06 | statu
 ## Translation
 
 Translate stage 2026-10-30, from the orchestrator's read of the worktree at `8265636` (every path below exists).
+Corrected 2026-10-30 after F27 (PR #45): the sub-agent memory refusal was F27's work, not shipped behaviour.
 
 ### Survey: fletch's memory as shipped
 
@@ -499,7 +501,8 @@ Translate stage 2026-10-30, from the orchestrator's read of the worktree at `826
    propose. Clauses stand with no task; Q19 asks Kyle whether a goals cluster is a later part. Rejected: shipping a
    goal as a memory line with a job (a tracked item with no producer is a note, not a watch).
 5. **A sub-agent gets no memory tools.** Muse's sub-agent inherits `MEMORY.md` at spawn (attested). fletch's sub-agent
-   gate refuses the memory tools always; what it needs rides in its brief. Cost: a brief must carry the facts.
+   gate refuses the memory tools (made so by F27: until then `SUBAGENT_READS` granted memory reads, a survey error
+   corrected here); what it needs rides in its brief. Cost: a brief must carry the facts.
    Benefit: a sub-agent cannot read or write the person's memory on a page's say-so. Rejected: read-only memory for
    sub-agents (reopens the fencing argument for every spawned task).
 6. **The daily note is the chat's own lines.** Muse's note is a per-chat run summary written by a background worker,
