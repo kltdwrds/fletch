@@ -1,5 +1,5 @@
 // The wire format between pi's transcript and the OpenAI-compatible chat completions of Workers AI and
-// OpenRouter: messages and tools out, SSE chunks in.
+// Meta: messages and tools out, SSE chunks in.
 import type { Message, Tool } from "@earendil-works/pi-ai";
 
 /** A content part of a user message: text, or an image as a data URL (M24.3, where the route's model takes images). */
@@ -78,29 +78,15 @@ export function toWire(messages: Message[]): { messages: WireMessage[]; tools: W
 /** One parsed `data:` event of the stream. */
 export type SseEvent = { done: true } | { done: false; chunk: ChatChunk };
 
-/** The readable reasoning of a delta: the plain fields, else the text and summary items of `reasoning_details`. */
+/** The readable reasoning of a delta, under either OpenAI-compatible spelling. */
 export function reasoningOf(d: NonNullable<NonNullable<ChatChunk["choices"]>[number]["delta"]>): string {
-  const plain = d.reasoning_content ?? d.reasoning;
-  if (plain) return plain;
-  let out = "";
-  for (const item of d.reasoning_details ?? []) {
-    if (item.type === "reasoning.text" && item.text) out += item.text;
-    else if (item.type === "reasoning.summary" && item.summary) out += item.summary;
-  }
-  return out;
-}
-
-/** True when a delta carries only encrypted reasoning items: reasoning the provider withholds. */
-export function reasoningWithheld(d: NonNullable<NonNullable<ChatChunk["choices"]>[number]["delta"]>): boolean {
-  return !reasoningOf(d) && (d.reasoning_details ?? []).some((i) => i.type === "reasoning.encrypted");
+  return d.reasoning_content ?? d.reasoning ?? "";
 }
 
 export interface ChatChunk {
-  /** OpenRouter: the host that served the call, on every chunk (openrouter.ai/docs, streaming). */
-  provider?: string;
   /** The model that answered, as the provider names it. */
   model?: string;
-  /** OpenRouter: an error after the stream started, sent as a chunk instead of a status. */
+  /** An error after the stream started, sent as a chunk instead of a status. */
   error?: { code?: number | string; message?: string };
   /** Absent on the closing chunk, which carries the totals (and an empty `response`). */
   choices?: Array<{
@@ -109,8 +95,6 @@ export interface ChatChunk {
       /** GLM 5.3 Flash's reasoning field, as recorded (M1.2); `reasoning` is the other OpenAI-compatible spelling. */
       reasoning_content?: string | null;
       reasoning?: string | null;
-      /** OpenRouter's typed reasoning items (openrouter.ai/docs reasoning-tokens): text, summary, or encrypted (opaque, may read `[REDACTED]`). */
-      reasoning_details?: Array<{ type?: string; text?: string | null; summary?: string | null; data?: string | null }> | null;
       tool_calls?: Array<{ index: number; id?: string | null; function?: { name?: string | null; arguments?: string | null } }>;
     };
     finish_reason?: string | null;
@@ -121,9 +105,6 @@ export interface ChatChunk {
     completion_tokens?: number;
     prompt_tokens_details?: { cached_tokens?: number };
     completion_tokens_details?: { reasoning_tokens?: number };
-    /** OpenRouter: the call's cost in US dollars, and with a BYOK key the host's charge under `upstream_inference_cost`. */
-    cost?: number;
-    cost_details?: { upstream_inference_cost?: number | null } | null;
   };
 }
 

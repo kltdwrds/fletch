@@ -117,7 +117,7 @@ export async function loginRoutes(deps: PasskeyDeps, request: Request, url: URL)
     const no = (refused: Response) => ({ ok: false as const, refused });
     if (count === 0) {
       if (!deps.setupToken) {
-        return no(refuse("LOGIN_SETUP_UNAVAILABLE", "first sign-in is not set up on this deploy: run `pnpm --dir <checkout> create-fletch` again, or set a setup token with `wrangler secret put SETUP_TOKEN`, then open the printed setup link", 503));
+        return no(refuse("LOGIN_SETUP_UNAVAILABLE", "first sign-in is not set up on this deploy: run `pnpm self-host` again, or set a setup token with `wrangler secret put SETUP_TOKEN`, then open the printed setup link", 503));
       }
       if (!sameSecret(setup, deps.setupToken)) return no(refuse("LOGIN_SETUP_REQUIRED", "creating the first passkey needs the setup link printed when this deploy was set up", 403));
       return { ok: true as const, count, session: await ownerSession() };

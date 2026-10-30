@@ -1,0 +1,9 @@
+// The tier-2 runner (scripts/evals.ts) and its slot client (scripts/evals/slot.ts), which signs in with the software
+// passkey from @qyvr/host-cloudflare's tests (test/support/soft-authenticator.ts): Node code that reaches sources
+// written over the Workers types, so both sets are loaded.
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "types": ["node", "@cloudflare/workers-types"] },
+  "include": ["scripts/evals.ts", "scripts/evals/slot.ts", "test/support/soft-authenticator.ts"],
+  "exclude": ["node_modules"]
+}

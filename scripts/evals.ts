@@ -1,7 +1,7 @@
 // `pnpm evals <cluster|task id>`: the tier-2 runner (parity framework design §3 "Tiers", §5.2; F19). Reads every
 // `test/evals/**/*.task.ts`, takes the tier-2 tasks whose cluster (`P<n>`) or id (`T-P<n>-<nn>`) is named, drives
 // this worktree's preview slot (`pnpm preview up`; scripts/evals/slot.ts) through the app's routes with a session
-// obtained as the live exit test obtains one, runs each task three times, grades by its code graders, and tells the
+// obtained with the software passkey (test/support/soft-authenticator.ts), runs each task three times, grades by its code graders, and tells the
 // slot's failures (`infra`) from the agent's (`fail`). Results go to docs/plan-v2/evidence/results/<versionHash>.json
 // (the tracked, content-free folder, D-0014) and the run is summarised as one Markdown table for the PR body.
 // Exit 0 when every task passed, 1 otherwise, 2 for a bad invocation. It runs from Kyle's Mac against the worktree's

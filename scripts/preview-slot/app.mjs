@@ -1,7 +1,7 @@
 // A fletch preview slot's Worker (docs/preview.md): the agent, with the slot's ops (./ops.mjs) answered first on
 // /__preview/, and the lease's Durable Object beside the agent's. The agent's `Chat`, `Job`, `Person`, `Ledger` and
 // `Vault` (and F32's `SubAgent`) are the test host's (./test-host.mjs, F26, F30, F32): the same objects with the fixture sites, the share fixture and the reads
-// a tier-2 grader needs. Deployed only to a slot, by scripts/preview.mjs; create-fletch deploys
+// a tier-2 grader needs. Deployed only to a slot, by scripts/preview.mjs; `pnpm self-host` deploys
 // packages/agent/src/index.ts itself. `/fixtures/p9-probe` is the Example API's stand-in, answered before either (F37,
 // ./test-host-p9.mjs).
 import agent from '../../packages/agent/src/index.ts';

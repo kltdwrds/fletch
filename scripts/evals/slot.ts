@@ -1,6 +1,6 @@
 // The worktree's preview slot as the tier-2 runner's `Slot` (F19): the lease `pnpm preview up` left in
-// <git common dir>/fletch-previews/, the slot's host from the pool's subdomain, a session obtained as the live exit
-// test obtains one (test/live/f1-deploy.live.test.ts: the software passkey, test/support/soft-authenticator.ts), and
+// <git common dir>/fletch-previews/, the slot's host from the pool's subdomain, a session obtained with the software
+// passkey (test/support/soft-authenticator.ts, the one @qyvr/host-cloudflare's real-ceremony test uses), and
 // one chat per trial driven over the chat socket (another opened when a prompt names it, F28). Every failure here is the slot's, an `InfraError` by code:
 //   SLOT_MISSING         no lease file, or the slot does not serve the app (`pnpm preview up` leases and deploys one)
 //   LEASE_LAPSED         the slot no longer takes this worktree's key, or its lease is another branch's or over

@@ -18,7 +18,7 @@ const host = singleAccountHost(env); // env: TENANT_ID, TENANT_SHAPE, OWNER_EMAI
 - Provisioning, given an API token and an account id: `CloudflareApi`, `tokenScopes` (the read probes for each
   needed permission), `ensureBucket`, `ensureVectorIndex`, `listSecrets`, `putSecret`, `workersDevUrl`,
   `mintMasterKey`, `mintSetupToken`. Every write is guarded by a read, so running it twice writes nothing twice.
-  The `fletch` repository's `create-fletch` is built on these.
+  They serve a setup that holds an API token; the `fletch` repository's own deploy runs on wrangler's login instead.
 
 The code imports nothing from `cloudflare:workers`: it is plain TypeScript over WebCrypto and `fetch`, and it
 names Workers runtime types (`DurableObjectNamespace`, `SqlStorage`) in its signatures, so install

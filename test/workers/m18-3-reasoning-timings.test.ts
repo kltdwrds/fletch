@@ -13,8 +13,8 @@ import { FakeModel } from "../support/fake-model.ts";
 import { ObjectHarness } from "../support/object-harness.ts";
 import { ada, T0 } from "./support/authority-world.ts";
 
-/** A deploy configured as qyvr-co's: chat on OpenRouter through gateway `qyvr`, hedged to Workers AI. */
-const OPENROUTER = modelConfig({ AI_GATEWAY_ID: "qyvr", CHAT_PROVIDER: "openrouter" });
+/** A deploy with chat on Meta's Muse Spark through gateway `qyvr` (D-0020). */
+const META = modelConfig({ AI_GATEWAY_ID: "qyvr", CHAT_PROVIDER: "meta" });
 
 const hello = normalizeContext({ messages: [{ role: "user", content: "hello", timestamp: 0 }] });
 
@@ -31,14 +31,13 @@ async function call(route: ChatRoute, person: string, clock: { t: number }, rows
 }
 
 describe("[M18.3] reasoning effort per route", () => {
-  it("the chat route's request carries effort low, in its provider's spelling, and no other route sends one", async () => {
+  it("the chat route's request carries reasoning_effort low, and no other route sends one", async () => {
     const sent: Record<string, unknown> = {};
     for (const route of Object.keys(ROUTES) as ChatRoute[]) {
       const { fake } = await call(route, ada.email, { t: T0 }, []);
       const inputs = fake.requests[0]?.inputs;
-      sent[route] = inputs?.reasoning_effort ?? inputs?.reasoning;
+      sent[route] = inputs?.reasoning_effort;
     }
-    // A self-host deploy's chat route is Workers AI, which spells it `reasoning_effort`.
     expect(sent.chat).toBe("low");
     for (const route of Object.keys(ROUTES) as ChatRoute[]) {
       if (route !== "chat") expect(sent[route], `route ${route}`).toBeUndefined();
@@ -61,7 +60,7 @@ describe("[M18.3] the clock of a model call", () => {
     const rows: ModelCallRow[] = [];
     // The fake pauses after its first delta, so the test moves the clock between first token and finish.
     const fake = new FakeModel([{ checkpoint: "mid", step: { text: "hello there friend" } }]);
-    // On a deploy that puts the chat route on OpenRouter, its primary goes through the gateway (M22.1).
+    // On a deploy that puts the chat route on Meta, the call goes through the gateway's passthrough.
     const ai = {
       fetch: (input: string, init: RequestInit) => {
         clock.t += 1_500;
@@ -69,11 +68,11 @@ describe("[M18.3] the clock of a model call", () => {
       },
     } as unknown as Ai;
     const streamFn = createStreamFn(
-      { ai, ledger: { record: async (r) => void rows.push(r) }, wait: async () => {}, now: () => clock.t, models: OPENROUTER },
+      { ai, ledger: { record: async (r) => void rows.push(r) }, wait: async () => {}, now: () => clock.t, models: META },
       { tenant: "solo-sam", person: ada.email, runId: "run-clock", route: "chat" },
     );
     let released = false;
-    for await (const ev of await streamFn(modelFor("chat", OPENROUTER), hello, {})) {
+    for await (const ev of await streamFn(modelFor("chat", META), hello, {})) {
       if (ev.type === "text_start" && !released) {
         released = true;
         clock.t += 2_500;
@@ -94,14 +93,13 @@ describe("[M18.3] the clock of a model call", () => {
     const down = async () => { clock.t += 40; throw new Error("binding down"); };
     const ai = { run: down, fetch: down } as unknown as Ai;
     const who = { tenant: "solo-sam", person: ada.email, runId: "run-fail", route: "chat" as const };
-    const base = { wait: async () => {}, now: () => clock.t, models: OPENROUTER };
-    await (await createStreamFn({ ...base, ai, ledger: { record: async (r) => void rows.push(r) } }, who)(modelFor("chat", OPENROUTER), hello, {})).result();
+    const base = { wait: async () => {}, now: () => clock.t, models: META };
+    await (await createStreamFn({ ...base, ai, ledger: { record: async (r) => void rows.push(r) } }, who)(modelFor("chat", META), hello, {})).result();
     const refusing = { record: async (r: ModelCallRow) => void rows.push(r), admit: async () => ({ ok: false as const, code: "BUDGET_PERSON_EXHAUSTED" as const, reason: "spent" }) };
-    await (await createStreamFn({ ...base, ai, ledger: refusing }, { ...who, runId: "run-refused" })(modelFor("chat", OPENROUTER), hello, {})).result();
-    // The failed primary went to the hedge (M22.1), which failed too: each attempt timed on its own.
+    await (await createStreamFn({ ...base, ai, ledger: refusing }, { ...who, runId: "run-refused" })(modelFor("chat", META), hello, {})).result();
+    // The failed call is the step's one attempt: there is no other model to send it to (D-0020).
     expect(rows).toEqual([
       expect.objectContaining({ attempt: 1, status: "failed", code: "MODEL_CALL_FAILED", startedAt: 5_000, firstTokenAt: null, finishedAt: 5_040 }),
-      expect.objectContaining({ attempt: 2, status: "failed", code: "MODEL_CALL_FAILED", startedAt: 5_040, firstTokenAt: null, finishedAt: 5_080 }),
       expect.objectContaining({ status: "refused", code: "BUDGET_PERSON_EXHAUSTED", startedAt: null, firstTokenAt: null, finishedAt: null }),
     ]);
   });

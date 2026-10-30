@@ -140,7 +140,7 @@ The first Phase 0 part. Everything below is a two-way door and lands as one PR K
 |---|---|
 | `docs/plan/` (parts, PROGRESS, QUESTIONS, KICKOFF, GOAL-PROMPT, VERIFIER-PROMPT) | **Rework.** `parts.md` is rewritten from the spine clusters (F0–F17 close as a history table in PROGRESS; F7, F16, F17 fold into their clusters: addresses into P1, the activity drawer and its eval into P5). KICKOFF shrinks to the builder's protocol (tests first, accept, verifier, PR). GOAL-PROMPT keeps its mechanism with the new ledgers. VERIFIER-PROMPT and QUESTIONS stay; stale questions close. The folder moves to `docs/plan-v2/` and `docs/plan/` goes. |
 | `docs/runbooks/muse-execution.md` | **Delete.** Superseded by §3. |
-| `docs/runbooks/` (preview, live-deploy, release, free-plan-spike) | **Keep.** Mechanics the loop uses. |
+| `docs/runbooks/` (preview, release, free-plan-spike) | **Keep.** Mechanics the loop uses. The live-deploy runbook went with the live lane, which never ran: real-model calls run only under `pnpm evals`, on a preview slot. |
 | `docs/briefs/` (twelve Muse-era briefs) | **Delete**, after the three reactions briefs have served the dry run (§5.3). Anything still needed is re-derived as a contract. |
 | `docs/research/2026-10-22-decision-records.md` | **Keep** (cited by D-0007). |
 | `docs/decisions/` | **Keep** the machinery and the accepted records. D-0006 is reworded for the new plan; D-0010 stays a stub until the artifacts track owns it. |

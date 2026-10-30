@@ -1,5 +1,5 @@
 // A preview slot's test host (F26): the P15 tier-2 tasks' world on a real slot with the real model. Deployed only
-// to a slot, through ./app.mjs; create-fletch deploys packages/agent/src/index.ts, which never imports this file.
+// to a slot, through ./app.mjs; `pnpm self-host` deploys packages/agent/src/index.ts, which never imports this file.
 //
 // - `Chat` browses the fixture sites (./test-host-sites.mjs) instead of a `BROWSER` binding the slot does not have, and
 //   offers the share fixture the tier-1 tasks use (`share_post`, test/support/p15-fixtures.ts), whose every run is

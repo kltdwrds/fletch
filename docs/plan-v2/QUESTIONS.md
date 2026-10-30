@@ -5,7 +5,7 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
-### Q37 (F41), 2026-10-30: No preview slot is free for P14's tier 2
+### Q38 (F41), 2026-10-30: No preview slot is free for P14's tier 2
 
 **Blocks:** F41's tier 2 (`pnpm evals P14`: T-P14-10, 11 and 12 must-have, 13 and 14 recorded) and so its DONE row.
 Everything else in F41 is built and committed on `claude/f41-identity-the-person-can-see-31e59c`: the Security pane,
@@ -17,9 +17,20 @@ merged, while both serve the F37 and F39 trees for your UAT (`WAITING-ON-KYLE.md
 **Recommended answer:** when a slot is free (pv-2 once PR #72's session releases it, or pv-1 or pv-3 once their UAT
 is done and you release it), resume F41 on its branch: `pnpm preview up`, `pnpm evals P14`, commit the results files,
 add any instruction line a failing must-have needs, then the verifier and the DONE row. No code change is expected
-before the run; the inert passkey the `p14` op seeds is described in Q36 (e).
+before the run; the inert passkey the `p14` op seeds is described in Q37 (e).
 
 Orchestrator, 2026-10-30: fletch-pv-1 released from F37's merged branch at 21:20Z and leased to F41, so F41 is not blocked.
+### Q36, 2026-10-30: Accept D-0023, the setup token minted by `pnpm self-host`, and mark D-0002 superseded
+
+**Blocks:** nothing that runs; D-0002's text names `create-fletch`, which is deleted (D-0022). D-0002 is an accepted
+one-way door (the login gate on a public URL), so an agent may only propose its successor: D-0023 states the same
+ruling with `pnpm self-host` as the command that mints the `SETUP_TOKEN` (only when the Worker lacks it) and prints
+`<url>/login?setup=<token>` once, on the minting run (`scripts/self-host.test.mjs` holds both). The login gate itself,
+in `@qyvr/host-cloudflare`, is unchanged; its refusal now names `pnpm self-host`.
+
+**Recommended answer:** accept D-0023 (`decider: Kyle`, `status: accepted`, with `supersedes: D-0002`), and set
+D-0002 to `status: superseded`, `superseded-by: D-0023`. The alternative is to keep D-0002 as it stands and read
+`create-fletch` in it as "the deploy command", which leaves an accepted record naming a deleted tool.
 
 ### Q34 (F40), 2026-10-30: The F40 draft PR could not be opened from the session
 
@@ -165,7 +176,7 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
-### Q36 (F41), 2026-10-30: F41's two-way choices, recorded here because the decision log is at its cap
+### Q37 (F41), 2026-10-30: F41's two-way choices, recorded here because the decision log is at its cap
 
 **Blocks nothing; for your read.** (a) T-P14-04's graders were corrected to what the host and the specimen say: a
 Remove is answered 204 (the host's `DELETE /login/passkeys/:id`), and the recovery session is told "Add a passkey

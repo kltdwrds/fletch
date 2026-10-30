@@ -3,7 +3,7 @@
 import { b64u } from "../keys.ts";
 import { type CloudflareApi, statusOf } from "./api.ts";
 
-/** The scopes `create-fletch` needs, each with the cheapest read that proves the token holds it. */
+/** The scopes a token-driven setup of fletch needs, each with the cheapest read that proves the token holds it. */
 export const NEEDED_SCOPES: readonly { scope: string; probe: (accountId: string) => string }[] = [
   { scope: "Workers Scripts", probe: (a) => `/accounts/${a}/workers/scripts` },
   { scope: "R2", probe: (a) => `/accounts/${a}/r2/buckets` },
