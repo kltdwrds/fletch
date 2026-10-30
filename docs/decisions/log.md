@@ -358,3 +358,8 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   dialog turns it on again, and a spent or removed job not at all (rejected: hiding a paused job, which leaves no way
   back to its dialog in the panel); the instructions-ask-for-a-reply test is word patterns (`asksForReply`), so a
   conditional ask ("tell me when") still allows silence.
+- 2026-10-30 P5 translated (`contracts/P5-activity.md`): eight two-way deltas, the record's words are code's (the
+  summary step computed, never a model pass), a done task says its failed-step count, one words table across
+  surfaces, a delegation's acknowledgement says launched, a run that did not arrive says so, the audit is a read
+  over steps and journal (no audit table), the drawer says the task's tokens, no store about the chat the person
+  cannot see. No one-way door. Orchestrator.

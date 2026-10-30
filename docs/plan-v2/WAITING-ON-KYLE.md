@@ -293,6 +293,27 @@ Kyle's own lines go under `## Steering`.
   [Q22](QUESTIONS.md#q22-f28-2026-10-30-three-nice-to-have-p6-tier-2-tasks-fail-on-the-slot-a-people-page-has-no-tool-path),
   `packages/agent/src/chat/instructions.ts` (`MEMORY_WORDS`), the results files under `docs/plan-v2/evidence/results/`.
 
+- [ ] 2026-10-30 look: **the P5 activity contract and its eight deltas from Muse.** The interrogation of muse.ai (one
+  side chat, 13 steps, 115 captures through `pnpm redact`, no setting or grant touched, the P7 card left pending) found
+  that Muse's record of work is written after the fact by a layer no doc names and contradicted its own turn three
+  times ("two links" over a file saying one; a row titled with the previous turn's intent; "probe file already missing"
+  after a successful `rm`); a turn with a failed step reads Complete with a green pill; the same failure reads
+  Completed on one card and Failed on the next; a scheduled run "Succeeded" with nothing delivered and no row; the
+  audit of effects is chat text that undercounted sub-agents four to one; 13 self-improvement tables and a background
+  memory writer with no surface; usage is a plan percentage while the probe chat spent about 23 million tokens. The
+  contract translates each into fletch's rule (the record's words are code's, a done task says its failed-step count,
+  one words table across surfaces, an acknowledgement says launched, a run that did not arrive says so, the audit is a
+  read over steps and journal, the drawer says the task's tokens, no hidden store) with the rejected alternative beside
+  each; no one-way door. F31 (tier 1, the five code changes, the drawer specimen) and F32 (tier 2 on a slot) follow.
+  What to read: the Clauses and the Deltas; say under Steering if a delta reads wrong, in particular delta 2 (a done
+  task with a failed step stays "Complete, 1 step failed" rather than failing) and delta 7 (tokens in the drawer's
+  head). Deep dive: [contract](contracts/P5-activity.md), [Q24](QUESTIONS.md#q24-p5-2026-10-30-muse-keeps-a-store-about-its-own-work-that-nothing-shows-a-removed-jobs-card-dangles-four-muse-findings),
+  [F31 and F32 in parts.md](parts.md#f31-activity-as-it-is-the-p5-contract-check-fifteen-task-files-codes-summary-a-failure-said-in-the-status-tokens-in-the-drawer-and-tier-1),
+  evidence on your Mac under `docs/plan-v2/evidence/p5-activity/` (`answers/step-0.md` to `step-12.md`,
+  `step-2-detail.png` the "two links" Summary over the file, `step-3-detail-phone.png` the Summary strip,
+  `step-11-step4-card.png` and `step-11-failed-card.png` one failure two words, `answers/step-12.md` "Left behind in
+  Muse").
+
 ## Steering
 
 ## Done
