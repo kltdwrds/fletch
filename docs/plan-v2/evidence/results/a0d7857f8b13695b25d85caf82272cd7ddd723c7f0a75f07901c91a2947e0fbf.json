@@ -1,0 +1,36 @@
+{
+  "task_id": "T-P3-14",
+  "cluster": "P3",
+  "version_hash": "a0d7857f8b13695b25d85caf82272cd7ddd723c7f0a75f07901c91a2947e0fbf",
+  "runs": [
+    {
+      "run_at": "2026-10-30T14:59:33.303Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the record shows one section with a pass or unverified verdict step",
+          "started_at": "2026-10-30T14:59:33.303Z",
+          "finished_at": "2026-10-30T15:00:40.398Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply, once, carries the title and the verdict in words",
+          "started_at": "2026-10-30T15:00:40.398Z",
+          "finished_at": "2026-10-30T15:01:31.146Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T15:01:31.147Z",
+          "finished_at": "2026-10-30T15:02:40.281Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}

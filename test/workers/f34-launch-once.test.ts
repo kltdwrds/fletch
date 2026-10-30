@@ -18,7 +18,7 @@ import { SAID_UNCONFIRMED } from "../evals/p3-delegation/launch-and-handoff-real
 const T0 = Date.UTC(2026, 9, 30, 9, 0, 0);
 const LAUNCH = "I started a sub-agent to read the page; I will tell you its title when it reports back.";
 
-function loop(script: FakeStep[], tool?: AgentTool<never>) {
+function loop(script: FakeStep[], tool?: AgentTool<never>, extra?: AgentTool<never>) {
   const fake = new FakeModel(script);
   const effects = new EffectBuffer();
   const ns = subagentsNamespace({ open: () => 0, status: () => [], close: async () => ({ ok: true, closed: [], settled: [] }) as never }, { effects, context: { counterpart: { kind: "own-agent" } } as TurnContext, latched: () => false, person: "sam-solo" });
@@ -26,8 +26,8 @@ function loop(script: FakeStep[], tool?: AgentTool<never>) {
   const streamFn = createStreamFn({ ai: fake.binding as unknown as Ai, ledger: { record: async () => {} }, wait: async () => {}, now: () => T0 }, { tenant: "solo-sam", person: "sam-solo", runId: "run-1", route: "chat" });
   const steps: Step[] = [];
   const user = { role: "user" as const, content: "Have a sub-agent read the page and tell me its title.", timestamp: T0 };
-  const messages = assemble({ platform: "P", task: "T", standingFiles: [], memory: [], skills: [], envelope: { now: T0, timeZone: "Europe/London", surface: "chat", modelId: "m", owner: "sam-solo" }, tools: [delegate], transcript: [user] });
-  const run = () => runTurnLoop({ turnId: "turn-1", model: modelFor("chat"), streamFn, tools: [delegate], effects, messages, barrier: (s) => void steps.push(s), afterBarrier: async () => {}, onFrame: () => {}, maxSteps: 8 });
+  const messages = assemble({ platform: "P", task: "T", standingFiles: [], memory: [], skills: [], envelope: { now: T0, timeZone: "Europe/London", surface: "chat", modelId: "m", owner: "sam-solo" }, tools: [delegate, ...(extra ? [extra] : [])], transcript: [user] });
+  const run = () => runTurnLoop({ turnId: "turn-1", model: modelFor("chat"), streamFn, tools: [delegate, ...(extra ? [extra] : [])], effects, messages, barrier: (s) => void steps.push(s), afterBarrier: async () => {}, onFrame: () => {}, maxSteps: 8 });
   return { fake, steps, run };
 }
 
@@ -40,6 +40,14 @@ describe("[F34] the launch reply is said once", () => {
     expect(steps.map((s) => s.final)).toEqual([true]);
     expect(steps[0]?.effects.map((e) => e.kind)).toEqual(["delegate"]);
     expect(fake.requests.length).toBe(1);
+  });
+
+  it("words said before the call, beside another tool, end the turn at the launch as well", async () => {
+    const other = { name: "tool_search", label: "load", description: "d", parameters: Type.Object({}), execute: async () => ({ content: [{ type: "text", text: "loaded" }], details: {} }) } as unknown as AgentTool<never>;
+    const { fake, steps, run } = loop([{ toolCall: { name: "tool_search", arguments: {} }, text: LAUNCH }, { toolCall: call }, { text: "Launched again." }], undefined, other);
+    expect(await run()).toMatchObject({ status: "done", steps: 2 });
+    expect(steps.map((s) => s.final)).toEqual([false, true]);
+    expect(fake.requests.length).toBe(2);
   });
 
   it("a delegate call with no words beside it continues, so the reply is written once after the call", async () => {
