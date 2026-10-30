@@ -58,7 +58,8 @@ Kyle's own lines go under `## Steering`.
   [Q13](QUESTIONS.md#q13-f21-2026-10-29-the-f21-draft-pr-could-not-be-opened-from-the-session),
   [PR #29](https://github.com/kltdwrds/fletch/pull/29). Update 2026-10-29: the F22 builder, same command and mode,
   opened [PR #31](https://github.com/kltdwrds/fletch/pull/31) itself without a refusal, so the classifier is not
-  consistent; the question stands until a setting makes it so.
+  consistent; the question stands until a setting makes it so. Update 2026-10-30: the F27 builder was refused again
+  (its Q20, folded into Q13); the orchestrator opened [PR #45](https://github.com/kltdwrds/fletch/pull/45).
 
 - [ ] 2026-10-29 uat: **F22, the care register: a reaction on a win, a heart on hard news.** On main since
   [PR #31](https://github.com/kltdwrds/fletch/pull/31). What changed: the agent's `REACTING` guidance names three
@@ -237,6 +238,18 @@ Kyle's own lines go under `## Steering`.
   now (then F28 grows a third part and the record is proposed first). Deep dive:
   [Q19](QUESTIONS.md#q19-p6-2026-10-30-goals-and-tracked-items-have-no-fletch-seam-four-attested-clauses-one-reload-finding),
   [B-P6-14 and B-P6-15](contracts/P6-memory.md#clauses), `answers/step-9.md` and `answers/step-10.md` on your Mac.
+- [ ] 2026-10-30 uat: **F27, memory as it is: a number is refused by memory itself, and a sub-agent has no memory.**
+  On main since [PR #45](https://github.com/kltdwrds/fletch/pull/45) (no slot deployed for it; `pnpm preview up` in
+  any worktree). What changed: `memory_write` refuses a credential, verification code, card, bank account or
+  government ID number on every target with `MEMORY_VALUE_REFUSED`, whatever the model proposed and however long the
+  edit, so the reply can only say the value was not kept; a sub-agent's memory tools are refused by code, so what it
+  needs must ride in its brief; the P6 task files and their tier-1 runs are in. What to try: tell it to remember where
+  something is kept along with an obviously fake sixteen-digit number; the location should be saved and the number
+  refused by name, and asking for it afterwards should find no record. Report anything that reads wrong under
+  Steering; nothing is blocked on this. Deep dive:
+  [F27 in parts.md](parts.md#f27-memory-as-it-is-the-p6-contract-check-fourteen-task-files-and-tier-1-on-what-is-shipped),
+  [PROGRESS.md F27](PROGRESS.md), `packages/agent/src/memory/service.ts` (`credentialContent`),
+  `test/evals/p6-memory/planted.test.ts`, the F27 lines in `docs/decisions/log.md`.
 
 ## Steering
 
