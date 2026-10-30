@@ -81,7 +81,7 @@ describe("[M17.1] a failed turn is a history entry (QYVR-156)", () => {
   });
 
   it("the page draws a failure in words, from the live frame and from history, never the raw code alone", () => {
-    expect(APP_PAGE).toContain('f.type === "turn_failed") { endThinking(); reply = null; add("note", f.text); }');
+    expect(APP_PAGE).toContain('f.type === "turn_failed") { endThinking(); settleReply(); add("note", f.text); }');
     expect(APP_PAGE).toContain('h.kind === "note" || h.kind === "failed" ? "note"');
     // Planted: the old line that drew the code as the person's text is gone.
     expect(APP_PAGE).not.toContain('"turn failed: " + f.code');

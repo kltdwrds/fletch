@@ -1,7 +1,8 @@
 // T-P2-07 (B-P2-07): an effect the reply reports is committed before the reply: the write's stored result precedes
 // the reply's row, and the reply's file link names the path the write returned. In c2 the file store refuses writes
 // (and holds no file), so the write's result is a failure and the reply links nothing. Muse's journal order is
-// fletch's transcript order (`rows`, by seq). F23 grades the link as a markdown link; its card is F24's (T-P2-10).
+// fletch's transcript order (`rows`, by seq). F23 graded the link as a markdown link; F24 asks for its card too: the
+// shipped page draws the c1 reply's link as the saved file's card (T-P2-10's), and c2's draws none.
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask } from "../../support/task.ts";
 import { type ChatLabel, linkTargets, type P2World, replyOf, resultsOf } from "./world.ts";
@@ -29,7 +30,7 @@ export const task = defineTask<P2World>({
   ],
   end_state: [
     "in c1 the file exists and the write's result row precedes the reply's row",
-    "the c1 reply carries the file link",
+    "the c1 reply carries the file link, drawn as the file's card",
     "in c2 the write's result is a failure, the read never claims the file, and the reply reports it with no file link",
   ],
   required_facts: ["the c1 reply's link names the path the write returned"],
@@ -47,7 +48,11 @@ export const task = defineTask<P2World>({
         return w.files().includes(PATH) && write?.isError === false && reply !== undefined && write.seq < reply.seq;
       },
     },
-    { name: "the c1 reply carries the file link", kind: "end_state", check: (w) => linkTargets(replyOf(w, "c1")).some((t) => t.endsWith(PATH)) },
+    {
+      name: "the c1 reply carries the file link, drawn as the file's card",
+      kind: "end_state",
+      check: async (w) => linkTargets(replyOf(w, "c1")).some((t) => t.endsWith(PATH)) && (await w.fileCards("c1")).some((c) => c.path === PATH) && (await w.fileCards("c2")).length === 0,
+    },
     {
       name: "in c2 the write's result is a failure, the read never claims the file, and the reply reports it with no file link",
       kind: "end_state",

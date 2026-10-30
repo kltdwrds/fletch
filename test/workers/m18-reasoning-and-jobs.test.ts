@@ -88,7 +88,7 @@ describe("[M18.2] reasoning reads as the agent's thinking (QYVR-163)", () => {
 
   it("the page draws the thinking as one line while it streams, never the reasoning's text, and ends it when the reply starts (M23.2)", () => {
     // Live: a reasoning frame starts the one line and ends the reply block; a reply frame ends the line.
-    expect(APP_PAGE).toContain('f.type === "reasoning") { reply = null; startThinking(); }');
+    expect(APP_PAGE).toContain('f.type === "reasoning") { settleReply(); startThinking(); }');
     expect(APP_PAGE).toContain('f.type === "delta") { endThinking(); reply ??= add("agent", "", true);');
     // History: a thinking entry is drawn as nothing, never as an agent message.
     expect(APP_PAGE).toContain('if (h.kind === "thinking") continue;');

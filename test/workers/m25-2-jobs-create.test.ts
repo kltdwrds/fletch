@@ -115,10 +115,13 @@ describe("[M25.2] owner, stop condition and cadences", () => {
     await w.say(ada.email, "Remind me twice.", chat);
     const [id] = w.jobIds(ada.email) as [string];
     await w.jobOf(ada.email, id).instance.enable(ada.email);
-    w.fake.enqueue(report("Stretch."), report("Stretch again."));
+    // Each result wakes her agent (F24), which has nothing to add.
+    w.fake.enqueue(report("Stretch."), { text: "" }, report("Stretch again."), { text: "" });
     await w.fireJob(ada.email, id);
+    await w.chats.harness(chat).instance.settled();
     expect(w.jobOf(ada.email, id).instance.status()?.status).toBe("active");
     await w.fireJob(ada.email, id);
+    await w.chats.harness(chat).instance.settled();
     expect(w.jobOf(ada.email, id).instance.status()).toMatchObject({ status: "finished", statusCode: "JOB_STOPPED" });
     expect(w.jobOf(ada.email, id).alarmAt).toBeNull();
   });

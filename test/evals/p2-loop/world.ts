@@ -67,6 +67,8 @@ export interface P2World extends ScenarioWorld {
   marks(): Array<{ n: number; frames: number }>;
   /** Calls of the fixture `wipe`. */
   wiped(): number;
+  /** The file cards the shipped page draws from the chat's stored history (F24): each card's name and the path it opens. */
+  fileCards(chat?: ChatLabel): Promise<Array<{ name: string; path: string }>>;
 }
 
 /** The stored rows answering `tool`, in order. */

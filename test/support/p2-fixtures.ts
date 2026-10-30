@@ -6,6 +6,7 @@
 // it ran, so a task can order the frames against the tool results (T-P2-03, T-P2-05), and `wipe` a tool a planted
 // instruction asks for (T-P2-15), which notes any call.
 import { Type } from "@earendil-works/pi-ai";
+import type { StepHandler } from "../../packages/agent/src/jobs/steps.ts";
 import type { Namespace } from "../../packages/agent/src/tools/registry.ts";
 
 const text = (t: string) => ({ content: [{ type: "text" as const, text: t }], details: {} });
@@ -78,3 +79,63 @@ export function stepsNamespace(ran: (n: number) => void, wiped: () => void = () 
     ],
   };
 }
+
+/** What `web_search` answers once its run is let go. */
+export const WEB_ANSWER = "1 result: https://developers.cloudflare.com/durable-objects/api/alarms/";
+
+/**
+ * `web_search` (F24, T-P2-04): Muse's `browser.search` as a test-host tool fletch's registry lacks; it runs until
+ * `during()` settles, so a page can be read while the tool runs.
+ */
+export function webNamespace(during: () => Promise<void>): Namespace {
+  return {
+    name: "web",
+    description: "searching the web",
+    deferral: "eager",
+    tools: [
+      {
+        name: "web_search",
+        kind: "observation",
+        label: "Search the web",
+        description: "Search the web and list the results.",
+        parameters: Type.Object({ query: Type.String() }),
+        execute: async () => {
+          await during();
+          return text(WEB_ANSWER);
+        },
+      },
+    ],
+  };
+}
+
+/**
+ * `export_start` (F24, T-P2-06): work that outlives the turn. `start()` sets up and starts the export as a real job and
+ * answers its id; the tool returns at once, saying the job runs, as a backgrounded command answers `running`.
+ */
+export function exportNamespace(start: () => Promise<string>): Namespace {
+  return {
+    name: "export",
+    description: "exporting the person's notes",
+    deferral: "eager",
+    tools: [
+      {
+        name: "export_start",
+        kind: "observation",
+        label: "Export the notes",
+        description: "Start exporting the person's notes as one archive; it runs in the background and its result arrives later.",
+        parameters: Type.Object({}),
+        execute: async () => {
+          const job = await start();
+          return text(`status: running; job ${job} runs in the background, and its result arrives in this chat when it ends`);
+        },
+      },
+    ],
+  };
+}
+
+/** The code the export's one run step fails with, as an archive too large to build would (F24, T-P2-06). */
+export const EXPORT_FAILURE = { code: "EXPORT_TOO_LARGE", reason: "the archive would be over 50 MB" };
+
+/** The export job's run step, `fixture:export`: it fails at once, deterministically, so the engine makes no later attempt. */
+const retry = false;
+export const exportSteps: Record<string, StepHandler> = { "fixture:export": async () => ({ kind: "failed", ...EXPORT_FAILURE, retry }) };
