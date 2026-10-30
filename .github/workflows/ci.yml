@@ -1,6 +1,8 @@
 name: ci
+# A pull request's commits run once, through pull_request; push runs only for main, the merged result.
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
@@ -13,6 +15,50 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      # Docs-only diffs run `pnpm check` (lint, the harness checks over Markdown, the scans, typecheck) and skip the
+      # tests. Docs means under docs/ (except docs/plan-v2/contracts/, which the tests read) or a Markdown or LICENSE
+      # file at the root; anything else, an empty diff or a base not in the clone runs the tests too.
+      - name: Classify the diff
+        id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_HEAD: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          is_docs() {
+            case "$1" in
+              docs/plan-v2/contracts/*) return 1 ;;
+              docs/*) return 0 ;;
+              */*) return 1 ;;
+              *.md | LICENSE | LICENSE.*) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
+          files=""
+          if [ "$EVENT" = "pull_request" ]; then
+            files=$(git diff --name-only "$PR_BASE...$PR_HEAD") || files=""
+          elif [ "$PUSH_BEFORE" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null; then
+            files=$(git diff --name-only "$PUSH_BEFORE" "$PUSH_HEAD") || files=""
+          fi
+          code=""
+          while IFS= read -r f; do
+            [ -n "$f" ] && ! is_docs "$f" && code+="$f"$'\n'
+          done <<< "$files"
+          if [ -z "$files" ]; then
+            echo "Judged: code (no diff to judge by: a new branch, a force-push or an empty diff). Running check and test."
+            echo "tests=true" >> "$GITHUB_OUTPUT"
+          elif [ -n "$code" ]; then
+            echo "Judged: code. Running check and test. The files that decided it:"
+            printf '%s' "$code" | sed 's/^/  /'
+            echo "tests=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Judged: docs only. Running check, skipping test. The files:"
+            printf '%s\n' "$files" | sed 's/^/  /'
+            echo "tests=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -20,21 +66,30 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Playwright version
+        if: steps.scope.outputs.tests == 'true'
         id: pw
         run: echo "version=$(pnpm exec playwright-core --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v4
+        if: steps.scope.outputs.tests == 'true'
         id: pw-cache
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
       - name: Install Chromium for the UI tests
+        if: steps.scope.outputs.tests == 'true'
         run: pnpm exec playwright-core install --with-deps chromium
-      # check (lint, the harness checks and scans, typecheck), then the tests. The file-size ratchet compares with the
-      # merge base of origin/main, which fetch-depth 0 brings; a push to main compares with the commit before it.
-      - name: Verify
+      # The file-size ratchet compares with the merge base of origin/main, which fetch-depth 0 brings; a push to main
+      # compares with the commit before it.
+      - name: Verify, check and test (pnpm verify)
+        if: steps.scope.outputs.tests == 'true'
         env:
-          CHECK_FILE_SIZES_BASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.before != '0000000000000000000000000000000000000000' && github.event.before || '' }}
+          CHECK_FILE_SIZES_BASE: ${{ github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000' && github.event.before || '' }}
         run: pnpm verify
+      - name: Verify, check only (pnpm check, docs-only diff)
+        if: steps.scope.outputs.tests != 'true'
+        env:
+          CHECK_FILE_SIZES_BASE: ${{ github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000' && github.event.before || '' }}
+        run: pnpm check
       - name: DCO sign-off
         env:
           EVENT: ${{ github.event_name }}
@@ -49,7 +104,8 @@ jobs:
           elif [ "$PUSH_BEFORE" = "0000000000000000000000000000000000000000" ]; then
             range="$PUSH_HEAD"
           elif ! git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null; then
-            # A force-push leaves the old head out of the clone: check what the branch adds to main instead.
+            # A force-push to main leaves the old head out of the clone; origin/main is then the pushed head, so the
+            # range is empty and the commits count as checked by their pull_request run.
             range="origin/main..$PUSH_HEAD"
           else
             range="$PUSH_BEFORE..$PUSH_HEAD"
