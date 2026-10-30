@@ -375,3 +375,5 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   Stop settles the children it stopped (F31, Q25), a child's row carries its failed-step count in P5's words table,
   a section shows the child's tokens, a refused delegation is said as what could not start and why, a job's run
   spawns nothing, a reply that is only a number is text. No one-way door. Orchestrator.
+- 2026-10-30 F33: the drawer's Stop draws a stopped entry and tells the next turn (`haltNote`); task usage counts
+  child and verifier calls; the delegate schemas drop `maxItems` so the gate's SUBAGENT_FANOUT_CAP answers. Agent.

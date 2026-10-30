@@ -321,6 +321,13 @@ Kyle's own lines go under `## Steering`.
   caption or the counts line reads wrong. A running task's head also offers Stop beside Refresh (not drawn in the
   specimen, whose tasks are finished). UAT after the build: it blocks nothing.
 
+- [ ] 2026-10-30 look: **the task drawer specimen after F33.** A sub-agent section's head now says the child's
+  status with its failed-step count ("Done, 1 step failed"), its tokens from its row and its verdict, as the drawer
+  draws it; a worker sits indented under its coordinator; the child's failed step carries the fail mark. Open
+  `packages/agent/src/design/fletch/ds/specimens/task-drawer.html` in light and dark and at phone width; say if the
+  head's line reads wrong or crowds the section number on a phone. UAT after the build: it blocks nothing. Deep dive:
+  [F33 in parts.md](parts.md#f33-delegation-as-it-is-the-p3-contract-check-seventeen-task-files-the-steer-and-refusal-words-a-childs-failed-count-and-tokens-a-bare-number-as-text-and-tier-1).
+
 - [ ] 2026-10-30 uat: **F29 and F30, jobs as they are and jobs say what they did (merged, PR #50 and PR #53; fletch-pv-2
   serves this tree until 2026-10-31T09:51Z, after that `pnpm preview up` on main).** A one-shot is set in one turn
   with its time named and nothing asked; a job that only reads and reports says so and offers to do the thing now in
