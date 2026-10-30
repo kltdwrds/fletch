@@ -5,6 +5,20 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
+### Q37 (F41), 2026-10-30: No preview slot is free for P14's tier 2
+
+**Blocks:** F41's tier 2 (`pnpm evals P14`: T-P14-10, 11 and 12 must-have, 13 and 14 recorded) and so its DONE row.
+Everything else in F41 is built and committed on `claude/f41-identity-the-person-can-see-31e59c`: the Security pane,
+T-P14-04 under vitest with its five minefields planted, the slot's `p14` op, readers and page, every P14 hash filled,
+and `pnpm accept F41` passing (the PROGRESS row has the TREE). At 21:03Z `pnpm preview list` showed all three slots
+leased: fletch-pv-2, free when F41 was dispatched, was leased at 20:58Z by `claude/chat-provider-meta` (PR #72, open
+and active), and `pnpm preview gc --dry-run` would take back fletch-pv-1 and fletch-pv-3 only because their branches
+merged, while both serve the F37 and F39 trees for your UAT (`WAITING-ON-KYLE.md`). F41 took none of them.
+**Recommended answer:** when a slot is free (pv-2 once PR #72's session releases it, or pv-1 or pv-3 once their UAT
+is done and you release it), resume F41 on its branch: `pnpm preview up`, `pnpm evals P14`, commit the results files,
+add any instruction line a failing must-have needs, then the verifier and the DONE row. No code change is expected
+before the run; the inert passkey the `p14` op seeds is described in Q36 (c).
+
 ### Q34 (F40), 2026-10-30: The F40 draft PR could not be opened from the session
 
 **Blocks:** the last step of F40's protocol (KICKOFF step 7), the draft PR. Everything else in F40 is done:
@@ -148,6 +162,25 @@ F27 is DONE and nothing is blocked. The F22 and F26 builders opened their PRs th
 the free-plan spike (Q2).
 
 ## Open, not blocking
+
+### Q36 (F41), 2026-10-30: F41's two-way choices, recorded here because the decision log is at its cap
+
+**Blocks nothing; for your read.** (a) T-P14-04's graders were corrected to what the host and the specimen say: a
+Remove is answered 204 (the host's `DELETE /login/passkeys/:id`), and the recovery session is told "Add a passkey
+first" (the specimen's words); the grader names say so. (b) Pat is a member session with no passkey: the routes list
+every passkey with no person filter and only the owner registers one, so "Pat sees no passkey of Sam's" is graded as
+Pat being told only the owner manages passkeys. (c) The host refuses a recovery session's page load
+(`PASSKEY_REQUIRED`, 403), so the recovery scenario is a recovery sign-in in another tab: the cookie is swapped under
+an open Settings page and Security opened from General; the refused load is asserted too. (d) The pane keeps its list
+while it redraws and marks the card `aria-busy` until the answer is in, so a Remove never blanks the list first.
+(e) On a slot, each P14 trial adds one inert fixture passkey for Sam when she holds fewer than two, so Settings >
+Security lists two (T-P14-11); its public key is fixed bytes, so nothing signs in with it. For your UAT: remove it, not
+your own, or a removed real passkey leaves only the inert one, and signing in then needs recovery. (f) On a slot,
+"the agent mailed" reads Sam's `mail.*` journal rows that are done, and "the models used" the Ledger's chat-route calls
+since the trial began; the test host keeps every system message of a chat request (P3's and P5's first-message read
+unchanged), since the envelope that names the model is its own system message. (g) The page script stores the mode
+under `qyvr-mode` as its own constant, held equal to `MODE_KEY` by a test, because the Node script cannot load the
+Worker module that exports it.
 
 ### Q35 (F39), 2026-10-30: T-P12-12 and T-P12-13 fail on the slot on their reply words; and F39's two-way choices
 
