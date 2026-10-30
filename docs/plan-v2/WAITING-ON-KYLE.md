@@ -275,6 +275,19 @@ Kyle's own lines go under `## Steering`.
   `step-2-detail.png` the job dialog, `step-11.png` the parked card, `step-8.png` the wake that reached no one,
   `answers/step-12.md` "Left behind in Muse").
 
+- [ ] 2026-10-30 uat: **F28, memory says what it did (merged, PR #47; fletch-pv-1 serves this tree until 2026-10-31T08:12Z,
+  after that `pnpm preview up` on main).** The reply now names a save in the turn that made it with the citation the
+  tool returned, refuses a number by kind while naming the kept location, says "no record" with no guess, and after a
+  forget says what was removed and what still holds the words; the P6 must-have tier-2 tasks pass 3 of 3 on the slot
+  and P6 is at level 2. What to try: tell it something about Pat Solo in passing (no "remember") and see the save
+  named with its citation in the same reply; ask for a fact it has no record of; ask it to forget the Pat line and
+  read what it says remains. Open for your eye, not blocking: three nice-to-have tier-2 tasks fail (Q22: recall across
+  chats, a second chat's reach, the people page, which no tool writes yet). Report anything that reads wrong under
+  Steering. Deep dive: [F28 in parts.md](parts.md#f28-memory-says-what-it-did-an-unasked-save-is-announced-a-refusal-and-a-forget-are-described-and-p6s-tier-2),
+  [PROGRESS.md F28](PROGRESS.md), [SCORECARD P6](SCORECARD.md),
+  [Q22](QUESTIONS.md#q22-f28-2026-10-30-three-nice-to-have-p6-tier-2-tasks-fail-on-the-slot-a-people-page-has-no-tool-path),
+  `packages/agent/src/chat/instructions.ts` (`MEMORY_WORDS`), the results files under `docs/plan-v2/evidence/results/`.
+
 ## Steering
 
 ## Done

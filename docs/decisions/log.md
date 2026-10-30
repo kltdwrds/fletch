@@ -328,6 +328,15 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   plan is made from claim ids, since a query plan ORs its terms and "Solo" reaches the Sam claim. The contract check
   takes a task of another cluster when its own contract has its block (B-P6-12 names T-P15-08 and T-P15-12), and the
   tier-2 tasks that repeat tier-1 ones name no clause, as P15's do.
+- 2026-10-30, F28 memory says what it did, the builder's, all two-way: the reply's memory words are `MEMORY_WORDS` in
+  `chat/instructions.ts` (Q18: instruction lines, not harness sentences), one line for each item F28's scope names
+  (delta 1, B-P6-07, B-P6-04, B-P6-09) and no other. A prompt turn may name its chat (`chat: "c2"`), so T-P6-03 and
+  T-P6-09 say on which chat each prompt runs, for the slot as for tier 1; the slot's P6 world
+  (`scripts/evals/p6-slot.ts`, `test-host-p6.mjs`) empties Sam's memory before each trial and seeds T-P6-03 and
+  T-P6-12 through the Person, the claims minted as the upkeep mints them and the forget's producers passed as tier 1
+  passes them; `sentIn` on a slot is the chat's stored rows. Rejected: a separate slot per trial (three slots, nine
+  leases a cluster); a line sending new facts to today's note and a MEMORY.md edit that cites its lines, both outside
+  the scope (the verifier's finding), left for a later part.
 - 2026-10-30, P7 scheduling translated (`docs/plan-v2/contracts/P7-scheduling.md`), seven deltas, all two-way, the
   orchestrator's: a stop in flight is said and ends the run as stopped (Muse's `cron.stop` promised a notice and drew
   none; rejected: waiting for the run); silence is certified by code against the run's call log, never by the worker's

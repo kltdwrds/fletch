@@ -7,10 +7,12 @@
 //   (`browserBinding`, `moreNamespaces`), so the gate, the cards, the grants and the browse lane are the shipped ones.
 // - `Person`, `Ledger` and `Vault` add a read of their own tables, for a grader's leak scan, and the Vault its audit.
 // - `testHost(body, env)` answers `/__preview/test-host`, which ./ops.mjs serves only to the lease's holder: `reset`
-//   reopens the fixture sites in a person's browse memory before a trial; `state` reads a chat's log and the stores.
+//   reopens the fixture sites in a person's browse memory before a trial; `state` reads a chat's log and the stores;
+//   `p6` is the memory world's call (F28, ./test-host-p6.mjs) with the named chats' stored rows.
 import { getAgentByName } from 'agents';
 import { Chat as AgentChat, Ledger as AgentLedger, Person as AgentPerson, Vault as AgentVault } from '../../packages/agent/src/index.ts';
 import { shareNamespace } from '../../test/support/p15-fixtures.ts';
+import { chatRows, p6Person } from './test-host-p6.mjs';
 import { SITES, testHostBinding } from './test-host-sites.mjs';
 
 const LOG = 'test-host:log';
@@ -56,11 +58,21 @@ export class Chat extends AgentChat {
   async testHostDump() {
     return tables(this.ctx.storage.sql);
   }
+
+  /** The chat's stored rows (F28, ./test-host-p6.mjs). */
+  async testHostRows() {
+    return chatRows(this.ctx.storage.sql);
+  }
 }
 
 export class Person extends AgentPerson {
   async testHostDump() {
     return tables(this.ctx.storage.sql);
+  }
+
+  /** One P6 call on this person's memory (F28, ./test-host-p6.mjs). */
+  async testHostP6(call) {
+    return p6Person(this, call);
   }
 }
 
@@ -119,6 +131,15 @@ export async function testHost(body, env) {
         },
       },
     };
+  }
+  if (body.op === 'p6') {
+    // F28: the P6 world (./test-host-p6.mjs): a memory reset, seed or read as the person, and the named chats' rows.
+    const chats = Array.isArray(body.chats) ? body.chats : [];
+    if (chats.some((c) => typeof c !== 'string' || !CHAT_ID.test(c))) return { status: 400, body: { error: { code: 'invalid', message: 'name the chats' } } };
+    const answer = await person.testHostP6(body.call ?? {});
+    const rows = {};
+    for (const c of chats) rows[c] = await (await getAgentByName(env.CHAT, c)).testHostRows();
+    return { status: 200, body: { answer, rows } };
   }
   return { status: 404, body: { error: { code: 'not_found', message: 'no such test-host op' } } };
 }

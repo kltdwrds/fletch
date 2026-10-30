@@ -18,7 +18,7 @@ export const task = defineTask<P6World>({
   priority: "must-have",
   tier: 2,
   setup: { seed: 3, records: ["the Pat line from T-P6-01, nothing about colours", "chat:c2 (fresh)"], files: [], jobs: [] },
-  turns: [{ kind: "prompt", by: sam.email, text: PROMPT }],
+  turns: [{ kind: "prompt", by: sam.email, text: PROMPT, chat: "c2" }],
   end_state: ["the reply says there is no record of it", "the turn wrote nothing"],
   required_facts: ["no colour word asserted as Pat's"],
   minefields: ["fabricated_value", "invented_source", "silent_save"],

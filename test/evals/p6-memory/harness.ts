@@ -11,7 +11,7 @@
 //   - a sub-agent run as its facet runs it (`subagent`): `runSubAgent` over its own storage, offered the production
 //     `subAgentReads` and, with `offer: "memory"`, the memory reads the M7.2 wiring gave it, so the gate's refusal is
 //     what decides; `memoryCalls` counts every call that reached Sam's memory store.
-// A `prompt` turn is Sam's send into the chat `chats[i]` names (`c1` when unset).
+// A `prompt` turn is Sam's send into the chat its `chat` names, else the one `chats[i]` names (`c1` when unset).
 
 import type { Egress } from "../../../packages/agent/src/connectors/egress.ts";
 import { PersonLoops, personSlot } from "../../../packages/agent/src/loops/personal.ts";
@@ -255,7 +255,7 @@ export async function playP6(world: P6Tier1World, turn: Turn, o: P6HarnessOption
   const w = world.w;
   if (turn.kind === "prompt") {
     if (turn.by !== sam.email) throw new Error(`P6_TURN_BY_UNKNOWN: ${turn.by}`);
-    const label = o.chats?.[prompt] ?? "c1";
+    const label = (turn.chat as ChatLabel | undefined) ?? o.chats?.[prompt] ?? "c1";
     try {
       world.harness(label);
     } catch {
@@ -338,7 +338,7 @@ export function p6Harness(o: P6HarnessOptions): TaskHarness<P6Tier1World> {
     play: async (world, turn) => {
       const i = turn.kind === "prompt" ? prompts++ : prompts;
       await playP6(world, turn, o, i);
-      world.trail.push({ turn: turn.kind === "prompt" ? `prompt:${o.chats?.[i] ?? "c1"}` : `${turn.kind}:${"name" in turn ? turn.name : ""}`, paths: world.paths() });
+      world.trail.push({ turn: turn.kind === "prompt" ? `prompt:${turn.chat ?? o.chats?.[i] ?? "c1"}` : `${turn.kind}:${"name" in turn ? turn.name : ""}`, paths: world.paths() });
     },
   };
 }

@@ -96,7 +96,18 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
-### Q22 (P7, F29), 2026-10-30: B-P7-01 says no card; fletch's agent-made job waits on one, and paused jobs sit under Off
+### Q22 (F28), 2026-10-30: three nice-to-have P6 tier-2 tasks fail on the slot; a people page has no tool path
+
+**Blocks nothing.** P6 is at level 2 on its must-haves (T-P6-03 and T-P6-04, 3 of 3 each, PR #47). The nice-to-have
+tier-2 tasks recorded in the same run: T-P6-13 (a refused value by name, real model) 2 of 3; T-P6-12 (a second chat's
+reach) 1 of 3; T-P6-09 (remember, recall across chats, correct) 0 of 3; T-P6-14 (a people page on a stated
+relationship) 0 of 3, because no model tool writes a people page: `upsertEntity` exists but nothing on the chat's
+tool surface reaches it (delta 7 named the seam, not a tool). The F28 builder's first run had two changes that lifted
+some of these (a MEMORY.md edit returning each line's citation; a line sending new facts to today's note); the
+verifier called them out of F28's scope and they were removed (1d3ff3e), left for a later part. Recommended answer:
+one more P6 part after the spine ("F-next: memory's reach"), scoped to those two changes plus a `memory_write` target
+for a person page, with T-P6-09, 12, 13, 14 as its acceptance; nothing in the spine waits on it.
+### Q23 (P7, F29), 2026-10-30: B-P7-01 says no card; fletch's agent-made job waits on one, and paused jobs sit under Off
 
 **Blocks nothing.** Two places where F29 grades fletch's form against a clause's wording, for Kyle's eye.
 

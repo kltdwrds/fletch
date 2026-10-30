@@ -1,0 +1,67 @@
+{
+  "task_id": "T-P6-09",
+  "cluster": "P6",
+  "version_hash": "5ffbaf9b4bb9369d42f0f9c70458ccf9de15316d4f3a9a50a62f6d0ce4b82b76",
+  "runs": [
+    {
+      "run_at": "2026-10-30T07:44:21.252Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "one line holds the fact, and c1's first reply cites it after the write",
+          "started_at": "2026-10-30T07:44:21.252Z",
+          "finished_at": "2026-10-30T07:45:24.937Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T07:45:24.937Z",
+          "finished_at": "2026-10-30T07:46:03.079Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "one line holds the fact, and c1's first reply cites it after the write",
+          "started_at": "2026-10-30T07:46:03.079Z",
+          "finished_at": "2026-10-30T07:47:01.982Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T08:16:06.296Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "one line holds the fact, and c1's first reply cites it after the write",
+          "started_at": "2026-10-30T08:16:06.296Z",
+          "finished_at": "2026-10-30T08:17:47.721Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "c2's second recall gives Markdown",
+          "started_at": "2026-10-30T08:17:47.721Z",
+          "finished_at": "2026-10-30T08:18:46.326Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "c2's second recall gives Markdown",
+          "started_at": "2026-10-30T08:18:46.327Z",
+          "finished_at": "2026-10-30T08:19:17.987Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}

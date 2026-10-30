@@ -64,7 +64,8 @@ export interface TaskResult extends Run {
 export interface Slot {
   /** `fletch-pv-<n>`, or `none` when no slot could be resolved (then `open` rejects with the InfraError that says why). */
   name: string;
-  open(): Promise<SlotWorld>;
+  /** A world for one trial of `task`: the slot's chat, and for a memory task (P6, F28) Sam's memory reset and seeded. */
+  open(task?: Pick<DefinedTask<SlotWorld>, "id" | "cluster">): Promise<SlotWorld>;
 }
 
 export interface RunDeps {
@@ -95,9 +96,9 @@ export async function trial(task: DefinedTask<SlotWorld>, slot: Slot, n: number,
   const started_at = now().toISOString();
   const done = (t: Omit<Trial, "trial_id" | "started_at" | "finished_at">): Trial => ({ trial_id: n, ...t, started_at, finished_at: now().toISOString() });
   try {
-    const world = await slot.open();
+    const world = await slot.open(task);
     for (const turn of task.turns) {
-      if (turn.kind === "prompt") await world.send(turn.text);
+      if (turn.kind === "prompt") await world.send(turn.text, turn.chat);
       else if (turn.kind === "event") await world.event(turn.name, turn.payload ?? {});
     }
     for (const g of task.graders) {

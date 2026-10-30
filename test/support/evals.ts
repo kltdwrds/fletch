@@ -57,12 +57,15 @@ export interface SlotWorld extends ScenarioWorld {
   readonly chatId: string;
   /** The agent's reply to each prompt so far, in order; the last is what the last turn said. */
   readonly replies: string[];
-  /** The history as the page draws it, read from the socket's `history` frame after the last turn ended. */
+  /** The history of the trial's first chat as the page draws it, read from the socket's `history` frame after its last turn ended. */
   entries(): SlotEntry[];
   /** The reaction rows of that history (`reactionsOf`). */
   reactions(): SlotReaction[];
-  /** Sends one prompt as the slot's owner and resolves with the reply once the turn is done; rejects with a `TurnError`. */
-  send(text: string): Promise<string>;
+  /**
+   * Sends one prompt as the slot's owner into the chat `chat` labels (the first, `c1`, when unset; another label is a
+   * new chat on its first prompt, F28) and resolves with the reply once the turn is done; rejects with a `TurnError`.
+   */
+  send(text: string, chat?: string): Promise<string>;
   /** Reads an app route with the trial's session. */
   read(path: string): Promise<{ status: number; body: unknown }>;
   /**
