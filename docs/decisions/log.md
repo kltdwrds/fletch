@@ -317,3 +317,14 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   note is the chat's own lines rendered per day (Muse's is a background per-chat summary that put facts in a second
   store unannounced; rejected: a background summariser); people pages on a stated relationship through `upsertEntity`
   (Muse's relationships loop; rejected: a loop over the notes). Parts F27 (tier 1) and F28 (reply lines, tier 2).
+- 2026-10-30, F27 memory as it is, the builder's, all two-way: `MEMORY_VALUE_REFUSED` is enforced in
+  `MemoryService.memoryWrite` on every target through `credentialContent`, the referee's secret shapes plus a
+  government ID number and without email or phone, which a memory line may hold (rejected: `forbiddenContent`, which
+  would refuse a saved address); a line the store refuses for its shape keeps that code first. A sub-agent's gate
+  refuses every `memory_` tool by code (`SUBAGENT_MEMORY_REFUSED`) and `subAgentReads` carries no memory namespace
+  (rejected: read-only memory). Forget gets no model tool and no route: no owner surface confirms a plan in shipped
+  fletch, so a plan tool would point at a surface that does not exist (D-0001); the tasks run `forgetPlan` and
+  `forgetConfirm` on the `Person` (rejected: a `memory_forget` tool; an owner confirm route, a security boundary). A
+  plan is made from claim ids, since a query plan ORs its terms and "Solo" reaches the Sam claim. The contract check
+  takes a task of another cluster when its own contract has its block (B-P6-12 names T-P15-08 and T-P15-12), and the
+  tier-2 tasks that repeat tier-1 ones name no clause, as P15's do.
