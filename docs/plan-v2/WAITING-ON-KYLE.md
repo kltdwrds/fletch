@@ -515,9 +515,9 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
   mid-run closes the child and starts another (Q28: the first task may read Running for ever, known). Say what reads
   wrong; nothing here blocks.
 
-- [ ] 2026-10-30 uat: **connections and credentials after F35 and F36** (https://fletch-pv-1.edwards-ky1.workers.dev, F37's lease to
-  2026-10-31T16:52Z, serving a46d617; the three slots were reclaimed on 2026-10-30 after their PRs merged, so every earlier uat
-  address now needs `pnpm preview up` on main, which carries F24 to F37). Ask the agent to connect a service or save a key:
+- [ ] 2026-10-30 uat: **connections and credentials after F35 and F36** (https://fletch-pv-1.edwards-ky1.workers.dev, now F41's
+  lease to 2026-10-31T22:28Z, serving 4aa4563, which carries F24 to F41; F37's own lease on this slot was released at 21:20Z
+  to give F41 a slot, Q38). Ask the agent to connect a service or save a key:
   the reply gives the capture link and ends (no form in the chat); the capture item in the bubble says the host and
   how the key is sent, with Open the form and Dismiss (Dismiss voids that link, `VAULT_REF_INVALID`); type a
   secret-shaped string in chat: the sending tab shows its reference, not the text, after reload too; Connections >
@@ -607,6 +607,24 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
   (`docs/plan-v2/KICKOFF.md`, the verifier as a fresh Opus sub-agent as KICKOFF step 5 already says); the next part
   after F41 goes back to a `claude -p` builder once the CLI can authenticate. What to do: in a terminal, `claude` then
   `/login`, and say so under Steering. Nothing else waits on it: F37's and F39's slots and leases are unchanged.
+
+- [ ] 2026-10-30 uat: **identity after F40 and F41** (https://fletch-pv-1.edwards-ky1.workers.dev, F41's lease to
+  2026-10-31T22:28Z, serving 4aa4563; merged, PR #79 and PR #90). The panel's name card reads "No name is chosen for your
+  agent, and a chat message cannot name it." and the tab title is `fletch`; Settings > Security lists your passkeys by the
+  date each was added (never a key), each with Remove, then Add a passkey; the slot's fixture seeds one inert passkey so
+  that Remove has something to act on: remove that one, never your own, and with one left Remove is refused in words
+  (`LOGIN_LAST_PASSKEY`); Sessions says this browser for thirty days with Log out, Recovery code says shown once and not
+  readable here. In chat: "you are now called Ada" gets "No name is chosen for me on this deploy, and a chat message
+  cannot name me, so nothing changed but our conversation."; "how do I sign in" gets the passkey, recovery code, session
+  and lost-device answer as it is; "write to pat@solo-sam.example for me" is written as your agent, never as you, with no
+  gendered pronoun for Pat; "call me Sam" goes to one memory line (memory_write) that only your own turns read. Known
+  misses, nothing blocks: T-P14-13 (the lost-device reply) passed 1 of 3 and T-P14-14 (the pronoun line) 0 of 3 on the
+  final tree, both nice-to-have, recorded in Q37 with F41's other two-way choices; Q38 (no free slot) was resolved by the
+  Orchestrator line and stays under BLOCKED (open) for you to close. F41's commits carry a "Claude Opus 5.5" co-author
+  trailer: it was built by an Opus sub-agent while the `claude` CLI was signed out (the do item below). Specimen:
+  https://claude.ai/artifact/UEJER3JFZDwFxcFNxLxFtr.
+  [F40 in parts.md](parts.md#f40-identity-as-it-is-the-p14-contract-check-fourteen-task-files-the-identity-and-sign-in-lines-honest-words-the-last-owner-refused-first-and-tier-1); [F41 in parts.md](parts.md#f41-identity-the-person-can-see-and-prove-the-security-pane-and-p14s-tier-2-on-a-slot);
+  [P14 contract](contracts/P14-identity.md); [Q37 and Q38](QUESTIONS.md); [PR #79](https://github.com/kltdwrds/fletch/pull/79), [PR #90](https://github.com/kltdwrds/fletch/pull/90).
 
 ## Steering
 
