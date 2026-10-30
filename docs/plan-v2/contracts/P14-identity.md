@@ -724,3 +724,5 @@ level 1 | tier 1: 0 of 8 (F40 not started); tier 2: 0 of 3 must-have (F41) | `co
 14 tasks, 7 deltas, one one-way door proposed: D-0018); interrogation 2026-10-30Z by an Opus agent under the
 orchestrator's scenario, `evidence/p14-identity/trace.json` validates (12 steps), 94 files through `pnpm redact`; every
 one of Muse's 165 calls a read, nothing of the owner's identity changed; F40 and F41 in `parts.md` | 2026-10-30
+
+<!-- CI probe: contracts-only diff; this PR is closed unmerged. -->
