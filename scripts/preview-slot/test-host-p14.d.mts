@@ -12,3 +12,10 @@ export declare function p14Memory(mem: { home: Home; rows(query: string): Array<
 export declare function p14SeedPasskey(call: (c: never) => Promise<unknown>, owner: string): Promise<{ added: boolean; count: number }>;
 export declare function p14Tools(system: string | null | undefined): Array<ToolLine & { guard: string | null }>;
 export declare function p14Mail(rows: unknown[]): Array<{ id: string; outcome: string; counterpart: string }>;
+export declare function p14Read(o: {
+  mem: { standing: Standing[]; seeded: Record<string, string>; daily: string[]; memory: string; memoryWriter: string; counts: Record<string, number> };
+  chat: { systems: string[]; counts: Record<string, number> };
+  ledger: { calls: Array<{ id: number; model: string }>; counts: Record<string, number> };
+  vault: Record<string, number>;
+  journal: unknown[];
+}): import("../evals/p14-slot.ts").P14State;

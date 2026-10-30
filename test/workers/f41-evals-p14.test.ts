@@ -12,7 +12,7 @@ import { MODE_KEY } from "../../packages/agent/src/http/app/settings-panes.ts";
 import { PAGE_MODE_KEY } from "../../scripts/evals/p14-page.ts";
 import { type P14Page, type P14State, p14Slot } from "../../scripts/evals/p14-slot.ts";
 import { CLUSTER_EVENTS, driveable, type Slot, trial } from "../../scripts/evals/runner.ts";
-import { counts, P14_PASSKEY, p14Memory, p14ResetStanding, p14SeedPasskey, p14Tools, SEED_WRITER, systemsText } from "../../scripts/preview-slot/test-host-p14.mjs";
+import { counts, P14_PASSKEY, p14Memory, p14Read, p14ResetStanding, p14SeedPasskey, p14Tools, SEED_WRITER, systemsText } from "../../scripts/preview-slot/test-host-p14.mjs";
 import { P14Tier1World, sam } from "../evals/p14-identity/harness.ts";
 import rename from "../evals/p14-identity/rename-by-chat-changes-nothing-real-model.task.ts";
 import { runs } from "../evals/p14-identity/runs.ts";
@@ -44,7 +44,14 @@ async function p14State(w: P14Tier1World): Promise<P14State> {
   const calls = (await w.w.ledger().modelCalls({ person: sam.email })).map((r, i) => ({ id: i + 1, route: r.route, model: r.model })).filter((r) => r.route === "chat");
   const asked = w.asked();
   const systems = w.w.fake.requests.filter((_, i) => asked[i]?.surface === "chat").map((r) => systemsText(r.inputs) ?? "");
-  return { ...m, counts: byObject, calls: calls.map(({ id, model }) => ({ id, model })), mail: [], systems, tools: p14Tools(systems[0]) };
+  // Assembled by the op's own `p14Read`, so a field the op leaves out is missing here too.
+  return p14Read({
+    mem: { ...m, counts: byObject.person ?? {} },
+    chat: { systems, counts: byObject.c1 ?? {} },
+    ledger: { calls: calls.map(({ id, model }) => ({ id, model })), counts: byObject.ledger ?? {} },
+    vault: byObject.vault ?? {},
+    journal: await w.w.ledger().journalRows({ principal: sam.email }),
+  });
 }
 
 /** The tier-1 page's reads as Sam's page on a slot: the drawn name from the tier-1 `look`, a reload its eviction. */

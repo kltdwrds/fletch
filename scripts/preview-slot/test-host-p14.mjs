@@ -88,3 +88,20 @@ export function p14Tools(system) {
 
 /** A person's mail journal rows (`mail.*`), as `{ id, outcome, counterpart }`. */
 export const p14Mail = (rows) => rows.filter((r) => String(r.actionKind).startsWith('mail.')).map((r) => ({ id: r.id, outcome: r.outcome, counterpart: r.counterpart }));
+
+/**
+ * The `read` answer from what each object gave: the person's `p14Memory` with its table counts (`mem`), the chat's
+ * system messages and counts (`chat`), the Ledger's chat calls and counts (`ledger`), the Vault's counts and the
+ * person's journal rows.
+ */
+export function p14Read({ mem, chat, ledger, vault, journal }) {
+  const { counts: person, ...memory } = mem;
+  return {
+    ...memory,
+    counts: { c1: chat.counts, person, ledger: ledger.counts, vault },
+    calls: ledger.calls,
+    mail: p14Mail(journal),
+    systems: chat.systems,
+    tools: p14Tools(chat.systems[0]),
+  };
+}

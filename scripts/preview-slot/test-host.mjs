@@ -40,7 +40,7 @@ import { recordingAi } from './test-host-p5.mjs';
 import { chatRows, p6Person } from './test-host-p6.mjs';
 import { clockedStorage, p7Op, probeGet, skewToNext } from './test-host-p7.mjs';
 import { P12_DEAD, p12Cards, p12Grants, p12Journal, p12Reset } from './test-host-p12.mjs';
-import { counts, p14Mail, p14Memory, p14ResetStanding, p14SeedPasskey, p14Tools, systemsText } from './test-host-p14.mjs';
+import { counts, p14Memory, p14Read, p14ResetStanding, p14SeedPasskey, systemsText } from './test-host-p14.mjs';
 import { p9ChatRows, p9Network, p9Reset, p9VaultRows } from './test-host-p9.mjs';
 import { SITES, testHostBinding } from './test-host-sites.mjs';
 
@@ -412,20 +412,7 @@ export async function testHost(body, env) {
     const vault = env.VAULT.get(env.VAULT.idFromName(env.TENANT_ID));
     const mem = await person.testHostP14('read');
     const led = await ledger.testHostP14(body.person);
-    return {
-      status: 200,
-      body: {
-        standing: mem.standing,
-        daily: mem.daily,
-        memory: mem.memory,
-        memoryWriter: mem.memoryWriter,
-        counts: { c1: chat.counts, person: mem.counts, ledger: led.counts, vault: await vault.testHostCounts() },
-        calls: led.calls,
-        mail: p14Mail(await ledger.journalRows({ principal: body.person })),
-        systems: chat.systems,
-        tools: p14Tools(chat.systems[0]),
-      },
-    };
+    return { status: 200, body: p14Read({ mem, chat, ledger: led, vault: await vault.testHostCounts(), journal: await ledger.journalRows({ principal: body.person }) }) };
   }
   if (body.op === 'p7') {
     // F30: the P7 world (./test-host-p7.mjs): Sam's jobs reset, defined, ticked and read, with the chat's notices.
