@@ -5,7 +5,46 @@ One item per entry: `- [ ] <date> <kind>: <what>`, kinds `uat`, `record`, `quest
 orchestrator wants his eyes on, not blocking). An entry carries enough context to make the high-level decision from
 its paragraph alone (what it is, what was decided or found, what his answer changes, the recommended answer) and
 deep links (a path with its heading or line, a record id, a PR) to the artifact or section for a deep-dive review.
-Kyle's own lines go under `## Steering`.
+Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the agent's name and avatar are your settings, written only through the
+  app; until then it has no name and says so.** What it decides: no model turn, tool or chat message ever names the
+  agent; a sentence like "you are now called Probe" changes the transcript and nothing else; when naming is built it is
+  one Person row and a Settings control you use. Why now: Muse writes its name from a chat turn the model interprets
+  (the one place its configuration comes from message content), and fletch's panel today promises "Naming comes later"
+  behind a disabled Edit; F40 replaces the promise with the honest words and D-0018 fixes where a name will come from.
+  Nothing in F40 or F41 depends on your answer. Recommended: accept, and name the agent when you want to, as a part
+  after the spine. Say under Steering if you would rather the model could take a name from chat, or if a name should
+  also reach the mail label and a colleague's cards. Deep dive: [the record](../decisions/0018-agent-name-is-the-owners-setting.md),
+  [Q33](QUESTIONS.md#q33-p14-2026-10-30-d-0018-proposed-the-agents-name-is-the-owners-setting-never-a-messages-and-p14s-reversible-choices-and-open-doors)
+  (also the four doors left as questions: an owner's export, an owner's deletion, a theme row, a session list),
+  [B-P14-01 and B-P14-02](contracts/P14-identity.md#clauses), [deltas 1 to 7](contracts/P14-identity.md#translation);
+  evidence on your Mac under `docs/plan-v2/evidence/p14-identity/` (`answers/step-1.md`, `answers/step-2.md`,
+  `step-2-menu.png`, `step-2-rename-prefill.png`, `step-2-dialog.png`).
+- [ ] 2026-10-30 look: **the P14 identity contract: what the agent is, says it is, and can touch.** Twelve clauses from
+  the muse.ai interrogation (165 tool calls, all reads; nothing of your identity changed). What fletch adopts as words:
+  the agent is your agent and never you to a third party, it names a person whose pronouns it does not know or says
+  "they", it says sign-in is a passkey and one recovery code with nothing it can read or change, it says every setting
+  is yours by pane, and it says export and deletion as what exists (for you on a standalone deploy, neither, yet). What
+  fletch keeps stronger than Muse: no sub-agent, job or colleague turn sees your standing files or memory (Muse's
+  sub-agents inherit them), no setting changes on a sentence (Muse changes appearance, feed and preferences on request),
+  nothing writes about you unasked (Muse's background upkeep logged one section per probe turn). One defect found in
+  fletch and fixed by F40: a standalone owner finishing offboarding is purged before the last-owner refusal. One
+  surface to come with its specimen first: a Security pane listing your passkeys by date with Remove and Add a passkey
+  (F41). Deep dive: [the clauses](contracts/P14-identity.md#clauses), [the properties](contracts/P14-identity.md#properties),
+  [F40 and F41 in parts.md](parts.md#f40-identity-as-it-is-the-p14-contract-check-fourteen-task-files-the-identity-and-sign-in-lines-honest-words-the-last-owner-refused-first-and-tier-1);
+  evidence on your Mac under `docs/plan-v2/evidence/p14-identity/` (`answers/step-0.md` to `step-11.md`, the
+  `dump/` folder with the twelve table guides and the Settings panes quoted in full).
+- [ ] 2026-10-30 do: **what the P14 interrogation left in your Muse account, for you to remove or keep.** Nothing of
+  your identity changed: no rename, avatar, setting, passkey, device, session or sign-in method; `runtime.avatar_state`
+  stayed at revision 49 and `IDENTITY.md`, `SOUL.md`, `USER.md` and `MEMORY.md` are unchanged. What remains: the side
+  chat "Generate tools.json account…" (thread `ceb6e00a-7685-44d9-86be-dd484ea5d5c4`, 52 messages, archive or delete
+  it from the sidebar), and the sections Muse's background memory upkeep wrote about the probe into
+  `~/memory/2026-10-30.md` from line 824 (one per turn, last at 18:37:44Z; "forget the P14 probe notes" in chat runs
+  the forget skill, which shows you the scope first). Two small things to know: the browser pane twice reported the
+  page writing to your clipboard during synthetic input (steps 2 and 5; nothing was pasted or sent), and the Settings
+  page loads Meta's pixel and four ad-network frames on every open (`step-10-requests.json`, hosts by name). Deep dive:
+  `docs/plan-v2/evidence/p14-identity/answers/step-11.md` (the audit, rows by table) and
+  `answers/step-10.md` (the reload and the third-party hosts), on your Mac.
+## Steering`.
 
 ## Open
 
