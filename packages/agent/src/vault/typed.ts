@@ -8,8 +8,22 @@ export const TYPED_TTL_MS = 24 * 3_600_000;
 /** How long the one-shot fill grant an allow-once card mints lasts: the action runs at once. */
 export const CARD_GRANT_MS = 5 * 60_000;
 
-/** Values that are credentials by their shape: vendor key prefixes, private keys and JWTs. */
-const SHAPES: RegExp[] = [
+/** Whether a run of digits passes the Luhn check, as every payment card number does (P12 delta 1). */
+export function luhn(digits: string): boolean {
+  let sum = 0;
+  for (let i = 0; i < digits.length; i++) {
+    let d = Number(digits[digits.length - 1 - i]);
+    if (i % 2 === 1) d = d * 2 > 9 ? d * 2 - 9 : d * 2;
+    sum += d;
+  }
+  return sum % 10 === 0;
+}
+
+/** A card number: 13 to 19 digits, spaces or dashes between them allowed, held only when it passes Luhn (P12 delta 1). */
+export const CARD_NUMBER = { re: /\b\d(?:[ -]?\d){12,18}\b/g, valid: (m: string) => luhn(m.replace(/[ -]/g, "")) };
+
+/** Values that are credentials by their shape: vendor key prefixes, private keys, JWTs and card numbers. */
+export const SHAPES: ReadonlyArray<RegExp | { re: RegExp; valid: (m: string) => boolean }> = [
   /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]+?-----END [A-Z ]*PRIVATE KEY-----/g,
   /\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{30,}\b/g,
   /\bgithub_pat_[A-Za-z0-9_]{30,}\b/g,
@@ -19,10 +33,18 @@ const SHAPES: RegExp[] = [
   /\bglpat-[A-Za-z0-9_-]{20,}\b/g,
   /\bAKIA[0-9A-Z]{16}\b/g,
   /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g,
+  CARD_NUMBER,
 ];
 
-/** A value the person labels as one: "my password is X", "pin: X", "api key = X". */
-const LABELED = /\b(password|passcode|passphrase|pin|pin code|api[ _-]?key|access token|token|secret)\b(?:\s+(?:is|was))?\s*[:=]?\s+["'“]?([^\s"'”]{4,200})/gi;
+/** The words a person labels a secret with: "my password is X", "pin: X", "api key = X" (patterns, in match order). */
+const LABELS = ["password", "passcode", "passphrase", "pin", "pin code", "api[ _-]?key", "access token", "token", "secret"];
+/**
+ * A card's words (P12 delta 1): "card number X", "cvc 123", "exp 12/30". A card word's value may be three characters,
+ * as a security code is, and must hold a digit.
+ */
+export const CARD_LABELS: ReadonlySet<string> = new Set(["card number", "card", "cvc", "cvv", "security code", "expiry", "exp"]);
+/** A value the person labels as one, built from the words above at each read. */
+const labeled = () => new RegExp(`\\b(${[...LABELS, ...CARD_LABELS].join("|")})\\b(?:\\s+(?:is|was))?\\s*[:=]?\\s+["'“]?([^\\s"'”]{3,200})`, "gi");
 
 export interface Found {
   start: number;
@@ -32,12 +54,16 @@ export interface Found {
 /** Every credential-shaped or labeled value in the text, in order, without overlaps. */
 export function findTypedSecrets(text: string): Found[] {
   const spans: Found[] = [];
-  for (const re of SHAPES) for (const m of text.matchAll(re)) spans.push({ start: m.index, end: m.index + m[0].length });
-  for (const m of text.matchAll(LABELED)) {
+  for (const shape of SHAPES) {
+    const { re, valid } = shape instanceof RegExp ? { re: shape, valid: () => true } : shape;
+    for (const m of text.matchAll(re)) if (valid(m[0])) spans.push({ start: m.index, end: m.index + m[0].length });
+  }
+  for (const m of text.matchAll(labeled())) {
     const raw = m[2] as string;
     const value = raw.replace(/[.,;!?)]+$/, "");
-    // A reference already in the text, or a plain word after "token", is not a value.
-    if (value.length < 4 || value.startsWith("[credential:") || value.startsWith("cred://") || !/[0-9]|[^A-Za-z]/.test(value)) continue;
+    // A reference already in the text, or a plain word after "token", is not a value; a card word's value holds a digit.
+    const card = CARD_LABELS.has((m[1] as string).toLowerCase());
+    if (value.length < (card ? 3 : 4) || value.startsWith("[credential:") || value.startsWith("cred://") || !/[0-9]|[^A-Za-z]/.test(value) || (card && !/[0-9]/.test(value))) continue;
     const start = m.index + m[0].length - raw.length;
     spans.push({ start, end: start + value.length });
   }
