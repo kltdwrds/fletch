@@ -28,14 +28,15 @@ import type { JobDefinition } from "../../../packages/agent/src/jobs/body.ts";
 import { chargeMicros } from "../../../packages/agent/src/ledger/budget.ts";
 import type { PersonDashboardDeps } from "../../../packages/agent/src/obs/dashboard.ts";
 import people from "../../fixtures/people.json" with { type: "json" };
-import { FakeBrowser } from "../../support/browser/fake-browser.ts";
+import type { FillApi } from "../../../packages/agent/src/browse/tools.ts";
+import { FakeBrowser, type FakeSite } from "../../support/browser/fake-browser.ts";
 import type { FakeRequest, FakeStep } from "../../support/fake-model.ts";
 import { ObjectHarness } from "../../support/object-harness.ts";
 import type { Snapshot } from "../../support/scenario.ts";
 import { Seeded } from "../../support/seeded.ts";
 import type { DefinedTask, TaskHarness, Turn } from "../../support/task.ts";
 import type { Namespace } from "../../../packages/agent/src/tools/registry.ts";
-import { type AuthorityWorld, authorityWorld } from "../../workers/support/authority-world.ts";
+import { type AuthorityWorld, authorityWorld, type WorldOptions } from "../../workers/support/authority-world.ts";
 import { type El, page } from "../../workers/support/page-harness.ts";
 import type { ChatLabel, DrawerView, ModelRow, P5World, RowView, RunRow, TaskDetail, TaskView, ThreadEntry } from "./world.ts";
 import { PROBE, PROBE_LINK, PROBE_TITLE } from "./world.ts";
@@ -74,6 +75,12 @@ export interface P5HarnessOptions {
   jobUrls?: string[];
   /** More tools offered to a child beside its read, eager: what a task plants for the child's gate to refuse (T-P3-03). */
   childTools?: (person: string) => Namespace[];
+  /** More of the authority world's options, read once at construction: P9's Vault, its hold and its connectors (F35). */
+  world?: () => Partial<WorldOptions>;
+  /** More sites the fake browser serves beside `example.com` (P9's sign-in page, F35). */
+  sites?: Record<string, FakeSite>;
+  /** The Vault's fill and scrub for the browse namespace, as `objects/chat.ts` wires them (F35). */
+  fill?: (person: string) => FillApi;
 }
 
 export class P5Tier1World implements P5World {
@@ -86,7 +93,7 @@ export class P5Tier1World implements P5World {
   private readonly memory = new Map<string, ObjectHarness<PersonBrowse>>();
 
   constructor(o: P5HarnessOptions) {
-    this.browser = new FakeBrowser({ "example.com": { markdown: o.page ?? PAGE } });
+    this.browser = new FakeBrowser({ "example.com": { markdown: o.page ?? PAGE }, ...(o.sites ?? {}) });
     const now = () => this.w.clock.now;
     const browseMemory = (person: string) => {
       let h = this.memory.get(person);
@@ -96,7 +103,7 @@ export class P5Tier1World implements P5World {
       }
       return h.instance;
     };
-    const hook = { port: this.browser, memory: (person: string) => ({ get: async (d: string) => browseMemory(person).get(d), record: async (r: Parameters<PersonBrowse["record"]>[0]) => browseMemory(person).record(r) }) };
+    const hook = { port: this.browser, memory: (person: string) => ({ get: async (d: string) => browseMemory(person).get(d), record: async (r: Parameters<PersonBrowse["record"]>[0]) => browseMemory(person).record(r) }), ...(o.fill ? { fill: o.fill } : {}) };
     // A sub-agent's production reads are the Hacker News pair (`SUBAGENT_READS`); here, as F14's children read a
     // fixture, the child reads the probe page through the real `browse_open`, offered eager (a child has no
     // `tool_search`), its url table holding the address its brief carries as the chat's holds the one Sam typed.
@@ -107,7 +114,7 @@ export class P5Tier1World implements P5World {
       const ns = chatBrowse(hook, person, { urls, session: cell() }, now);
       return [{ ...ns, deferral: "eager" as const, tools: ns.tools.filter((t) => t.name === "browse_open") }, ...(o.childTools?.(person) ?? [])];
     };
-    this.w = authorityWorld({ seed: [sam, pat], stores: true, jobs: true, script: o.script, browse: hook, subagents: { reads: childReads }, jobFetch: async (url) => ((o.jobUrls ?? [PROBE]).includes(url) ? new Response(o.page ?? PAGE, { status: 200, headers: { "content-type": "text/plain" } }) : new Response("no", { status: 404 })) });
+    this.w = authorityWorld({ seed: [sam, pat], stores: true, jobs: true, script: o.script, browse: hook, subagents: { reads: childReads }, jobFetch: async (url) => ((o.jobUrls ?? [PROBE]).includes(url) ? new Response(o.page ?? PAGE, { status: 200, headers: { "content-type": "text/plain" } }) : new Response("no", { status: 404 })), ...(o.world?.() ?? {}) });
   }
 
   async open(): Promise<void> {

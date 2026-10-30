@@ -34,7 +34,8 @@ export type EgressCode =
   | "EGRESS_FILL_FIELD"
   | "EGRESS_SURROGATE_UNKNOWN";
 
-export type EgressFailure = { ok: false; code: EgressCode; reason: string; host?: string };
+/** `ref` names the credential a refused plan carried, when it carried one (F35: the refusal's audit row). */
+export type EgressFailure = { ok: false; code: EgressCode; reason: string; host?: string; ref?: string };
 
 /**
  * One place a credential's value may stand on a request: a header after an optional scheme word
@@ -102,7 +103,7 @@ function hasRef(text: string): boolean {
 /** A header value that is a reference alone or after an auth scheme: `cred://x`, `Bearer cred://x`. */
 const CRED_HEADER = /^((?:[A-Za-z][A-Za-z0-9-]* )?)(cred:\/\/[a-z][a-z0-9-]{0,62})$/;
 
-const fail = (code: EgressCode, reason: string, host?: string): EgressFailure => ({ ok: false, code, reason, ...(host ? { host } : {}) });
+const fail = (code: EgressCode, reason: string, host?: string, ref?: string): EgressFailure => ({ ok: false, code, reason, ...(host ? { host } : {}), ...(ref ? { ref } : {}) });
 
 /** The references a request carries, each where it stands; anything else that names one is a placement refusal. */
 function references(url: URL, req: OutboundRequest): { ok: true; uses: CredentialUse[]; headers: Array<[string, string]> } | { ok: false; reason: string } {
@@ -173,13 +174,13 @@ export function plan(req: OutboundRequest, hosts: readonly HostRule[], publicHos
   if (!rule) {
     // A reference no host lists is not a saved credential: said as such, before the host is.
     const unknown = found.uses.find((u) => !known(u.ref));
-    if (unknown) return fail("EGRESS_CRED_UNKNOWN", `${unknown.ref} is not a saved credential`, host);
-    return fail("EGRESS_HOST_DENIED", closed ? `${host} cannot be read: ${closed}` : `${host} is not a listed host`, host);
+    if (unknown) return fail("EGRESS_CRED_UNKNOWN", `${unknown.ref} is not a saved credential`, host, unknown.ref);
+    return fail("EGRESS_HOST_DENIED", closed ? `${host} cannot be read: ${closed}` : `${host} is not a listed host`, host, found.uses[0]?.ref);
   }
   if (!rule.methods.includes(method) && !rule.credentials.some((c) => c.methods.includes(method))) return fail("EGRESS_METHOD_DENIED", `${method} is not allowed to ${host}`, host);
   for (const use of found.uses) {
     const slot = rule.credentials.find((c) => c.ref === use.ref);
-    if (!slot) return known(use.ref) ? fail("EGRESS_CRED_HOST_DENIED", `${use.ref} may not be sent to ${host}`, host) : fail("EGRESS_CRED_UNKNOWN", `${use.ref} is not a saved credential`, host);
+    if (!slot) return known(use.ref) ? fail("EGRESS_CRED_HOST_DENIED", `${use.ref} may not be sent to ${host}`, host, use.ref) : fail("EGRESS_CRED_UNKNOWN", `${use.ref} is not a saved credential`, host, use.ref);
     // The credential's declaration fixes where its value stands; a placement it does not declare is refused.
     if (!slot.placements.some((p) => samePlacement(p, use.placement))) {
       const allowed = slot.placements.map(placementWords).join(" or ") || "nowhere on a request";

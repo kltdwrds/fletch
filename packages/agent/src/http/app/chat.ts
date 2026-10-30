@@ -246,9 +246,12 @@ function taken(id) {
   return p.node;
 }
 // The chat stored the person's message (F10): its bubble is named now, under the mid history draws it by, so a reaction
-// on it lands before the turn ends. A bubble named already (queued, now its own turn's) takes the new mid.
-function nameSent(d, mid) {
-  if (!d || !mid) return;
+// on it lands before the turn ends. A bubble named already (queued, now its own turn's) takes the new mid. Its words are
+// the frame's, as stored (F35, P9 delta 2): a secret typed in it was held first, so this tab shows the reference too.
+function nameSent(d, mid, text) {
+  if (!d) return;
+  if (text && d.bubble && d.raw !== text) { d.bubble.textContent = text; d.raw = text; if (d.msg) d.msg.text = text; }
+  if (!mid) return;
   if (d.msg) { d.dataset.mid = mid; d.msg.mid = mid; } else named(d, { mid, text: words(d).textContent, at: Date.now(), kind: "you" });
 }
 function unsent(id, code) {
@@ -388,11 +391,11 @@ function frame(e) {
   }
   else if (f.type === "turn_started") {
     // A turn that goes on after a decision (M20.1) has no text: nothing the person typed starts it.
-    nameSent(taken(f.id) || (f.text ? add("you", f.text, true) : null), f.mid);
+    nameSent(taken(f.id) || (f.text ? add("you", f.text, true) : null), f.mid, f.text);
     reply = null; endThinking(); current = f.turn; drawn = 0; working(true);
   }
   // A send while a turn runs is queued (M24.2): drawn as sent, and the reply that takes it up starts below it.
-  else if (f.type === "queued") { nameSent(taken(f.id) || (f.text ? add("you", f.text, true) : null), f.mid); settleReply(); }
+  else if (f.type === "queued") { nameSent(taken(f.id) || (f.text ? add("you", f.text, true) : null), f.mid, f.text); settleReply(); }
   else if (f.type === "duplicate") taken(f.id);
   else if (f.type === "turn_stopping") { if (f.turn === current) { stopping = current; $("stop").disabled = true; $("busy").textContent = STOP.stopping; } }
   else if (f.type === "turn_stopped") { endThinking(); settleReply(); stoppedNote(f); }
