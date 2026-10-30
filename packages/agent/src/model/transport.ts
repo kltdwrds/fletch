@@ -2,13 +2,14 @@
 // tenant's `AI` binding, so no token or provider key is in a tenant script:
 // - Workers AI: `ai.run(model, inputs, { returnRawResponse })`, plus `{ gateway }` with the gateway's
 //   log collection off only when the deploy configures `AI_GATEWAY_ID` (a self-host deploy does not).
-// - A gateway provider: the configured gateway as a universal request, `ai.gateway(id).run({ provider,
-//   endpoint, ... })`, with no provider authorization header, so the gateway serves it with the BYOK key
-//   stored for that provider (credential precedence: a request's own key, then the stored `default`
-//   key, then Unified Billing), and the binding needs no gateway token. OpenRouter is a built-in
-//   provider; Meta's Model API is the gateway's custom provider `meta` (base URL https://api.meta.ai/v1,
-//   added in the dashboard), which the gateway names `custom-meta`. Only a deploy that configures both
-//   a gateway and `CHAT_PROVIDER` takes this path.
+// - A gateway provider: the configured gateway's provider-native path over the binding's fetch
+//   passthrough, `https://workers-binding.ai/ai-gateway/gateways/<id>/<provider>/<endpoint>`, with no
+//   provider authorization header, so the gateway serves it with the BYOK key stored for that provider
+//   (credential precedence: a request's own key, then the stored `default` key, then Unified Billing),
+//   and the binding needs no gateway token. OpenRouter is a built-in provider; Meta's Model API is the
+//   gateway's custom provider `meta` (base URL https://api.meta.ai/v1, added in the dashboard), which
+//   the gateway names `custom-meta`. Only a deploy that configures both a gateway and `CHAT_PROVIDER`
+//   takes this path.
 import { type ChatProvider, type ModelConfig, OPENROUTER_PROVIDER, providerOf, REASONING_EFFORT, type Route, SELF_HOST_MODELS } from "./routes.ts";
 import type { WireMessage, WireTool } from "./wire.ts";
 
@@ -17,14 +18,19 @@ export function gatewayOption(config: ModelConfig = SELF_HOST_MODELS): { id: str
   return config.gatewayId ? { id: config.gatewayId, collectLog: false } : undefined;
 }
 /**
- * Each gateway provider's universal request: the provider as the gateway's path names it, and the chat
- * completions endpoint appended to it (a custom provider's path is appended to its base URL, which for
- * Meta already ends in `/v1`).
+ * Each gateway provider's path: the provider as the gateway names it, and the chat completions endpoint
+ * appended to it (a custom provider's path is appended to its base URL, which for Meta already ends in
+ * `/v1`).
  */
 export const GATEWAY_REQUESTS: Readonly<Record<Exclude<ChatProvider, "workers-ai">, { provider: string; endpoint: string }>> = Object.freeze({
   openrouter: { provider: "openrouter", endpoint: "v1/chat/completions" },
   meta: { provider: "custom-meta", endpoint: "chat/completions" },
 });
+
+/** The binding's fetch passthrough (`workerd` `ai-api.ts`), which `@cloudflare/workers-types` does not declare. */
+interface BindingFetch {
+  fetch(input: string, init: RequestInit): Promise<Response>;
+}
 
 export interface RequestParts {
   messages: WireMessage[];
@@ -61,12 +67,12 @@ export function send(ai: Ai, model: string, body: Record<string, unknown>, signa
     // `routeModel` names a gateway provider only with a gateway configured; this guards a caller that skipped it.
     if (!gateway) return Promise.reject(new Error(`MODEL_GATEWAY_UNSET: ${provider} is reached only through an AI Gateway; set AI_GATEWAY_ID`));
     const request = GATEWAY_REQUESTS[provider];
-    return ai.gateway(gateway.id).run(
-      { provider: request.provider, endpoint: request.endpoint, headers: { "content-type": "application/json" }, query: body },
-      // The universal options' type keeps `id` required (it removes nothing from an object type); the
-      // gateway is the one `gateway()` names, so the same option as Workers AI's is passed.
-      { gateway, signal },
-    );
+    // The gateway's provider-native path over the binding's fetch passthrough, pre-authenticated in-account: a
+    // custom provider is served there and on `/compat`, not by the deprecated universal request, which answers
+    // it with 502 (gateway error 2006). The `Ai` type does not declare `fetch` yet; it exists at run time.
+    const url = `https://workers-binding.ai/ai-gateway/gateways/${gateway.id}/${request.provider}/${request.endpoint}`;
+    const headers = { "content-type": "application/json", "cf-aig-collect-log": String(gateway.collectLog) };
+    return (ai as unknown as BindingFetch).fetch(url, { method: "POST", headers, body: JSON.stringify(body), signal });
   }
   return ai.run(model as keyof AiModels, body as never, { ...(gateway ? { gateway } : {}), returnRawResponse: true, signal }) as unknown as Promise<Response>;
 }

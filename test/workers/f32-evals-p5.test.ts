@@ -100,19 +100,18 @@ describe("[F32] P5 on a slot: the probe page, the prompts, the child's reads and
         sent.push(body);
         return "answer";
       },
-      gateway: (_id: string) => ({
-        run: async (req: unknown, _o?: unknown) => {
-          sent.push(req);
-          return "gateway answer";
-        },
-      }),
+      fetch: async (_input: string, init: { method: string; body: string }) => {
+        sent.push(JSON.parse(init.body));
+        return "gateway answer";
+      },
       models: () => "models",
     };
     const kept: string[] = [];
     const wrapped = recordingAi(ai, async (p: string) => void kept.push(p), (p: string) => p.startsWith(VERIFIER_INSTRUCTIONS));
     const chat = { messages: [{ role: "system", content: "You are fletch." }, { role: "user", content: "hi" }] };
     expect(await wrapped.run("m", chat, {})).toBe("answer");
-    expect(await wrapped.gateway("g").run({ provider: "openrouter", query: { messages: [{ role: "system", content: [{ type: "text", text: "Routed." }] }] } }, {})).toBe("gateway answer");
+    const routed = { messages: [{ role: "system", content: [{ type: "text", text: "Routed." }] }] };
+    expect(await wrapped.fetch("https://workers-binding.ai/ai-gateway/gateways/g/openrouter/v1/chat/completions", { method: "POST", body: JSON.stringify(routed) })).toBe("gateway answer");
     await wrapped.run("m", { messages: [{ role: "system", content: `${VERIFIER_INSTRUCTIONS}\nmore` }] }, {});
     await wrapped.run("embed", { text: ["a"] }, {});
     expect(kept).toEqual(["You are fletch.", "Routed."]);

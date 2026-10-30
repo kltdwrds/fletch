@@ -63,12 +63,10 @@ describe("[M18.3] the clock of a model call", () => {
     const fake = new FakeModel([{ checkpoint: "mid", step: { text: "hello there friend" } }]);
     // On a deploy that puts the chat route on OpenRouter, its primary goes through the gateway (M22.1).
     const ai = {
-      gateway: (id: string) => ({
-        run: (r: unknown, o: unknown) => {
-          clock.t += 1_500;
-          return fake.binding.gateway(id).run(r, o);
-        },
-      }),
+      fetch: (input: string, init: RequestInit) => {
+        clock.t += 1_500;
+        return fake.binding.fetch(input, init);
+      },
     } as unknown as Ai;
     const streamFn = createStreamFn(
       { ai, ledger: { record: async (r) => void rows.push(r) }, wait: async () => {}, now: () => clock.t, models: OPENROUTER },
@@ -94,7 +92,7 @@ describe("[M18.3] the clock of a model call", () => {
     const clock = { t: 5_000 };
     const rows: ModelCallRow[] = [];
     const down = async () => { clock.t += 40; throw new Error("binding down"); };
-    const ai = { run: down, gateway: () => ({ run: down }) } as unknown as Ai;
+    const ai = { run: down, fetch: down } as unknown as Ai;
     const who = { tenant: "solo-sam", person: ada.email, runId: "run-fail", route: "chat" as const };
     const base = { wait: async () => {}, now: () => clock.t, models: OPENROUTER };
     await (await createStreamFn({ ...base, ai, ledger: { record: async (r) => void rows.push(r) } }, who)(modelFor("chat", OPENROUTER), hello, {})).result();
