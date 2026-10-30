@@ -113,7 +113,7 @@ Kyle's own lines go under `## Steering`.
   did not retry. Say under Steering when you have a window; the orchestrator then captures steps 5 and 6: whether the
   allowed POST runs once and from which turn, the decision in permissions.history, the same ask again (a new card,
   since "once"), and the denial's words, its finality and what Muse offers instead. Deep dive:
-  [the scenario, steps 2 to 6](evidence/p15-approvals/scenario.md), the timed-out cards' chats
+  the scenario, steps 2 to 6 (`evidence/p15-approvals/scenario.md`, on your Mac), the timed-out cards' chats
   https://muse.ai/thread/287a0b56-6551-474c-b6fb-faa30761aeca and
   https://muse.ai/thread/06684629-39d4-492c-a02c-a79b1d5f279f, the pass's continuing chat
   https://muse.ai/thread/38531e29-650e-4669-852e-35d1c606c46b; evidence on your Mac under
