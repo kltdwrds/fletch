@@ -1,7 +1,8 @@
 // T-P7-09 (B-P7-01, B-P7-11): tier 2, T-P7-01 asked of the real model on a slot (`pnpm evals P7`, F30): exactly one
 // runonce five minutes on in the home zone, a reply that says it is set, names the time and asks nothing, and the row
 // under Reminders in the panel's Upcoming. fletch's form keeps the one card under the reply, which Sam decides (the
-// agent's job starts off). Its graders are T-P7-01's, with the Upcoming row added.
+// agent's job starts off). Its graders are T-P7-01's, with the Upcoming row added: the row of the one job the ask made,
+// whatever title the real model gave it (F30; the scripted fake's title is T-P7-01's).
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
 import { graders as oneShot, PROMPT, TITLE } from "./one-shot-set.task.ts";
@@ -11,7 +12,7 @@ const sam = people.people.find((p) => p.id === "sam-solo")!;
 
 const graders: Grader<P7World>[] = [
   ...oneShot,
-  { name: "the panel's Upcoming shows the row under Reminders", kind: "end_state", check: async (w) => (await w.listed()).some((j) => j.title === TITLE && j.listed === "upcoming" && j.kind === "runonce") && (await w.groups())[0] === "Reminders" },
+  { name: "the panel's Upcoming shows the row under Reminders", kind: "end_state", check: async (w) => w.jobs().length === 1 && (await w.listed()).some((j) => j.id === w.jobs()[0]!.id && j.listed === "upcoming" && j.kind === "runonce") && (await w.groups())[0] === "Reminders" },
 ];
 
 export const task = defineTask<P7World>({

@@ -3,7 +3,7 @@
 // Pure over a `Slot`: `pnpm evals` (scripts/evals.ts) hands it the worktree's preview slot (scripts/evals/slot.ts),
 // the test a scripted one.
 //
-//   trial     one chat on the slot, the task's prompts and decide events in order, then the graders: `pass`; `fail` with a code
+//   trial     one chat on the slot, the task's prompts and events (SLOT_EVENTS) in order, then the graders: `pass`; `fail` with a code
 //             (GRADER_FAILED, MINEFIELD, GRADER_THREW, or the TurnError's code) and the grader's name; `infra` with the
 //             InfraError's code (SLOT_MISSING, LEASE_LAPSED, SLOT_5XX, SLOT_UNREACHABLE, SESSION_UNAVAILABLE).
 //   verdict   `pass` when every one of TRIALS trials passed; `fail` when any trial failed; else `infra`. An infra trial
@@ -78,8 +78,11 @@ export interface RunDeps {
   log?: (line: string) => void;
 }
 
-/** The events a slot world plays as its owner would (F26): a decision on a card, through the page's own route. */
-export const SLOT_EVENTS: readonly string[] = ["decide"];
+/**
+ * The events a slot world plays (F26, F30): a decision on a card, through the page's own route; a job's tick, its next
+ * alarm fired by the test host; a reload, the world read again.
+ */
+export const SLOT_EVENTS: readonly string[] = ["decide", "tick", "reload"];
 
 /** Why the runner cannot drive `task` on a slot owned by `owner`, or null: a prompt by someone else, an event the slot cannot play, a schedule. */
 export function driveable(task: DefinedTask<SlotWorld>, owner: string): string | null {

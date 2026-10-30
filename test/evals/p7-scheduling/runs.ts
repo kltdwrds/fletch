@@ -5,6 +5,7 @@
 import { type FakeStep, report } from "../../support/fake-model.ts";
 import { answer, callFrom, idIn, load, type P7HarnessOptions, type P7Tier1World, replyFrom } from "./harness.ts";
 import { INSTRUCTIONS, TITLE } from "./one-shot-set.task.ts";
+import { INSTRUCTIONS as UNCHANGED, TITLE as UNCHANGED_TITLE } from "./silence-real-model.task.ts";
 import { PROBE } from "./world.ts";
 
 /** A woken turn with nothing to add to a job's notice (F24): it draws nothing. */
@@ -115,7 +116,7 @@ export const runs: Record<string, () => P7HarnessOptions> = {
   "T-P7-09": () => ({ script: [...oneShot] }),
   "T-P7-10": () => ({ seed: oneShotSeed, script: [...oneShot, report("It is five past eleven."), quiet] }),
   "T-P7-11": () => ({
-    seed: async (w) => void (await w.defineJob({ id: "p7-probe-unchanged", title: "p7 probe: say nothing if unchanged", instructions: "Read the p7 probe page. If nothing changed, say nothing.", timing: every(30), noGateReason: "the p7 probe has no change signal" })),
+    seed: async (w) => void (await w.defineJob({ id: "p7-probe-unchanged", title: UNCHANGED_TITLE, instructions: UNCHANGED, timing: every(30), noGateReason: "the p7 probe has no change signal" })),
     script: [read("r1"), silent(["r1"]), read("r2"), silent(["r2"], "s2")],
   }),
   "T-P7-14": () => ({ seed: surfacesSeed, script: [] }),

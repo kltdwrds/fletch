@@ -38,5 +38,11 @@ the chat socket).
 4. Commit the results file(s) with the part. The exit code is 0 when every task passed, 1 otherwise.
 
 `--results <dir>` writes the results elsewhere for a dry run. A task the runner cannot drive (a prompt by anyone but
-the slot's owner, an event or a schedule turn) stops the run by name before any trial; tier-1 matches are skipped and
-named, since they run under vitest.
+the slot's owner, an event other than `decide`, `tick` or `reload`, or a schedule turn) stops the run by name before any
+trial; tier-1 matches are skipped and named, since they run under vitest.
+
+A P7 task (F30, `scripts/evals/p7-slot.ts`) starts each trial with Sam's jobs removed and her home zone Europe/London,
+then makes the task's jobs through the slot's test host (`scripts/preview-slot/test-host-p7.mjs`). A `tick` fires the
+job's next alarm at once (the test host moves that job's clock to it) and waits for the run, its notice and the turn the
+notice wakes; the job's page reads come from a fixture, never the network. The Upcoming tab and the job dialog are read
+in headless Chromium (`scripts/evals/p7-page.ts`), so playwright-core's Chromium must be installed (AGENTS.md, gotcha 5).

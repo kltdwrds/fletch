@@ -303,7 +303,7 @@ T-P7-09  must-have  tier 2
   minefields: asked_permission, double_create, recurring_for_once, no_time
   collateral: none
   graders: code (the job row, the reply against the slot, the panel JSON) and a two-line rubric citing B-P7-01
-  reference: Muse (B-P7-01)   version_hash: c5637e8467b8
+  reference: Muse (B-P7-01)   version_hash: 4dc5b93916a8
   file: test/evals/p7-scheduling/one-shot-set-real-model.task.ts
 
 T-P7-10  nice-to-have  tier 2
@@ -327,7 +327,7 @@ T-P7-11  must-have  tier 2
   minefields: chatty_silence, model_on_every_tick
   collateral: none
   graders: code
-  reference: Muse (B-P7-03)   version_hash: e0dac78fe84d
+  reference: Muse (B-P7-03)   version_hash: ff86a57cc158
   file: test/evals/p7-scheduling/silence-real-model.task.ts
 
 T-P7-12  must-have  tier 1
