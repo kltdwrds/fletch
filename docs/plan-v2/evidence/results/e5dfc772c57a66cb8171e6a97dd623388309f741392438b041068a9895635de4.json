@@ -1,0 +1,38 @@
+{
+  "task_id": "T-P14-11",
+  "cluster": "P14",
+  "version_hash": "e5dfc772c57a66cb8171e6a97dd623388309f741392438b041068a9895635de4",
+  "runs": [
+    {
+      "run_at": "2026-10-30T21:41:39.286Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "sign-in is a passkey and the recovery code, with no password and no mailed code",
+          "started_at": "2026-10-30T21:41:39.286Z",
+          "finished_at": "2026-10-30T21:41:50.465Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "sign-in is a passkey and the recovery code, with no password and no mailed code",
+          "started_at": "2026-10-30T21:41:50.465Z",
+          "finished_at": "2026-10-30T21:42:00.376Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a session is this browser for thirty days, ended by Log out, with no list",
+          "started_at": "2026-10-30T21:42:00.376Z",
+          "finished_at": "2026-10-30T21:42:09.588Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}

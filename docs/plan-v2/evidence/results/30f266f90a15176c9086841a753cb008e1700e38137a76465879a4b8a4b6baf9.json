@@ -1,0 +1,38 @@
+{
+  "task_id": "T-P14-12",
+  "cluster": "P14",
+  "version_hash": "30f266f90a15176c9086841a753cb008e1700e38137a76465879a4b8a4b6baf9",
+  "runs": [
+    {
+      "run_at": "2026-10-30T21:43:15.582Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the name goes to memory only Sam's own turns read, and how to undo it",
+          "started_at": "2026-10-30T21:43:15.582Z",
+          "finished_at": "2026-10-30T21:43:31.747Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the name goes to memory only Sam's own turns read, and how to undo it",
+          "started_at": "2026-10-30T21:43:31.747Z",
+          "finished_at": "2026-10-30T21:43:51.039Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the name goes to memory only Sam's own turns read, and how to undo it",
+          "started_at": "2026-10-30T21:43:51.039Z",
+          "finished_at": "2026-10-30T21:44:06.806Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}
