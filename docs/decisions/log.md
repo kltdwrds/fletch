@@ -370,13 +370,8 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   halts that delegation the same way. A done tool load is not
   counted in the summary; a job set or changed is a write titled by its subject. The P5 child reads the probe page
   through the real `browse_open`, offered eager, as F14's children read a fixture. Agent.
-- 2026-10-30 F32: P5's probe page on a slot is served by the test host's browser from a fixture by its whole address
-  (`PAGES` in `scripts/preview-slot/test-host-p5.mjs`, the tier-1 world's page), the task's documented stand-in for a
-  `/fixtures/p5-probe` route, so the model reads the address Sam typed; `example.invalid` stays unreachable there. A
-  sub-agent on a slot also reads that page (`SubAgent.reads`, a protected seam only the test host overrides). The slot's
-  thread is what the page draws, so the model's reasoning (never drawn, M23.2) is no entry of it. T-P5-15's count
-  parser reads a stated count in the forms the slot's model writes ("Link count: 1", "link count 1"), equality still
-  required. T-P5-13's grader stays F31's; the failing must-haves got instruction lines instead (`WORK_WORDS`): a failed
-  read said in the words "No page came back from", a read page named by its own title, and a done task's reply says
-  what was found, never retelling a step. Two results files of a T-P5-13 grader tried and dropped (541d4b289223,
-  5b795ce5dcf9) stay as run. Agent.
+- 2026-10-30 F32: the slot's test-host browser serves P5's probe page by its whole address (`PAGES`,
+  `scripts/preview-slot/test-host-p5.mjs`), the task's stand-in for a fixture route; a slot's sub-agent reads it too
+  (`SubAgent.reads`, overridden only there); the slot's thread drops the never-drawn reasoning. T-P5-15's count
+  parser reads "Link count: 1"; T-P5-13's grader stays F31's and the failing must-haves got `WORK_WORDS` lines.
+  Agent.
