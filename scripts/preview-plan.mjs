@@ -1,9 +1,10 @@
 // The pool of fletch preview slots (docs/preview.md): each slot's names and host; its wrangler config, derived from the
-// agent's base config (packages/agent/wrangler.jsonc); the pool's inventory, the one record of what provisioning made;
-// the check every deletion passes; the lease rules; and which credential wrangler runs on. No I/O: scripts/preview.mjs
-// and scripts/preview-pool.mjs do the wrangler, git and file work, scripts/preview-slot/ is what a slot's Worker runs,
-// and scripts/preview-plan.test.mjs tests this. Ported from qyvr's scripts/preview-plan.mjs.
-import { createHash } from 'node:crypto';
+// agent's base config (packages/agent/wrangler.jsonc) by `deployConfig`, which `pnpm self-host` shares
+// (scripts/self-host-plan.mjs); the pool's inventory, the one record of what provisioning made; the check every
+// deletion passes; the lease rules; the secrets a deploy is given; and which credential wrangler runs on. No I/O:
+// scripts/preview.mjs and scripts/preview-pool.mjs do the wrangler, git and file work, scripts/preview-slot/ is what a
+// slot's Worker runs, and scripts/preview-plan.test.mjs tests this. Ported from qyvr's scripts/preview-plan.mjs.
+import { createHash, randomBytes } from 'node:crypto';
 
 /** Every preview resource's name starts with this, and nothing else on the account does. */
 export const PREFIX = 'fletch-pv-';
@@ -15,6 +16,10 @@ export const MAX_SLOTS = 20;
 export const SLOT_OWNER = 'sam@solo-sam.example';
 /** The vars `pnpm preview up --var K=V` may set on a slot: how its chat reaches a model (`packages/agent/src/model/routes.ts`), nothing else. */
 export const SLOT_VAR_KEYS = ['AI_GATEWAY_ID', 'CHAT_PROVIDER', 'CHAT_HEDGE'];
+/** The Worker secrets every deploy of the agent holds: a slot gets fresh ones with each lease, a self-host deploy once. */
+export const SECRETS = ['MASTER_KEY', 'SETUP_TOKEN'];
+/** A value for each of `names`: 32 random bytes, base64url, the shape @qyvr/host-cloudflare's keys expect of MASTER_KEY. */
+export const mintSecrets = (names) => Object.fromEntries(names.map((n) => [n, randomBytes(32).toString('base64url')]));
 /** The memory index's shape: MEMORY_INDEX_CONFIG in packages/host-cloudflare/src/provision/resources.ts. */
 export const MEMORY_INDEX = { dimensions: 768, metric: 'cosine' };
 /** The slot Worker's entry, from packages/agent/ where its generated config is written. */
@@ -78,22 +83,47 @@ export const dataResources = (plan) => [
 ];
 
 /**
- * Every key of the base config a slot's config is known to handle: rebound to the slot's own resource, replaced, or safe
- * to copy. Anything else (a D1, a KV namespace, a queue, a service binding…) would be copied as it is and could point a
- * slot at another deploy's resource, so it is refused until someone decides what a slot gets and adds it here.
+ * Every key of the base config a deploy's config is known to handle: rebound to the deploy's own resource, replaced, or
+ * safe to copy. Anything else (a D1, a KV namespace, a queue, a service binding…) would be copied as it is and could
+ * point a slot or a self-host deploy at another deploy's resource, so it is refused until someone decides what a deploy
+ * gets and adds it here.
  */
 export const KNOWN_CONFIG_KEYS = new Set([
   'ai', 'compatibility_date', 'compatibility_flags', 'durable_objects', 'exports', 'main', 'name', 'observability',
   'r2_buckets', 'vars', 'vectorize',
 ]);
 
-/** Each binding of `list` pointed at the slot's resource for it, by `byBinding`; a binding the slot does not have is refused. */
-function rebind(list, byBinding, what, point) {
-  return (list ?? []).map((b) => {
-    const name = byBinding[b.binding];
-    if (name === undefined) throw new Error(`preview: the agent has a ${what} binding ${b.binding} a slot does not have`);
-    return point(b, name);
-  });
+/**
+ * The agent's raw base config as one deploy of it, the part a preview slot and a self-host deploy share: its Worker
+ * `name` on workers.dev, each R2 and Vectorize binding pointed at the deploy's own resource (`r2`, `vectorize`: a name
+ * by binding), `vars` laid over the base vars, and with `paid` the paid-plan bindings (D-0021). A base key outside
+ * KNOWN_CONFIG_KEYS, or a binding the deploy has no resource for, is refused rather than copied. `label` and `what`
+ * name the caller in a refusal (`preview`, `a preview slot`).
+ */
+export function deployConfig(raw, { name, r2, vectorize, vars = {}, paid = false, label, what }) {
+  const unknown = Object.keys(raw).filter((k) => !KNOWN_CONFIG_KEYS.has(k));
+  if (unknown.length > 0) {
+    throw new Error(`${label}: packages/agent/wrangler.jsonc has ${unknown.join(', ')}, which ${what} does not know: decide what ${what} gets in scripts/preview-plan.mjs`);
+  }
+  const rebind = (list, byBinding, kind, point) =>
+    (list ?? []).map((b) => {
+      const to = byBinding[b.binding];
+      if (to === undefined) throw new Error(`${label}: the agent has a ${kind} binding ${b.binding} ${what} does not have`);
+      return point(b, to);
+    });
+  const out = {
+    ...raw,
+    name,
+    workers_dev: true,
+    r2_buckets: rebind(raw.r2_buckets, r2, 'R2', (b, to) => ({ ...b, bucket_name: to })),
+    vectorize: rebind(raw.vectorize, vectorize, 'Vectorize', (b, to) => ({ ...b, index_name: to })),
+    vars: { ...raw.vars, ...vars },
+  };
+  if (paid) {
+    out.worker_loaders = [{ binding: 'LOADER' }];
+    out.images = { binding: 'IMAGES' };
+  }
+  return out;
 }
 
 /**
@@ -102,45 +132,40 @@ function rebind(list, byBinding, what, point) {
  * The placeholder runs the slot's ops alone: the agent's classes are `deleted` tombstones, which delete every object
  * and its storage (idempotent, and harmless for a class never made: verified 2026-10-22), so a release wipes the
  * agent's state. `deploy` is a random id the slot echoes, so a deploy is known live; `paid` adds the paid-plan bindings
- * as `create-fletch --paid` does; `vars` are the model vars of `SLOT_VAR_KEYS` (`pnpm preview up --var K=V`), so a
- * slot can run its chat on another model than the self-host default.
+ * as `pnpm self-host --paid` does (D-0021); `vars` are the model vars of `SLOT_VAR_KEYS` (`pnpm preview up --var K=V`),
+ * so a slot can run its chat on another model than the self-host default.
  */
 export function slotConfig(raw, plan, { accountId, placeholder = false, deploy, paid = false, vars = {} }) {
-  const unknown = Object.keys(raw).filter((k) => !KNOWN_CONFIG_KEYS.has(k));
-  if (unknown.length > 0) {
-    throw new Error(`preview: packages/agent/wrangler.jsonc has ${unknown.join(', ')}, which a preview slot does not know: decide what a slot gets in scripts/preview-plan.mjs`);
-  }
   const strangeVars = Object.keys(vars).filter((k) => !SLOT_VAR_KEYS.includes(k));
   if (strangeVars.length > 0) throw new Error(`preview: --var takes only ${SLOT_VAR_KEYS.join(', ')}; not ${strangeVars.join(', ')}`);
   const agentClasses = Object.entries(raw.exports ?? {}).filter(([, e]) => e.type === 'durable-object').map(([c]) => c);
   if (agentClasses.includes(LEASE_OBJECT.className)) throw new Error(`preview: the agent exports ${LEASE_OBJECT.className}, the slot lease's class`);
   const lease = { name: LEASE_OBJECT.binding, class_name: LEASE_OBJECT.className };
   const out = {
-    ...raw,
-    name: plan.worker,
+    ...deployConfig(raw, {
+      name: plan.worker,
+      r2: plan.r2,
+      vectorize: plan.vectorize,
+      vars: { ...vars, TENANT_ID: plan.name, OWNER_EMAIL: SLOT_OWNER, PREVIEW_SERVING: placeholder ? 'placeholder' : 'app', PREVIEW_DEPLOY: deploy },
+      paid: paid && !placeholder,
+      label: 'preview',
+      what: 'a preview slot',
+    }),
     main: placeholder ? SLOT_MAIN.placeholder : SLOT_MAIN.app,
     account_id: accountId,
-    workers_dev: true,
     preview_urls: false,
-    r2_buckets: rebind(raw.r2_buckets, plan.r2, 'R2', (b, name) => ({ ...b, bucket_name: name })),
-    vectorize: rebind(raw.vectorize, plan.vectorize, 'Vectorize', (b, name) => ({ ...b, index_name: name })),
     durable_objects: { bindings: [...(placeholder ? [] : (raw.durable_objects?.bindings ?? [])), lease] },
     exports: {
       ...Object.fromEntries(Object.entries(raw.exports ?? {}).map(([c, e]) => [c, placeholder && e.type === 'durable-object' ? { type: 'durable-object', state: 'deleted' } : e])),
       [LEASE_OBJECT.className]: { type: 'durable-object', storage: 'sqlite' },
     },
-    vars: { ...raw.vars, ...vars, TENANT_ID: plan.name, OWNER_EMAIL: SLOT_OWNER, PREVIEW_SERVING: placeholder ? 'placeholder' : 'app', PREVIEW_DEPLOY: deploy },
   };
   if (placeholder) delete out.ai;
-  else if (paid) {
-    out.worker_loaders = [{ binding: 'LOADER' }];
-    out.images = { binding: 'IMAGES' };
-  }
   return out;
 }
 
-/** A generated config as written beside the agent's (git-ignored). */
-export const configText = (config) => `// Written by scripts/preview.mjs from packages/agent/wrangler.jsonc (docs/preview.md); never edit or commit it.\n${JSON.stringify(config, null, 2)}\n`;
+/** A generated config as written beside the agent's (git-ignored), with the script that wrote it. */
+export const configText = (config, by = 'scripts/preview.mjs') => `// Written by ${by} from packages/agent/wrangler.jsonc; never edit or commit it.\n${JSON.stringify(config, null, 2)}\n`;
 
 // The inventory: scripts/preview-pool.json, committed, secret-free. A slot's entry is written before each resource is made
 // and filled after, so a crash between leaves a record that `provision` adopts and `deprovision` deletes.
@@ -224,7 +249,11 @@ export function authMode(env) {
   return env.FLETCH_PREVIEW_AUTH === 'token' || env.CLAUDE_CODE_REMOTE === 'true' ? 'token' : 'oauth';
 }
 
-/** The environment wrangler runs in: on the login, no token from the environment; on the token, the environment's, for the pool's account. */
+/**
+ * The environment wrangler runs in: on the login, no token from the environment; on the token, the environment's, for
+ * the pool's account. `accountId` is optional on the login (`pnpm self-host` without --account-id): wrangler then
+ * takes the login's own account.
+ */
 export function wranglerEnv(env, mode, accountId) {
   const out = { ...env, WRANGLER_SEND_METRICS: 'false', WRANGLER_BUILD_CONDITIONS: 'development,workerd,worker,browser' };
   if (mode === 'oauth') {
@@ -234,7 +263,7 @@ export function wranglerEnv(env, mode, accountId) {
     if (!env.CLOUDFLARE_API_TOKEN) throw new Error('preview: token mode needs CLOUDFLARE_API_TOKEN (in a cloud session, the network secret attaches the real one)');
     if (env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_ACCOUNT_ID !== accountId) throw new Error(`preview: CLOUDFLARE_ACCOUNT_ID is not the pool's account ${accountId}`);
   }
-  out.CLOUDFLARE_ACCOUNT_ID = accountId;
+  if (accountId) out.CLOUDFLARE_ACCOUNT_ID = accountId;
   return out;
 }
 
@@ -257,16 +286,23 @@ export const r2Names = (text) => [...text.matchAll(/^name:\s+(\S+)\s*$/gm)].map(
 /** Whether wrangler said the Worker does not exist (code 10007). */
 export const noSuchWorker = (text) => /\[code: 10007\]/.test(text);
 
-/** The tag of the Worker a deploy made, from wrangler's ndjson output: 32 hex, or null. */
-export function workerTag(ndjson) {
+/** The deploy entries of wrangler's ndjson output file (`WRANGLER_OUTPUT_FILE_PATH`). */
+function deployEntries(ndjson) {
+  const out = [];
   for (const line of ndjson.split('\n')) {
-    let e;
     try {
-      e = JSON.parse(line);
-    } catch {
-      continue;
-    }
-    if (e?.type === 'deploy' && /^[0-9a-f]{32}$/.test(e.worker_tag ?? '')) return e.worker_tag;
+      const e = JSON.parse(line);
+      if (e?.type === 'deploy') out.push(e);
+    } catch {}
   }
-  return null;
+  return out;
 }
+
+/** The tag of the Worker a deploy made, from wrangler's ndjson output: 32 hex, or null. */
+export const workerTag = (ndjson) => deployEntries(ndjson).find((e) => /^[0-9a-f]{32}$/.test(e.worker_tag ?? ''))?.worker_tag ?? null;
+
+/** The workers.dev URL a deploy serves, from the targets in wrangler's ndjson output, or null. */
+export const workersDevTarget = (ndjson) =>
+  deployEntries(ndjson)
+    .flatMap((e) => (Array.isArray(e.targets) ? e.targets : []))
+    .find((t) => typeof t === 'string' && /^https:\/\/[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev$/.test(t)) ?? null;

@@ -5,9 +5,9 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { down, gc, loadLease, mergedBranchHashes, parseFlags, SECRETS, tokenChecks, up, varFlags } from './preview.mjs';
+import { down, gc, loadLease, mergedBranchHashes, parseFlags, tokenChecks, up, varFlags } from './preview.mjs';
 import { fakeAccount, fakeSlot, fakeSlotsFetch, tagOf } from './preview-fakes.mjs';
-import { ownerTag, sha256Hex, slotPlan } from './preview-plan.mjs';
+import { ownerTag, SECRETS, sha256Hex, slotPlan } from './preview-plan.mjs';
 import { deprovision, INVENTORY, loadInventory, provision, saveInventory, subdomainFile } from './preview-pool.mjs';
 
 // `pnpm preview`'s commands against fakes: an account answering the wrangler calls, and slots answering /__preview/ with

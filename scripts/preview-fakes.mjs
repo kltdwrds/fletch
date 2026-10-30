@@ -1,11 +1,11 @@
 // Test doubles for `pnpm preview`'s tests (scripts/preview-slot.test.mjs, scripts/preview.test.mjs): R2 and Vectorize
 // in memory, a slot answering /__preview/ with the real scripts/preview-slot/ops.mjs and /health as the agent would, and
-// an account answering the wrangler calls scripts/preview.mjs and scripts/preview-pool.mjs make. Not a test itself.
+// an account answering the wrangler calls scripts/preview.mjs, scripts/preview-pool.mjs and scripts/self-host.mjs make
+// (scripts/self-host.test.mjs uses it too). Not a test itself.
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { memoryLease } from './preview-slot/lease-rules.mjs';
 import { ops } from './preview-slot/ops.mjs';
-import { CONFIG } from './preview-pool.mjs';
 import { sha256Hex } from './preview-plan.mjs';
 
 export function fakeR2() {
@@ -93,7 +93,7 @@ export function fakeAccount({ subdomain, slotsByWorker }) {
     if (a === 'vectorize' && b === 'delete') return s.vectorize.delete(c) ? okOut() : { status: 1, out: 'no such' };
     if (a === 'whoami') return okOut('logged in');
     if (a === 'deploy') {
-      const config = JSON.parse(s.configs.get(path.join(opts.cwd, CONFIG)).replace(/^\/\/.*\n/, ''));
+      const config = JSON.parse(s.configs.get(path.join(opts.cwd, args[2])).replace(/^\/\/.*\n/, ''));
       // Like wrangler, the tag is the one looked up before the upload: none for the deploy that makes the Worker.
       const tag = s.workers.has(config.name) ? tagOf(config.name) : null;
       s.workers.add(config.name);
@@ -104,8 +104,9 @@ export function fakeAccount({ subdomain, slotsByWorker }) {
         Object.assign(slot.vars, { PREVIEW_SERVING: config.vars.PREVIEW_SERVING, PREVIEW_DEPLOY: config.vars.PREVIEW_DEPLOY, TENANT_ID: config.vars.TENANT_ID });
       }
       const out = opts.extraEnv?.WRANGLER_OUTPUT_FILE_PATH;
-      if (out) writeFileSync(out, `${JSON.stringify({ type: 'wrangler-session', version: 1 })}\n${JSON.stringify({ type: 'deploy', worker_name: config.name, worker_tag: tag })}\n`);
-      return okOut(`Uploaded ${config.name}\nDeployed ${config.name} triggers\n  https://${config.name}.${subdomain}.workers.dev\n`);
+      const url = `https://${config.name}.${subdomain}.workers.dev`;
+      if (out) writeFileSync(out, `${JSON.stringify({ type: 'wrangler-session', version: 1 })}\n${JSON.stringify({ type: 'deploy', worker_name: config.name, worker_tag: tag, targets: [url] })}\n`);
+      return okOut(`Uploaded ${config.name}\nDeployed ${config.name} triggers\n  ${url}\n`);
     }
     if (a === 'secret' && b === 'bulk') {
       const w = args[3];

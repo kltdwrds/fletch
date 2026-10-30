@@ -12,6 +12,7 @@
     "dev": "node --conditions=development scripts/dev.ts",
     "create-fletch": "node --conditions=development packages/create-fletch/src/index.ts",
     "preview": "node scripts/preview.mjs",
+    "self-host": "node scripts/self-host.mjs",
     "redact": "node scripts/redact-capture.mjs",
     "evals": "node --conditions=development scripts/evals.ts",
     "live-sweep": "node --conditions=development scripts/live-sweep.ts",
