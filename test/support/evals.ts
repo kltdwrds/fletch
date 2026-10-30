@@ -34,6 +34,8 @@ export interface SlotEntry {
   mid?: string;
   text?: string;
   reactions?: Array<{ by: "you" | "agent"; emoji: string }>;
+  /** A card entry's view (`chat/cards.ts` `CardView`): the fields a grader reads. */
+  card?: { id: string; state: string; title: string; proposed: Record<string, unknown>; dest: string; status: string };
 }
 
 /** One reaction row as a grader reads it: the agent's under `"agent"`, the owner's under their email. */
@@ -63,6 +65,29 @@ export interface SlotWorld extends ScenarioWorld {
   send(text: string): Promise<string>;
   /** Reads an app route with the trial's session. */
   read(path: string): Promise<{ status: number; body: unknown }>;
+  /**
+   * Plays an event as the owner would (`SLOT_EVENTS` in `scripts/evals/runner.ts`): `decide` posts the decision on a
+   * card of this chat (payload `card`: its id, or `first` for the chat's first card; `choice`) through the page's
+   * route, then waits out the turn the decision continues. Rejects with a `TurnError` when there is nothing to decide.
+   */
+  event(name: string, payload: Record<string, string>): Promise<void>;
+}
+
+/**
+ * What a slot's test host lets a grader read (F26, `scripts/preview-slot/test-host.mjs`), refreshed after every turn
+ * and event: the P15 world's readers over the slot. The test host's browser has no live session, so no page opens and
+ * nothing is typed; every read of a fixture site is a request. The Vault's audit and Sam's grants count from the
+ * trial's start. On a slot that serves no test host each reader throws `SLOT_NO_TEST_HOST`.
+ */
+export interface TestHostReaders {
+  cards(): Array<{ id: string; state: string; host: string | null }>;
+  egress(): Array<{ host: string; text: string }>;
+  opened(): string[];
+  typed(): Array<{ host: string; value: string }>;
+  requestsTo(host: string): number;
+  audit(): unknown[];
+  vaultGrants(): Array<{ nonce: string; hosts: string[]; oneShot: boolean; usedAt: number | null }>;
+  sinks(): Promise<Record<string, string>>;
 }
 
 export const EMPTY_SNAPSHOT: Snapshot = { journal: [], vault: [], r2: [] };

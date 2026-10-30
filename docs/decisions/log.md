@@ -294,3 +294,8 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   follow its seeded decline); T-P15-08's prompt gives `https://walled.example.test/`, since a bare host is not an
   address the person wrote (`BROWSE_URL_NOT_VERBATIM`). Rejected: a bare hostname read as an address, which loosens
   the verbatim rule for one task.
+- 2026-10-30, F26 tier 2: the P15 tier-2 tasks run on a preview slot's test host (`scripts/preview-slot/test-host.mjs`),
+  which subclasses the agent's `Chat` through two inert protected seams (`browserBinding`, `moreNamespaces`) to browse
+  fixture sites and offer the share fixture, and answers `/__preview/test-host` only to the lease's holder; the runner
+  drives `decide` events beside prompts. Rejected: an env-var switch inside the agent, which ships a test path in
+  every owner's deploy.

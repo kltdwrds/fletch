@@ -1,5 +1,5 @@
 // What a fletch preview slot's Worker answers at /__preview/, before the agent or the placeholder sees the request
-// (docs/preview.md): its lease, a claim of it, and a reset of the slot's bucket and memory index. It works through the
+// (docs/preview.md): its lease, a claim of it, a reset of the slot's bucket and memory index, and its test host's reads. It works through the
 // slot's own bindings, so the scoped token that deploys a slot needs no R2 or Vectorize permission. A caller proves it
 // may by a key: the secret PREVIEW_KEY_<tag> it set on this Worker. The lease (./lease.mjs) says which tag owns the
 // slot. The agent's Durable Objects are wiped by the placeholder's deploy, not here. The agent never imports this file.
@@ -79,7 +79,7 @@ export async function emptyStores(env) {
  * The answer to a /__preview/ request, or null for any other request. `lease` is the slot's lease store (the Durable
  * Object's stub, or the tests' memoryLease); `now` is seconds.
  */
-export async function ops(request, env, { lease: store, now = Math.floor(Date.now() / 1000) }) {
+export async function ops(request, env, { lease: store, now = Math.floor(Date.now() / 1000), testHost }) {
   const url = new URL(request.url);
   if (!url.pathname.startsWith('/__preview/')) return null;
   const lease = await store.read();
@@ -111,6 +111,13 @@ export async function ops(request, env, { lease: store, now = Math.floor(Date.no
     if (holds && body.keepLease === true) return json(200, { done: true });
     await store.end(forced ? { force: true, expectTag: body.expectTag } : { tag }, now);
     return json(200, { done: true });
+  }
+  if (url.pathname === '/__preview/test-host') {
+    // The slot's test host (./test-host.mjs, F26) reads a chat's log and the stores a grader scans: its holder's alone.
+    if (!holds) return refuse(409, 'conflict', 'this slot is not yours, or its lease is over');
+    if (!testHost) return refuse(404, 'not_found', 'this slot serves no test host');
+    const r = await testHost(body, env);
+    return json(r.status, r.body);
   }
   return refuse(404, 'not_found', 'no such preview op');
 }

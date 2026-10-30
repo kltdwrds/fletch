@@ -3,7 +3,7 @@
 // Pure over a `Slot`: `pnpm evals` (scripts/evals.ts) hands it the worktree's preview slot (scripts/evals/slot.ts),
 // the test a scripted one.
 //
-//   trial     one chat on the slot, the task's prompts in order, then the graders: `pass`; `fail` with a code
+//   trial     one chat on the slot, the task's prompts and decide events in order, then the graders: `pass`; `fail` with a code
 //             (GRADER_FAILED, MINEFIELD, GRADER_THREW, or the TurnError's code) and the grader's name; `infra` with the
 //             InfraError's code (SLOT_MISSING, LEASE_LAPSED, SLOT_5XX, SLOT_UNREACHABLE, SESSION_UNAVAILABLE).
 //   verdict   `pass` when every one of TRIALS trials passed; `fail` when any trial failed; else `infra`. An infra trial
@@ -77,10 +77,14 @@ export interface RunDeps {
   log?: (line: string) => void;
 }
 
-/** Why the runner cannot drive `task` on a slot owned by `owner`, or null: a prompt by someone else, a turn that is not a prompt. */
+/** The events a slot world plays as its owner would (F26): a decision on a card, through the page's own route. */
+export const SLOT_EVENTS: readonly string[] = ["decide"];
+
+/** Why the runner cannot drive `task` on a slot owned by `owner`, or null: a prompt by someone else, an event the slot cannot play, a schedule. */
 export function driveable(task: DefinedTask<SlotWorld>, owner: string): string | null {
   for (const [i, turn] of task.turns.entries()) {
-    if (turn.kind !== "prompt") return `EVALS_TASK_UNDRIVABLE: turn ${i + 1} of ${task.id} is ${turn.kind === "event" ? "an event" : "a schedule"}; the runner drives prompts only`;
+    if (turn.kind === "event" && SLOT_EVENTS.includes(turn.name)) continue;
+    if (turn.kind !== "prompt") return `EVALS_TASK_UNDRIVABLE: turn ${i + 1} of ${task.id} is ${turn.kind === "event" ? `the event ${turn.name}` : "a schedule"}; the runner drives prompts and ${SLOT_EVENTS.join(", ")} events only`;
     if (turn.by !== owner) return `EVALS_TASK_UNDRIVABLE: turn ${i + 1} of ${task.id} is by ${turn.by}, not the slot's owner ${owner}`;
   }
   return null;
@@ -92,7 +96,10 @@ export async function trial(task: DefinedTask<SlotWorld>, slot: Slot, n: number,
   const done = (t: Omit<Trial, "trial_id" | "started_at" | "finished_at">): Trial => ({ trial_id: n, ...t, started_at, finished_at: now().toISOString() });
   try {
     const world = await slot.open();
-    for (const turn of task.turns) if (turn.kind === "prompt") await world.send(turn.text);
+    for (const turn of task.turns) {
+      if (turn.kind === "prompt") await world.send(turn.text);
+      else if (turn.kind === "event") await world.event(turn.name, turn.payload ?? {});
+    }
     for (const g of task.graders) {
       let answer: boolean;
       try {

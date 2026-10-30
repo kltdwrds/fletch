@@ -27,6 +27,7 @@ import { personFiles, personMemory, personTree } from "../memory/rpc.ts";
 import type { RenderResult } from "../render/render.ts";
 import { documentsApi } from "../render/tools.ts";
 import { onboardingNamespace, type OnboardingApi } from "../company/onboarding-tools.ts";
+import type { Namespace } from "../tools/registry.ts";
 import { BUILTIN_SKILLS } from "../skills/builtin.ts";
 import { SkillCatalog } from "../skills/catalog.ts";
 import { SubAgentHost } from "../subagents/host.ts";
@@ -96,7 +97,7 @@ export class Chat extends Agent<Env> {
         return { list: () => vault().list(person), addApprovedHost: (input, writer) => vault().addApprovedHost(input, writer) };
       },
       secrets: (person, text) => holdTypedSecrets(text, (value) => this.env.VAULT.get(this.env.VAULT.idFromName(this.env.TENANT_ID)).holdTyped({ person, value, source: "chat" })),
-      ...(browserOf(this.env) ? { browse: this.browseHook(browserOf(this.env) as BrowserBinding) } : {}),
+      ...(this.browserBinding() ? { browse: this.browseHook(this.browserBinding() as BrowserBinding) } : {}),
       authority: (person) => ({
         decide: async (d) => (await getAgentByName(this.env.PERSON, person)).grantDecide(d),
         commit: async (d, effectId, args) => (await getAgentByName(this.env.PERSON, person)).grantCommit(d, effectId, args),
@@ -114,10 +115,23 @@ export class Chat extends Agent<Env> {
       jobs: this.jobsApi(),
       nameOf: displayNames(host.memberSeed),
       ...(host.tenant.shape === "company" ? { companyInstructions: async () => this.companyText(await this.company().instructions()) } : {}),
-      namespaces: (view) => [onboardingNamespace(this.onboardingApi(), () => view.owner() ?? "")],
+      namespaces: (view) => [onboardingNamespace(this.onboardingApi(), () => view.owner() ?? ""), ...this.moreNamespaces()],
       subagents: { open: () => new SubAgentStore(this.ctx.storage).open(), status: () => this.subagents.status(), close: (person, ids) => this.subagents.close(person, ids), delegate: (input) => this.subagents.delegate(input) },
     });
     return this.engineInstance;
+  }
+
+  /**
+   * The browser this chat browses with (M9): the `BROWSER` binding, when the deploy has one. A preview slot's test host
+   * (`scripts/preview-slot/test-host.mjs`, F26) answers with its fixture sites instead; nothing else overrides it.
+   */
+  protected browserBinding(): BrowserBinding | undefined {
+    return browserOf(this.env);
+  }
+
+  /** Namespaces beside the engine's own: none on a deploy; a preview slot's test host adds its share fixture (F26). */
+  protected moreNamespaces(): Namespace[] {
+    return [];
   }
 
   /** Code Mode's host (M25.5): the loader on this script and its own `Egress` entrypoint, called from this object. */
