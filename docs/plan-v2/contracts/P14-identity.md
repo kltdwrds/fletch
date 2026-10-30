@@ -257,7 +257,7 @@ T-P14-01  must-have  tier 1
   graders: code
   reference: Muse's rename as a model turn calling `onboarding.update_identity` and its live IDENTITY.md editor
   (B-P14-01, B-P14-02)
-  version_hash: unfilled (F40)
+  version_hash: 8e044d48de6d
   file: test/evals/p14-identity/chat-cannot-rename.task.ts
 
 T-P14-02  must-have  tier 1
@@ -279,7 +279,7 @@ T-P14-02  must-have  tier 1
   collateral: none
   graders: code
   reference: Muse's sub-agent inheriting the standing files and its colleague wall (B-P14-03)
-  version_hash: unfilled (F40)
+  version_hash: b5fe3f8a26e9
   file: test/evals/p14-identity/call-me-is-memory-the-owner-reads.task.ts
 
 T-P14-03  must-have  tier 1
@@ -299,7 +299,7 @@ T-P14-03  must-have  tier 1
   graders: code
   reference: Muse's `ui.set`, `onboarding.update_identity`, `device.unpair` and the no-card class (B-P14-05, B-P14-06,
   B-P14-07)
-  version_hash: unfilled (F40)
+  version_hash: 1256959dfee6
   file: test/evals/p14-identity/no-tool-reaches-identity-or-login.task.ts
 
 T-P14-04  must-have  tier 1
@@ -344,7 +344,7 @@ T-P14-05  must-have  tier 1
   collateral: Pat's departure row and bundle
   graders: code
   reference: Muse's "no Delete Account row", Reset as the only wipe and "not stated" retention (B-P14-09)
-  version_hash: unfilled (F40)
+  version_hash: ea12559c0e70
   file: test/evals/p14-identity/last-owner-refused-before-purge.task.ts
 
 T-P14-06  nice-to-have  tier 1
@@ -363,7 +363,7 @@ T-P14-06  nice-to-have  tier 1
   collateral: the mail fake's record
   graders: code
   reference: Muse's "as you, by default" and its field shapes (B-P14-04, B-P14-08)
-  version_hash: unfilled (F40)
+  version_hash: 6991115b08c3
   file: test/evals/p14-identity/the-persons-agent-never-the-person.task.ts
 
 T-P14-07  must-have  tier 1
@@ -381,7 +381,7 @@ T-P14-07  must-have  tier 1
   collateral: none
   graders: code
   reference: Muse's dialog without a route, clipped swatches and ad pixels on load (B-P14-07, B-P14-11)
-  version_hash: unfilled (F40)
+  version_hash: ba2de0f32ade
   file: test/evals/p14-identity/identity-and-settings-survive-reload.task.ts
 
 T-P14-08  must-have  tier 1
@@ -398,7 +398,7 @@ T-P14-08  must-have  tier 1
   collateral: none
   graders: code
   reference: Muse's background upkeep writing one section per turn to the daily log unasked (B-P14-02, B-P14-10)
-  version_hash: unfilled (F40)
+  version_hash: 9f242dd3ac34
   file: test/evals/p14-identity/nothing-else-written.task.ts
 
 T-P14-09  nice-to-have  tier 1
@@ -412,7 +412,7 @@ T-P14-09  nice-to-have  tier 1
   collateral: none
   graders: code
   reference: Muse's "default given name until changed" drawn from state (B-P14-01)
-  version_hash: unfilled (F40)
+  version_hash: eaac8119688a
   file: test/evals/p14-identity/the-name-card-says-what-is.task.ts
 
 T-P14-10  must-have  tier 2

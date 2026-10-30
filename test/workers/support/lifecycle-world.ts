@@ -4,34 +4,35 @@
 // The model is the scripted fake on the `AI` binding the referee, the handover draft and the import's
 // extraction call. fletch has no platform to convert a tenant through, so the world has no converter.
 import { unavailable } from "@qyvr/host";
-import { upsertEntity } from "../../../packages/agent/src/memory/entities.ts";
-import { PersonMemory } from "../../../packages/agent/src/memory/store.ts";
+import { PersonAttachments } from "../../../packages/agent/src/attachments/store.ts";
+import { PersonLinks } from "../../../packages/agent/src/files/links.ts";
+import { PersonFiles } from "../../../packages/agent/src/files/store.ts";
+import { PersonAuthority } from "../../../packages/agent/src/grants/authority.ts";
 import { PersonalLearning } from "../../../packages/agent/src/learning/personal.ts";
 import { MemoryImport } from "../../../packages/agent/src/lifecycle/import.ts";
 import { ConversionState, type OffboardingDeps, purgeWork } from "../../../packages/agent/src/lifecycle/offboarding.ts";
-import { PersonAttachments } from "../../../packages/agent/src/attachments/store.ts";
-import { PersonLinks } from "../../../packages/agent/src/files/links.ts";
-import { treeOf } from "../../../packages/agent/src/tree/rpc.ts";
-import { seedClaim } from "./seed-claim.ts";
-import { PersonFiles } from "../../../packages/agent/src/files/store.ts";
-import { PersonAuthority } from "../../../packages/agent/src/grants/authority.ts";
-import { SkillCatalog } from "../../../packages/agent/src/skills/catalog.ts";
+import { upsertEntity } from "../../../packages/agent/src/memory/entities.ts";
+import { PersonMemory } from "../../../packages/agent/src/memory/store.ts";
 import { Company } from "../../../packages/agent/src/objects/company.ts";
 import { Ledger } from "../../../packages/agent/src/objects/ledger.ts";
+import { SkillCatalog } from "../../../packages/agent/src/skills/catalog.ts";
+import { treeOf } from "../../../packages/agent/src/tree/rpc.ts";
 import { FakeModel, type FakeStep } from "../../support/fake-model.ts";
 import { ObjectHarness } from "../../support/object-harness.ts";
 import { ada, T0, TENANT } from "./authority-world.ts";
 import { asBucket, FakeR2 } from "./fake-r2.ts";
+import { seedClaim } from "./seed-claim.ts";
 
 export { ada, T0, TENANT };
 
 export const verdict = (v: "promote" | "reject", reason = "fine") => ({ text: JSON.stringify({ verdict: v, reason }) });
 
-export function lifecycleWorld(o: { script?: FakeStep[]; roles?: Record<string, "owner" | "admin" | "member"> } = {}) {
+/** `seed` names the members (Sam alone unless a task brings Pat, F40) and `shape` the tenant's (a company unless standalone). */
+export function lifecycleWorld(o: { script?: FakeStep[]; roles?: Record<string, "owner" | "admin" | "member">; seed?: Array<typeof ada>; shape?: "company" | "standalone" } = {}) {
   const clock = { now: T0 };
   const fake = new FakeModel(o.script ?? []);
-  const members = [ada].map((p) => ({ email: p.email, role: o.roles?.[p.email] ?? p.role, name: p.name }));
-  const env = { TENANT_ID: TENANT, TENANT_SHAPE: "company", QYVR_ENV: "test", HOST: { memberSeed: JSON.stringify(members) } };
+  const members = (o.seed ?? [ada]).map((p) => ({ email: p.email, role: o.roles?.[p.email] ?? p.role, name: p.name }));
+  const env = { TENANT_ID: TENANT, TENANT_SHAPE: o.shape ?? "company", QYVR_ENV: "test", HOST: { memberSeed: JSON.stringify(members) } };
   const ledgerH = new ObjectHarness("ledger", (ctx, e) => new Ledger(ctx as DurableObjectState, e as Env), env, (l) => {
     l.now = () => clock.now;
   });
@@ -87,7 +88,7 @@ export function lifecycleWorld(o: { script?: FakeStep[]; roles?: Record<string, 
   const person = (email: string) => ({ kind: "person" as const, email });
   const agent = (email: string) => ({ kind: "agent" as const, email });
 
-  return { clock, fake, r2, company, host, model, ledger: () => ledgerH.instance, offboarding, write, page, catalog, person, agent };
+  return { clock, fake, r2, company, host, model, ledger: () => ledgerH.instance, ledgerHarness: () => ledgerH, personHarness: (email: string) => hosts.get(email), offboarding, write, page, catalog, person, agent };
 }
 
 export type LifecycleWorld = ReturnType<typeof lifecycleWorld>;
