@@ -264,3 +264,14 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   and T-P2-13 3 of 3, the part's PROGRESS row left BLOCKED and Q16 open for Kyle (the two grader edits read as
   corrections, and his steer is to ship and review); P2 stays at level 1 until he answers. Rejected holding the PR,
   which keeps the status line and file card off main and blocks nothing Kyle decides faster.
+- 2026-10-29 orchestrator, P15 translated (`docs/plan-v2/contracts/P15-approvals.md`, eight deltas, no one-way door):
+  a card does not block the turn and never expires (Muse: ten minutes, "Timed out", the turn resumes and may ask
+  again); rejected an expiry column and alarm, which would let the clock settle an ask the person never saw. A bot
+  check is `BROWSE_BOT_WALL`, refused by name and remembered; a memory line never grants solving (Muse solved the
+  reCAPTCHA demo on one); rejected a solving path as outside the product. No side chats, workers or discretion file
+  (fletch talks to another person only through their agent under grants; P3 and P9). A decided card keeps its words
+  in the thread (Muse's thread forgets it; the history alone remembers). No cross-chat "N tasks need review" bar and
+  no read-only permissions tool for the model until a UAT pass or a tier-2 miss asks for one. fletch's choices (once,
+  30 days, always, decline; a purchase once or decline) and the history's table words stay its own. Stop stays as
+  M24.2 built it (Muse offered none during a tool call). Parts F25 (the contract check and tier 1 on shipped
+  behaviour) and F26 (nothing goes around a card; tier 2).
