@@ -4,8 +4,10 @@
 // host, method, path, person, purpose, outcome; never the value). Redirects are not followed, so a
 // credential cannot ride a redirect to another host, and any echo of a secret in the response is
 // redacted before the result goes back to the caller, and so is any surrogate token (M25.1). A value
-// stands where its credential's declaration placed it: a header, a query parameter or a body field.
-import { type EgressCode, type EgressFailure, type HostRule, type OutboundRequest, plan, planFill, type PublicHost, redact } from "./policy.ts";
+// stands where its credential's declaration placed it: a header, a query parameter or a body field. A
+// plan refused for its host or its credential (F35, P9 delta 4) writes its row too, outcome the code and
+// nothing revealed, so the person can read that a call was refused, not only that one was sent.
+import { type EgressCode, type EgressFailure, type HostRule, type OutboundRequest, type PublicHost, plan, planFill, redact } from "./policy.ts";
 import { scrubSurrogates } from "./surrogate.ts";
 
 /** Who asked and why: the person the request acts for and the tool or job that made it. */
@@ -50,9 +52,18 @@ export const RESPONSE_MAX = 1_000_000;
 /** Response headers passed back; the rest (cookies among them) stay at egress. */
 const PASSED_HEADERS = new Set(["content-type", "etag", "last-modified", "link", "location", "retry-after", "x-ratelimit-remaining", "x-ratelimit-reset"]);
 
+/** The plan refusals that write an audit row: a host or a credential the request may not use. */
+export const AUDITED_REFUSALS: ReadonlySet<EgressCode> = new Set(["EGRESS_HOST_DENIED", "EGRESS_CRED_HOST_DENIED", "EGRESS_CRED_UNKNOWN"]);
+
 export async function egressFetch(deps: EgressDeps, req: OutboundRequest, ctx: EgressContext): Promise<EgressResult> {
   const planned = plan(req, deps.hosts, deps.publicHost);
-  if (!planned.ok) return planned;
+  if (!planned.ok) {
+    if (AUDITED_REFUSALS.has(planned.code)) {
+      const at = new URL(String(req.url));
+      deps.audit({ at: deps.now(), ref: planned.ref ?? "", host: at.hostname.toLowerCase(), method: String(req.method ?? "GET").toUpperCase(), path: at.pathname, person: ctx.person, purpose: ctx.purpose, outcome: planned.code });
+    }
+    return planned;
+  }
   const { url, method, uses } = planned;
   const host = url.hostname;
   const row = (ref: string, outcome: AuditRow["outcome"], grant?: string) =>

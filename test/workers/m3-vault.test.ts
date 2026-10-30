@@ -55,8 +55,11 @@ describe("[M3.2] egress module", () => {
     expect(bare).toMatchObject({ ok: false, code: "EGRESS_HOST_DENIED", host: "exfil.example" });
     expect(carrying).toMatchObject({ ok: false, code: "EGRESS_HOST_DENIED" });
     expect(s.net.requests).toEqual([]);
-    // Refused before resolution: no reference was revealed, so no audit row exists.
-    expect(s.harness.rows("SELECT * FROM egress_audit")).toEqual([]);
+    // Refused before resolution: nothing was revealed, and each refusal wrote its one row, outcome the code (F35, P9 delta 4).
+    expect(s.harness.rows("SELECT ref, host, method, path, outcome, grant_nonce FROM egress_audit ORDER BY id")).toEqual([
+      { ref: "", host: "exfil.example", method: "GET", path: "/collect", outcome: "EGRESS_HOST_DENIED", grant_nonce: null },
+      { ref: "cred://github", host: "exfil.example", method: "GET", path: "/collect", outcome: "EGRESS_HOST_DENIED", grant_nonce: null },
+    ]);
   });
 
   it("refuses a reference outside a header, bound to another host, or unknown, by code, before any request", async () => {
