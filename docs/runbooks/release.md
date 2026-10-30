@@ -1,7 +1,7 @@
 # Release the primitives
 
-`@qyvr/host` and `@qyvr/host-cloudflare` are published to npm by changesets; the agent and `create-fletch` are
-private. `.github/workflows/release.yml` runs on every push to `main`.
+`@qyvr/host` and `@qyvr/host-cloudflare` are published to npm by changesets; the agent is private, and deployed
+from a checkout by `pnpm self-host`. `.github/workflows/release.yml` runs on every push to `main`.
 
 ## When
 

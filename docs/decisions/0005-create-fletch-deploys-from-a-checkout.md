@@ -1,7 +1,8 @@
 ---
 id: D-0005
 title: create-fletch deploys the agent from a fletch checkout, not from a published package
-status: accepted
+status: superseded
+superseded-by: D-0022
 door: two-way
 decided: 2026-10-20
 decider: inherited

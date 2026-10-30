@@ -21,7 +21,7 @@ and shown to the owner by name, never as empty or success (`test/workers/f1-refu
   through a gateway only when `AI_GATEWAY_ID` is set (`test/workers/f1-models.test.ts`).
 - **Migrations are append-only**, one list per object in `packages/agent/src/migrations/`, run in the constructor.
 - **Paid-plan bindings are optional.** `LOADER` and `IMAGES` are not in the base config, so `wrangler types` keeps
-  them optional in `packages/agent/src/env.d.ts`; `create-fletch --paid` adds them.
+  them optional in `packages/agent/src/env.d.ts`; `pnpm self-host --paid` adds them (D-0021).
 - **Generated files.** `packages/agent/src/http/app/tokens.ts` and `icons.ts` come from `pnpm ds`; the pre-commit
   hook refuses a hand edit. The design sources are under `packages/agent/src/design/`.
 - **Platform docs are for the model.** `packages/agent/docs/platform/` holds manuals the agent reads at run time
@@ -39,7 +39,7 @@ One folder per concern under `packages/agent/src/`; `src/objects/` holds the Dur
 
 No tests in the package: they live in the root `test/workers/`, `test/scenarios/` and `test/m*/`, under the
 hermetic setup with the test host from `test/support/host.ts`. There is no build; `pnpm accept` bundles the Worker
-with `wrangler deploy --dry-run`, and `create-fletch` deploys it from the checkout.
+with `wrangler deploy --dry-run`, and `pnpm self-host` deploys it from the checkout (D-0022).
 
 ## Keep this file true
 

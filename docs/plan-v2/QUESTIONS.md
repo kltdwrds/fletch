@@ -5,6 +5,18 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
+### Q36, 2026-10-30: Accept D-0023, the setup token minted by `pnpm self-host`, and mark D-0002 superseded
+
+**Blocks:** nothing that runs; D-0002's text names `create-fletch`, which is deleted (D-0022). D-0002 is an accepted
+one-way door (the login gate on a public URL), so an agent may only propose its successor: D-0023 states the same
+ruling with `pnpm self-host` as the command that mints the `SETUP_TOKEN` (only when the Worker lacks it) and prints
+`<url>/login?setup=<token>` once, on the minting run (`scripts/self-host.test.mjs` holds both). The login gate itself,
+in `@qyvr/host-cloudflare`, is unchanged; its refusal now names `pnpm self-host`.
+
+**Recommended answer:** accept D-0023 (`decider: Kyle`, `status: accepted`, with `supersedes: D-0002`), and set
+D-0002 to `status: superseded`, `superseded-by: D-0023`. The alternative is to keep D-0002 as it stands and read
+`create-fletch` in it as "the deploy command", which leaves an accepted record naming a deleted tool.
+
 ### Q34 (F40), 2026-10-30: The F40 draft PR could not be opened from the session
 
 **Blocks:** the last step of F40's protocol (KICKOFF step 7), the draft PR. Everything else in F40 is done:
