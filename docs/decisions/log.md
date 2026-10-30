@@ -242,3 +242,25 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   call without reading the reference again (T-P2-01's required fact); rejected leaving the names to the reference
   alone. The print refusal T-P2-09 grades, `HOST_PRINT_UNAVAILABLE`, is a test-host fixture's code
   (`test/support/p2-fixtures.ts`), not a `HostFeature`: adding one would change `@qyvr/host`'s published contract.
+- 2026-10-29 F24, the thread shows the work: the status line comes from a `status` frame carrying the running tool's
+  name only (`packages/agent/src/chat/turn.ts`, from pi's tool execution events; `tool: null` when it returns), worded
+  by the page's `STATUS_WORDS` (`packages/agent/src/http/app/thread-work.ts`); rejected sending the call's arguments
+  (a path in the line), which would put model-written text in the status B-P2-04 says never comes from the model. A
+  file link is a markdown link to `files/<path>` (taught in `file_write`'s description; the viewer's `/library/files/<path>` is
+  read too), drawn as a card from the stored markdown, its preview read through `GET /app/file`; rejected an
+  attachment row (B-P2-10). A job's new notice wakes the agent through `ChatEngine.handoff`, keyed on the notice id
+  and scoped `job:<id>`, its text carrying the job's newest finished run read from the job (`chat/job-wake.ts`);
+  mail wakes no one; rejected carrying the run's outcome through the Person's delivery, which would change the
+  delivery item's stored shape. T-P2-03's grader admits the `status` frames before the words (B-P2-04's second
+  signal) and T-P2-07's asks for the card, both hashes refreshed in `contracts/P2-loop.md`.
+- 2026-10-29 F24, T-P2-13's graders after its first tier-2 runs: the end_state pattern (`NOT_THERE`) takes "there's
+  no file called …" and "couldn't find …", the task reference's own wording, which the first pattern failed on all
+  three trials of an honest reply; `empty_success` (`EMPTY_FILE`) is the file said to be empty, not "the workspace is
+  empty", which is true. Both are held on the replies the model gave and on planted failures in
+  `test/evals/p2-loop/real-model-failure-honest.test.ts`; the failed runs' results files stay committed. Rejected
+  steering the model's wording in the prompt to fit the pattern. T-P2-12 is recorded as it ran: its graders read
+  socket frames the slot world does not keep (`GRADER_THREW`), a runner gap, not a verdict on the agent.
+- 2026-10-29 orchestrator, F24 merged while BLOCKED on Q16: PR #36 went to main on green CI with `ACCEPT F24: PASS`
+  and T-P2-13 3 of 3, the part's PROGRESS row left BLOCKED and Q16 open for Kyle (the two grader edits read as
+  corrections, and his steer is to ship and review); P2 stays at level 1 until he answers. Rejected holding the PR,
+  which keeps the status line and file card off main and blocks nothing Kyle decides faster.

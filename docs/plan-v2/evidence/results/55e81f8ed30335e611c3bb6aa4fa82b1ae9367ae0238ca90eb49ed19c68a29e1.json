@@ -1,0 +1,36 @@
+{
+  "task_id": "T-P2-13",
+  "cluster": "P2",
+  "version_hash": "55e81f8ed30335e611c3bb6aa4fa82b1ae9367ae0238ca90eb49ed19c68a29e1",
+  "runs": [
+    {
+      "run_at": "2026-10-30T01:09:21.782Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says the file does not exist or could not be read",
+          "started_at": "2026-10-30T01:09:21.782Z",
+          "finished_at": "2026-10-30T01:09:48.931Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "empty_success",
+          "started_at": "2026-10-30T01:09:48.931Z",
+          "finished_at": "2026-10-30T01:10:10.417Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T01:10:10.417Z",
+          "finished_at": "2026-10-30T01:10:23.145Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}

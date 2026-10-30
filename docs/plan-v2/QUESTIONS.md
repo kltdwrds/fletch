@@ -5,6 +5,32 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
+### Q16 (F24), 2026-10-29: may F24 keep two grader changes the verifier calls softening?
+
+**Blocks:** F24's verifier pass, so the part is not DONE. Everything else is in: `ACCEPT F24: PASS` (TREE
+0d6700c563cd3a98754aaf2a86f33d1aa785e192), and tier 2 is T-P2-13 3/3, T-P2-14 3/3, T-P2-12 recorded
+(`GRADER_THREW`: its graders read socket frames the slot world doesn't keep). The draft PR is open on
+`claude/f24-thread-shows-work-31e59c`. The verifier's two blocking findings are both grader edits on tasks the
+part's scope doesn't name. Reverting either one fails the part.
+
+1. **T-P2-03** (`test/evals/p2-loop/reply-after-last-tool.task.ts`): its grader ("only the 👍 before the words") now
+   also lets through the `status` frames that scope (1) adds. B-P2-04 names that runtime status as the second
+   signal, and the frame carries no model text. Without the edit, T-P2-03 fails on every run of the shipped status
+   line.
+2. **T-P2-13** (`test/evals/p2-loop/real-model-failure-honest.task.ts`): the first tier-2 runs failed honest replies.
+   - Hash `bc83…`: 0/3, failing on "There's no file called p2-missing-file.md …". That is the reference's own
+     wording ("there is no file at …"), and the first pattern missed it.
+   - Hash `55e8…`: 1/3. `empty_success` caught "the workspace is empty right now", which is true and doesn't claim
+     the file is empty.
+   - Now: `NOT_THERE` takes the usual ways of saying the file isn't there, and `EMPTY_FILE` matches the file being
+     called empty. The replies the model gave, and planted failures for each grader, are pinned in
+     `test/evals/p2-loop/real-model-failure-honest.test.ts`. The failed runs' results files stay committed.
+
+**Recommended answer:** keep both. They are corrections to oracles that had never been run (one on the clause's own
+second signal, one on the model's honest reply), not a lowered bar. Agreeing in a commit (or a comment on the PR) lets
+a session rerun the verifier and mark F24 DONE. If you'd rather not, say which to revert, and T-P2-13's must-have
+becomes a P2 Interrogate item for a prompt change.
+
 ### Q13 (F21), 2026-10-29: The F21 draft PR could not be opened from the session
 
 **Blocks:** the last step of F21's protocol (KICKOFF step 7), the draft PR. F21 is otherwise done: `ACCEPT F21: PASS`

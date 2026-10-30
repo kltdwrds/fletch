@@ -112,7 +112,7 @@ export function filesNamespace(api: FilesApi, requester: string, writer: string,
     kind: "observation",
     mutates: true,
     label: "Write a file",
-    description: "Write the whole text of one of your files (home files up to 1 MiB); say it is saved only after this returns.",
+    description: "Write the whole text of one of your files (home files up to 1 MiB); say it is saved only after this returns. To hand the person a file, link it in your reply as [name](files/<path>): their thread draws it as the file's card.",
     parameters: WriteParams,
     execute: async (_id, p) => {
       if (inTree(p.path)) {

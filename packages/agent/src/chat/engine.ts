@@ -32,6 +32,7 @@ import { flushOutbox } from "./outbox.ts";
 import { type RequestInput, requestContext, requestText, type SendInput } from "./inputs.ts";
 import { MAX_STEPS_PER_TURN, runTurnLoop } from "./turn.ts";
 import { failureText } from "./failure-words.ts";
+import { jobHandoff, jobOfSource } from "./job-wake.ts";
 import type { HistorySnapshot } from "./history.ts";
 import { admitTurn } from "./admission.ts";
 import { assembleTurn, liveTranscript } from "./assemble-turn.ts";
@@ -147,6 +148,8 @@ export class ChatEngine {
       if (added) this.store.appendMessage(`notice:${n.id}`, { role: "system", content: `${origin}, already shown to the person:\n${n.text}`, timestamp: at });
     });
     if (added) for (const socket of this.sockets()) socket.send(JSON.stringify({ type: "notice", id: n.id, source: n.source, text: n.text } satisfies ChatFrame));
+    // A job's new notice also wakes the agent (F24): a handoff keyed on the notice, so a redelivery wakes nothing.
+    if (added && jobOfSource(n.source)) this.defer(jobHandoff(this.hooks.jobs, n).then((text) => this.handoff({ grp: n.id, person: n.person, text, scope: n.source })));
     return { ok: true, duplicate: !added };
   }
 
@@ -315,12 +318,13 @@ export class ChatEngine {
   /**
    * The handoff of a delegation's sub-agents (M7.2), labelled by code: an `internal_handoff` mailbox row
    * (M24.2), keyed on the delegation so the host's retry is answered with the first row. It reaches a
-   * running turn at its next step boundary, or runs as a turn of the owner's own task.
+   * running turn at its next step boundary, or runs as a turn of the owner's own task. A job's notice (F24)
+   * takes the same path, keyed on the notice and scoped to the job.
    */
-  async handoff(h: { grp: string; person: string; text: string }): Promise<SendResult> {
+  async handoff(h: { grp: string; person: string; text: string; scope?: string }): Promise<SendResult> {
     if (this.owner() !== h.person) return { status: "refused", code: "CHAT_NOT_OWNER" };
     const id = `handoff:${h.grp}`;
-    const { row, duplicate } = this.store.transaction(() => this.mailbox.accept({ messageId: id, kind: "internal_handoff", scope: `delegation:${h.grp}`, person: h.person, text: h.text, at: this.now() }));
+    const { row, duplicate } = this.store.transaction(() => this.mailbox.accept({ messageId: id, kind: "internal_handoff", scope: h.scope ?? `delegation:${h.grp}`, person: h.person, text: h.text, at: this.now() }));
     if (duplicate) return { status: "duplicate", id, ordinal: row.ordinal, state: row.state };
     const running = this.activeTurn ?? this.store.runningTurn()?.id;
     if (running || this.opening) return { status: "queued", id, ordinal: row.ordinal, turnId: running ?? "" };

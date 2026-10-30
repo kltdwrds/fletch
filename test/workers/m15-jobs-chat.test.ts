@@ -37,7 +37,8 @@ describe("[M15.7] jobs from chat", () => {
     const chat = await openChat(w, ada.email);
     const id = jobIdFor(TITLE, chat, { kind: "runonce", at: AT }, BODY);
     // The turn pauses on the card; once she decides it goes on by itself (M20.1) and says so, then the job's own call.
-    w.fake.enqueue(load, create(), enable(id), { text: "It is on." }, report("push test"));
+    // The job's result then wakes her agent (F24), which has nothing to add.
+    w.fake.enqueue(load, create(), enable(id), { text: "It is on." }, report("push test"), { text: "" });
 
     const said = await w.say(ada.email, "In 3 minutes, tell me 'push test'.", chat);
     expect(said.result).toMatchObject({ status: "done", awaiting: true });
@@ -61,12 +62,13 @@ describe("[M15.7] jobs from chat", () => {
     expect(w.jobOf(ada.email, id).alarmAt).toBe(T0 + 3 * 60_000);
     expect(w.noticesOf(ada.email)).toEqual([]);
 
-    // On the clock: one run, one model call on the job route for Ada, and the result in the chat.
+    // On the clock: one run, one model call on the job route for Ada, the result in the chat, and the woken turn's call (F24).
     const calls = w.fake.requests.length;
     await w.fireJob(ada.email, id);
+    await w.chats.harness(chat).instance.settled();
     expect(w.clock.now).toBe(T0 + 3 * 60_000);
     expect(job.store.runs()).toEqual([expect.objectContaining({ phase: "done", signal: "notify", manual: false })]);
-    expect(w.fake.requests).toHaveLength(calls + 1);
+    expect(w.fake.requests).toHaveLength(calls + 2);
     expect(w.noticesOf(ada.email)).toEqual([expect.objectContaining({ source: `job:${id}`, text: "push test" })]);
     expect(await w.ledger().runs({ person: ada.email })).toEqual([expect.objectContaining({ signal: "notify", phase: "done", person: ada.email })]);
     expect((await w.ledger().modelCalls({ person: ada.email })).filter((c) => c.route === "job")).toHaveLength(1);

@@ -3,7 +3,7 @@
 // (`test/support/p2-fixtures.ts`). A `prompt` turn is Sam's send. With `hold`, the first prompt's turn is left
 // waiting at that checkpoint of the script and the next prompt is sent into it, then the checkpoint is released: a
 // steer mid-turn (T-P2-05). `chats` places each prompt in a chat; `before` runs before each prompt (the clock, a
-// store that refuses).
+// store that refuses). Below it, the readers of what the shipped page draws (F24).
 import { LOADED_NAMESPACES_KEY } from "../../../packages/agent/src/chat/engine.ts";
 import type { Namespace } from "../../../packages/agent/src/tools/registry.ts";
 import type { FakeStep } from "../../support/fake-model.ts";
@@ -12,6 +12,7 @@ import type { Snapshot } from "../../support/scenario.ts";
 import type { TaskHarness, Turn } from "../../support/task.ts";
 import { authorityWorld, type WorldOptions } from "../../workers/support/authority-world.ts";
 import { P1Tier1World, sam } from "../p1-reactions/harness.ts";
+import { page } from "../../workers/support/page-harness.ts";
 import type { ChatLabel, ModelRequest, P2World, Row } from "./world.ts";
 
 export { sam };
@@ -57,6 +58,9 @@ export class P2Tier1World extends P1Tier1World implements P2World {
   }
   wiped() {
     return this.wipes;
+  }
+  async fileCards(label: ChatLabel = "c1") {
+    return fileCardsOf(await drawn({ ...this.chat(label).history() })).map((c) => ({ name: c.name, path: c.path }));
   }
   /** P1's rows, each loaded namespace (`namespace:<chat>:<name>`) and each of Sam's files (`file:<path>`). */
   override snapshot(): Snapshot {
@@ -145,4 +149,49 @@ export function p2Harness(o: P2HarnessOptions): TaskHarness<P2Tier1World> {
       await world.chat(label).settled();
     },
   };
+}
+
+// What the shipped page draws in the thread, read from the page harness's DOM (F24): the links, the file cards and the
+// status line. Shared by the P2 page worlds (T-P2-04, T-P2-10) and by the tier-1 world's `fileCards` (T-P2-07).
+
+export type Page = Awaited<ReturnType<typeof page>>;
+type Node = Page["log"];
+
+const all = (n: Node): Node[] => [n, ...n.children.flatMap(all)];
+const inThread = (p: Page): Node[] => p.log.children.flatMap(all);
+
+/** Opens the shipped page on a chat and draws `snapshot` as the chat's `history` frame, as a socket opening would; `plant` rewrites the page script first. */
+export async function drawn(snapshot: Record<string, unknown>, fetch?: (path: string) => Promise<Response | null>, plant?: (js: string) => string): Promise<Page> {
+  const p = await page({ onSend() {}, ...(fetch ? { fetch } : {}) }, {}, plant);
+  const s = p.sockets[0] as NonNullable<Page["sockets"][0]>;
+  p.open(s);
+  p.deliver(s, { type: "history", ...snapshot });
+  return p;
+}
+
+/** Every anchor in the thread that is not a file card: its address and words. */
+export const anchorsOf = (p: Page) =>
+  inThread(p)
+    .filter((n) => n.tag === "a" && !n.className.includes("qf-fcard"))
+    .map((n) => ({ href: String((n as Node & { href?: string }).href ?? ""), text: n.text() }));
+
+/** Every file card in the thread: its name, kind, the viewer's address it opens, and its preview once read. */
+export const fileCardsOf = (p: Page) =>
+  inThread(p)
+    .filter((n) => n.className.includes("qf-fcard--chat"))
+    .map((n) => {
+      const part = (cls: string) => all(n).find((c) => c.className === cls);
+      const pv = part("pv");
+      return { name: part("nm")?.textContent ?? "", kind: part("kd")?.textContent ?? "", href: String((n as Node & { href?: string }).href ?? ""), preview: pv && !pv.hidden ? pv.textContent : null, path: n.dataset.file ?? "" };
+    });
+
+/** The status line's words in the thread, or null when none is drawn. */
+export function statusOf(p: Page): string | null {
+  const line = inThread(p).find((n) => n.className === "qf-busy");
+  return line ? line.children.map((c) => c.textContent).filter(Boolean).join(" ") : null;
+}
+
+/** Lets the page's own reads (a card's preview) settle: each is one fetch and its `json()`. */
+export async function settledReads(): Promise<void> {
+  for (let i = 0; i < 10; i++) await new Promise((r) => setImmediate(r));
 }
