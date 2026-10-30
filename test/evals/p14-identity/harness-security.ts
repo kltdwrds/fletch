@@ -199,14 +199,23 @@ type Handle = (r: Request) => Promise<Response>;
 /** A planted fault: the request path with something taken out of it, given the deploy and its sessions. */
 export type Plant = (handle: Handle, d: { company: ReturnType<typeof securityDeploy>["company"]; tokens: Record<As, string> }) => Handle;
 
-/** T-P14-04's harness over one launched Chromium; `close` ends it. `plant` wraps the request path (the planted runs). */
+let shared: Promise<Browser> | null = null;
+/** The one Chromium every T-P14-04 harness in a file opens its contexts in, launched on first use. */
+const sharedBrowser = () => (shared ??= chromium.launch({ channel: "chromium", headless: true }));
+/** Closes the shared Chromium, after every harness over it is closed. */
+export async function closeSecurityBrowser(): Promise<void> {
+  const b = shared;
+  shared = null;
+  await (await b)?.close();
+}
+
+/** T-P14-04's harness over the shared Chromium; `close` ends its contexts and server. `plant` wraps the request path (the planted runs). */
 export function p14SecurityHarness(o: { plant?: Plant } = {}): TaskHarness<P14SecurityWorld> & { close(): Promise<void>; last(): P14Security | null } {
-  let browser: Browser | null = null;
   const sites: Array<{ close(): Promise<void> }> = [];
   let world: P14Security | null = null;
   return {
     setup: async () => {
-      browser ??= await chromium.launch({ channel: "chromium", headless: true });
+      const browser = await sharedBrowser();
       const d = securityDeploy();
       const tokens = await d.seed();
       const site = await listen(o.plant ? o.plant(d.handle, { company: d.company, tokens }) : d.handle);
@@ -219,7 +228,6 @@ export function p14SecurityHarness(o: { plant?: Plant } = {}): TaskHarness<P14Se
     close: async () => {
       await world?.close();
       for (const s of sites) await s.close();
-      await browser?.close();
     },
   };
 }

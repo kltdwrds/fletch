@@ -4,29 +4,32 @@ import { SESSION_COOKIE } from "@qyvr/host-cloudflare";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { Seeded } from "../../support/seeded.ts";
 import { runTask } from "../../support/task.ts";
-import { type Plant, p14SecurityHarness } from "./harness-security.ts";
+import { closeSecurityBrowser, type Plant, p14SecurityHarness } from "./harness-security.ts";
 import task from "./security-pane-reads-the-routes.task.ts";
 import type { P14SecurityWorld } from "./world.ts";
 
 // Seven Chromium contexts and a reload on one run, with the redraws: past the default 5 s on a loaded run.
 vi.setConfig({ testTimeout: 120_000 });
 const h = p14SecurityHarness();
-const planted: Array<{ close(): Promise<void> }> = [];
-// Five browsers and servers to close: past the default 10 s hook on a loaded full run.
+// One Chromium for the run and the planted runs; each planted run's contexts and server are closed when it ends.
 afterAll(async () => {
-  await Promise.all([h, ...planted].map((x) => x.close()));
+  await h.close();
+  await closeSecurityBrowser();
 }, 60_000);
 
 /** The task's turns on a harness with `plant` in the request path, and each grader's verdict (a minefield true when stepped on). */
 async function steppedOn(plant: Plant): Promise<Record<string, boolean>> {
   const ph = p14SecurityHarness({ plant });
-  planted.push(ph);
-  const rng = new Seeded(task.setup.seed);
-  const w = (await ph.setup(rng, task)) as P14SecurityWorld;
-  for (const t of task.turns) await ph.play(w, t, rng);
-  const out: Record<string, boolean> = {};
-  for (const g of task.graders) out[g.name] = await g.check(w);
-  return out;
+  try {
+    const rng = new Seeded(task.setup.seed);
+    const w = (await ph.setup(rng, task)) as P14SecurityWorld;
+    for (const t of task.turns) await ph.play(w, t, rng);
+    const out: Record<string, boolean> = {};
+    for (const g of task.graders) out[g.name] = await g.check(w);
+    return out;
+  } finally {
+    await ph.close();
+  }
 }
 
 const path = (r: Request) => new URL(r.url).pathname;
