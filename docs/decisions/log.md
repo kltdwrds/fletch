@@ -307,3 +307,13 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   model step after a bare pause, which changes the turn loop and every scripted card test; and grading the card's
   status line as a reply, which weakens the task. Tension, called out: the part says reply words are instruction
   lines; this one is code's, as a card's own status is.
+- 2026-10-30, P6 memory translated (`docs/plan-v2/contracts/P6-memory.md`), seven deltas, all two-way, the orchestrator's:
+  an unasked save is announced with its citation or not made (Muse saves a passing fact silently; rejected: saving only
+  on ask); forget is scoped to the claim, its lines, chunks, index rows and producers (Muse's forget also resets the
+  feed's learned interests; rejected: a global fence); memory search never reads a chat's transcript (Muse's
+  past-conversations leg keeps a refused value within reach; rejected: scrubbing the transcript); no goals, tracked
+  items or briefings in P6 (no seam; a store is a one-way door; Q19; rejected: a goal as a memory line with a job);
+  a sub-agent gets no memory tools (Muse's inherits `MEMORY.md`; rejected: read-only memory for sub-agents); the daily
+  note is the chat's own lines rendered per day (Muse's is a background per-chat summary that put facts in a second
+  store unannounced; rejected: a background summariser); people pages on a stated relationship through `upsertEntity`
+  (Muse's relationships loop; rejected: a loop over the notes). Parts F27 (tier 1) and F28 (reply lines, tier 2).

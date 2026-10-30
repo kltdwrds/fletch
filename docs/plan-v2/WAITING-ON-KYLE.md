@@ -209,6 +209,34 @@ Kyle's own lines go under `## Steering`.
   [F26 in parts.md](parts.md#f26-nothing-goes-around-a-card-the-egress-level-gate-the-bot-wall-and-the-rate-limit-refused-by-name-and-p15s-tier-2),
   [PROGRESS.md F26](PROGRESS.md), the `STOPS` block in `packages/agent/src/chat/instructions.ts`,
   `packages/agent/src/browse/read.ts`, `scripts/preview-slot/test-host.mjs`, the tier-2 table in PR #42.
+- [ ] 2026-10-30 look: **the P6 memory contract and its seven deltas from Muse.** The interrogation of muse.ai (two
+  new side chats, steps 0 to 12 of the scenario, run by an Opus agent that pressed no approval, named only the two
+  fixtures, tagged every probe and removed every probe line and row at the end) is now `contracts/P6-memory.md`:
+  fifteen clauses on reading memory first, saving on ask and in passing, recall with citations, the honest negative,
+  corrections, what memory refuses, the two-phase forget, what a removal leaves, the daily note, people pages, memory
+  versus permission, what a second chat and a sub-agent see, and goals and tracking; fourteen tasks; seven deltas. The
+  decisions worth your eye, each a two-way door the orchestrator took: an unasked save is announced with its citation
+  or not made (Muse saved "Sam Solo is switching the team meeting to Thursdays" silently and said only "Noted");
+  fletch's forget reaches the subject only (every Muse forget also resets the feed's learned interests, which is why
+  the run stopped at the plan); memory search never reads a chat's transcript (Muse's does, so a passport number it
+  refused to store stayed within recall's reach); no goals or tracked items in P6 (Q19); a sub-agent gets no memory
+  tools; the daily note is the chat's own lines (Muse's background worker wrote six probe facts into a second store
+  with no word in the thread, ahead of the forget plan). Two parts follow: F27 (tier 1 on what is shipped) and F28
+  (the reply's words and tier 2). Deep dive: [the contract](contracts/P6-memory.md), [its deltas](contracts/P6-memory.md#translation),
+  [Q19](QUESTIONS.md#q19-p6-2026-10-30-goals-and-tracked-items-have-no-fletch-seam-four-attested-clauses-one-reload-finding),
+  [F27 and F28 in parts.md](parts.md#f27-memory-as-it-is-the-p6-contract-check-fourteen-task-files-and-tier-1-on-what-is-shipped),
+  evidence on your Mac under `docs/plan-v2/evidence/p6-memory/` (`answers/step-0.md` to `step-12.md`, `step-7.png` the
+  forget plan, `step-9-goals-tab.png`, `step-11-sidechat.png`, `answers/step-12.md` "Left behind in Muse": two probe
+  chats, an unconfirmed forget plan, four runtime-owned bank lines and one claim row the agent could not remove).
+
+- [ ] 2026-10-30 question: **Q19, goals and tracked items: a later cluster or part of P6?** Muse's goals, tracked
+  items and briefings (a goal row created on the ask with no card, a Goals tab, a tracked item that goes stale with no
+  producer, briefings as background letters) have no fletch seam, and a new store is a storage schema you alone accept.
+  The orchestrator left the two clauses with no task and kept P6 to memory. Recommended answer: a later cluster after
+  the spine, with a proposed record for the store when it is translated; a line under Steering if you want it in P6
+  now (then F28 grows a third part and the record is proposed first). Deep dive:
+  [Q19](QUESTIONS.md#q19-p6-2026-10-30-goals-and-tracked-items-have-no-fletch-seam-four-attested-clauses-one-reload-finding),
+  [B-P6-14 and B-P6-15](contracts/P6-memory.md#clauses), `answers/step-9.md` and `answers/step-10.md` on your Mac.
 
 ## Steering
 
