@@ -19,7 +19,10 @@ output of `pnpm accept <id>`. Answer five questions, each with evidence quoted f
    docs/plan-v2/VERIFIER-PROMPT.md, docs/plan-v2/GOAL-PROMPT.md, or a file under docs/plan-v2/ other than the part's own
    rows in PROGRESS.md and QUESTIONS.md, a split of its own section in parts.md and a contract file its scope names? Quote the paths. A hunk anywhere
    that removes, narrows or softens a check, a test, a question, a constraint or a stop signal is a blocking
-   finding, whoever wrote it. Did the diff take a one-way decision (irreversible, money, a security boundary, a
+   finding, whoever wrote it. A tier-2 grader widened after a run is such a hunk unless the diff carries its oracle
+   correction (KICKOFF.md): the refused reply pinned verbatim in the task's tier-1 test, a planted negative the new
+   grader still fails, and the failed run's results file kept. A must-have scored from any run but the one declared
+   in the PR on the final tree, or from a rerun of a trial not recorded `infra`, is a blocking finding. Did the diff take a one-way decision (irreversible, money, a security boundary, a
    published contract, a storage schema) that no accepted record in docs/decisions/ with decider Kyle holds? Did it
    write `decider: Kyle` into a record, set a one-way record to accepted, move a question under `BLOCKED (open)`
    to Answered (all three are Kyle's own commits, Q9), or change an accepted record's Ruling line instead of
