@@ -59,6 +59,9 @@ describe('the gates are wired', () => {
     for (const s of verify) assert.match(s, gate("== 'code'"), s);
     for (const s of check) assert.match(s, gate("!= 'code'"), s);
     for (const s of related) assert.match(s, gate("== 'contracts'"), s);
+    // The contracts path can bring a browser test, so Chromium installs for everything but docs.
+    const [chromium] = ciSteps.filter((x) => /run: pnpm exec playwright-core install/.test(x));
+    assert.match(chromium ?? '', gate("!= 'docs'"));
   });
 
   it('Claude Code runs the hook guard, the handoff hook and the session start', () => {

@@ -96,8 +96,21 @@ describe('ci.yml classifies a pull request diff', () => {
     assert.deepEqual(r.named, ['test/p9.test.ts']);
   });
 
-  it('contracts: one no test names runs check alone, and says so', () => {
+  it('contracts: one no test names falls back to the tests that name its folder', () => {
     const r = pr({ 'docs/plan-v2/contracts/P99-new.md': 'n\n' }, named);
+    assert.equal(r.class, 'contracts');
+    assert.deepEqual(r.named, ['test/p9.test.ts']);
+  });
+
+  it('contracts: a committed eval result, read by its folder, brings the test that reads the folder', () => {
+    const R = 'docs/plan-v2/evidence/results';
+    const r = pr({ [`${R}/abc.json`]: '{"x":2}\n' }, { [`${R}/abc.json`]: '{"x":1}\n', 'test/r.test.ts': `const R = "${R}";\n` });
+    assert.equal(r.class, 'contracts');
+    assert.deepEqual(r.named, ['test/r.test.ts']);
+  });
+
+  it('contracts: when neither the file nor its folder is named, check alone, and says so', () => {
+    const r = pr({ 'docs/plan-v2/contracts/P99-new.md': 'n\n' }, { 'test/other.test.ts': 'nothing\n' });
     assert.equal(r.class, 'contracts');
     assert.deepEqual(r.named, []);
     assert.match(r.log, /The files that name them: none/);

@@ -19,8 +19,9 @@ jobs:
         with:
           fetch-depth: 0
       # The pull request's whole diff from the merge base decides what runs. Docs (under docs/, or a Markdown or
-      # LICENSE file at the root) run `pnpm check` alone. A cluster contract (docs/plan-v2/contracts/) adds the tests
-      # related to the test files that name it (`vitest related`, so a world.ts that names it brings its tasks).
+      # LICENSE file at the root) run `pnpm check` alone. Docs the tests read (a cluster contract, a committed eval
+      # result) add the tests related to the files under test/ that name the file, or its folder when nothing names
+      # the file (`vitest related`, so a world.ts that names it brings its tasks).
       # Anything else, an empty diff or a base not in the clone runs `pnpm verify`. --no-renames lists a moved file's
       # old path too, so code moved under docs/ still counts as code (scripts/ci-classify.test.mjs).
       - name: Classify the diff
@@ -32,7 +33,7 @@ jobs:
           set -euo pipefail
           kind() {
             case "$1" in
-              docs/plan-v2/contracts/*) echo contract ;;
+              docs/plan-v2/contracts/* | docs/plan-v2/evidence/results/*) echo contract ;;
               docs/*) echo docs ;;
               */*) echo code ;;
               *.md | LICENSE | LICENSE.*) echo docs ;;
@@ -56,12 +57,22 @@ jobs:
             printf '%s' "$code" | sed 's/^/  /'
             echo "class=code" >> "$GITHUB_OUTPUT"
           elif [ -n "$contracts" ]; then
+            # git grep exits 1 for no match; anything above that is an error, never "nothing names it".
+            naming() {
+              local rc=0
+              git grep -l -F "$1" -- test || rc=$?
+              [ "$rc" -le 1 ] || exit "$rc"
+            }
             named=""
             while IFS= read -r c; do
-              if [ -n "$c" ]; then named+="$(git grep -l -F "$c" -- test || true)"$'\n'; fi
+              if [ -n "$c" ]; then
+                hits=$(naming "$c")
+                [ -n "$hits" ] || hits=$(naming "$(dirname "$c")")
+                named+="$hits"$'\n'
+              fi
             done <<< "$contracts"
             named=$(printf '%s' "$named" | sed '/^$/d' | sort -u | tr '\n' ' ')
-            echo "Judged: contracts. Running check and the tests related to the files that name them. The contracts:"
+            echo "Judged: contracts. Running check and the tests related to the files that name them. The files read:"
             printf '%s' "$contracts" | sed 's/^/  /'
             echo "The files that name them: ${named:-none}"
             echo "class=contracts" >> "$GITHUB_OUTPUT"
@@ -77,18 +88,19 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # The contracts path can bring a browser test (P14's world.ts is imported by one), so it installs Chromium too.
       - name: Playwright version
-        if: steps.scope.outputs.class == 'code'
+        if: steps.scope.outputs.class != 'docs'
         id: pw
         run: echo "version=$(pnpm exec playwright-core --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v4
-        if: steps.scope.outputs.class == 'code'
+        if: steps.scope.outputs.class != 'docs'
         id: pw-cache
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
       - name: Install Chromium for the UI tests
-        if: steps.scope.outputs.class == 'code'
+        if: steps.scope.outputs.class != 'docs'
         run: pnpm exec playwright-core install --with-deps chromium
       # The file-size ratchet compares with the merge base of origin/main, which fetch-depth 0 brings.
       - name: Verify, check and test (pnpm verify)
@@ -97,16 +109,16 @@ jobs:
       - name: Verify, check only (pnpm check, docs or contracts diff)
         if: steps.scope.outputs.class != 'code'
         run: pnpm check
-      - name: Contract tests (vitest related to the files that name a changed contract)
+      - name: Contract tests (vitest related to the files that name a changed contract or result)
         if: steps.scope.outputs.class == 'contracts'
         env:
           NAMED: ${{ steps.scope.outputs.named }}
           QYVR_HERMETIC: "1"
         run: |
           set -euo pipefail
-          if [ -z "${NAMED// /}" ]; then echo "No test names a changed contract; nothing to run."; exit 0; fi
-          # shellcheck disable=SC2086 # NAMED is a space-separated list of paths without spaces
-          pnpm exec vitest related --run $NAMED
+          read -r -a named <<< "$NAMED"
+          if [ "${#named[@]}" -eq 0 ]; then echo "No test names a changed file or its folder; nothing to run."; exit 0; fi
+          pnpm exec vitest related --run "${named[@]}"
       - name: DCO sign-off
         env:
           PR_BASE: ${{ github.event.pull_request.base.sha }}
