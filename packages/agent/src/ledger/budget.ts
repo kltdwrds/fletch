@@ -24,14 +24,16 @@ export function dollars(micros: number): string {
  * Unit prices in US dollars per million tokens, from each model's page (glm-5.3-flash fetched
  * 2026-10-12: $0.15 input, $0.50 output, $0.03 cached input; bge-base-en-v1.5 from the Workers AI
  * pricing page 2026-10-13: $0.067 input, embeddings have no output; OpenRouter's z-ai/glm-5.3-flash at
- * the price most of its hosts list, the latency research's endpoints listing of 2026-10-15). A model
- * without a listed price is costed at zero here and says so through `priced: false`; the Ledger then
- * charges `chargeMicros` instead (M28.1). A row whose provider gave its own cost (OpenRouter's usage,
- * M22.1) is costed at that instead.
+ * the price most of its hosts list, the latency research's endpoints listing of 2026-10-15; Muse Spark
+ * 1.3 Contributor from Meta's pricing page, dev.meta.ai 2026-10-30: $0.10 input, $0.20 output, $0.002
+ * cached input). A model without a listed price is costed at zero here and
+ * says so through `priced: false`; the Ledger then charges `chargeMicros` instead (M28.1). A row whose
+ * provider gave its own cost (OpenRouter's usage, M22.1) is costed at that instead.
  */
 export const PRICES: Record<string, { input: number; output: number; cached: number }> = {
   "@cf/zai-org/glm-5.3-flash": { input: 0.15, output: 0.5, cached: 0.03 },
   "z-ai/glm-5.3-flash": { input: 0.15, output: 0.5, cached: 0.03 },
+  "muse-spark-1.3-contributor": { input: 0.1, output: 0.2, cached: 0.002 },
   "@cf/baai/bge-base-en-v1.5": { input: 0.067, output: 0, cached: 0.067 },
 };
 
