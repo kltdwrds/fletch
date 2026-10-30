@@ -556,6 +556,7 @@ Browser card), the file grades the fletch one and says so.
 
 ## Scorecard
 
-level 1 | tier 1 and tier 2 not yet run: 14 tasks (8 must-have) written, hashes unset | `contracts/P6-memory.md`;
-interrogation 2026-10-30Z by an Opus agent under the orchestrator's scenario, `evidence/p6-memory/trace.json`
-validates (13 steps), 104 captures through `pnpm redact`; F27 and F28 in `parts.md` | 2026-10-30
+level 2 | tier 1: 8 of 8 under vitest (F27); tier 2 on fletch-pv-1 (F28): T-P6-03 3 of 3 and T-P6-04 3 of 3, the must-haves; T-P6-13 2 of 3,
+T-P6-12 1 of 3, T-P6-09 0 of 3, T-P6-14 0 of 3 recorded (Q22) | PR #45 (`ACCEPT F27: PASS`, TREE f7a3b98c04bb, `VERIFIER: no
+blocking findings`), PR #47 (`ACCEPT F28: PASS`, TREE 39c4081c5095, `VERIFIER: no blocking findings`); results under
+`docs/plan-v2/evidence/results/` by task hash (`SCORECARD.md` names each) | 2026-10-30
