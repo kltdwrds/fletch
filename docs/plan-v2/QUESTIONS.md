@@ -5,6 +5,21 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
+### Q27 (F33), 2026-10-30: open F33's draft PR; the session was refused permission to create it
+
+**Blocks:** only the draft PR, so the goal's last condition is not met. Everything else is in:
+- `ACCEPT F33: PASS` (TREE ca0cde87f1a6aca8e18c8edb081dd26f6d8cb8d0, HEAD 36cd007).
+- The verifier returned `VERIFIER: no blocking findings`.
+- PROGRESS.md marks F33 DONE at 36cd007.
+- The branch `claude/f33-delegation-as-it-is-31e59c` is pushed.
+
+`gh pr create --draft` was refused by the session's permission classifier ("Create Public Surface"). The session did
+not work around the refusal.
+
+**Recommended answer:** open the draft PR yourself:
+`gh pr create --repo kltdwrds/fletch --head claude/f33-delegation-as-it-is-31e59c --draft --base main`. Or allow the
+command in the session's permissions and re-run the goal's last step.
+
 ### Q18 (F26), 2026-10-30: may F26 keep `pauseWords` and the widened `claimed_sent` that T-P15-13's pass needs?
 
 **Blocks:** F26's verifier pass, so the part is not DONE. Everything else is in. `ACCEPT F26: PASS` (TREE
