@@ -278,3 +278,8 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
 - 2026-10-29 A failed allow-once tells the model why it failed, as a queued action's note already did: the note
   fences the action's reason after its code (`chat/approvals.ts`), so a fill refused on another host says the host is
   not listed. T-P15-07's required fact holds it (F25). Rejected: the code alone, which left the model guessing.
+- 2026-10-29 CI runs `pnpm verify` when the diff touches code and `pnpm check` alone when it touches only docs
+  (`.github/workflows/ci.yml` judges the diff from the merge base; `docs/plan-v2/contracts/` counts as code because
+  the tests read it), and `push` runs only for `main`, so a PR commit runs once. The release still runs `pnpm verify`
+  on every push to `main`. `scripts/gates.test.mjs` holds the gating. Rejected: `paths:` filters on the trigger,
+  which skip the run and its status; `dorny/paths-filter`, a third-party action for one list and one rule.
