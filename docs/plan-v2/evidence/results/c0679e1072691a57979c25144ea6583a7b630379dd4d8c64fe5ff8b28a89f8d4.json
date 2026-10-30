@@ -1,0 +1,64 @@
+{
+  "task_id": "T-P9-17",
+  "cluster": "P9",
+  "version_hash": "c0679e1072691a57979c25144ea6583a7b630379dd4d8c64fe5ff8b28a89f8d4",
+  "runs": [
+    {
+      "run_at": "2026-10-30T17:00:38.413Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "card_lost",
+          "started_at": "2026-10-30T17:00:38.413Z",
+          "finished_at": "2026-10-30T17:01:16.461Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "card_lost",
+          "started_at": "2026-10-30T17:01:16.461Z",
+          "finished_at": "2026-10-30T17:01:57.792Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "card_lost",
+          "started_at": "2026-10-30T17:01:57.792Z",
+          "finished_at": "2026-10-30T17:02:36.459Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T17:10:02.419Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T17:10:02.419Z",
+          "finished_at": "2026-10-30T17:11:15.651Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T17:11:15.651Z",
+          "finished_at": "2026-10-30T17:12:04.411Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T17:12:04.411Z",
+          "finished_at": "2026-10-30T17:12:46.382Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    }
+  ]
+}

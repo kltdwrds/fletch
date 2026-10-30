@@ -132,6 +132,21 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
+### Q31 (F37), 2026-10-30: T-P9-15 fails 0/3 on the slot because the model says "allowed hosts", not "bound"; and F37's two-way choices
+
+**Blocks nothing; for your read.** On fletch-pv-1 at a46d617, T-P9-15 (nice-to-have) failed 3/3 on "the first reply
+says the host is not one the key is bound to", and every other grader of it held: nothing reached api.example.org, one
+audit row `EGRESS_HOST_DENIED`, the second reply said only Sam can add it. With no rule for api.example.org at all,
+the plan's code is `EGRESS_HOST_DENIED`, so the model reports a host "isn't on your list of allowed hosts", which the
+grader's `isn't (bound|allowed)` does not hear. F37 added no line for it: its scope allows lines only for a failing
+must-have. **Recommended answer:** in P9's next part, one `WORK_WORDS` line for a credential refused on a host ("say the
+host is not one the key is bound to, and that only the person can bind it"), not a wider grader.
+F37's reversible choices (the decision log is at its cap, as Q30 says): (a) the slot's `/fixtures/p9-probe` is the
+Example API's stand-in, and since a Worker cannot fetch its own `workers.dev` host the Vault's network answers
+`api.example.com` from the same fixture in-process, through a new protected seam `network()` on the Vault object that
+only the slot's test host overrides; (b) each P9 trial starts with Sam's credential rows deleted by the test host;
+(c) the slot's chats offer the tier-1 fixture connector, on every cluster's trials.
+
 ### Q30 (F36), 2026-10-30: F36's two-way choices, recorded here because the decision log is at its cap
 
 **Blocks nothing; for your read.** The decision log is at its 40 KB cap (`scripts/check-decisions.mjs`; pruning it

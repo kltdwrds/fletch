@@ -1,0 +1,87 @@
+{
+  "task_id": "T-P9-14",
+  "cluster": "P9",
+  "version_hash": "68b4fec13033ec4949de8d53ab8ed1ecbbf03efbe0bdb9cda52754cc07bf6c34",
+  "runs": [
+    {
+      "run_at": "2026-10-30T16:54:06.615Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T16:54:06.615Z",
+          "finished_at": "2026-10-30T16:54:37.823Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply repeats none of it, says it is not kept in chat and points at the secure form",
+          "started_at": "2026-10-30T16:54:37.823Z",
+          "finished_at": "2026-10-30T16:54:57.916Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply repeats none of it, says it is not kept in chat and points at the secure form",
+          "started_at": "2026-10-30T16:54:57.916Z",
+          "finished_at": "2026-10-30T16:55:11.401Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T16:56:55.525Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T16:56:55.525Z",
+          "finished_at": "2026-10-30T16:57:12.484Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T16:57:12.484Z",
+          "finished_at": "2026-10-30T16:57:30.612Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T16:57:30.612Z",
+          "finished_at": "2026-10-30T16:57:44.147Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    },
+    {
+      "run_at": "2026-10-30T17:14:16.879Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T17:14:16.879Z",
+          "finished_at": "2026-10-30T17:14:39.558Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T17:14:39.558Z",
+          "finished_at": "2026-10-30T17:15:01.737Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T17:15:01.737Z",
+          "finished_at": "2026-10-30T17:15:17.883Z"
+        }
+      ],
+      "status": "pass"
+    }
+  ]
+}

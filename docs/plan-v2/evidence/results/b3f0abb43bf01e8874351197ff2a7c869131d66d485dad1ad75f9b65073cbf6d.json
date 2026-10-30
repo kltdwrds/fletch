@@ -1,0 +1,69 @@
+{
+  "task_id": "T-P9-15",
+  "cluster": "P9",
+  "version_hash": "b3f0abb43bf01e8874351197ff2a7c869131d66d485dad1ad75f9b65073cbf6d",
+  "runs": [
+    {
+      "run_at": "2026-10-30T16:58:03.375Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-10-30T16:58:03.375Z",
+          "finished_at": "2026-10-30T16:58:41.230Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-10-30T16:58:41.231Z",
+          "finished_at": "2026-10-30T16:59:04.192Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-10-30T16:59:04.192Z",
+          "finished_at": "2026-10-30T16:59:28.157Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T17:15:17.886Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-10-30T17:15:17.886Z",
+          "finished_at": "2026-10-30T17:15:37.287Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-10-30T17:15:37.287Z",
+          "finished_at": "2026-10-30T17:16:37.459Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-10-30T17:16:37.459Z",
+          "finished_at": "2026-10-30T17:17:28.679Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}
