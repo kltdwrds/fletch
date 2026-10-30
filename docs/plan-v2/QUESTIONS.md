@@ -96,6 +96,32 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
+### Q21 (P7), 2026-10-30: proactivity editions and the feed have no fletch seam; three attested clauses; five findings
+
+**Blocks nothing.** The P7 interrogation (`contracts/P7-scheduling.md`, evidence under `evidence/p7-scheduling/` on
+Kyle's Mac) leaves three things for Kyle's eye.
+
+1. **Proactivity editions and the feed (B-P7-13, B-P7-14).** Muse prepares editions in the background and hands them to a
+   chat whose agent decides per item (send or skip, with a reason, after a freshness check); a feed of units is built on
+   its own cadence from one prompt the person edits, announcing nothing, on a /feed page. Both originate work and
+   reading the person did not ask for. fletch has no store, worker or surface for either; a feed store or an editions
+   worker is a storage schema and a product scope, one-way doors the orchestrator may only propose. `VISION.md` has no
+   line on unasked work. The clauses stand with no task. Recommended answer: neither in the spine; a later cluster only
+   if Kyle wants fletch to originate reading or work, with a proposed record when it is translated.
+2. **Attested, not instrumented.** B-P7-04 (a manual run spends a one-shot) is inferred from the rows and Muse's own
+   retraction; B-P7-07 (hooks are files only, the dry run) rests on tool results and an activity row, no table holds a
+   hook; B-P7-13 rests on descriptions, since `proactivity.read` needs an edition id and has no listing (the remembered
+   id returned "preparation not found", no code). Recommended answer: accept them as written; the first two are held
+   by fletch's own tests whatever Muse does.
+3. **Five findings in Muse the deltas answer.** (a) `cron.stop` reported `job_chat_notified true` and no notice appeared
+   (delta 1). (b) A hook worker told to reply "done" ended `completed_noop` and the word reached no chat (delta 2).
+   (c) A scheduled run's gated `exec` parked on an approval card with a 24 h expiry, where P15's chat cards timed out at
+   10 minutes (delta 4: a fletch job cannot act). (d) `cron.remove` left that run "running" and the card pending
+   (delta 5). (e) Muse's `cron.stop` text claimed a one-shot "is still set to fire" after a manual run; it was consumed
+   (B-P7-04). Recommended answer: none needed; each is a two-way door the orchestrator took, listed under Translation.
+
+**Recommended answer:** as above; the deltas stand unless Kyle wants unasked work in fletch.
+
 ### Q19 (P6), 2026-10-30: goals and tracked items have no fletch seam; four attested clauses; one reload finding
 
 **Blocks nothing.** The P6 interrogation (`contracts/P6-memory.md`, evidence under `evidence/p6-memory/` on Kyle's

@@ -316,3 +316,50 @@ their results recorded whatever the verdict; `ACCEPT F28: PASS`; `VERIFIER: no b
 
 **Not in scope:** goals and tracking (Q19); a background summariser or relationships loop (deltas 6, 7); a code-written
 reply line (Q18); a change to a clause.
+
+## F29 Jobs as they are: the P7 contract check, fourteen task files, a stop that is said, an update in place and tier 1
+
+**Read:** `docs/plan-v2/contracts/P7-scheduling.md` (every clause, the Tasks, the Translation's deltas 1, 2, 5 and
+7, the Build notes), the P6 world and tasks under `test/evals/p6-memory/` as the pattern, `packages/agent/src/jobs/`
+(`engine.ts`, `tools.ts`, `silence.ts`, `store.ts`), `packages/agent/src/http/app/panel.ts` and
+`packages/agent/src/http/app-routes.ts` (the job dialog and its actions), `test/workers/m25-2-job-runs.test.ts`,
+`docs/plan-v2/QUESTIONS.md` Q18 (a reply's required words are instruction lines, not harness sentences). No one-way
+door: `jobs_update` is a tool list change, the definitions' history rides in the Job DO's existing JSON column.
+
+**Scope:** (1) `test/m0/f29-contract.test.ts` holds the P7 contract as `f27-contract.test.ts` holds P6: fourteen
+clauses, fourteen tasks, every tier-1 `version_hash` filled. (2) The fourteen `.task.ts` files under
+`test/evals/p7-scheduling/` with a `world.ts` (a Job DO per job, the fake network serving `https://example.com/p7-probe`,
+the test's clock) and a `harness.ts`; tier 1 (T-P7-01, 02, 03, 04, 05, 06, 07, 08, 12, 13) runs under vitest with a
+`[F29]` describe, every minefield planted in a `planted.test.ts`. (3) The code the deltas need: the owner's disable or
+remove while a run is in flight ends that run failed with a stop code and one line in the chat, never notify and never
+silent (deltas 1 and 5; T-P7-05, T-P7-13); `jobs_update` (time, instructions, gate, stop) on the same id, the previous
+definitions kept on the job's record and readable from the dialog's run history (delta 7; T-P7-06); silence refused by
+code when the job's instructions ask for a reply (delta 2; T-P7-08). (4) The chat card and reply for a one-shot say the
+time and stop (T-P7-01) with what the harness already says (`timeLine`, `cardLinesOf`); no new harness sentence.
+
+**Acceptance:** the ten tier-1 tasks pass under vitest and each planted minefield fails without its guard;
+`test/m0/f29-contract.test.ts` passes; `pnpm check` and the hermetic suite green; `ACCEPT F29: PASS`;
+`VERIFIER: no blocking findings`.
+
+**Not in scope:** proactivity editions and the feed (Q21); a hook script lane (delta 3); a run-time approval card for a
+job (delta 4); tier 2 (F30); a code-written reply line (Q18); a change to a clause.
+
+## F30 Jobs say what they did: P7's tier 2 on a slot and the reply's words
+
+**Read:** `docs/plan-v2/contracts/P7-scheduling.md` (B-P7-01, B-P7-02, B-P7-03, B-P7-09, B-P7-11, the tier-2 tasks),
+the F29 world and tasks under `test/evals/p7-scheduling/`, `packages/agent/src/chat/instructions.ts`,
+`docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q18. No one-way door. A live step: `pnpm evals` runs from
+Kyle's Mac on this worktree's slot (`pnpm preview up`); if no slot can be leased, that is a question, not a reason to
+skip.
+
+**Scope:** (1) Instruction lines in `instructions.ts` for: a one-shot is set in one turn, the reply names the time
+and stops (B-P7-01); a job reads and reports and cannot act, said in words with the offer to do it now in the chat
+(B-P7-09, delta 4); a stop, a pause and a remove are each confirmed in one line (B-P7-05, B-P7-06, B-P7-10).
+(2) Tier 2 on the slot: T-P7-09 and T-P7-11 (must-have), T-P7-10 and T-P7-14, three trials each, the results files
+committed, the table in the PR body. (3) Every P7 hash in the contract matches.
+
+**Acceptance:** `pnpm evals T-P7-09` and `pnpm evals T-P7-11` `pass` (three of three); T-P7-10 and T-P7-14 run and
+their results recorded whatever the verdict; `ACCEPT F30: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** proactivity and the feed (Q21); a hook lane (delta 3); a job that acts (delta 4); a change to a
+clause.

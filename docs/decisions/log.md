@@ -328,3 +328,12 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   plan is made from claim ids, since a query plan ORs its terms and "Solo" reaches the Sam claim. The contract check
   takes a task of another cluster when its own contract has its block (B-P6-12 names T-P15-08 and T-P15-12), and the
   tier-2 tasks that repeat tier-1 ones name no clause, as P15's do.
+- 2026-10-30, P7 scheduling translated (`docs/plan-v2/contracts/P7-scheduling.md`), seven deltas, all two-way, the
+  orchestrator's: a stop in flight is said and ends the run as stopped (Muse's `cron.stop` promised a notice and drew
+  none; rejected: waiting for the run); silence is certified by code against the run's call log, never by the worker's
+  judgment (Muse's hook worker dropped a requested word; rejected: trusting the terminal signal); a poll is a gate on a
+  recurring job, code over one https url at five minutes or slower, not a script (rejected: a script lane); a job
+  cannot act, it reads and reports and the action is done in the chat before the person (Muse parks a run on a 24 h
+  card; rejected: a run-time card); remove ends what the job has in flight (Muse left the run and card; rejected:
+  refusing the remove); no proactivity editions or feed in P7 (no seam; a store is a one-way door; Q21; rejected: a feed
+  as a recurring job); a job is changed in place by `jobs_update` with its history kept (rejected: remove and recreate).
