@@ -16,8 +16,9 @@ import { readPage } from "../../packages/agent/src/browse/read.ts";
 import { EMPTY_SNAPSHOT, type SlotEntry, type SlotWorld } from "../support/evals.ts";
 import type { DefinedTask } from "../support/task.ts";
 import { PAGE, type P5HarnessOptions, P5Tier1World, pat, sam } from "../evals/p5-activity/harness.ts";
-import failedRead from "../evals/p5-activity/failed-read-real-model.task.ts";
-import oneTask from "../evals/p5-activity/one-request-one-task-real-model.task.ts";
+import failedRead, { answersFirst, NOTHING_BACK } from "../evals/p5-activity/failed-read-real-model.task.ts";
+import { WORK_WORDS } from "../../packages/agent/src/chat/instructions.ts";
+import oneTask, { count } from "../evals/p5-activity/one-request-one-task-real-model.task.ts";
 import reload from "../evals/p5-activity/reload-and-phone.task.ts";
 import { ASK, load, read, REPLY, runs, TWO, write } from "../evals/p5-activity/runs.ts";
 import ack from "../evals/p5-activity/subagent-ack-real-model.task.ts";
@@ -147,6 +148,38 @@ describe("[F32] P5 on a slot: the probe page, the prompts, the child's reads and
     expect((await w.w.http(pat.email, "GET", `/app/activity/${w.chatId("c1")}/${id}`)).status).not.toBe(200);
     expect(() => slot.readers.results()).toThrow(/^SLOT_P5_UNREAD/);
     expect(REPLY).not.toBe(TWO);
+  });
+
+  it("T-P5-13 hears the instruction's own words for a read that failed, and a reply that only answers the first page still fails", async () => {
+    // The instruction line's example passes its own grader.
+    expect(NOTHING_BACK.test(/Example: "([^"]+)"/.exec(WORK_WORDS.split("\n")[1] as string)?.[1] as string)).toBe(true);
+    expect(["Nothing came back from the second address.", "The second gave nothing back.", "The second returned nothing.", "The second page could not be read.", "Here is the second page."].map((t) => NOTHING_BACK.test(t))).toEqual([true, true, true, true, false]);
+    // The first page is answered by its title or by its own words quoted; a reply about something else answers nothing.
+    expect(["It is titled The p5 probe page.", 'It says: "The probe has one line of text."', "It is a page about probes."].map(answersFirst)).toEqual([true, true, false]);
+    const reply = (text: string) => () => ({ script: [load("browse"), read(PROBE, "r1"), read(DEAD, "r2"), { text }] });
+    expect(await run(failedRead, reply("The first page is The p5 probe page. The second returned nothing, so I have nothing from it."))).toMatchObject({ status: "pass" });
+    // Planted: the second page passed over in silence, and the second page's failure said with its raw code.
+    expect(await run(failedRead, reply("The first page is The p5 probe page, with one link."))).toMatchObject({ status: "fail", code: "GRADER_FAILED", rule: "the reply answers the first page and says plainly no page came back from the second" });
+    expect(await run(failedRead, reply("The first page is The p5 probe page. The second could not be read (BROWSE_UNREACHABLE)."))).toMatchObject({ status: "fail", code: "GRADER_FAILED" });
+  });
+
+  it("the thread is what Sam sees: the model's reasoning, never drawn, is no entry of it, so naming a tool there is no narration", async () => {
+    const at = 0;
+    const entries = (thinking: string, agent: string) => () => [{ kind: "you", text: ASK, at }, { kind: "thinking", text: thinking, at }, { kind: "agent", text: agent, at }] as unknown as SlotEntry[];
+    const quiet = p5Slot(() => "c", entries("Simple: browse_open, then file_write.", REPLY), async () => ({ status: 200, body: {} }), async () => [], { rows: async () => [], drawer: async () => null });
+    expect(quiet.readers.thread().map((e) => e.kind)).toEqual(["you", "agent"]);
+    const narrated = oneTask.graders.find((g) => g.name === "narrated_calls") as { check: (w: P5World) => boolean };
+    expect(narrated.check(quiet.readers as unknown as P5World)).toBe(false);
+    // Planted: the same tool named in the reply the thread draws is narration.
+    const loud = p5Slot(() => "c", entries("", "I ran browse_open, then file_write."), async () => ({ status: 200, body: {} }), async () => [], { rows: async () => [], drawer: async () => null });
+    expect(narrated.check(loud.readers as unknown as P5World)).toBe(true);
+  });
+
+  it("T-P5-15 reads a file's count as the slot's model writes it (\"Link count: 1\"), and a file that says another count still fails", async () => {
+    expect([count("1 link"), count("It has two links."), count("# p5-probe\n\nTitle: The p5 probe page\nLink count: 1\n"), count("Links: 3"), count("The p5 probe page")]).toEqual(["1", "2", "1", "3", null]);
+    expect(await run(oneTask, () => ({ script: [load("browse", "files"), read(PROBE, "r1"), write("w1", "Title: The p5 probe page\nLink count: 1\n"), { text: REPLY }] }))).toMatchObject({ status: "pass" });
+    // Planted: the file's field says two over a page with one link.
+    expect(await run(oneTask, () => ({ script: [load("browse", "files"), read(PROBE, "r1"), write("w1", "Title: The p5 probe page\nLink count: 2\n"), { text: REPLY }] }))).toMatchObject({ status: "fail", code: "GRADER_FAILED", rule: "the reply's link count equals the file's and the page's" });
   });
 
   it("the trial's own chat only: an earlier chat's task is left out of the list, and a task still running is waited for until the deadline", async () => {

@@ -370,3 +370,11 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   halts that delegation the same way. A done tool load is not
   counted in the summary; a job set or changed is a write titled by its subject. The P5 child reads the probe page
   through the real `browse_open`, offered eager, as F14's children read a fixture. Agent.
+- 2026-10-30 F32: P5's probe page on a slot is served by the test host's browser from a fixture by its whole address
+  (`PAGES` in `scripts/preview-slot/test-host-p5.mjs`, the tier-1 world's page), the task's documented stand-in for a
+  `/fixtures/p5-probe` route, so the model reads the address Sam typed; `example.invalid` stays unreachable there. A
+  sub-agent on a slot also reads that page (`SubAgent.reads`, a protected seam only the test host overrides). The slot's
+  thread is what the page draws, so the model's reasoning (never drawn, M23.2) is no entry of it. Two graders read what
+  the slot's model wrote rather than one wording: T-P5-15's file count as "Link count: 1" too, T-P5-13's failed read
+  in `WORK_WORDS`' own words ("Nothing came back") and the first page answered by its quoted text too; their
+  minefields and plants unchanged. Agent.

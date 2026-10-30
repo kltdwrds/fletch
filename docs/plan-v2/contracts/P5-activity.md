@@ -467,7 +467,7 @@ T-P5-13  must-have  tier 2
   collateral: none
   graders: code (deny-list over the reply; the step state) and judge (the reply says what was not obtained)
   reference: Muse's "there is no page there to read" (B-P5-05)
-  version_hash: 3b50b65434a0
+  version_hash: 541d4b289223
   file: test/evals/p5-activity/failed-read-real-model.task.ts
 
 T-P5-14  nice-to-have  tier 2

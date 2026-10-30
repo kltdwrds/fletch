@@ -53,7 +53,9 @@ export function p5Slot(c1: () => string, entries: () => SlotEntry[], read: Read,
     if (chat !== "c1") throw new Error(`SLOT_P5_UNREAD: chat ${chat} is not opened on a slot`);
     return c1();
   };
-  const thread = (): ThreadEntry[] => entries().map((e) => ({ kind: e.kind, text: e.text ?? "" }));
+  // The thread as Sam sees it: the agent's reasoning is kept in the history but never drawn (the page skips a `thinking`
+  // entry, M23.2, and a live `reasoning` frame draws only the thinking dots), so it is no entry of the visible thread.
+  const thread = (): ThreadEntry[] => entries().flatMap((e) => (e.kind === "thinking" ? [] : [{ kind: e.kind, text: e.text ?? "" }]));
 
   const readers: P5Readers = {
     chatId: (chat = "c1") => chatOf(chat),

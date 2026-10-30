@@ -11,7 +11,12 @@ import { newest, PROBE_TITLE, summaryOf, work } from "./world.ts";
 const sam = people.people.find((p) => p.id === "sam-solo")!;
 
 const detail = async (w: P5World) => w.task("c1", (await newest(w))!.id);
-const count = (s: string) => /\b(\d+|one|two|three)\s+links?\b/i.exec(s)?.[1]?.toLowerCase().replace("one", "1").replace("two", "2").replace("three", "3") ?? null;
+const WORDS: Record<string, string> = { one: "1", two: "2", three: "3" };
+/** The link count `s` states, as "1 link" or as "Link count: 1" (a file's field, F32), or null when it states none. */
+export const count = (s: string) => {
+  const n = (/\b(\d+|one|two|three)\s+links?\b/i.exec(s) ?? /\blinks?(?:\s+count)?\s*[:=]\s*(\d+|one|two|three)\b/i.exec(s))?.[1]?.toLowerCase();
+  return n === undefined ? null : (WORDS[n] ?? n);
+};
 const file = async (w: P5World) => work(await detail(w)).find((s) => s.tool === "file_write")?.detail.files[0]?.preview ?? "";
 const page = async (w: P5World) => /\((?:via \w+, )?(\d+) links?\)/.exec(work(await detail(w)).find((s) => s.tool === "browse_open")?.detail.result?.text ?? "")?.[1] ?? null;
 

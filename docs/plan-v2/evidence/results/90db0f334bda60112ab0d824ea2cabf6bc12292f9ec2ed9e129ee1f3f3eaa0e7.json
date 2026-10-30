@@ -1,0 +1,93 @@
+{
+  "task_id": "T-P5-15",
+  "cluster": "P5",
+  "version_hash": "90db0f334bda60112ab0d824ea2cabf6bc12292f9ec2ed9e129ee1f3f3eaa0e7",
+  "runs": [
+    {
+      "run_at": "2026-10-30T11:19:21.441Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply's link count equals the file's and the page's",
+          "started_at": "2026-10-30T11:19:21.442Z",
+          "finished_at": "2026-10-30T11:20:16.606Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply's link count equals the file's and the page's",
+          "started_at": "2026-10-30T11:20:16.606Z",
+          "finished_at": "2026-10-30T11:21:06.285Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply's link count equals the file's and the page's",
+          "started_at": "2026-10-30T11:21:06.285Z",
+          "finished_at": "2026-10-30T11:21:42.896Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T11:25:29.029Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "narrated_calls",
+          "started_at": "2026-10-30T11:25:29.029Z",
+          "finished_at": "2026-10-30T11:25:46.211Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T11:25:46.212Z",
+          "finished_at": "2026-10-30T11:26:02.345Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "narrated_calls",
+          "started_at": "2026-10-30T11:26:02.345Z",
+          "finished_at": "2026-10-30T11:26:22.782Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T11:30:56.457Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T11:30:56.457Z",
+          "finished_at": "2026-10-30T11:31:23.445Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T11:31:23.446Z",
+          "finished_at": "2026-10-30T11:32:06.703Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T11:32:06.704Z",
+          "finished_at": "2026-10-30T11:32:31.169Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    }
+  ]
+}

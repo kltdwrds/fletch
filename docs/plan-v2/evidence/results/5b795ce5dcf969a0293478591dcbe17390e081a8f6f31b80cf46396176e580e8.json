@@ -1,0 +1,36 @@
+{
+  "task_id": "T-P5-13",
+  "cluster": "P5",
+  "version_hash": "5b795ce5dcf969a0293478591dcbe17390e081a8f6f31b80cf46396176e580e8",
+  "runs": [
+    {
+      "run_at": "2026-10-30T11:26:23.610Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T11:26:23.611Z",
+          "finished_at": "2026-10-30T11:26:51.056Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply answers the first page and says plainly no page came back from the second",
+          "started_at": "2026-10-30T11:26:51.056Z",
+          "finished_at": "2026-10-30T11:27:23.107Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply answers the first page and says plainly no page came back from the second",
+          "started_at": "2026-10-30T11:27:23.107Z",
+          "finished_at": "2026-10-30T11:27:32.134Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}
