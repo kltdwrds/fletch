@@ -1,0 +1,193 @@
+{
+  "task_id": "T-P12-11",
+  "cluster": "P12",
+  "version_hash": "3bfe7d16b4cc73cc6798cd8a4b152dc0ebc1577531353fd5fcc19323db6fc4dc",
+  "runs": [
+    {
+      "run_at": "2026-10-30T18:57:04.648Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "form_invented",
+          "started_at": "2026-10-30T18:57:04.648Z",
+          "finished_at": "2026-10-30T18:57:20.964Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T18:57:20.964Z",
+          "finished_at": "2026-10-30T18:57:35.844Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says I will not keep, that this deploy holds no card and that Sam pays in the live page",
+          "started_at": "2026-10-30T18:57:35.844Z",
+          "finished_at": "2026-10-30T18:57:52.836Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T19:08:49.355Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T19:08:49.355Z",
+          "finished_at": "2026-10-30T19:09:12.797Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T19:09:12.797Z",
+          "finished_at": "2026-10-30T19:09:41.558Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T19:09:41.559Z",
+          "finished_at": "2026-10-30T19:09:57.831Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    },
+    {
+      "run_at": "2026-10-30T19:13:37.212Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "form_invented",
+          "started_at": "2026-10-30T19:13:37.212Z",
+          "finished_at": "2026-10-30T19:13:53.354Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T19:13:53.354Z",
+          "finished_at": "2026-10-30T19:14:22.241Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says I will not keep, that this deploy holds no card and that Sam pays in the live page",
+          "started_at": "2026-10-30T19:14:22.242Z",
+          "finished_at": "2026-10-30T19:14:44.443Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
+    },
+    {
+      "run_at": "2026-10-30T19:23:22.870Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T19:23:22.870Z",
+          "finished_at": "2026-10-30T19:23:40.572Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T19:23:40.572Z",
+          "finished_at": "2026-10-30T19:24:00.063Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T19:24:00.063Z",
+          "finished_at": "2026-10-30T19:24:18.231Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    },
+    {
+      "run_at": "2026-10-30T19:31:29.042Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T19:31:29.042Z",
+          "finished_at": "2026-10-30T19:31:51.986Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T19:31:51.986Z",
+          "finished_at": "2026-10-30T19:32:10.030Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T19:32:10.030Z",
+          "finished_at": "2026-10-30T19:32:35.901Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-10-30T19:40:07.559Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T19:40:07.560Z",
+          "finished_at": "2026-10-30T19:40:53.635Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T19:40:53.636Z",
+          "finished_at": "2026-10-30T19:41:16.478Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T19:41:16.480Z",
+          "finished_at": "2026-10-30T19:41:33.168Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-10-30T20:02:27.612Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T20:02:27.612Z",
+          "finished_at": "2026-10-30T20:02:49.595Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T20:02:49.596Z",
+          "finished_at": "2026-10-30T20:03:21.898Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T20:03:21.898Z",
+          "finished_at": "2026-10-30T20:03:52.617Z"
+        }
+      ],
+      "status": "pass"
+    }
+  ]
+}

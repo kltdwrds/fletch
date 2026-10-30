@@ -75,3 +75,13 @@ request, which a grader reads with the Vault's rows and the chat's cards and mes
 world's fixture connector. A `tabs` event sends from one of two Chromium tabs on the chat and reads both, the sending
 tab reloaded and the chat opened at phone width; `reload` draws the chat at a width and reloads it, or after an `open`
 reloads that settings page; every request those pages made is kept by origin (`scripts/evals/p9-page.ts`).
+
+A P12 task (F39, `scripts/evals/p12-slot.ts`) is played over the P9 world above: each trial starts with Sam's credential
+and typed rows deleted by the `p9` op and her grant rows by the test host's `p12` op
+(`scripts/preview-slot/test-host-p12.mjs`); a trial's chat is new, so it holds no card. `shop.example.invalid` is no site
+the test-host browser serves, so a read of it is `BROWSE_UNREACHABLE`, and the `reset` op reopens it so no earlier
+trial's read is remembered as a block. The `p12` op reads the chat's cards with their words, Sam's grants, her journal
+rows and her jobs (those there before the trial left out); the effects that ran are the test host's egress log, the slot
+having no purchase tool. T-P12-13 is played after T-P12-10's ask and T-P12-11's typed card in its own chat. `reload`
+draws the chat (the agent's bubbles and Sam's typed-card bubble) at a width and reloads it, or after an `open` reloads
+`/settings` and reads its nav's panes; every request those pages made is kept by origin (`scripts/evals/p12-page.ts`).
