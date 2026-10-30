@@ -4,10 +4,10 @@
 // rows, mailbox rows and model requests are the test host's `p3` op (`scripts/preview-slot/test-host-p3.mjs`), its
 // drawer sections and thread Sam's page in a real browser (`scripts/evals/p3-page.ts`).
 //
-// A request is over for P3 when nothing it started is still out: the newest task of `c1` no longer running (P5's rule)
-// and no sub-agent row queued, running or waiting (`settle`), so a closed child still reading its slow page is waited
-// out too. An older task is not waited for: a delegation the model closed (a steer) never hands off, and its task reads
-// running still (`packages/agent/src/chat/activity.ts`, Q28). The events:
+// A request is over for P3 when nothing it started is still out: the newest task of `c1` no longer running (P5's rule),
+// no sub-agent row queued, running or waiting, and every row's group handed off (`settle`), so a closed child still
+// reading its slow page and a handoff not yet in the chat are waited out too. An older task is not waited for: after a steer its task reads running
+// still, its closed delegation handed off (`packages/agent/src/chat/activity.ts`, Q28). The events:
 //   - `midchild` (payload `text` or `stop`): once a child of `c1` is seen mid-run (its row running with a step in its
 //     drawer, or settled first, which T-P3-15 answers as "already finished"), Sam sends `text` as a turn, or presses the
 //     Stop of the oldest running task through the drawer's route; then everything is waited out;
@@ -20,6 +20,7 @@
 import type { ChildRow, DrawnSection, MailView, P3World, ThreadDom } from "../../test/evals/p3-delegation/world.ts";
 import type { ChatLabel, TaskDetail, TaskView } from "../../test/evals/p5-activity/world.ts";
 import type { SlotEntry } from "../../test/support/evals.ts";
+import { P3_TITLE } from "../preview-slot/test-host-p3.mjs";
 import type { P5Readers } from "./p5-slot.ts";
 
 /** Sam's page on the slot, in a real browser: a task's drawer sections, and the thread. */
@@ -42,7 +43,7 @@ export interface P3Slot {
   readers: P3Readers;
   /** Reads `c1`'s rows again. */
   refresh(): Promise<void>;
-  /** Waits until the newest task of `c1` is not running and no sub-agent row is out, or until `deadline`; throws `P3_UNSETTLED` then. */
+  /** Waits until the newest task of `c1` is not running, no sub-agent row is out and every row's group has handed off, or until `deadline`; throws `P3_UNSETTLED` then. */
   settle(deadline: number): Promise<void>;
   /** A P3 event (`midchild`, `children`, `reload`); `send` sends Sam's text as a turn. False for an event it does not play. */
   event(name: string, payload: Record<string, string>, send: (text: string) => Promise<unknown>, deadline: number): Promise<boolean>;
@@ -83,9 +84,9 @@ export function p3Slot(c1: () => string, entries: () => SlotEntry[], read: Read,
     for (;;) {
       await refresh();
       const newest = (await tasks())[0];
-      const out = state.children.filter((c) => OUT.has(c.status));
+      const out = state.children.filter((c) => OUT.has(c.status) || c.handedOffAt === null);
       if (newest?.status !== "running" && !out.length) return;
-      if (now() >= deadline) throw new Error(`P3_UNSETTLED: the newest task is ${newest?.status ?? "unrecorded"} and ${out.length} sub-agent(s) are out`);
+      if (now() >= deadline) throw new Error(`P3_UNSETTLED: the newest task is ${newest?.status ?? "unrecorded"} and ${out.length} sub-agent(s) are out or not handed off`);
       await wait(POLL_MS);
     }
   };
@@ -105,6 +106,7 @@ export function p3Slot(c1: () => string, entries: () => SlotEntry[], read: Read,
   };
 
   const readers: P3Readers = {
+    probeTitle: P3_TITLE,
     children: (chat) => {
       chatOf(chat);
       return children();

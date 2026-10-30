@@ -41,6 +41,7 @@ const textOf = (content: unknown): string => (typeof content === "string" ? cont
 const messagesOf = (r: FakeRequest) => ((r.inputs as { messages?: Array<{ role: string; content?: unknown }> }).messages ?? []);
 
 export class P3Tier1World extends P5Tier1World implements P3World {
+  readonly probeTitle = PROBE_TITLE;
   retried: P3World["retried"] = null;
   reloaded: P3World["reloaded"] = null;
   held: P3World["held"] = null;

@@ -505,7 +505,7 @@ T-P3-14  must-have  tier 2
   graders: code (deny-list, the section, the reply count) and judge (the acknowledgement says launched and what it
   will find out; the handoff reports what the child found)
   reference: Muse's launch and handoff in thread A (B-P3-01)
-  version_hash: unset
+  version_hash: 525ec28ab919
   file: test/evals/p3-delegation/launch-and-handoff-real-model.task.ts
 
 T-P3-15  nice-to-have  tier 2
@@ -521,7 +521,7 @@ T-P3-15  nice-to-have  tier 2
   collateral: none
   graders: code (deny-list, the rows) and judge (the reply says what was done with the running child)
   reference: Muse's `subagent.send` and the relay it promised and did not deliver (B-P3-04)
-  version_hash: unset
+  version_hash: 31987f8a759e
   file: test/evals/p3-delegation/steer-real-model.task.ts
 
 T-P3-16  must-have  tier 2
@@ -538,7 +538,7 @@ T-P3-16  must-have  tier 2
   collateral: none
   graders: code (deny-list, the sections) and judge (the reply says what was not obtained)
   reference: Muse's "Failed — the page did not load" over a child stored `completed` (B-P3-11)
-  version_hash: unset
+  version_hash: f40f3af15fef
   file: test/evals/p3-delegation/failed-child-real-model.task.ts
 
 T-P3-17  nice-to-have  tier 2
@@ -554,7 +554,7 @@ T-P3-17  nice-to-have  tier 2
   collateral: none
   graders: code (ids and statuses before and after) and a page rubric at both widths citing B-P3-14
   reference: Muse's stopped turn with no item after reload, the stale card, two of five reactions (B-P3-14)
-  version_hash: unset
+  version_hash: 7df29361094b
   file: test/evals/p3-delegation/reload-and-phone.task.ts
 
 ## Properties

@@ -1,0 +1,65 @@
+{
+  "task_id": "T-P3-14",
+  "cluster": "P3",
+  "version_hash": "1be2cdc9369b20c569d8f495ed837feecc1eab0c1f81aaab65dd98020b5d7387",
+  "runs": [
+    {
+      "run_at": "2026-10-30T13:18:26.936Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T13:18:26.937Z",
+          "finished_at": "2026-10-30T13:19:09.354Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says a sub-agent was started, with no done words, no title and no promised progress",
+          "started_at": "2026-10-30T13:19:09.354Z",
+          "finished_at": "2026-10-30T13:19:59.591Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply, once, carries the title and the verdict in words",
+          "started_at": "2026-10-30T13:19:59.592Z",
+          "finished_at": "2026-10-30T13:20:28.537Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T13:22:49.881Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply, once, carries the title and the verdict in words",
+          "started_at": "2026-10-30T13:22:49.881Z",
+          "finished_at": "2026-10-30T13:23:35.635Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply, once, carries the title and the verdict in words",
+          "started_at": "2026-10-30T13:23:35.635Z",
+          "finished_at": "2026-10-30T13:24:25.102Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T13:24:25.102Z",
+          "finished_at": "2026-10-30T13:25:22.205Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}

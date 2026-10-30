@@ -3,7 +3,8 @@
 // lease's holder (./ops.mjs, `/__preview/test-host`). Pure, so a hermetic test runs it under plain Node.
 //
 // - The probe pages. `https://example.com/p3-probe` (a title and three links, the tier-1 world's `PAGE` in
-//   test/evals/p3-delegation/harness.ts) and `https://example.com/p3-probe-2` are served by the test host's browser
+//   test/evals/p3-delegation/harness.ts under its own title: the real verifier takes "Example Domain" for
+//   example.com's home page and doubts a child that reports it) and `https://example.com/p3-probe-2` are served by the test host's browser
 //   (./test-host-sites.mjs) by their whole address, the stand-in for the slot's `/fixtures/p3-probe` routes the
 //   contract names: a sub-agent's reads go through the slot's browser, never the network. The second is served slowly
 //   (`SLOW`), so Sam's steer or Stop arrives while a child reads it (T-P3-15, T-P3-17). `example.invalid` stays no site
@@ -15,7 +16,7 @@
 
 export const P3_PROBE = 'https://example.com/p3-probe';
 export const P3_PROBE_2 = 'https://example.com/p3-probe-2';
-export const P3_TITLE = 'Example Domain';
+export const P3_TITLE = 'The p3 probe page';
 
 export const P3_PAGES = {
   [P3_PROBE]: `# ${P3_TITLE}\n\nThis page is for the p3 probe. It has three links.\n\n[One](https://example.com/p3-one) [Two](https://example.com/p3-two) [Three](https://example.com/p3-three)`,

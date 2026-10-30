@@ -1,0 +1,38 @@
+{
+  "task_id": "T-P3-16",
+  "cluster": "P3",
+  "version_hash": "27cc4178d91cda9d2835afc9e4562b0ab3d190248ccf647310ea8f000b08e860",
+  "runs": [
+    {
+      "run_at": "2026-10-30T13:30:21.368Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply gives the first title and says the second page could not be read and has no title",
+          "started_at": "2026-10-30T13:30:21.368Z",
+          "finished_at": "2026-10-30T13:31:11.839Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply gives the first title and says the second page could not be read and has no title",
+          "started_at": "2026-10-30T13:31:11.840Z",
+          "finished_at": "2026-10-30T13:32:45.248Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply gives the first title and says the second page could not be read and has no title",
+          "started_at": "2026-10-30T13:32:45.248Z",
+          "finished_at": "2026-10-30T13:33:15.187Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}

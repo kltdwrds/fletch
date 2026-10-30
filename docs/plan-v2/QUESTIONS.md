@@ -96,6 +96,20 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
+### Q28 (P3, P5, F34), 2026-10-30: a task whose delegation the model closed reads Running for ever
+
+**Blocks nothing.** Found while building F34's slot settle. When a steer closes a running child (`subagents_close`,
+P3 delta 2), the closed delegation hands off (its `handoff:<grp>` row is written and `handed_off_at` set), yet the first
+task's Activity row says Running with no end: `record` in `packages/agent/src/chat/activity.ts` counts a delegation as
+received only by a handoff row among the task's own turns, and this one appears to wake a turn grouped with the steer's
+task. Its drawer offers a
+Stop that halts nothing. T-P3-15's tier-1 run shows it (the first task `running`, its only child `failed
+SUBAGENT_CLOSED`, handed off), and so do the slot's F34 runs where a child was closed; no grader reads that row, so F33 and F34 pass over
+it. F34 waits on the chat's newest task only (`scripts/evals/p3-slot.ts`), as P5's
+runner does. **Recommended answer:** a part in P5's or P3's next pass counts a delegation whose every child is closed
+as settled (the task reads Done, or Stopped when the person pressed Stop), with a tier-1 task that reads the first
+task's row after a steer; two-way, no storage change.
+
 ### Q26 (P3), 2026-10-30: six Muse delegation findings fletch already rules out, recorded for Kyle's read
 
 **Blocks nothing.** The P3 interrogation (one side chat, thread A, 13 steps, 106 files through `pnpm redact`) found

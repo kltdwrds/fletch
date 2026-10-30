@@ -59,8 +59,8 @@ A P3 task (F34, `scripts/evals/p3-slot.ts`) reads the P5 world above and the cha
 model requests (their messages, the system prompt aside) through the test host's `p3` op
 (`scripts/preview-slot/test-host-p3.mjs`). The probe pages `https://example.com/p3-probe` (a title and three links) and
 `https://example.com/p3-probe-2` are served by the test-host browser from fixtures, the second after 45 seconds, so a
-steer or a Stop reaches a child mid-read. A request is over when the chat's newest task is not running and no sub-agent
-row is out.
+steer or a Stop reaches a child mid-read. A request is over when the chat's newest task is not running, no sub-agent
+row is out and every row's group has handed off.
 `midchild` waits for a child seen mid-run (a running row with a step in its drawer), then sends the steer as a turn or
 presses the drawer's Stop; `children` waits everything out; `reload` keeps the entries and rows, then reads them again.
 The drawer's sections and the thread are read in headless Chromium (`scripts/evals/p3-page.ts`).

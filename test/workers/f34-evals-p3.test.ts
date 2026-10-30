@@ -5,8 +5,11 @@
 // grader as the tier-1 world does. Hermetic: the readers run over Sam's real chat in the P3 tier-1 world, played by the
 // scripted fake model, its `subagents` and `mailbox` rows read from the chat's own SQLite by the op's code; the page
 // is the tier-1 page.
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { bindingPort } from "../../packages/agent/src/browse/binding.ts";
+import { WORK_WORDS } from "../../packages/agent/src/chat/instructions.ts";
 import { readPage } from "../../packages/agent/src/browse/read.ts";
 import { type P3Page, type P3State, p3Slot } from "../../scripts/evals/p3-slot.ts";
 import { type P5Page, p5Slot } from "../../scripts/evals/p5-slot.ts";
@@ -15,7 +18,7 @@ import { childBrowse } from "../../scripts/preview-slot/test-host-child.mjs";
 import { CHUNK, chunks, joinChunks, P3_PAGES, P3_PROBE, P3_PROBE_2, P3_TITLE, p3Rows, requestText, SLOW } from "../../scripts/preview-slot/test-host-p3.mjs";
 import { recordingAi } from "../../scripts/preview-slot/test-host-p5.mjs";
 import { testHostBinding } from "../../scripts/preview-slot/test-host-sites.mjs";
-import failed from "../evals/p3-delegation/failed-child-real-model.task.ts";
+import failed, { NO_TITLE, UNREAD } from "../evals/p3-delegation/failed-child-real-model.task.ts";
 import { type P3HarnessOptions, P3Tier1World, PAGE, pat, sam } from "../evals/p3-delegation/harness.ts";
 import launch from "../evals/p3-delegation/launch-and-handoff-real-model.task.ts";
 import launched from "../evals/p3-delegation/launch-says-launched.task.ts";
@@ -23,10 +26,12 @@ import reload from "../evals/p3-delegation/reload-and-phone.task.ts";
 import { ACK, BRIEF, delegate, FAILED_BRIEF, FAILED_HANDOFF, load, reads, routed, runs } from "../evals/p3-delegation/runs.ts";
 import steer from "../evals/p3-delegation/steer-real-model.task.ts";
 import type { ChildRow, P3World } from "../evals/p3-delegation/world.ts";
-import { DEAD, PROBE, PROBE_2 } from "../evals/p3-delegation/world.ts";
+import { DEAD, PROBE, PROBE_2, PROBE_TITLE } from "../evals/p3-delegation/world.ts";
 import type { TaskView } from "../evals/p5-activity/world.ts";
 import { EMPTY_SNAPSHOT, type SlotEntry, type SlotWorld } from "../support/evals.ts";
 import type { DefinedTask } from "../support/task.ts";
+import { staleHashes } from "../support/task-hashes.ts";
+import { repoRoot } from "../support/temp-repo.ts";
 
 type Sql = Parameters<typeof p3Rows>[0];
 /** The chat's SQLite as the op reads it (`ctx.storage.sql`), over the tier-1 object's own storage. */
@@ -82,6 +87,8 @@ function slotOver(opts: () => P3HarnessOptions, worlds: P3Tier1World[] = []): Sl
       };
       Object.defineProperties(world, Object.getOwnPropertyDescriptors(p5.readers));
       Object.defineProperties(world, Object.getOwnPropertyDescriptors(p3.readers));
+      // The probe page here is the tier-1 world's, under its title.
+      Object.defineProperty(world, "probeTitle", { value: w.probeTitle });
       return world as unknown as SlotWorld;
     },
   };
@@ -114,9 +121,19 @@ function scripted(o: { tasks: () => Array<{ id: string; status: string }>; drawe
   );
   return { slot, posts, polls: () => clock };
 }
-const row = (id: string, status: string, code: string | null = null): ChildRow => ({ id, grp: "g", turnId: "t", parent: "main", role: "worker", depth: 1, brief: "", status, code, tokens: 0, verdict: null, verdictReason: null, refusals: [], handedOffAt: null });
+const OUT = ["queued", "running", "waiting"];
+/** A row; a settled one handed off unless `handedOffAt` says otherwise. */
+const row = (id: string, status: string, code: string | null = null, handedOffAt: number | null = OUT.includes(status) ? null : 1): ChildRow => ({ id, grp: "g", turnId: "t", parent: "main", role: "worker", depth: 1, brief: "", status, code, tokens: 0, verdict: null, verdictReason: null, refusals: [], handedOffAt });
 
 describe("[F34] P3 on a slot: the probe pages, the requests, the rows, the readers and the events", () => {
+  it("every P3 version_hash in the contract is its file's hash, the tier-2 tasks' as first graded on the slot; an unfilled one is named", () => {
+    const contract = readFileSync(join(repoRoot, "docs/plan-v2/contracts/P3-delegation.md"), "utf8");
+    expect(staleHashes(contract)).toEqual([]);
+    // Planted: T-P3-14's line put back to unset is caught by id.
+    const t14 = /T-P3-14 [\s\S]*?version_hash: (\S+)/.exec(contract)?.[1] as string;
+    expect(staleHashes(contract.replace(`version_hash: ${t14}`, "version_hash: unset"))).toEqual([`T-P3-14 unset ${t14}`]);
+  });
+
   it("drives every P3 tier-2 task (prompts, midchild, children, reload), and refuses a P3 event to another cluster and a tier-1 event", () => {
     for (const t of [launch, steer, failed, reload]) expect(driveable(t as unknown as DefinedTask<SlotWorld>, sam.email)).toBeNull();
     // Planted: the same turns under another cluster's id are refused at the first P3-only event, before any trial.
@@ -126,14 +143,17 @@ describe("[F34] P3 on a slot: the probe pages, the requests, the rows, the reade
   });
 
   it("the slot serves the tier-1 world's probe page with its title and three links, the second page after its delay, and example.invalid is unreachable, with no request made", async () => {
-    expect([P3_PROBE, P3_PROBE_2, P3_PAGES[P3_PROBE], P3_TITLE]).toEqual([PROBE, PROBE_2, PAGE, "Example Domain"]);
+    // The tier-1 world's page under the slot's own title, which the slot's readers give the graders.
+    expect([P3_PROBE, P3_PROBE_2, P3_PAGES[P3_PROBE]]).toEqual([PROBE, PROBE_2, PAGE.replace(PROBE_TITLE, P3_TITLE)]);
+    expect(P3_TITLE).not.toBe(PROBE_TITLE);
+    expect(p3Slot(() => "c", () => [], async () => ({ status: 200, body: {} }), async () => ({ children: [], mailbox: [], requests: [] }), { sections: async () => [], threadDom: async () => ({ bubbles: [], lists: [], kinds: [] }) }).readers.probeTitle).toBe(P3_TITLE);
     expect(P3_PAGES[P3_PROBE]?.match(/\]\(https:/g)).toHaveLength(3);
     const network = vi.spyOn(globalThis, "fetch");
     const waited: number[] = [];
     const reads: Array<{ host: string }> = [];
     const port = bindingPort(testHostBinding(async (e: { host: string }) => void reads.push(e), undefined, undefined, undefined, async (ms: number) => void waited.push(ms)));
     const memory = { get: async () => null, record: async () => {} };
-    expect(await readPage({ port, memory, now: () => 0 }, PROBE)).toMatchObject({ ok: true, markdown: PAGE });
+    expect(await readPage({ port, memory, now: () => 0 }, PROBE)).toMatchObject({ ok: true, markdown: P3_PAGES[P3_PROBE] });
     expect(waited).toEqual([]);
     expect(await readPage({ port, memory, now: () => 0 }, PROBE_2)).toMatchObject({ ok: true, markdown: P3_PAGES[P3_PROBE_2] });
     expect(waited).toEqual([SLOW[P3_PROBE_2]]);
@@ -204,6 +224,21 @@ describe("[F34] P3 on a slot: the probe pages, the requests, the rows, the reade
     expect(() => slot.readers.held).toThrow(/^SLOT_P3_UNREAD/);
   });
 
+  it("T-P3-16 hears WORK_WORDS' own failed-read words as the second page said plainly; a reply that only hints at it still fails", async () => {
+    const example = /Example: "([^"]+)"/.exec(WORK_WORDS.split("\n")[1] as string)?.[1] as string;
+    expect(example).toMatch(/^No page came back from/);
+    expect([UNREAD.test(example), NO_TITLE.test(example)]).toEqual([true, true]);
+    // What the slot's model wrote (F34's first run), and the F33 wording, each pass.
+    for (const said of ["No page came back from example.invalid/p3-probe, so there is no title for that one.", "no page came back; the address did not resolve, so I have nothing from it.", "The second page could not be read, so it has no title."]) expect([UNREAD.test(said), NO_TITLE.test(said)]).toEqual([true, true]);
+    // Planted: a hint, a page called unread with a title made up, and a failure with no word about the title.
+    expect(UNREAD.test("The other one had a problem.")).toBe(false);
+    expect(NO_TITLE.test("The second page could not be read; its title is Example Domain.")).toBe(false);
+    expect(NO_TITLE.test("The second page could not be read.")).toBe(false);
+    const reply = (text: string) => () => ({ script: routed([load("subagents"), delegate([BRIEF, FAILED_BRIEF]), { text: ACK }, { text }], { children: [[DEAD, reads([DEAD], FAILED_HANDOFF)]], spare: 10 }) });
+    expect(await run(failed, reply(`The first page is titled Example Domain. ${example}`))).toMatchObject({ status: "pass" });
+    expect(await run(failed, reply("The first page is titled Example Domain. The second could not be read."))).toMatchObject({ status: "fail", code: "GRADER_FAILED" });
+  });
+
   it("planted: a closed child's report in a chat request fires T-P3-15's closed_child_hands_off over the op's requests", async () => {
     const mine = steer.graders.find((g) => g.name === "closed_child_hands_off") as { check: (w: P3World) => boolean };
     const state = (requests: string[]): P3State => ({ children: [row("s1", "failed", "SUBAGENT_CLOSED"), row("s2", "done")], mailbox: [], requests });
@@ -260,10 +295,15 @@ describe("[F34] P3 on a slot: the probe pages, the requests, the rows, the reade
     await slot.event("children", {}, async () => {}, 100);
     expect(n).toBe(4);
     const stuck = scripted({ tasks: () => [{ id: "t1", status: "done" }], state: () => ({ children: [row("s1", "queued")], mailbox: [], requests: [] }) });
-    await expect(stuck.slot.settle(2)).rejects.toThrow("P3_UNSETTLED: the newest task is done and 1 sub-agent(s) are out");
+    await expect(stuck.slot.settle(2)).rejects.toThrow("P3_UNSETTLED: the newest task is done and 1 sub-agent(s) are out or not handed off");
+    // Planted: a child done whose handoff has not entered the chat is waited for (F34's first T-P3-15 run read too early).
+    let reads = 0;
+    const pending = scripted({ tasks: () => [{ id: "t1", status: "done" }], state: () => ({ children: [row("s1", "done", null, ++reads > 2 ? 5 : null)], mailbox: [], requests: [] }) });
+    await pending.slot.settle(100);
+    expect(reads).toBe(3);
     // Planted: the newest task still running is waited for too.
     const busy = scripted({ tasks: () => [{ id: "t2", status: "running" }], state: () => ({ children: [], mailbox: [], requests: [] }) });
-    await expect(busy.slot.settle(2)).rejects.toThrow("P3_UNSETTLED: the newest task is running and 0 sub-agent(s) are out");
+    await expect(busy.slot.settle(2)).rejects.toThrow("P3_UNSETTLED: the newest task is running and 0 sub-agent(s) are out or not handed off");
     let entries: SlotEntry[] = [{ kind: "you", mid: "m1" }, { kind: "stopped", turn: "t9" }];
     const rows = [row("s1", "failed", "SUBAGENT_STOPPED")];
     const kept = p3Slot(() => "c", () => entries, async () => ({ status: 200, body: { tasks: [] } }), async () => ({ children: rows, mailbox: [], requests: [] }), { sections: async () => [], threadDom: async () => ({ bubbles: [], lists: [], kinds: [] }) });

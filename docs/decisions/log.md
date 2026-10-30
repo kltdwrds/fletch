@@ -8,8 +8,6 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
 - 2026-10-20 `@noble/hashes` 2.4.0 provides synchronous SHA-256 in the passkey stores.
 - 2026-10-20 `create-fletch` sets `MASTER_KEY` and `SETUP_TOKEN` (32 random bytes, base64url) each only when the Worker
   lacks it: a fresh account gets two secret puts, a second run none (D-0002).
-- 2026-10-20 `tokenScopes(cf, accountId)` takes the account id, which the per-scope probes and the account-token
-  verify endpoint need.
 - 2026-10-22 `pnpm check` is the fast gate (lint, harness checks and scans, typecheck; about 20 s, run by the pre-push
   hook) and `pnpm verify` adds the tests (CI and the release). Rejected: tests in the pre-push hook, too slow for every
   push and refused beside a cloud shell's credentials.
@@ -23,10 +21,6 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
 - 2026-10-22 The `workers.dev` subdomain of the preview pool is never committed (it names the account's owner):
   `FLETCH_PREVIEW_SUBDOMAIN`, or a git-ignored file `provision` writes. Rejected: custom domains under qyvr.dev, which
   would hand any `.qyvr.dev` cookie to a slot a session deployed.
-- 2026-10-22 Muse owns execution: it runs the KICKOFF protocol through Claude Code, reviews and UATs the result and
-  merges the PR and deploys previews (`docs/runbooks/muse-execution.md`); Kyle steers, does final UAT, accepts one-way
-  doors, every Cloudflare change and the production go. Rejected: Muse
-  as a second implementer, which would put two writers on one branch.
 - 2026-10-22 F2 searches the entries `history()` draws, with no `LIKE` prefilter on `messages.body` (F2's first ruling
   named one): the thread also draws mailbox messages and a tool's announced words, which `messages` does not hold, and
   a `LIKE` over the JSON body misses escaped characters and non-ASCII case, so a prefilter could hide a match. Rejected:
@@ -380,3 +374,7 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   stopped (F31, Q25). No one-way door. Orchestrator.
 - 2026-10-30 F33: the drawer's Stop draws a stopped entry and tells the next turn (`haltNote`); task usage counts
   child and verifier calls; the delegate schemas drop `maxItems` so the gate's SUBAGENT_FANOUT_CAP answers. Agent.
+- 2026-10-30 F34: the slot's P3 probe page has its own title (`probeTitle`), since the real verifier doubts a child
+  reporting example.com's "Example Domain"; T-P3-16's grader hears `WORK_WORDS`' failed-read words; the launch line
+  says its reply is written once, after the call, and ends the turn (T-P3-14); a slot request waits for every
+  group's handoff. Agent.
