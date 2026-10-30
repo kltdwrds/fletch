@@ -5,6 +5,25 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
+### Q24 (F30), 2026-10-30: The F30 draft PR could not be opened from the session
+
+**Blocks:** the last step of F30's protocol, the draft PR. F30 is otherwise done:
+- `ACCEPT F30: PASS` (TREE 938f10e91ec01e175fef768b7ffd4a8ac4e15613).
+- The verifier's `VERIFIER: no blocking findings`.
+- The PROGRESS.md row: DONE at c7db303.
+
+The branch `claude/f30-jobs-say-what-they-did-31e59c` is pushed. The session's permission classifier refused
+`gh pr create --repo kltdwrds/fletch --draft` ("Create Public Surface"). This is the same class as Q13.
+
+**Recommended answer:** open the draft PR yourself:
+
+    gh pr create --repo kltdwrds/fletch --draft --base main --head claude/f30-jobs-say-what-they-did-31e59c
+
+Title it "F30: jobs say what they did, and P7's tier 2 runs on a slot". For the body, use the PROGRESS row, the tier-2
+table, and two notes:
+- T-P7-09, 10 and 11 pass 3/3; T-P7-14 fails 3/3 because the run history is drawn open.
+- Run `pnpm preview down` on slot 2 before merge.
+
 ### Q18 (F26), 2026-10-30: may F26 keep `pauseWords` and the widened `claimed_sent` that T-P15-13's pass needs?
 
 **Blocks:** F26's verifier pass, so the part is not DONE. Everything else is in. `ACCEPT F26: PASS` (TREE
