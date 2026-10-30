@@ -81,7 +81,9 @@ Run the same command again whenever you like. A second run makes nothing, sets n
 it redeploys the Worker from the checkout, so after a `git pull` it is also how you update. It writes the generated
 config whole each time, so repeat `--paid` and every `--var` (one left out is dropped) and give the same
 `--owner-email`: the deploy's passkeys, sessions and recovery code belong to that address, so another is refused
-with `SELF_HOST_OWNER_CHANGE`.
+with `SELF_HOST_OWNER_CHANGE`. Handing a deploy over on purpose mints no new setup token, and once a passkey exists a
+setup token grants nothing (D-0023) while the old owner's passkeys are refused for the new address, so do it only
+before the first passkey (`docs/runbooks/self-host.md`, step 4).
 
 ### Models
 

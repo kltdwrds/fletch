@@ -46,7 +46,10 @@ prints the setup link once (D-0023). The code is `scripts/self-host.mjs` (the ru
 
    Each run writes the deploy's config whole from what it is given, so repeat `--paid` and every `--var` each time:
    one left out is dropped from the deploy. A different `--owner-email` is refused (`SELF_HOST_OWNER_CHANGE`); to hand
-   the deploy to another owner on purpose, delete the generated config first.
+   the deploy to another owner on purpose, delete the generated config first. A handover mints no new setup token,
+   and once any passkey exists a setup token grants nothing (D-0023), while the previous owner's passkeys belong to
+   their address and are refused for the new one (`LOGIN_NOT_OWNER`): hand a deploy over only before its first
+   passkey, when the new owner registers through the setup link (lost: see the end of "What you see").
 
 ## What you see
 

@@ -46,7 +46,7 @@ export async function selfHost(ctx, opts) {
   if (prior?.changed) {
     return refuse(
       'SELF_HOST_OWNER_CHANGE',
-      `${name} was deployed for ${prior.owner}, and this run names ${opts.ownerEmail.trim().toLowerCase()}. The owner is the one account that can sign in, so this would lock ${prior.owner} out. Run again with --owner-email ${prior.owner}; to hand the deploy to another owner on purpose, delete packages/agent/${SELF_HOST_CONFIG} first`,
+      `${name} was deployed for ${prior.owner}, and this run names ${opts.ownerEmail.trim().toLowerCase()}. The owner is the one account that can sign in, so this would lock ${prior.owner} out. Run again with --owner-email ${prior.owner}; to hand the deploy to another owner on purpose, before its first passkey (docs/runbooks/self-host.md, step 4), delete packages/agent/${SELF_HOST_CONFIG} first`,
     );
   }
   try {

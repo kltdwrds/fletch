@@ -61,8 +61,8 @@ export function parseSelfHostArgs(argv) {
 }
 
 /**
- * What is wrong with the model vars, or null. The agent falls back to Workers AI on a value it does not know
- * (packages/agent/src/model/routes.ts); this refuses earlier, so a typo is named instead of silently ignored.
+ * What is wrong with the model vars, or null. The agent refuses every model call with `MODEL_CONFIG_INVALID` on a
+ * value it cannot serve (packages/agent/src/model/routes.ts, D-0020); this refuses at deploy time, before that.
  */
 function modelVarsProblem(vars) {
   if ('AI_GATEWAY_ID' in vars && vars.AI_GATEWAY_ID.trim() === '') return 'AI_GATEWAY_ID may not be empty: give the gateway id, or leave the --var out';
