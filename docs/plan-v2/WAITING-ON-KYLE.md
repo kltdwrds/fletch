@@ -273,7 +273,12 @@ Kyle's own lines go under `## Steering`.
   [F29 and F30 in parts.md](parts.md#f29-jobs-as-they-are-the-p7-contract-check-fourteen-task-files-a-stop-that-is-said-an-update-in-place-and-tier-1),
   evidence on your Mac under `docs/plan-v2/evidence/p7-scheduling/` (`answers/step-0.md` to `step-12.md`,
   `step-2-detail.png` the job dialog, `step-11.png` the parked card, `step-8.png` the wake that reached no one,
-  `answers/step-12.md` "Left behind in Muse").
+  `answers/step-12.md` "Left behind in Muse"). **F29 landed since (PR #50, `ACCEPT F29: PASS`, verifier clean):**
+  jobs stop by name, update in place with history, refuse silence when the instructions ask a reply; its two
+  gradings of fletch's form against the clause wording are
+  [Q23](QUESTIONS.md#q23-p7-f29-2026-10-30-b-p7-01-says-no-card-fletchs-agent-made-job-waits-on-one-and-paused-jobs-sit-under-off)
+  (the agent-made one-shot still waits on one card, a security boundary F29 did not cross; a paused job sits under
+  Off in Upcoming). F30 puts this tree on a slot; the uat item follows it.
 
 - [ ] 2026-10-30 uat: **F28, memory says what it did (merged, PR #47; fletch-pv-1 serves this tree until 2026-10-31T08:12Z,
   after that `pnpm preview up` on main).** The reply now names a save in the turn that made it with the citation the
