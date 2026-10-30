@@ -15,7 +15,7 @@ export const MAX_SLOTS = 20;
 /** The slot's owner: the fixture person (test/fixtures/people.json), never a real address. */
 export const SLOT_OWNER = 'sam@solo-sam.example';
 /** The vars `pnpm preview up --var K=V` may set on a slot: how its chat reaches a model (`packages/agent/src/model/routes.ts`), nothing else. */
-export const SLOT_VAR_KEYS = ['AI_GATEWAY_ID', 'CHAT_PROVIDER', 'CHAT_HEDGE'];
+export const SLOT_VAR_KEYS = ['AI_GATEWAY_ID', 'CHAT_PROVIDER'];
 /** The Worker secrets every deploy of the agent holds: a slot gets fresh ones with each lease, a self-host deploy once. */
 export const SECRETS = ['MASTER_KEY', 'SETUP_TOKEN'];
 /** A value for each of `names`: 32 random bytes, base64url, the shape @qyvr/host-cloudflare's keys expect of MASTER_KEY. */

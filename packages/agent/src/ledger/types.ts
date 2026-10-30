@@ -3,11 +3,8 @@
 // before every model call, whether the run, the person and the tenant are inside their budgets.
 import type { Route } from "../model/routes.ts";
 
-/**
- * How a model call ended; a 429 retried later is its own `rate_limited` row; `refused` never left;
- * `aborted` is a hedged attempt stopped because the other attempt gave its first token first (M22.1).
- */
-export type CallStatus = "ok" | "rate_limited" | "http_error" | "dropped" | "failed" | "refused" | "aborted";
+/** How a model call ended; a 429 retried later is its own `rate_limited` row; `refused` never left. */
+export type CallStatus = "ok" | "rate_limited" | "http_error" | "dropped" | "failed" | "refused";
 
 export interface ModelCallRow {
   tenant: string;
@@ -16,10 +13,10 @@ export interface ModelCallRow {
   route: Route;
   /** The model that answered as the provider named it, else the one asked for. */
   model: string;
-  /** Who served the call (M22.1): `workers-ai`, or `openrouter/<host>` as OpenRouter reported it. */
+  /** Who served the call: `workers-ai` or `meta` (D-0020). */
   provider?: string | null;
-  /** The provider's own cost for the call, in millionths of a dollar, where its usage gave one; else priced from `PRICES`. */
-  costMicros?: number;
+  /** The model id the call asked for, when the provider named the answer another (a dated id): the price falls back to it. */
+  asked?: string;
   attempt: number;
   status: CallStatus;
   /** Stable code for any status but `ok`. */

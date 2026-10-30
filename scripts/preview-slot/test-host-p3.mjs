@@ -28,9 +28,9 @@ export const SLOW = { [P3_PROBE_2]: 45_000 };
 
 const textOf = (content) => (typeof content === 'string' ? content : Array.isArray(content) ? content.map((c) => c?.text ?? '').join('') : '');
 
-/** The messages of a model request body (Workers AI's, or the gateway's universal `query`) other than its system prompt, as one text; null for an embedding. */
+/** The messages of a model request body (Workers AI's or Meta's, both Chat Completions) other than its system prompt, as one text; null for an embedding. */
 export function requestText(body) {
-  const messages = body?.messages ?? body?.query?.messages;
+  const messages = body?.messages;
   if (!Array.isArray(messages)) return null;
   return messages
     .filter((m) => m?.role !== 'system')

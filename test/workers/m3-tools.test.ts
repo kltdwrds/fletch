@@ -136,7 +136,7 @@ describe("[M3.1] tool registry", () => {
     ]);
     const sending = chat.instance.send({ person: ada.email, text: "post it" });
     await fake.reached("posting");
-    // A self-host chat route is unhedged (Workers AI), so the drop is the step's one attempt.
+    // A drop after the first token is the step's: nothing is re-sent (D-0020).
     fake.drop("posting");
     expect(await sending).toMatchObject({ status: "failed" });
     expect(log).toEqual([]);

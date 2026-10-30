@@ -4,7 +4,7 @@
 // whose credentials the real Vault resolves only under a company grant, and company skills written by
 // admins alone and read by every member's catalog.
 import { describe, expect, it } from "vitest";
-import { GLM_OPENROUTER, HEDGES, MODEL_TIERS, ROUTES } from "../../packages/agent/src/model/routes.ts";
+import { GLM_WORKERS_AI, MODEL_TIERS, MUSE_SPARK_CONTRIBUTOR, ROUTES } from "../../packages/agent/src/model/routes.ts";
 import { VaultCore } from "../../packages/agent/src/vault/core.ts";
 import { ObjectHarness } from "../support/object-harness.ts";
 import { ada, authorityWorld } from "./support/authority-world.ts";
@@ -21,13 +21,12 @@ describe("[M10.2] admin pages", () => {
     expect(set.body).toMatchObject({ settings: { budgets: { personDailyMicros: 40_000, tenantDailyMicros: 20_000_000 }, budgetsSet: { personDailyMicros: 40_000 }, modelTier: "economy" } });
     expect(w.ledger().budgets()).toEqual({ personDailyMicros: 40_000, tenantDailyMicros: 20_000_000 });
     expect(w.ledger().budgetsSet()).toEqual({ personDailyMicros: 40_000 });
-    // The economy tier admits D1's default model, on both hosts the chat route may use (Workers AI by default,
-    // OpenRouter when a deploy configures it, M22.1), and refuses the smoke route's, before the call.
-    expect(MODEL_TIERS.economy).toEqual([GLM_OPENROUTER, ROUTES.chat]);
-    expect(ROUTES.chat).toBe(HEDGES.chat?.model);
+    // The economy tier admits D1's default model, GLM 5.3 Flash on Workers AI, and refuses the smoke route's and
+    // Muse Spark (a deploy's chat on Meta, D-0020), before the call.
+    expect(MODEL_TIERS.economy).toEqual([GLM_WORKERS_AI]);
+    expect(ROUTES.chat).toBe(GLM_WORKERS_AI);
     expect(await w.ledger().admit({ person: ada.email, runId: "r1", model: ROUTES.chat })).toEqual({ ok: true });
-    expect(await w.ledger().admit({ person: ada.email, runId: "r1", model: GLM_OPENROUTER })).toEqual({ ok: true });
-    expect(await w.ledger().admit({ person: ada.email, runId: "r1", model: HEDGES.chat?.model })).toEqual({ ok: true });
+    expect(await w.ledger().admit({ person: ada.email, runId: "r1", model: MUSE_SPARK_CONTRIBUTOR })).toMatchObject({ ok: false, code: "MODEL_TIER_REFUSED" });
     expect(await w.ledger().admit({ person: ada.email, runId: "r1", model: ROUTES.smoke })).toMatchObject({ ok: false, code: "MODEL_TIER_REFUSED" });
     // The standard tier admits the smoke route's model, which has no price, so the dollar caps refuse it (M28.1).
     await w.http(ada.email, "PUT", "/admin/settings", { modelTier: "standard" });

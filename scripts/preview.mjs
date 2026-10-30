@@ -19,7 +19,7 @@ import { agentDir, CONFIG, account, deploySlot, deprovision, drainBucket, INVENT
 export const ACCOUNT_ID = '62b4c5143baaabf42b828a0d7a6b272e';
 
 const USAGE = `usage: pnpm preview <command>
-  up [--slot n] [--ttl hours] [--paid] [--var K=V]...   lease a slot (or renew this worktree's) and deploy the working tree to it; --var sets a model var (AI_GATEWAY_ID, CHAT_PROVIDER, CHAT_HEDGE)
+  up [--slot n] [--ttl hours] [--paid] [--var K=V]...   lease a slot (or renew this worktree's) and deploy the working tree to it; --var sets a model var (AI_GATEWAY_ID, CHAT_PROVIDER)
   status                  this worktree's lease and what its slot answers
   tail                    wrangler tail on its slot's Worker
   down                    release its slot: placeholder (the agent's objects deleted), new secrets, bucket and index emptied

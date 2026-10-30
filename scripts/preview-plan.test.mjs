@@ -106,12 +106,14 @@ describe('preview plan: the slot config', () => {
   });
 
   it("sets the model vars --var names, over the base config and under the slot's own, and refuses any other var", () => {
-    const vars = { AI_GATEWAY_ID: 'fletch', CHAT_PROVIDER: 'meta', CHAT_HEDGE: 'off' };
+    const vars = { AI_GATEWAY_ID: 'fletch', CHAT_PROVIDER: 'meta' };
     assert.deepEqual(Object.keys(vars), SLOT_VAR_KEYS);
     const c = slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', vars });
     assert.deepEqual(c.vars, { ...BASE.vars, ...vars, TENANT_ID: plan.name, OWNER_EMAIL: SLOT_OWNER, PREVIEW_SERVING: 'app', PREVIEW_DEPLOY: 'x' });
     assert.throws(() => slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', vars: { TENANT_ID: 'other' } }), /--var takes only .*; not TENANT_ID/);
     assert.throws(() => slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', vars: { MASTER_KEY: 'k' } }), /not MASTER_KEY/);
+    // The chat route's hedge is gone (D-0020), so its var is refused by name like any other.
+    assert.throws(() => slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', vars: { CHAT_HEDGE: 'off' } }), /--var takes only AI_GATEWAY_ID, CHAT_PROVIDER; not CHAT_HEDGE/);
     assert.equal(app.vars.CHAT_PROVIDER, undefined);
   });
 

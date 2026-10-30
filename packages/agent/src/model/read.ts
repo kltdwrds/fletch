@@ -1,24 +1,19 @@
 // Reading one model response into pi's events (moved out of the adapter at M22.1, unchanged in what it
 // streams): the body guarded by the attempt's abort, the SSE chunks turned into text, thinking and
-// tool-call blocks on the message, and what the response says served it (host, model, cost).
+// tool-call blocks on the message, and the model the response says served it.
 import type { AssistantMessage, AssistantMessageEvent, Usage } from "@earendil-works/pi-ai";
-import { readSse, reasoningOf, reasoningWithheld, StreamFault } from "./wire.ts";
+import { readSse, reasoningOf, StreamFault } from "./wire.ts";
 
 export const zeroUsage = (): Usage => ({ input: 0, output: 0, cacheRead: 0, cacheWrite: 0, reasoning: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } });
 
-/** Where a response's events go: the turn's stream, or a hedged attempt's gate in front of it. */
+/** Where a response's events go: the turn's stream. */
 export interface EventSink {
   push(event: AssistantMessageEvent): void;
 }
 
-/**
- * What served a response, as its chunks say: OpenRouter names the host (`provider`) and the model on
- * each chunk and gives the call's cost in US dollars on its usage; Workers AI gives the model only.
- */
+/** What served a response, as its chunks say: the model, which a provider may name by a dated id of its own. */
 export interface Served {
-  provider?: string;
   model?: string;
-  costUsd?: number;
 }
 
 /** Rejects with the signal's reason once it aborts, whether or not the binding honours the signal. */
@@ -74,7 +69,7 @@ export function tapped(body: ReadableStream<Uint8Array>, tap: (raw: string) => v
 
 /**
  * Streams chunks into pi events on `message`; throws a StreamFault when the body breaks or the provider
- * reports an error inside the stream. `onFirstToken` may throw to stop reading (a hedged attempt that lost).
+ * reports an error inside the stream. `onFirstToken` runs at each delta that carries a token.
  */
 export async function readInto(body: ReadableStream<Uint8Array>, message: AssistantMessage, stream: EventSink, onFirstToken: () => void, served: Served = {}): Promise<void> {
   let open: { kind: "text" | "thinking"; index: number } | undefined;
@@ -110,12 +105,8 @@ export async function readInto(body: ReadableStream<Uint8Array>, message: Assist
     if (event.done) break;
     const { chunk } = event;
     if (chunk.error) throw new StreamFault("MODEL_STREAM_DROPPED", `the provider reported an error in the stream: ${String(chunk.error.message ?? chunk.error.code ?? "unknown").slice(0, 120)}`);
-    if (chunk.provider) served.provider = chunk.provider;
     if (chunk.model) served.model = chunk.model;
     const u = chunk.usage;
-    // With a BYOK key OpenRouter's own `cost` is its fee; the host's charge is the upstream cost.
-    const cost = u?.cost_details?.upstream_inference_cost || u?.cost;
-    if (typeof cost === "number" && Number.isFinite(cost) && cost > 0) served.costUsd = cost;
     if (u) {
       if (chunk.choices === undefined) {
         message.usage.input = u.prompt_tokens ?? message.usage.input;
@@ -135,7 +126,6 @@ export async function readInto(body: ReadableStream<Uint8Array>, message: Assist
       const d = choice.delta ?? {};
       const reasoning = reasoningOf(d);
       if (reasoning || d.content || d.tool_calls?.length) onFirstToken();
-      if (reasoningWithheld(d)) (message as { reasoningWithheld?: boolean }).reasoningWithheld = true;
       if (reasoning) append("thinking", reasoning);
       if (d.content) append("text", d.content);
       for (const tc of d.tool_calls ?? []) {

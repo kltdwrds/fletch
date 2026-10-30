@@ -110,13 +110,14 @@ describe("[M28.1] an unpriced model is never free", () => {
     expect(words).not.toMatch(/[A-Z]{3,}_[A-Z_]+/);
   });
 
-  it("a row with neither a price nor the provider's cost is charged at the fallback, and it counts toward the cap", async () => {
+  it("a row priced neither by the model that answered nor by the one asked for is charged at the fallback, and it counts toward the cap", async () => {
     const w = authorityWorld();
     const ledger = w.ledger();
     await ledger.setBudgets({ personDailyMicros: 18_000 });
     await ledger.record(call(ada.email, 0, T0, { model: "vendor/answered-as-another", inputTokens: 1_000, outputTokens: 1_000 }));
-    await ledger.record(call(other.email, 0, T0, { model: "vendor/answered-as-another", inputTokens: 1_000, outputTokens: 1_000, costMicros: 7 }));
-    expect((await ledger.modelCalls()).map((r) => [r.person, r.costMicros])).toEqual([[ada.email, 18_000], [other.email, 7]]);
+    // Answered under another name for a priced model: the asked model's price (D-0020), 150 + 500 micros.
+    await ledger.record(call(other.email, 0, T0, { model: "vendor/answered-as-another", asked: ROUTES.chat, inputTokens: 1_000, outputTokens: 1_000 }));
+    expect((await ledger.modelCalls()).map((r) => [r.person, r.costMicros])).toEqual([[ada.email, 18_000], [other.email, 650]]);
     expect(chargeMicros("vendor/answered-as-another", { input: 1_000, output: 1_000, cached: 0 })).toBe(18_000);
     expect(await ledger.admit({ person: ada.email, runId: "n" })).toMatchObject({ ok: false, code: "BUDGET_PERSON_EXHAUSTED" });
     expect(await ledger.admit({ person: other.email, runId: "n" })).toEqual({ ok: true });
