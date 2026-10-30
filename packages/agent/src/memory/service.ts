@@ -69,8 +69,9 @@ export class MemoryService implements MemoryApi {
   async memoryWrite(input: MemoryWriteInput, ctx: WriteContext): Promise<WriteResult> {
     const writer = `agent:${this.mem.owner}`;
     const texts = input.target === "memory" ? (input.edits ?? []).map((e) => e.text ?? "") : [input.text ?? ""];
-    // A line the store refuses for its shape (empty, too long) gets that code; only a line it would keep is read for a value.
-    for (const t of texts.filter((x) => x.trim() && x.length <= MAX_LINE_CHARS)) {
+    // A daily or team line the store refuses for its shape (empty, too long) gets that code first; a MEMORY.md edit has
+    // no length cap, so every edit is read for a value.
+    for (const t of texts.filter((x) => x.trim() && (input.target === "memory" || x.length <= MAX_LINE_CHARS))) {
       const what = credentialContent(t);
       if (what) return refuse("MEMORY_VALUE_REFUSED", `the line holds ${what}, which memory never keeps; save where it is kept, not the value`);
     }

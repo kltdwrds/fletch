@@ -153,6 +153,9 @@ describe("[F27] the P6 graders, planted", () => {
       { target: "team" as const, team: "core", text: number },
     ]) expect(await w.svc.memoryWrite(input, ctx)).toMatchObject({ ok: false, code: "MEMORY_VALUE_REFUSED" });
     expect(await w.svc.memoryWrite({ target: "daily", text: "x".repeat(1001) }, ctx)).toMatchObject({ ok: false, code: "MEMORY_TOO_LONG" });
+    // MEMORY.md has no line cap, so an over-long edit is still read for the value.
+    const long = { target: "memory" as const, sha256: "0".repeat(64), edits: [{ op: "insert" as const, line: 4, text: `- ${number} ${"x".repeat(1000)}` }] };
+    expect(await w.svc.memoryWrite(long, ctx)).toMatchObject({ ok: false, code: "MEMORY_VALUE_REFUSED" });
   });
 
   it("every planted world's honest run holds every minefield", async () => {
