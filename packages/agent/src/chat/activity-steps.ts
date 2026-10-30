@@ -7,8 +7,9 @@
 // tool call and result: the timeline is exactly what that view leaves out.
 import type { Message } from "@earendil-works/pi-ai";
 import { unfence } from "../context/fence.ts";
+import { isPurchaseKind } from "../grants/engine.ts";
 import type { JournalRow } from "../grants/journal.ts";
-import { DECISION_WORDS, OUTCOME_WORDS, SUMMARY_WORDS, UNKNOWN_OUTCOME } from "../obs/activity-words.ts";
+import { DECISION_WORDS, OUTCOME_WORDS, SUMMARY_WORDS, titleOf, UNKNOWN_OUTCOME } from "../obs/activity-words.ts";
 import type { TranscriptRow } from "./history.ts";
 
 export type StepKind = "read" | "edit" | "write" | "delete" | "search" | "code" | "todo" | "memory" | "load" | "launch" | "close" | "action" | "observe" | "other";
@@ -229,7 +230,8 @@ export function journalOf(journal: readonly JournalRow[], chatId: string, turnId
 /**
  * A task's tool calls as steps, in seq order: each `toolCall` part of an assistant message, paired with the
  * `toolResult` of the same call id. `chatId` is the journal ids' prefix. A call with journal rows is a gated action,
- * titled by its card's label and in the state its latest row says; every other call is titled from `STEP_WORDS`.
+ * titled by its card's label and in the state its latest row says, a purchase by its kind's words in `KIND_WORDS`
+ * (P12 delta 3: an ask, true whatever the outcome); every other call is titled from `STEP_WORDS`.
  */
 export function stepsOf(rows: readonly TranscriptRow[], journal: readonly JournalRow[], o: { chatId: string; child?: boolean }): StepRecord[] {
   const results = new Map<string, Result>();
@@ -251,7 +253,8 @@ export function stepsOf(rows: readonly TranscriptRow[], journal: readonly Journa
       const words = STEP_WORDS[call.name];
       const action = rowsOfCall.length > 0;
       const kind: StepKind = action ? "action" : (words?.kind ?? "other");
-      const base = action ? capital(spaced(call.name)) : words ? words.title(args) : `Called ${spaced(call.name)}`;
+      const kindOf = rowsOfCall[0]?.actionKind ?? "";
+      const base = action ? (isPurchaseKind(kindOf) ? titleOf("purchase") : capital(spaced(call.name))) : words ? words.title(args) : `Called ${spaced(call.name)}`;
       const outcome = joined(rowsOfCall);
       let state: StepState = result ? (result.isError ? "failed" : "done") : "started";
       let code: string | null = result?.isError ? codeOf(result.text) : null;

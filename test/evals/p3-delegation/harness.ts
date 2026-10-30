@@ -27,7 +27,7 @@ export { pat, sam };
 /** The probe page: a title, two sentences and three links. */
 export const PAGE = `# ${PROBE_TITLE}\n\nThis page is for the p3 probe. It has three links.\n\n[One](https://example.com/p3-one) [Two](https://example.com/p3-two) [Three](https://example.com/p3-three)`;
 
-export interface P3HarnessOptions extends Pick<P5HarnessOptions, "script" | "seed" | "world" | "sites" | "fill"> {
+export interface P3HarnessOptions extends Pick<P5HarnessOptions, "script" | "seed" | "world" | "sites" | "fill" | "childTools"> {
   /** Offer the child the planted write, send, reaction and memory tools (T-P3-03). */
   planted?: boolean;
 }

@@ -67,9 +67,14 @@ export function parseParty(ref: string): Party | null {
   return m[1] === "person" ? { kind: "person", id: m[2] as string } : { kind: "agent-of-person", id: m[2] as string };
 }
 
-/** Every field an identifier or a code; a reason names the first that is not. */
+/** The row's fields, and no other: an amount, a currency, a merchant or a method is the card's, never the journal's (P12 delta 3). */
+const FIELDS: ReadonlySet<string> = new Set(["id", "at", "actor", "principal", "actionKind", "subjectRef", "counterpart", "origin", "hops", "decision", "grantId", "outcome", "runId", "tokens"]);
+
+/** Every field an identifier or a code, and no field beyond them; a reason names the first that is not. */
 export function checkJournalRow(r: JournalRow): { ok: true } | { ok: false; code: "JOURNAL_ROW_INVALID"; reason: string } {
   const fail = (reason: string) => ({ ok: false as const, code: "JOURNAL_ROW_INVALID" as const, reason });
+  const extra = Object.keys(r).find((k) => !FIELDS.has(k));
+  if (extra !== undefined) return fail(extra);
   if (!RUN.test(r.id)) return fail("id");
   if (!Number.isSafeInteger(r.at)) return fail("at");
   if (!/^(agent|person):/.test(r.actor) || !EMAIL.test(r.actor.slice(r.actor.indexOf(":") + 1))) return fail("actor");

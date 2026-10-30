@@ -24,8 +24,10 @@ import { SCHEMA as DELIVERY_SCHEMA } from "../../../packages/agent/src/delivery/
 import { type VaultDirectory, vaultRoutes } from "../../../packages/agent/src/http/vault-routes.ts";
 import type { ParsedMail } from "../../../packages/agent/src/mail/mime.ts";
 import { PersonMail } from "../../../packages/agent/src/person/mail.ts";
+import type { Namespace } from "../../../packages/agent/src/tools/registry.ts";
 import { VaultCore } from "../../../packages/agent/src/vault/core.ts";
 import { holdTypedSecrets } from "../../../packages/agent/src/vault/typed.ts";
+import type { FakeSite } from "../../support/browser/fake-browser.ts";
 import type { FakeStep } from "../../support/fake-model.ts";
 import { ObjectHarness } from "../../support/object-harness.ts";
 import type { Snapshot } from "../../support/scenario.ts";
@@ -51,6 +53,10 @@ export interface P9HarnessOptions {
   plant?: (js: string) => string;
   /** The status of each read of the Example API's probe in turn, 200 once they run out (T-P9-08: a 200, then a 401). */
   probe?: number[];
+  /** More sites the fake browser serves (P12's checkout page, F38). */
+  sites?: Record<string, FakeSite>;
+  /** Tools offered to a child for its gate to refuse (P12's `shop_buy`, F38). */
+  childTools?: (person: string) => Namespace[];
 }
 
 /** The writer the capture form and settings pass for a signed-in person. */
@@ -111,8 +117,9 @@ export class P9Tier1World extends P3Tier1World implements P9World {
     const fill = (person: string): FillApi => ({ fill: (req) => vault().fill(req, { person, purpose: "browse_fill" }), scrub: (session, t) => vault().scrub(session, t) });
     super({
       script: o.script,
-      sites: { [LOGIN_HOST]: { page: { title: "Sign in", text: "Enter the code we mailed you." } } },
+      sites: { [LOGIN_HOST]: { page: { title: "Sign in", text: "Enter the code we mailed you." } }, ...(o.sites ?? {}) },
       fill,
+      ...(o.childTools ? { childTools: o.childTools } : {}),
       world: () => ({
         vault: {
           egress: (p) => egressFor(vault(), p),

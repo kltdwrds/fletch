@@ -62,6 +62,8 @@ export const KIND_WORDS: Array<[prefix: string, title: string]> = [
   ["platform.workspace", "Asked for a workspace"],
   ["memory", "Updated what it remembers"],
   ["connector", "Used a connected app"],
+  // P12 delta 3: an ask, whatever came of it; the amount stays on the card, never in the journal.
+  ["purchase", "Asked to buy or pay"],
 ];
 export const UNKNOWN_TITLE = "Did something for you";
 
