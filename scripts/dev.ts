@@ -1,4 +1,4 @@
-// `pnpm dev`: the agent Worker under `wrangler dev`, with no deploy and no create-fletch. Durable Objects and R2 run
+// `pnpm dev`: the agent Worker under `wrangler dev`, with no deploy and no `pnpm self-host`. Durable Objects and R2 run
 // locally; Vectorize has no local mode (semantic memory search is off) and Workers AI has none either, so by default
 // the `AI` binding is left out and the model routes fail while the login page, passkeys, the recovery code, files and
 // memory work. `--remote-ai` keeps the binding, which wrangler then proxies to the account in CLOUDFLARE_API_TOKEN and
@@ -20,7 +20,7 @@ import { parseArgs } from "node:util";
 import { root } from "./accept.ts";
 
 const AGENT = join(root, "packages/agent");
-/** 32 random bytes, base64url: the shape create-fletch mints MASTER_KEY and SETUP_TOKEN in (`@qyvr/host-cloudflare`, whose Workers types this Node project does not load). */
+/** 32 random bytes, base64url: the shape `pnpm self-host` mints MASTER_KEY and SETUP_TOKEN in (`mintSecrets` in scripts/preview-plan.mjs). */
 const random32 = () => randomBytes(32).toString("base64url");
 
 /** The base wrangler.jsonc as this run's config: its own name and owner, and the AI binding only when asked. */

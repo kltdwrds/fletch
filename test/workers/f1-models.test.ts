@@ -2,10 +2,9 @@
 // Workers AI over the AI binding with no key and no AI Gateway option; a gateway is used only when the
 // deploy sets `AI_GATEWAY_ID`, and a gateway provider (BYOK through that gateway: OpenRouter, or Meta's
 // Model API as the custom provider `meta`) only when it also sets `CHAT_PROVIDER`. Every claim runs the production engine, adapter and Ledger over the
-// scripted fake, with the vars create-fletch's template actually ships.
+// scripted fake, with the vars the agent's base config ships (`pnpm self-host` adds a model var only when asked).
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { parseJsonc, TEMPLATE } from "../../packages/create-fletch/src/init.ts";
 import { ChatEngine, type EngineCtx } from "../../packages/agent/src/chat/engine.ts";
 import { admitPolicy, isPriced } from "../../packages/agent/src/ledger/budget.ts";
 import { embed } from "../../packages/agent/src/model/adapter.ts";
@@ -19,8 +18,8 @@ import people from "../fixtures/people.json" with { type: "json" };
 const sam = people.people.find((p) => p.id === "sam-solo")!;
 const T0 = Date.UTC(2026, 9, 20, 9, 0, 0);
 
-/** The vars a create-fletch deploy ships, read from the template itself. */
-const TEMPLATE_VARS = (parseJsonc(readFileSync(TEMPLATE, "utf8")) as { vars: Record<string, string> }).vars;
+/** The vars a deploy ships, read from packages/agent/wrangler.jsonc itself (its comments are whole lines). */
+const TEMPLATE_VARS = (JSON.parse(readFileSync("packages/agent/wrangler.jsonc", "utf8").replace(/^\s*\/\/.*$/gm, "")) as { vars: Record<string, string> }).vars;
 const SELF_HOST_VARS: Record<string, string> = { ...TEMPLATE_VARS, TENANT_ID: "base", OWNER_EMAIL: sam.email };
 
 /** One chat turn through the production engine and Ledger, on an env with `vars`. */
@@ -37,7 +36,7 @@ async function turn(vars: Record<string, string>) {
 }
 
 describe("[F1] a self-host deploy's models", () => {
-  it("the template sets no gateway and no chat provider, so its config is Workers AI with no gateway", () => {
+  it("the base config sets no gateway and no chat provider, so its config is Workers AI with no gateway", () => {
     expect(TEMPLATE_VARS).not.toHaveProperty("AI_GATEWAY_ID");
     expect(TEMPLATE_VARS).not.toHaveProperty("CHAT_PROVIDER");
     expect(modelConfig(SELF_HOST_VARS)).toEqual(SELF_HOST_MODELS);
