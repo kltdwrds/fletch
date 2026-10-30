@@ -33,6 +33,7 @@ import { ObjectHarness } from "../../support/object-harness.ts";
 import type { Snapshot } from "../../support/scenario.ts";
 import { Seeded } from "../../support/seeded.ts";
 import type { DefinedTask, TaskHarness, Turn } from "../../support/task.ts";
+import type { Namespace } from "../../../packages/agent/src/tools/registry.ts";
 import { type AuthorityWorld, authorityWorld } from "../../workers/support/authority-world.ts";
 import { type El, page } from "../../workers/support/page-harness.ts";
 import type { ChatLabel, DrawerView, ModelRow, P5World, RowView, RunRow, TaskDetail, TaskView, ThreadEntry } from "./world.ts";
@@ -64,18 +65,27 @@ export interface P5HarnessOptions {
   script: FakeStep[];
   /** Runs before the snapshot, after `c1` and `c2` are open: the task's setup records. */
   seed?: (w: P5Tier1World) => Promise<void>;
+  /** What the fake browser serves for `example.com` (P3's world, F33); the probe page when unset. */
+  page?: string;
+  /** The addresses a child's url table holds, as its brief carries them; `PROBE` when unset. */
+  childUrls?: string[];
+  /** The addresses a job's fetch serves the page at; `PROBE` when unset. */
+  jobUrls?: string[];
+  /** More tools offered to a child beside its read, eager: what a task plants for the child's gate to refuse (T-P3-03). */
+  childTools?: (person: string) => Namespace[];
 }
 
 export class P5Tier1World implements P5World {
   readonly w: AuthorityWorld;
-  readonly browser = new FakeBrowser({ "example.com": { markdown: PAGE } });
+  readonly browser: FakeBrowser;
   readonly ids = new Map<ChatLabel, string>();
   during: P5World["during"] = null;
-  private holds = 0;
+  protected holds = 0;
   before: Record<string, number> = {};
   private readonly memory = new Map<string, ObjectHarness<PersonBrowse>>();
 
   constructor(o: P5HarnessOptions) {
+    this.browser = new FakeBrowser({ "example.com": { markdown: o.page ?? PAGE } });
     const now = () => this.w.clock.now;
     const browseMemory = (person: string) => {
       let h = this.memory.get(person);
@@ -92,11 +102,11 @@ export class P5Tier1World implements P5World {
     const cell = (v: string | null = null) => ({ get: () => v, set: (x: string | null) => { v = x; } });
     const childReads = (person: string) => {
       const urls = cell();
-      new UrlTable(urls).add([PROBE]);
+      new UrlTable(urls).add(o.childUrls ?? [PROBE]);
       const ns = chatBrowse(hook, person, { urls, session: cell() }, now);
-      return [{ ...ns, deferral: "eager" as const, tools: ns.tools.filter((t) => t.name === "browse_open") }];
+      return [{ ...ns, deferral: "eager" as const, tools: ns.tools.filter((t) => t.name === "browse_open") }, ...(o.childTools?.(person) ?? [])];
     };
-    this.w = authorityWorld({ seed: [sam, pat], stores: true, jobs: true, script: o.script, browse: hook, subagents: { reads: childReads }, jobFetch: async (url) => (url === PROBE ? new Response(PAGE, { status: 200, headers: { "content-type": "text/plain" } }) : new Response("no", { status: 404 })) });
+    this.w = authorityWorld({ seed: [sam, pat], stores: true, jobs: true, script: o.script, browse: hook, subagents: { reads: childReads }, jobFetch: async (url) => ((o.jobUrls ?? [PROBE]).includes(url) ? new Response(o.page ?? PAGE, { status: 200, headers: { "content-type": "text/plain" } }) : new Response("no", { status: 404 })) });
   }
 
   async open(): Promise<void> {
@@ -115,7 +125,7 @@ export class P5Tier1World implements P5World {
     return this.w.chats.harness(this.chatId(chat)).instance;
   }
 
-  private label(chatId: string): string {
+  protected label(chatId: string): string {
     return [...this.ids].find(([, id]) => id === chatId)?.[0] ?? chatId;
   }
 
@@ -127,7 +137,7 @@ export class P5Tier1World implements P5World {
   }
 
   /** Runs every sub-agent the chat launched, the handoff turn they wake, and the chat to rest. */
-  private async settle(chat: ChatLabel) {
+  protected async settle(chat: ChatLabel) {
     await this.engine(chat).settled();
     await this.w.subagents.get(this.chatId(chat))?.settle();
     await this.engine(chat).settled();
@@ -174,7 +184,7 @@ export class P5Tier1World implements P5World {
   }
 
   /** The thread, the Stop control and the newest task as they stand now: the first time only. */
-  private async keep(chat: ChatLabel) {
+  protected async keep(chat: ChatLabel) {
     if (this.during) return;
     const t = await this.newestRecord(chat);
     const steps = t ? (await this.task(chat, t.id)).steps : [];
@@ -183,13 +193,13 @@ export class P5Tier1World implements P5World {
     this.during = { thread: this.thread(chat), stop: offered, status: t?.status ?? "", summary: t?.summary ?? null, summaryStep: steps.some((x) => x.kind === "summary") };
   }
 
-  private jobId(title: string): string {
+  protected jobId(title: string): string {
     const id = this.w.jobIds(sam.email).find((i) => this.w.jobOf(sam.email, i).instance.status()?.def.title === title);
     if (!id) throw new Error(`P5_NO_JOB: ${title}`);
     return id;
   }
 
-  private async newestRecord(chat: ChatLabel) {
+  protected async newestRecord(chat: ChatLabel) {
     return (await this.activity()).tasks.find((t) => t.chat === chat);
   }
 
@@ -229,7 +239,7 @@ export class P5Tier1World implements P5World {
     return p;
   }
 
-  private rowsIn(p: Awaited<ReturnType<P5Tier1World["page"]>>): El[] {
+  protected rowsIn(p: Awaited<ReturnType<P5Tier1World["page"]>>): El[] {
     return byClass(p.byId("panel-activity"), "prow");
   }
 
@@ -286,7 +296,7 @@ export class P5Tier1World implements P5World {
       .map((m) => ({ tool: m.toolName ?? "", text: textOf(m.content), isError: !!m.isError }));
   }
 
-  private chatRequests(): FakeRequest[] {
+  protected chatRequests(): FakeRequest[] {
     return this.w.fake.requests.filter((r) => {
       const sent = JSON.stringify(inputsOf(r).messages ?? []);
       return !sent.includes(JOB_TASK_MARK) && !sent.includes(CHILD_MARK) && !sent.includes(VERIFIER_MARK);
