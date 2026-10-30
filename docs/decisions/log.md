@@ -275,3 +275,6 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   30 days, always, decline; a purchase once or decline) and the history's table words stay its own. Stop stays as
   M24.2 built it (Muse offered none during a tool call). Parts F25 (the contract check and tier 1 on shipped
   behaviour) and F26 (nothing goes around a card; tier 2).
+- 2026-10-29 A failed allow-once tells the model why it failed, as a queued action's note already did: the note
+  fences the action's reason after its code (`chat/approvals.ts`), so a fill refused on another host says the host is
+  not listed. T-P15-07's required fact holds it (F25). Rejected: the code alone, which left the model guessing.

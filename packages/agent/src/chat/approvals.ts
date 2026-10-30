@@ -231,7 +231,9 @@ export class Approvals {
     const result = done(r.ok ? "approved" : "failed", decision.grantId as string, outcome);
     await p.journal(this.row(`${id}:decision`, now, "auto", decision.grantId, outcome, card.turnId));
     traceApproval({ conversation: p.chatId, tool: card.tool, actionKind: d.actionKind, state: "approved" });
-    p.note(id, `${p.nameOf(person)} allowed the proposal on card ${id} (${d.actionKind}); ${r.ok ? "it ran" : `it failed with ${outcome}`}.${r.text ? `\n${fence(`tool:${card.tool}`, r.text)}` : ""}`);
+    // As a queued action's note says it (`release`): what ran answered, or why it failed, as data the model can use.
+    const said = r.ok ? r.text : r.reason;
+    p.note(id, `${p.nameOf(person)} allowed the proposal on card ${id} (${d.actionKind}); ${r.ok ? "it ran" : `it failed with ${outcome}`}.${said ? `\n${fence(`tool:${card.tool}`, said)}` : ""}`);
     p.frame({ type: "action", turn: card.turnId, id, tool: card.tool, status: r.ok ? "done" : "failed", ...(r.ok ? {} : { code: outcome }) });
     await this.finish(card, r.ok ? "done" : "not done");
     return result;
