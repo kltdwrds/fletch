@@ -1,7 +1,7 @@
 // The worktree's preview slot as the tier-2 runner's `Slot` (F19): the lease `pnpm preview up` left in
 // <git common dir>/fletch-previews/, the slot's host from the pool's subdomain, a session obtained as the live exit
 // test obtains one (test/live/f1-deploy.live.test.ts: the software passkey, test/support/soft-authenticator.ts), and
-// one chat per trial driven over the chat socket. Every failure here is the slot's, an `InfraError` by code:
+// one chat per trial driven over the chat socket (another opened when a prompt names it, F28). Every failure here is the slot's, an `InfraError` by code:
 //   SLOT_MISSING         no lease file, or the slot does not serve the app (`pnpm preview up` leases and deploys one)
 //   LEASE_LAPSED         the slot no longer takes this worktree's key, or its lease is another branch's or over
 //   SLOT_UNREACHABLE     no answer at all from the slot's host
@@ -15,6 +15,8 @@ import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { EMPTY_SNAPSHOT, InfraError, reactionsOf, type SlotEntry, type SlotWorld, TurnError } from "../../test/support/evals.ts";
+import type { ChatLabel } from "../../test/evals/p6-memory/world.ts";
+import { type P6Call, p6Slot } from "./p6-slot.ts";
 import { type TestHostState, testHostReaders } from "./test-host.ts";
 import { type SavedPasskey, softAuthenticator } from "../../test/support/soft-authenticator.ts";
 import { origin as originOf, ownerTag, SLOT_OWNER, slotPlan } from "../preview-plan.mjs";
@@ -315,17 +317,23 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
         failure = error;
       }
     },
-    async open(): Promise<SlotWorld> {
+    async open(task?: { id: string; cluster: string }): Promise<SlotWorld> {
       await slot.resolve();
       if (failure) throw failure;
       const { dir, lease, base } = resolved as NonNullable<typeof resolved>;
       const cookie = await signIn(base, lease, sessionPath(dir, lease.tag));
-      const opened = await http(base, "POST", "/chats", { cookie });
-      if (opened.res.status === 401) throw new InfraError("SESSION_UNAVAILABLE", "the session was refused when opening a chat");
-      if (opened.res.status !== 201) throw new InfraError("SLOT_5XX", `POST /chats answered ${opened.res.status} ${String(opened.body.code ?? "")}`);
-      const chatId = opened.body.chatId as string;
+      const openChat = async () => {
+        const opened = await http(base, "POST", "/chats", { cookie });
+        if (opened.res.status === 401) throw new InfraError("SESSION_UNAVAILABLE", "the session was refused when opening a chat");
+        if (opened.res.status !== 201) throw new InfraError("SLOT_5XX", `POST /chats answered ${opened.res.status} ${String(opened.body.code ?? "")}`);
+        return opened.body.chatId as string;
+      };
+      // A task's chats by label (F28): `c1` opened now, another on its first prompt.
+      const chats = new Map<ChatLabel, string>([["c1", await openChat()]]);
+      const chatId = chats.get("c1") as string;
       const replies: string[] = [];
-      let entries: SlotEntry[] = [];
+      const histories = new Map<ChatLabel, SlotEntry[]>();
+      const entriesOf = (label: ChatLabel = "c1") => histories.get(label) ?? [];
       // The test host, when the slot serves one (F26): its fixture sites reopened in the owner's browse memory, the
       // fixture login saved, and what the Vault held before this trial, so the readers count only the trial's own.
       const hosted = (await testHostOp(base, lease, { op: "reset", person: OWNER })) !== null;
@@ -337,30 +345,48 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
       await refresh();
       const before = state as TestHostState | null;
       const baseline = { audit: (before?.audit ?? []).map((a) => JSON.stringify(a)), grants: (before?.grants ?? []).map((g) => g.nonce) };
-      const after = async () => {
-        entries = await history(base, chatId, cookie);
+      // A memory task (F28): Sam's memory emptied and seeded before the turns, and read again after each.
+      const p6 =
+        task?.cluster === "P6"
+          ? p6Slot(
+              async (call, ids) => {
+                const r = await testHostOp(base, lease, { op: "p6", person: OWNER, call, chats: ids });
+                if (!r) throw new InfraError("SLOT_MISSING", "this slot serves no test host; `pnpm preview up` deploys one");
+                return r as unknown as Awaited<ReturnType<P6Call>>;
+              },
+              () => chats,
+              entriesOf,
+            )
+          : null;
+      if (p6 && task) await p6.begin(task.id);
+      const after = async (label: ChatLabel) => {
+        histories.set(label, await history(base, chats.get(label) as string, cookie));
         await refresh();
+        await p6?.refresh(`prompt:${label}`);
       };
       return {
         chatId,
         replies,
         snapshot: () => EMPTY_SNAPSHOT,
-        entries: () => entries,
-        reactions: () => reactionsOf(entries, OWNER),
-        ...testHostReaders(() => entries, () => state, baseline),
-        async send(text) {
-          const reply = await turn(base, chatId, cookie, text);
+        reactions: () => reactionsOf(entriesOf(), OWNER),
+        ...testHostReaders(() => entriesOf(), () => state, baseline),
+        ...(p6?.readers ?? {}),
+        entries: (label?: ChatLabel) => (p6 ? p6.readers.entries(label) : entriesOf(label)) as SlotEntry[],
+        async send(text, label = "c1") {
+          const chat = label as ChatLabel;
+          if (!chats.has(chat)) chats.set(chat, await openChat());
+          const reply = await turn(base, chats.get(chat) as string, cookie, text);
           replies.push(reply);
-          await after();
+          await after(chat);
           return reply;
         },
         async event(name, payload) {
           if (name !== "decide") throw new TurnError("EVENT_UNSUPPORTED", name);
-          const cards = entries.filter((e) => e.kind === "card" && e.card);
+          const cards = entriesOf().filter((e) => e.kind === "card" && e.card);
           const card = payload.card === "first" ? cards[0]?.card : cards.find((e) => e.card?.id === payload.card)?.card;
           if (!card) throw new TurnError("DECIDE_NO_CARD", `the chat has no card ${payload.card ?? ""} to decide`);
           await decide(base, chatId, cookie, card.id, payload.choice ?? "");
-          await after();
+          await after("c1");
         },
         async read(path) {
           const r = await http(base, "GET", path, { cookie });

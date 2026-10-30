@@ -122,7 +122,6 @@ async function forgotten(w: P6Tier1World): Promise<void> {
 /** The tier-2 tasks' scripted runs (F27): what a model that keeps every rule would do, so each file loads and runs here before F28 runs it on a slot. */
 export const scripted: Record<string, () => P6HarnessOptions> = {
   "T-P6-03": () => ({
-    chats: ["c2"],
     seed: (w: P6Tier1World) => w.say(SAID_PAT),
     script: [
       ...remember,
@@ -132,7 +131,6 @@ export const scripted: Record<string, () => P6HarnessOptions> = {
   }),
   "T-P6-04": () => ({ script: [writeDaily("call_sam", SAM_FACT), replyFrom((r) => `Saved: ${SAM_FACT} (${citeOf(last(r))}).`)] }),
   "T-P6-09": () => ({
-    chats: ["c1", "c2", "c1", "c2"],
     script: [
       ...remember,
       searchFor("call_s", "Pat Solo", "Pat Solo preferences"),

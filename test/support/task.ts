@@ -14,7 +14,8 @@ import { describe, it } from "vitest";
 import { execute, type RunOptions, type ScenarioWorld, type Snapshot } from "./scenario.ts";
 import type { Seeded } from "./seeded.ts";
 
-export type Turn = { kind: "prompt"; by: string; text: string } | { kind: "event"; name: string; payload?: Record<string, string> } | { kind: "schedule"; fire: string };
+/** A prompt goes to the task's first chat unless `chat` names another (`c2`, F28): each label is one chat for the whole run. */
+export type Turn = { kind: "prompt"; by: string; text: string; chat?: string } | { kind: "event"; name: string; payload?: Record<string, string> } | { kind: "schedule"; fire: string };
 
 export type GraderKind = "end_state" | "required_fact" | "minefield";
 

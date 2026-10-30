@@ -1,7 +1,7 @@
 // T-P6-14 is tier 2 (`pnpm evals`, F28); here its file loads and runs under the scripted fake, and fails where shipped
 // fletch has no seam: no model tool writes a people page (`upsertEntity` is the Person's alone, delta 7), so after
-// the stated relationship there is no page and no index. Every other grader holds. When F28 gives the model the
-// seam, this test fails and is turned into the passing run.
+// the stated relationship there is no page and no index. Every other grader holds. When a later part gives the model
+// the seam, this test fails and is turned into the passing run.
 import { describe, expect, it } from "vitest";
 import task from "./people-page-real-model.task.ts";
 import { graded, scripted } from "./runs.ts";

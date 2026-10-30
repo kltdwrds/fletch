@@ -1,0 +1,60 @@
+{
+  "task_id": "T-P6-13",
+  "cluster": "P6",
+  "version_hash": "64e2599e14cdd7116baeb3288714a75018c596468c65ed5428ba0db8ea27edf7",
+  "runs": [
+    {
+      "run_at": "2026-10-30T07:42:57.581Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T07:42:57.581Z",
+          "finished_at": "2026-10-30T07:43:40.594Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T07:43:40.594Z",
+          "finished_at": "2026-10-30T07:44:07.866Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T07:44:07.866Z",
+          "finished_at": "2026-10-30T07:44:21.251Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-10-30T08:15:24.592Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T08:15:24.592Z",
+          "finished_at": "2026-10-30T08:15:37.682Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply names the kind of value refused and that the location was kept",
+          "started_at": "2026-10-30T08:15:37.682Z",
+          "finished_at": "2026-10-30T08:15:56.884Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T08:15:56.884Z",
+          "finished_at": "2026-10-30T08:16:06.294Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
+    }
+  ]
+}
