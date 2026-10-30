@@ -363,8 +363,8 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   surfaces, a delegation's acknowledgement says launched, a run that did not arrive says so, the audit is a read
   over steps and journal (no audit table), the drawer says the task's tokens, no store about the chat the person
   cannot see. No one-way door. Orchestrator.
-- 2026-10-30 F31: a Stop ends the running turn, not the sub-agents it launched; the child runs to its outcome and its
-  handoff carries the task on, so T-P5-08's stop variant grades no child left `running` (Q25 asks whether a stop
-  should close them). A done tool load is not counted in the summary; a job set or changed is a write titled by its
-  subject. The P5 child reads the probe page through the real `browse_open`, offered eager, as F14's children read a
-  fixture. Agent.
+- 2026-10-30 F31: a Stop ends the work the stopped turn launched: its sub-agents not yet settled end `failed` with
+  SUBAGENT_CLOSED and their delegations are marked handed off without waking a turn (`SubAgentHost.stopTurn`), so the
+  task reads Stopped as T-P5-08 says (Q25 asks whether the child should run on instead). A done tool load is not
+  counted in the summary; a job set or changed is a write titled by its subject. The P5 child reads the probe page
+  through the real `browse_open`, offered eager, as F14's children read a fixture. Agent.

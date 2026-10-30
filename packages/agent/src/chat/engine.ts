@@ -258,6 +258,7 @@ export class ChatEngine {
   /** Says the stop on the owner's sockets and records it in the Ledger. */
   private async endStopped(turnId: string, person: string, steps: number): Promise<SendResult> {
     await this.wakeup.disarm();
+    this.hooks.subagents?.stopped?.(turnId);
     this.broadcast({ type: "turn_stopped", turn: turnId, ...stoppedEntry(this.store, this.mailbox, turnId) });
     await this.turnEnded({ person, chatId: this.chatId(), turnId, outcome: "stopped", steps, at: this.now() });
     return { status: "stopped", turnId };

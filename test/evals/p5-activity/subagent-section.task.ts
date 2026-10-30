@@ -3,10 +3,9 @@
 // what was launched and never done or the answer; the row is `running` with Stop offered until the handoff; then the
 // drawer holds one `SUBAGENT 01` section with the child's read by code from its facet (D-0011) and its handoff, the
 // verdict step, and the reply's count equal to the child's. In c2 Sam presses Stop while the delegating turn runs:
-// fletch's form of the row's stop is a running turn's Stop in the composer (delta 3). A stop ends the turn, not the work
-// it launched: the child runs to its outcome, its row `done` or `failed` with its code and never `running`, and its
-// handoff carries the task on (logged in `docs/decisions/log.md`; whether a stop should close the turn's sub-agents is
-// Q25 for Kyle).
+// fletch's form of the row's stop is a running turn's Stop in the composer (delta 3). The stop ends the work the turn
+// launched: the parent reads `stopped` with its note, and the child's row says what became of it (`done`, or `failed`
+// with SUBAGENT_CLOSED), never `running`, and wakes no turn (logged in `docs/decisions/log.md`; Q25).
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P5World, SectionView, StepView } from "./world.ts";
 import { DONE_WORDS, newest, PROBE } from "./world.ts";
@@ -21,7 +20,7 @@ const handed = async (w: P5World) => steps((await detail(w)).subagents[0])?.find
 const graders: Grader<P5World>[] = [
   { name: "the acknowledgement says what was launched, never done or the answer", kind: "end_state", check: (w) => /sub-agent/i.test(ack(w)) && !DONE_WORDS.test(ack(w)) && number(ack(w)) === null },
   { name: "the row is running with Stop offered until the handoff, then Complete", kind: "end_state", check: async (w) => w.during?.status === "running" && w.during.stop === false && (await newest(w))?.status === "done" },
-  { name: "the stopped variant: the turn ends stopped with its note, and its child is never left running", kind: "end_state", check: async (w) => w.thread("c2").some((e) => e.kind === "stopped") && w.subagents("c2").length === 1 && w.subagents("c2").every((s) => s.status === "done" || (s.status === "failed" && !!s.code)) && (await newest(w, "c2"))?.status !== "running" },
+  { name: "the stopped variant: the parent reads stopped with its note, and its child says what became of it, never running", kind: "end_state", check: async (w) => w.thread("c2").some((e) => e.kind === "stopped") && w.subagents("c2").length === 1 && w.subagents("c2").every((s) => s.status === "done" || (s.status === "failed" && !!s.code)) && (await newest(w, "c2"))?.status === "stopped" },
   { name: "one SUBAGENT 01 section: the child's read by code and its handoff with its final text, then the verdict", kind: "end_state", check: async (w) => {
     const d = await detail(w);
     const kids = steps(d.subagents[0]);

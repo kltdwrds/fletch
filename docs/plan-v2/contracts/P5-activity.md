@@ -369,7 +369,7 @@ T-P5-08  must-have  tier 1
   collateral: no write by the child (a sub-agent's gate refuses every action)
   graders: code (the acknowledgement's words, the sections, the facet read's refusal)
   reference: Muse's "Done — a sub-agent is on it" and its child rows with ids and status only (B-P5-08)
-  version_hash: ea9287a99d94
+  version_hash: 90bcff165054
   file: test/evals/p5-activity/subagent-section.task.ts
 
 T-P5-09  must-have  tier 1

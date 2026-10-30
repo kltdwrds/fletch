@@ -116,7 +116,7 @@ export class Chat extends Agent<Env> {
       nameOf: displayNames(host.memberSeed),
       ...(host.tenant.shape === "company" ? { companyInstructions: async () => this.companyText(await this.company().instructions()) } : {}),
       namespaces: (view) => [onboardingNamespace(this.onboardingApi(), () => view.owner() ?? ""), ...this.moreNamespaces()],
-      subagents: { open: () => new SubAgentStore(this.ctx.storage).open(), status: () => this.subagents.status(), close: (person, ids) => this.subagents.close(person, ids), delegate: (input) => this.subagents.delegate(input) },
+      subagents: { open: () => new SubAgentStore(this.ctx.storage).open(), status: () => this.subagents.status(), close: (person, ids) => this.subagents.close(person, ids), delegate: (input) => this.subagents.delegate(input), stopped: (turnId) => this.subagents.stopTurn(turnId) },
     });
     return this.engineInstance;
   }

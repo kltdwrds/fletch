@@ -50,7 +50,7 @@ export function wireSubAgents(storage: DurableObjectStorage, d: SubAgentDeps) {
     arm: async () => {},
     now: d.now,
   });
-  const hooks = { open: () => store.open(), status: () => host.status(), close: (person: string, ids: string[]) => host.close(person, ids), delegate: (input: Parameters<SubAgentHost["delegate"]>[0]) => host.delegate(input) };
+  const hooks = { open: () => store.open(), status: () => host.status(), close: (person: string, ids: string[]) => host.close(person, ids), delegate: (input: Parameters<SubAgentHost["delegate"]>[0]) => host.delegate(input), stopped: (turnId: string) => host.stopTurn(turnId) };
   const record: SubAgentRows = { group: (g) => store.group(g), handedOffAt: (g) => store.handedOffAt(g), transcript: async (id) => facet(id).transcript() };
   return {
     store,

@@ -149,7 +149,7 @@ function drawTask(t) {
   selectStep(keep || (t && device() !== "phone" && t.steps.length ? String(t.steps[0].n) : null), !keep);
 }
 // The task's model calls and tokens from the Ledger's rows of its turns; a usage that could not be read says so by code.
-const counted = (w, n) => n === 1 ? w[0] : fill(w[1], { n: String(n).replace(/B(?=(d{3})+(?!d))/g, ",") });
+const counted = (w, n) => n === 1 ? w[0] : fill(w[1], { n: String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ",") });
 function drawUsage(t) {
   const u = t && t.usage, line = $("task-usage");
   if (!u) { coded(line, "", ""); return; }

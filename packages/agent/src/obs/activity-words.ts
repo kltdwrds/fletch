@@ -39,13 +39,6 @@ export const USAGE_WORDS = {
   unread: "Could not read this task's usage just now.",
 } as const;
 
-const grouped = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-/** `{calls} · {tokens}` in `USAGE_WORDS`. */
-export function usageWords(u: { calls: number; tokens: number }): string {
-  const one = (w: readonly [string, string], n: number) => (n === 1 ? w[0] : w[1].replace("{n}", grouped(n)));
-  return USAGE_WORDS.line.replace("{calls}", one(USAGE_WORDS.call, u.calls)).replace("{tokens}", one(USAGE_WORDS.token, u.tokens));
-}
-
 /** What the agent did, by the action kind's family: the longest matching prefix wins. */
 export const KIND_WORDS: Array<[prefix: string, title: string]> = [
   ["mail", "Sent a mail"],

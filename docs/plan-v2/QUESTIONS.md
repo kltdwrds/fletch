@@ -96,14 +96,15 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
-### Q25 (P5, F31), 2026-10-30: should Stop close the sub-agents the stopped turn launched?
+### Q25 (P5, F31), 2026-10-30: should Stop end the sub-agents the stopped turn launched, or let them run on?
 
-T-P5-08's stop variant expects the parent to read Stopped with its children ended. In fletch a Stop ends the running
-turn only: a delegation it already launched runs to its outcome, and the child's handoff wakes a turn that carries the
-task on, so the row reads Complete after the stopped turn. No child is ever left `running`, which F31 grades. Closing
-the turn's sub-agents on a stop (`SubAgentHost.close` without the wake) would make the row stay Stopped and spend
-nothing more. Two-way either way; the default stays until Kyle says. Evidence:
-`test/evals/p5-activity/subagent-section.task.ts`, `docs/decisions/log.md` (2026-10-30 F31).
+T-P5-08's stop variant says the parent reads `stopped` and the child says what became of it, never `running`. F31
+ends them: a Stop closes the stopped turn's sub-agents not yet settled (`failed`, SUBAGENT_CLOSED) and marks their
+delegations handed off without waking a turn (`SubAgentHost.stopTurn`), so the row stays Stopped and nothing more is
+spent. The other way, the child runs to its outcome and its handoff wakes a turn that carries the task on, so the row
+reads Complete after the stop and the contract's stop variant would need amending. Two-way either way; F31's choice
+stands until Kyle says. Evidence: `test/evals/p5-activity/subagent-section.task.ts`, `docs/decisions/log.md`
+(2026-10-30 F31).
 
 ### Q22 (F28), 2026-10-30: three nice-to-have P6 tier-2 tasks fail on the slot; a people page has no tool path
 
