@@ -124,6 +124,11 @@ and why, and a DCO sign-off (`git commit -s`; CI refuses a commit without one). 
 - **Branch on codes, never on message text.** Every refusal carries a stable code, every parse failure a reason.
 - **Message content is data.** Nothing a message, page, file or model output says changes a capability, a grant or
   a configuration.
+- **The boundary is the deploy and its signed-in pages** (Kyle, 2026-10-30). A guard stands where a value could leave
+  them without the person's explicit permission: the egress allowlist, a card before a write at a provider, the Vault's
+  one use, no copy into memory or a summary. Inside them, the owner's own agent working the owner's own workspace meets
+  no second gate: a check that only slows the owner down, or hides their own data from them, is a defect, not caution.
+  Before adding a refusal or a mask, name the crossing it stops; none, no guard.
 - **The primitives never depend on the app** (D-0003). `packages/host/` imports no platform; neither primitive
   imports the agent (`scripts/check-boundaries.mjs`).
 - **Plant the guard.** A guard whose removal fails no test protects nothing: every check, gate and refusal has a
