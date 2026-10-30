@@ -3,7 +3,9 @@
      classes (test/workers/f11-activity-specimens.test.ts holds that); the drawer F15 builds draws from the same rules.
      The PR #15 task: its main steps, a SUBAGENT 01 section, a selected command step with its output folded, an edit's
      change and the summary with two file cards, in light and dark. Each theme draws three drawers: the command step
-     open, then the edit and the summary open with .is-detail, which is what a phone shows once a step is tapped. -->
+     open, then the edit and the summary open with .is-detail, which is what a phone shows once a step is tapped.
+     F31: the head's pill says the failed-step count ("Complete, 1 step failed"), a caption under it the task's model
+     calls and tokens, and the summary step code's counts. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -27,7 +29,8 @@
 <li><span class="rail"><b class="is-wait"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><circle cx="128" cy="128" r="48"/></svg></b><i></i></span><span class="tx"><span class="nm">A step waiting on an answer</span><p>rail mark: .is-wait</p></span></li>
 </ol></div>
 <div class="qf-stage" id="light-run"><div class="qf-dlg qf-dlg--960" role="dialog" aria-label="Task">
-<div class="qf-task-head"><span class="qf-status qf-status--done"><i></i>Done</span><h2>The Company's own migrations create the grants tables</h2><button type="button" class="qf-ibtn qf-dlg-x" aria-label="Close"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M208.49 191.51a12 12 0 0 1-17 17L128 145l-63.51 63.49a12 12 0 0 1-17-17L111 128 47.51 64.49a12 12 0 0 1 17-17L128 111l63.51-63.52a12 12 0 0 1 17 17L145 128Z"/></svg></button></div>
+<div class="qf-task-head"><span class="qf-status qf-status--done"><i></i>Complete, 1 step failed</span><h2>The Company's own migrations create the grants tables</h2><button type="button" class="qf-ibtn qf-dlg-x" aria-label="Close"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M208.49 191.51a12 12 0 0 1-17 17L128 145l-63.51 63.49a12 12 0 0 1-17-17L111 128 47.51 64.49a12 12 0 0 1 17-17L128 111l63.51-63.52a12 12 0 0 1 17 17L145 128Z"/></svg></button></div>
+<p class="t-foot">5 model calls · 33,420 tokens</p>
 <div class="qf-task">
 <div class="qf-task-list">
 <ol class="qf-tl">
@@ -37,7 +40,7 @@
 <li data-kind="edit"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Edited packages/agent/src/migrations/catalog.ts</span><p>+1 −0</p></span></li>
 <li><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Ran pnpm exec vitest run test/workers/m25-3-migrations.test.ts</span><p>exit 0 · 3.9 s</p></span></li>
 <li data-kind="launch"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Launched subagent: review the grants fix against the staging error</span><p>SUBAGENT 01 · no blocking findings</p></span></li>
-<li data-kind="summary"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Summary</span><p>2 files changed</p></span></li>
+<li data-kind="summary"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Summary</span><p>Read 2, 1 failed; wrote 2 (company/migrations.ts, test/company-grants.test.ts)</p></span></li>
 </ol>
 <div class="qf-items-head">SUBAGENT 01</div>
 <ol class="qf-tl qf-tl--nested">
@@ -102,7 +105,8 @@ Error: SQLITE_ERROR: no such table: grants
 </div>
 </div></div>
 <div class="qf-stage" id="light-edit"><div class="qf-dlg qf-dlg--960" role="dialog" aria-label="Task">
-<div class="qf-task-head"><span class="qf-status qf-status--done"><i></i>Done</span><h2>The Company's own migrations create the grants tables</h2><button type="button" class="qf-ibtn qf-dlg-x" aria-label="Close"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M208.49 191.51a12 12 0 0 1-17 17L128 145l-63.51 63.49a12 12 0 0 1-17-17L111 128 47.51 64.49a12 12 0 0 1 17-17L128 111l63.51-63.52a12 12 0 0 1 17 17L145 128Z"/></svg></button></div>
+<div class="qf-task-head"><span class="qf-status qf-status--done"><i></i>Complete, 1 step failed</span><h2>The Company's own migrations create the grants tables</h2><button type="button" class="qf-ibtn qf-dlg-x" aria-label="Close"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M208.49 191.51a12 12 0 0 1-17 17L128 145l-63.51 63.49a12 12 0 0 1-17-17L111 128 47.51 64.49a12 12 0 0 1 17-17L128 111l63.51-63.52a12 12 0 0 1 17 17L145 128Z"/></svg></button></div>
+<p class="t-foot">5 model calls · 33,420 tokens</p>
 <div class="qf-task is-detail">
 <div class="qf-task-list">
 <ol class="qf-tl">
@@ -112,7 +116,7 @@ Error: SQLITE_ERROR: no such table: grants
 <li class="is-sel" data-kind="edit"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Edited packages/agent/src/migrations/catalog.ts</span><p>+1 −0</p></span></li>
 <li><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Ran pnpm exec vitest run test/workers/m25-3-migrations.test.ts</span><p>exit 0 · 3.9 s</p></span></li>
 <li data-kind="launch"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Launched subagent: review the grants fix against the staging error</span><p>SUBAGENT 01 · no blocking findings</p></span></li>
-<li data-kind="summary"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Summary</span><p>2 files changed</p></span></li>
+<li data-kind="summary"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Summary</span><p>Read 2, 1 failed; wrote 2 (company/migrations.ts, test/company-grants.test.ts)</p></span></li>
 </ol>
 <div class="qf-items-head">SUBAGENT 01</div>
 <ol class="qf-tl qf-tl--nested">
@@ -137,7 +141,8 @@ export const COMPANY_MIGRATIONS: readonly Migration[] = [
 </div>
 </div></div>
 <div class="qf-stage" id="light-summary"><div class="qf-dlg qf-dlg--960" role="dialog" aria-label="Task">
-<div class="qf-task-head"><span class="qf-status qf-status--done"><i></i>Done</span><h2>The Company's own migrations create the grants tables</h2><button type="button" class="qf-ibtn qf-dlg-x" aria-label="Close"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M208.49 191.51a12 12 0 0 1-17 17L128 145l-63.51 63.49a12 12 0 0 1-17-17L111 128 47.51 64.49a12 12 0 0 1 17-17L128 111l63.51-63.52a12 12 0 0 1 17 17L145 128Z"/></svg></button></div>
+<div class="qf-task-head"><span class="qf-status qf-status--done"><i></i>Complete, 1 step failed</span><h2>The Company's own migrations create the grants tables</h2><button type="button" class="qf-ibtn qf-dlg-x" aria-label="Close"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M208.49 191.51a12 12 0 0 1-17 17L128 145l-63.51 63.49a12 12 0 0 1-17-17L111 128 47.51 64.49a12 12 0 0 1 17-17L128 111l63.51-63.52a12 12 0 0 1 17 17L145 128Z"/></svg></button></div>
+<p class="t-foot">5 model calls · 33,420 tokens</p>
 <div class="qf-task is-detail">
 <div class="qf-task-list">
 <ol class="qf-tl">
@@ -147,7 +152,7 @@ export const COMPANY_MIGRATIONS: readonly Migration[] = [
 <li data-kind="edit"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Edited packages/agent/src/migrations/catalog.ts</span><p>+1 −0</p></span></li>
 <li><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Ran pnpm exec vitest run test/workers/m25-3-migrations.test.ts</span><p>exit 0 · 3.9 s</p></span></li>
 <li data-kind="launch"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Launched subagent: review the grants fix against the staging error</span><p>SUBAGENT 01 · no blocking findings</p></span></li>
-<li class="is-sel" data-kind="summary"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Summary</span><p>2 files changed</p></span></li>
+<li class="is-sel" data-kind="summary"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Summary</span><p>Read 2, 1 failed; wrote 2 (company/migrations.ts, test/company-grants.test.ts)</p></span></li>
 </ol>
 <div class="qf-items-head">SUBAGENT 01</div>
 <ol class="qf-tl qf-tl--nested">
@@ -196,7 +201,8 @@ export const CHAT_MIGRATIONS = [</pre></div><div class="qf-fcard"><div class="qf
 <li><span class="rail"><b class="is-wait"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><circle cx="128" cy="128" r="48"/></svg></b><i></i></span><span class="tx"><span class="nm">A step waiting on an answer</span><p>rail mark: .is-wait</p></span></li>
 </ol></div>
 <div class="qf-stage" id="dark-run"><div class="qf-dlg qf-dlg--960" role="dialog" aria-label="Task">
-<div class="qf-task-head"><span class="qf-status qf-status--done"><i></i>Done</span><h2>The Company's own migrations create the grants tables</h2><button type="button" class="qf-ibtn qf-dlg-x" aria-label="Close"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M208.49 191.51a12 12 0 0 1-17 17L128 145l-63.51 63.49a12 12 0 0 1-17-17L111 128 47.51 64.49a12 12 0 0 1 17-17L128 111l63.51-63.52a12 12 0 0 1 17 17L145 128Z"/></svg></button></div>
+<div class="qf-task-head"><span class="qf-status qf-status--done"><i></i>Complete, 1 step failed</span><h2>The Company's own migrations create the grants tables</h2><button type="button" class="qf-ibtn qf-dlg-x" aria-label="Close"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M208.49 191.51a12 12 0 0 1-17 17L128 145l-63.51 63.49a12 12 0 0 1-17-17L111 128 47.51 64.49a12 12 0 0 1 17-17L128 111l63.51-63.52a12 12 0 0 1 17 17L145 128Z"/></svg></button></div>
+<p class="t-foot">5 model calls · 33,420 tokens</p>
 <div class="qf-task">
 <div class="qf-task-list">
 <ol class="qf-tl">
@@ -206,7 +212,7 @@ export const CHAT_MIGRATIONS = [</pre></div><div class="qf-fcard"><div class="qf
 <li data-kind="edit"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Edited packages/agent/src/migrations/catalog.ts</span><p>+1 −0</p></span></li>
 <li><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Ran pnpm exec vitest run test/workers/m25-3-migrations.test.ts</span><p>exit 0 · 3.9 s</p></span></li>
 <li data-kind="launch"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Launched subagent: review the grants fix against the staging error</span><p>SUBAGENT 01 · no blocking findings</p></span></li>
-<li data-kind="summary"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Summary</span><p>2 files changed</p></span></li>
+<li data-kind="summary"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Summary</span><p>Read 2, 1 failed; wrote 2 (company/migrations.ts, test/company-grants.test.ts)</p></span></li>
 </ol>
 <div class="qf-items-head">SUBAGENT 01</div>
 <ol class="qf-tl qf-tl--nested">
@@ -271,7 +277,8 @@ Error: SQLITE_ERROR: no such table: grants
 </div>
 </div></div>
 <div class="qf-stage" id="dark-edit"><div class="qf-dlg qf-dlg--960" role="dialog" aria-label="Task">
-<div class="qf-task-head"><span class="qf-status qf-status--done"><i></i>Done</span><h2>The Company's own migrations create the grants tables</h2><button type="button" class="qf-ibtn qf-dlg-x" aria-label="Close"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M208.49 191.51a12 12 0 0 1-17 17L128 145l-63.51 63.49a12 12 0 0 1-17-17L111 128 47.51 64.49a12 12 0 0 1 17-17L128 111l63.51-63.52a12 12 0 0 1 17 17L145 128Z"/></svg></button></div>
+<div class="qf-task-head"><span class="qf-status qf-status--done"><i></i>Complete, 1 step failed</span><h2>The Company's own migrations create the grants tables</h2><button type="button" class="qf-ibtn qf-dlg-x" aria-label="Close"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M208.49 191.51a12 12 0 0 1-17 17L128 145l-63.51 63.49a12 12 0 0 1-17-17L111 128 47.51 64.49a12 12 0 0 1 17-17L128 111l63.51-63.52a12 12 0 0 1 17 17L145 128Z"/></svg></button></div>
+<p class="t-foot">5 model calls · 33,420 tokens</p>
 <div class="qf-task is-detail">
 <div class="qf-task-list">
 <ol class="qf-tl">
@@ -281,7 +288,7 @@ Error: SQLITE_ERROR: no such table: grants
 <li class="is-sel" data-kind="edit"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Edited packages/agent/src/migrations/catalog.ts</span><p>+1 −0</p></span></li>
 <li><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Ran pnpm exec vitest run test/workers/m25-3-migrations.test.ts</span><p>exit 0 · 3.9 s</p></span></li>
 <li data-kind="launch"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Launched subagent: review the grants fix against the staging error</span><p>SUBAGENT 01 · no blocking findings</p></span></li>
-<li data-kind="summary"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Summary</span><p>2 files changed</p></span></li>
+<li data-kind="summary"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Summary</span><p>Read 2, 1 failed; wrote 2 (company/migrations.ts, test/company-grants.test.ts)</p></span></li>
 </ol>
 <div class="qf-items-head">SUBAGENT 01</div>
 <ol class="qf-tl qf-tl--nested">
@@ -306,7 +313,8 @@ export const COMPANY_MIGRATIONS: readonly Migration[] = [
 </div>
 </div></div>
 <div class="qf-stage" id="dark-summary"><div class="qf-dlg qf-dlg--960" role="dialog" aria-label="Task">
-<div class="qf-task-head"><span class="qf-status qf-status--done"><i></i>Done</span><h2>The Company's own migrations create the grants tables</h2><button type="button" class="qf-ibtn qf-dlg-x" aria-label="Close"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M208.49 191.51a12 12 0 0 1-17 17L128 145l-63.51 63.49a12 12 0 0 1-17-17L111 128 47.51 64.49a12 12 0 0 1 17-17L128 111l63.51-63.52a12 12 0 0 1 17 17L145 128Z"/></svg></button></div>
+<div class="qf-task-head"><span class="qf-status qf-status--done"><i></i>Complete, 1 step failed</span><h2>The Company's own migrations create the grants tables</h2><button type="button" class="qf-ibtn qf-dlg-x" aria-label="Close"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M208.49 191.51a12 12 0 0 1-17 17L128 145l-63.51 63.49a12 12 0 0 1-17-17L111 128 47.51 64.49a12 12 0 0 1 17-17L128 111l63.51-63.52a12 12 0 0 1 17 17L145 128Z"/></svg></button></div>
+<p class="t-foot">5 model calls · 33,420 tokens</p>
 <div class="qf-task is-detail">
 <div class="qf-task-list">
 <ol class="qf-tl">
@@ -316,7 +324,7 @@ export const COMPANY_MIGRATIONS: readonly Migration[] = [
 <li data-kind="edit"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Edited packages/agent/src/migrations/catalog.ts</span><p>+1 −0</p></span></li>
 <li><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Ran pnpm exec vitest run test/workers/m25-3-migrations.test.ts</span><p>exit 0 · 3.9 s</p></span></li>
 <li data-kind="launch"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Launched subagent: review the grants fix against the staging error</span><p>SUBAGENT 01 · no blocking findings</p></span></li>
-<li class="is-sel" data-kind="summary"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Summary</span><p>2 files changed</p></span></li>
+<li class="is-sel" data-kind="summary"><span class="rail"><b><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49 80.49l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z"/></svg></b><i></i></span><span class="tx"><span class="nm">Summary</span><p>Read 2, 1 failed; wrote 2 (company/migrations.ts, test/company-grants.test.ts)</p></span></li>
 </ol>
 <div class="qf-items-head">SUBAGENT 01</div>
 <ol class="qf-tl qf-tl--nested">

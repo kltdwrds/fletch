@@ -4,18 +4,22 @@
 // `SUBAGENT nn` section under its `.qf-items-head` with its rows' status, verdict and steps, then the summary; the
 // detail pane draws the selected step generically from its `StepDetail` (the typed shapes are F16's). The drawer is
 // an overlay without an address (decision 6.5): it pushes one entry and back closes it. A running task is the
-// snapshot of its opening, with Refresh. Every word is in `ACTIVITY_TEXT`; the title is the record's own string,
+// snapshot of its opening, with Refresh. The pill says the record's `words` (its status and failed-step count, F31) and
+// the line under the head the task's model calls and tokens from the Ledger (F31, P5 delta 7). Every word is in
+// `ACTIVITY_TEXT`; the title is the record's own string,
 // drawn as it came, in the head and the detail pane as in the row; a task that could not be read is said with its code.
 
 import type { TaskStatus } from "../../chat/activity.ts";
 import type { StepRecord } from "../../chat/activity-steps.ts";
-import { ACTIVITY_TEXT as STATUS_WORDS } from "../../obs/activity-words.ts";
+import { ACTIVITY_TEXT as STATUS_WORDS, USAGE_WORDS } from "../../obs/activity-words.ts";
 import { type IconName, ic } from "./icons.ts";
 import { SCRIPT_GLYPHS } from "./shell.ts";
 
 /** Every word the drawer says, one table. The task's status words are F12's table, cited, not copied. */
 export const ACTIVITY_TEXT = {
   status: STATUS_WORDS.status,
+  /** The task's model calls and tokens under the head (F31), F31's table cited. */
+  usage: USAGE_WORDS,
   refresh: "Refresh",
   back: "Back",
   close: "Close",
@@ -81,6 +85,7 @@ export const ACTIVITY_CSS = `
 #task-dialog .qf-task-head .qf-btn { flex-shrink: 0; }
 #task-dialog .qf-task { min-height: 0; }
 #task-note { padding: 16px 24px 0; }
+#task-usage { padding: 8px 24px 0; }
 .qf-task-list .qf-tl li { cursor: pointer; }
 .qf-task-list .qf-tl li:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 10px; }
 .qf-task-list .qf-items-head { gap: 8px; }
@@ -95,6 +100,7 @@ export const ACTIVITY_CSS = `
 /** `#task-dialog`: the head (pill, title, Refresh, the X), a note for a read that failed, then the two panes. */
 export const ACTIVITY_MARKUP = `<div id="task-dialog" class="qf-dlg qf-dlg--960" role="dialog" aria-labelledby="task-title" hidden>
   <div class="qf-task-head"><span id="task-state" class="qf-status" hidden></span><h2 id="task-title"></h2><button id="task-refresh" class="qf-btn qf-btn--secondary">${ACTIVITY_TEXT.refresh}</button><button id="task-close" class="qf-ibtn qf-dlg-x" aria-label="${ACTIVITY_TEXT.close}">${ic("x", "xs")}</button></div>
+  <p id="task-usage" class="task-caption"></p>
   <p id="task-note" class="panel-note" role="status"></p>
   <div id="task-body" class="qf-task">
     <div id="task-steps" class="qf-task-list" aria-label="${ACTIVITY_TEXT.steps}"></div>
@@ -135,11 +141,20 @@ function drawTask(t) {
   pill.hidden = !t; pill.replaceChildren();
   $("task-title").textContent = t ? titleOf(t.task) : "";
   $("task-detail-task").textContent = t ? titleOf(t.task) : "";
-  if (t) { pill.className = "qf-status qf-status--" + TASK_TONE[t.task.status]; pill.append(el("i"), fill(TASK.status[t.task.status], { code: t.task.code })); }
+  if (t) { pill.className = "qf-status qf-status--" + TASK_TONE[t.task.status]; pill.append(el("i"), t.task.words); }
+  drawUsage(t);
   drawSteps(t);
   const keep = t && taskSel && stepAt(taskSel) ? taskSel : null;
   // From 768 px the detail pane stands beside the timeline, so a step is always open there; a phone shows one pane.
   selectStep(keep || (t && device() !== "phone" && t.steps.length ? String(t.steps[0].n) : null), !keep);
+}
+// The task's model calls and tokens from the Ledger's rows of its turns; a usage that could not be read says so by code.
+const counted = (w, n) => n === 1 ? w[0] : fill(w[1], { n: String(n).replace(/B(?=(d{3})+(?!d))/g, ",") });
+function drawUsage(t) {
+  const u = t && t.usage, line = $("task-usage");
+  if (!u) { coded(line, "", ""); return; }
+  if (!u.ok) { coded(line, TASK.usage.unread, u.code); return; }
+  coded(line, fill(TASK.usage.line, { calls: counted(TASK.usage.call, u.calls), tokens: counted(TASK.usage.token, u.tokens) }), "");
 }
 // Every step the drawer drew, by its key: a main step by its n, a child's by its section, row and n.
 let taskSteps = new Map();

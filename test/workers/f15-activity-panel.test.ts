@@ -103,7 +103,8 @@ describe("[F15] the Activity tab opens the task drawer", () => {
     expect(row.tag).toBe("button");
     expect([rowTitle(row), byClass(row, "t-foot")[0]?.textContent, byClass(row, "prow-side")[0]?.textContent]).toEqual([
       task.title,
-      STATUS_WORDS.status.done,
+      // The task's script failed one step (F31): the row says the count with the status.
+      "Complete, 1 step failed",
       new Date(T0).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
     ]);
     expect(p.byId("task-dialog").hidden).toBe(true);
@@ -112,7 +113,7 @@ describe("[F15] the Activity tab opens the task drawer", () => {
     expect(p.asked).toContain(taskAt(task.chatId, task.id));
     expect(titles(p)).toEqual([task.title, task.title, task.title]);
     // The pill is the record's status, in its tone and the one table's words.
-    expect([p.byId("task-state").className, p.byId("task-state").text()]).toEqual([`qf-status qf-status--${TASK_TONE.done}`, STATUS_WORDS.status.done]);
+    expect([p.byId("task-state").className, p.byId("task-state").text()]).toEqual([`qf-status qf-status--${TASK_TONE.done}`, "Complete, 1 step failed"]);
   });
 
   it("planted: a drawer that formats its own title differs from the row's, and the check sees it", async () => {

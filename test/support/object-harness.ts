@@ -205,6 +205,8 @@ export function harnessNamespace<T extends object>(make: (name: string) => Objec
   };
   return {
     harness: of,
+    /** Every harness made so far, by name. */
+    all: () => [...harnesses.entries()],
     binding: {
       idFromName: (name: string) => ({ name, toString: () => name }),
       get: (id: { name: string }) => of(id.name).instance,

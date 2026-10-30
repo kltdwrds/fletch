@@ -61,6 +61,9 @@ export const PANEL_TEXT = {
   runBlocked: "paused by the site",
   runNothing: "nothing new",
   runReported: "reported",
+  /** A run that reported but whose notice the chat never took (F31, P5 delta 5). */
+  runUndelivered: "reported, but it did not arrive",
+  runSending: "reported, not delivered yet",
   runManual: "manual",
   runScheduled: "scheduled",
   edit: "Edit",
@@ -87,8 +90,8 @@ const PANEL_GLYPH: Record<(typeof PANEL_TABS)[number], IconName> = { activity: "
 /** Each tab's body (M27.4). */
 export const PANEL_BODY: Record<(typeof PANEL_TABS)[number], string> = { activity: "panel-activity", approvals: "panel-approvals", upcoming: "panel-upcoming", identity: "panel-identity" };
 
-/** An Activity row's glyph by its task's status (F12), beside its words in \`ACTIVITY_TEXT.status\`. */
-export const ACTIVITY_GLYPH: Record<keyof typeof ACTIVITY_TEXT.status, IconName> = { done: "check", running: "pulse", waiting: "bell", failed: "x", stopped: "dot" };
+/** An Activity row's glyph by its task's status (F12), beside its words in \`ACTIVITY_TEXT.status\`; a done task with a failed step has its own (F31). */
+export const ACTIVITY_GLYPH: Record<keyof typeof ACTIVITY_TEXT.status | "failedSteps", IconName> = { done: "check", running: "pulse", waiting: "bell", failed: "x", stopped: "dot", failedSteps: "flag" };
 /** Every glyph the panel's script copies is in the page's one glyph set. */
 for (const g of [...Object.values(ACTIVITY_GLYPH), "shield", "bell", "clock", "chevup", "chevdown"])
   if (!(SCRIPT_GLYPHS as readonly string[]).includes(g)) throw new Error(`SCRIPT_GLYPHS lacks the panel's glyph "${g}"`);
@@ -245,13 +248,22 @@ const sheetActivity = latest(async (current) => {
   box.replaceChildren();
   // A chat that could not be read is said with its code, so the tab is never empty for want of a read (F12).
   for (const u of a.unread || []) box.append(couldNot(el("p"), "\u201c" + u.title + "\u201d", u));
-  if (!a.tasks.length) { if (!(a.unread || []).length) say(box, PANEL.activityEmpty); return; }
+  for (const u of a.jobsUnread || []) box.append(couldNot(el("p"), "a job", u));
+  const runs = a.runs || [];
+  if (!a.tasks.length && !runs.length) { if (!(a.unread || []).length && !(a.jobsUnread || []).length) say(box, PANEL.activityEmpty); return; }
   const now = Date.now(); let day = null;
-  for (const t of a.tasks) {
-    const d = dayName(t.startedAt, now);
+  // Tasks and job runs in one list, newest first: a run that fired leaves a row too (F31, B-P5-09).
+  const rows = [...a.tasks.map((t) => ({ at: t.startedAt, t })), ...runs.map((r) => ({ at: r.at, r }))].sort((x, y) => y.at - x.at);
+  for (const { at, t, r: run } of rows) {
+    const d = dayName(at, now);
     if (d !== day) { day = d; heading(box, d); }
+    if (run) {
+      const r = prow(box, { glyph: "clock", round: true, title: run.title, desc: runLabel(run), time: clock(run.at), danger: run.word === "runFailed" || run.word === "runUndelivered", tap: () => openJobById(run.jobId) });
+      r.dataset.run = run.runId; continue;
+    }
     // A row opens its task in the drawer (F15, activity.ts) by its chat and anchor turn.
-    const r = prow(box, { glyph: ACTIVITY_GLYPH[t.status], title: t.title, desc: ACTIVITY_TEXT.status[t.status].replace("{code}", t.code || ""), time: clock(t.startedAt), danger: t.status === "failed", tap: () => openTask(t.chatId, t.id) });
+    // The row says the record's own words (its status and failed-step count, F31), with the failed-count mark for a task that finished with a failed step.
+    const r = prow(box, { glyph: t.failed && t.status === "done" ? ACTIVITY_GLYPH.failedSteps : ACTIVITY_GLYPH[t.status], title: t.title, desc: t.words, time: clock(t.startedAt), danger: t.status === "failed", tap: () => openTask(t.chatId, t.id) });
     r.dataset.task = t.id;
   }
 });
@@ -329,7 +341,16 @@ const sheetReminders = latest(async (current) => {
 });
 // The job dialog (Dialog; a full-width sheet on a phone): the state chip, the title, the schedule and next run, the
 // run history, and the actions the job's own object allows. A result stays said in the dialog (QYVR-224).
+// A run's line, the same on its Activity row and in the Run history: its word from the route (\`runWord\`), by its
+// delivery for a run that reported (F31), else how far it went; then manual or scheduled.
 const RUN_SIGNAL = { failed: PANEL.runFailed, blocked: PANEL.runBlocked, nothing_to_report: PANEL.runNothing, notify: PANEL.runReported };
+const runLabel = (r) => ((r.word && PANEL[r.word]) || RUN_PHASE[r.phase] || r.phase) + " · " + (r.manual ? PANEL.runManual : PANEL.runScheduled);
+// Opens a job's dialog from its Activity row, read fresh from the job route.
+async function openJobById(id) {
+  const j = await getJson("/app/jobs").catch(() => null);
+  const job = j && j.jobs.find((x) => x.id === id && x.ok);
+  if (job) openJob(job);
+}
 let jobShown = null;
 function drawJob(job) {
   jobShown = job;
@@ -348,7 +369,7 @@ function drawJob(job) {
   for (const r of job.runs) {
     const row = el("div"); row.className = "job-run"; if (r.code) row.dataset.code = r.code;
     const dot = el("span"); dot.className = "job-dot" + (r.signal === "failed" || r.signal === "blocked" ? " job-dot--bad" : r.phase === "done" ? "" : " job-dot--wait");
-    const label = el("span", ((r.phase === "done" && RUN_SIGNAL[r.signal]) || RUN_PHASE[r.phase] || r.phase) + " · " + (r.manual ? PANEL.runManual : PANEL.runScheduled)); label.className = "t-cap t-2 job-run-label";
+    const label = el("span", runLabel(r)); label.className = "t-cap t-2 job-run-label";
     row.append(dot, label, el("span", whenOf(r.scheduledFor))); runs.append(row);
   }
   // The definitions it had before each change in place (delta 7), newest first, as text: the cadence and the instructions.

@@ -127,12 +127,14 @@ describe("[F13] the step timeline", () => {
     expect(memory.detail.blocks.map((b) => [b.label, b.text])).toEqual([["Saved", "The offsite is at the Henley boathouse."]]);
   });
 
-  it("the summary is the last step: the final text and a card naming the edited file with a preview of its change", async () => {
+  it("the summary is the last step: code's counts, the final text quoted as the agent's, and a card naming the edited file with a preview of its change", async () => {
     const w = world({ script: FALLBACK });
     const { steps, task: t } = await fallback(w);
     const summary = steps.at(-1) as StepRecord;
     expect(summary.kind).toBe("summary");
-    expect(summary.detail.prose).toBe("The offsite plan is updated: Henley boathouse, budget 1500.");
+    // F31: the counts are code's, from the steps' states (the done tool load is not counted); the reply is quoted whole.
+    expect(summary.detail.prose).toBe("Read 1; wrote 3 (work/offsite.md); ran 2, 1 failed; 1 other");
+    expect(summary.detail.blocks.map((b) => [b.label, b.text])).toEqual([["The agent's reply, in its own words", "The offsite plan is updated: Henley boathouse, budget 1500."]]);
     // Newest change first, one card per path.
     expect(summary.detail.files).toEqual([{ path: "work/offsite.md", preview: "- budget: 1500\n- catering: <b>vegetarian</b>" }]);
     // The summary is never the title.
@@ -173,7 +175,7 @@ describe("[F13] the step timeline", () => {
       ["", "done", null, "Summary"],
     ]);
     // The continuation after the decision is the task's last finished turn: its words are the summary.
-    expect([declined.task.turnIds.length, declined.task.turnIds[0], declined.steps.at(-1)?.detail.prose]).toEqual([2, askedTurn, "Understood, not sent."]);
+    expect([declined.task.turnIds.length, declined.task.turnIds[0], declined.steps.at(-1)?.detail.blocks[0]?.text]).toEqual([2, askedTurn, "Understood, not sent."]);
     expect(declined.steps[0]?.detail.lines).toEqual(["You were asked first.", "Waiting for your decision.", "It was held back.", "You declined it."]);
   });
 
@@ -226,7 +228,8 @@ describe("[F13] the step timeline", () => {
     expect(steps[STEPS_PER_TASK - 2]?.callId).toBe("t3-48");
     const marker = steps[STEPS_PER_TASK - 1] as StepRecord;
     expect([marker.kind, marker.title]).toEqual(["marker", "51 more steps are not shown"]);
-    expect([steps.at(-1)?.kind, steps.at(-1)?.detail.prose]).toEqual(["summary", "Two hundred and fifty checklist writes."]);
+    // The counts read every step, the hidden ones included.
+    expect([steps.at(-1)?.kind, steps.at(-1)?.detail.prose, steps.at(-1)?.detail.blocks[0]?.text]).toEqual(["summary", "250 other", "Two hundred and fifty checklist writes."]);
     // The list row says the same.
     const listed = ((await w.http(ada.email, "GET", "/app/activity")).body as unknown as { tasks: TaskRecord[] }).tasks[0];
     expect([listed?.stepCount, listed?.capped]).toEqual([250, true]);

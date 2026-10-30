@@ -37,11 +37,14 @@ export const STATUS_WORDS: Record<string, string> = {
   subagents_close: "Closing sub-agents",
   subagents_status: "Checking on sub-agents",
   jobs_create: "Setting up a scheduled task",
+  jobs_update: "Changing a scheduled task",
   jobs_list: "Looking at your scheduled tasks",
   jobs_enable: "Turning on a scheduled task",
   jobs_disable: "Turning off a scheduled task",
   jobs_remove: "Removing a scheduled task",
   page_read: "Reading a web page",
+  browse_open: "Reading a web page",
+  browse_live: "Using the live browser",
   web_search: "Searching the web",
 };
 

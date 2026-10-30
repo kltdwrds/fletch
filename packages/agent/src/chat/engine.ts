@@ -8,7 +8,7 @@
 // set persisted here, and actions performed from the outbox only after the barrier.
 import type { JournalRow } from "../grants/journal.ts";
 import { treeSpill } from "../tree/spill.ts";
-import type { LedgerSink } from "../ledger/types.ts";
+import type { LedgerSink, ModelCallRow } from "../ledger/types.ts";
 import type { Message } from "@earendil-works/pi-ai";
 import { createStreamFn } from "../model/adapter.ts";
 import { modelConfig, modelFor, type Route } from "../model/routes.ts";
@@ -18,7 +18,7 @@ import { coreNamespace } from "../tools/search.ts";
 import { reactTool } from "./agent-reaction.ts";
 import { compact, type Compacted } from "./compact-turn.ts";
 import { type CompactionRecord, ChatStore } from "./store.ts";
-import { type TaskRecord, taskOf, tasksOf, taskSteps } from "./activity.ts";
+import { type TaskRecord, taskOf, tasksOf, taskSteps, taskUsage } from "./activity.ts";
 import { Approvals, type DecideResult, requestReply } from "./approvals.ts";
 import { addTally, replyToColleague, tallyOf } from "./approval-ports.ts";
 import { CardStore, type CardView, type Choice, pauseWords } from "./cards.ts";
@@ -370,6 +370,8 @@ export class ChatEngine {
 
   /** A task's steps (F13): its transcript with the journal's outcomes for its own turns, for the owner alone. */
   async stepsFor(person: string, task: TaskRecord) { return this.owner() === person ? taskSteps(this.store, task, await (this.ledger() as LedgerSink & { journalRows(f: { principal: string }): Promise<JournalRow[]> }).journalRows({ principal: person })) : null; }
+  /** A task's model calls and tokens (F31): the Ledger's rows of its turns, for the owner alone. */
+  usageFor(person: string, task: TaskRecord) { return taskUsage(async () => (this.owner() === person ? (this.ledger() as LedgerSink & { modelCalls(f: { person: string }): Promise<ModelCallRow[]> }).modelCalls({ person }) : []), task); }
 
   /** When the chat last had something to show (M29.3), for its owner alone; anyone else is refused. */
   lastAt(person: string): { ok: true; at: number | null } | { ok: false; code: "CHAT_NOT_OWNER" } {

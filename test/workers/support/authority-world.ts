@@ -54,6 +54,7 @@ import { FakeModel, type FakeMode, type FakeStep } from "../../support/fake-mode
 import { harnessNamespace, ObjectHarness } from "../../support/object-harness.ts";
 import people from "../../fixtures/people.json" with { type: "json" };
 import { asBucket, FakeR2 } from "./fake-r2.ts";
+import { type WiredSubAgents, wireSubAgents } from "./subagent-wiring.ts";
 
 export const TENANT = "solo-sam";
 export const person = (id: string) => people.people.find((p) => p.id === id) as (typeof people.people)[number];
@@ -113,6 +114,8 @@ export interface WorldOptions {
   render?: (input: { markdown: string; to: string }) => Promise<RenderResult>;
   /** A model binding in place of the scripted fake: the live eval arms' gateway shim (M15.1). */
   ai?: { run: (model: string, inputs: unknown, options: unknown) => Promise<Response> };
+  /** Each chat's sub-agents (F31), as `subagent-wiring.ts` wires them, with these tools for the sub-agents. */
+  subagents?: { reads: (person: string) => Namespace[] };
   /** Each member's attachments as `objects/person.ts` and `objects/chat.ts` wire them (M24.3): the sender's store shares, the recipient's keeps. */
   attachments?: { share: NonNullable<import("../../../packages/agent/src/colleagues/tools.ts").ColleaguesApi["shareAttachments"]>; attach: (to: string) => NonNullable<import("../../../packages/agent/src/person/requests.ts").RequestDeps["attach"]> };
 }
@@ -332,11 +335,16 @@ export function authorityWorld(o: WorldOptions = {}) {
     },
     "company",
   );
+  /** Each chat's sub-agents (F31), by chat id. */
+  const subagents = new Map<string, WiredSubAgents>();
   const chats: ReturnType<typeof harnessNamespace<ChatEngine>> = harnessNamespace((name) =>
     new ObjectHarness<ChatEngine>(
       name,
-      (ctx, e) =>
-        new ChatEngine(ctx as EngineCtx, e as Env, {
+      (ctx, e) => {
+        const wired = o.subagents ? wireSubAgents((ctx as DurableObjectState).storage, { ai: aiBinding as unknown as Ai, ledger: () => ledgerH.instance, tenant: TENANT, now: () => clock.now, env, reads: o.subagents.reads }) : null;
+        if (wired) subagents.set(name, wired);
+        const engine = new ChatEngine(ctx as EngineCtx, e as Env, {
+          ...(wired ? { subagents: wired.hooks } : {}),
           namespaces: (view) => [...fixtures(view), ...(o.onboarding ? [onboardingNamespace(onboardingApi, () => view.owner() ?? "")] : []), ...(o.namespaces?.(() => view.owner() ?? "") ?? [])],
           ...(o.workspace ? { workspace: { tenant: TENANT, api: { workspaces: o.workspace, capabilities: o.workspace, approvals: o.workspace } } } : {}),
           ...(o.browse ? { browse: o.browse } : {}),
@@ -367,7 +375,10 @@ export function authorityWorld(o: WorldOptions = {}) {
             const v = await company().instructions();
             return v ? { tenant: TENANT, text: v.text } : null;
           },
-        }),
+        });
+        wired?.bind(engine);
+        return engine;
+      },
       { ...env, AI: aiBinding, LEDGER: ledgers },
       (c) => {
         c.now = () => clock.now;
@@ -440,7 +451,7 @@ export function authorityWorld(o: WorldOptions = {}) {
     // The Activity tab's tasks (F12), each chat answering for its owner as the `Chat` object does; and one home file.
     chatTasks: async (p, chatId) => chatTasks(chats.harness(chatId).instance, p),
     // These chats wire no sub-agents (the sub-agent world does, F14), so their record holds no delegation.
-    chatTask: async (p, chatId, turnId) => chatTask(chats.harness(chatId).instance, p, turnId, { group: () => [], handedOffAt: () => null, transcript: async () => [] }),
+    chatTask: async (p, chatId, turnId) => chatTask(chats.harness(chatId).instance, p, turnId, subagents.get(chatId)?.record ?? { group: () => [], handedOffAt: () => null, transcript: async () => [] }),
     homeFile: async (p, path) => host(p).memory.memoryGet({ path, limit: 200 }, p),
     // The Library's files (M23.4): each person's own `PersonFiles`, decided there for the session's person.
     files: async (p) => host(p).files.list({ preview: true }, p),
@@ -510,7 +521,12 @@ export function authorityWorld(o: WorldOptions = {}) {
     for (let i = 0; i < limit && h.alarmAt !== null && h.alarmAt <= clock.now; i++) await h.fireAlarm();
   };
 
-  return { dir, env, clock, fake, performed, jobOf, fireJob, jobAudit, jobIds: (p: string) => host(p).jobs.list(), calendar, r2, chats, host, personHarness: (p: string) => persons.get(p), filesOf, hooks, company, companyHarness: () => companyH, ledger: () => ledgerH.instance, http, say, grant, request, journal, grantsNow, view, chatsOf, cardsOf, transcriptOf, noticesOf };
+  /** Every Durable Object the world built, by name, each sub-agent facet among them: what a table diff enumerates (F31). */
+  const objects = (): Array<[string, { rows: (q: string) => Record<string, unknown>[] }]> => [
+    ["ledger", ledgerH], ["company", companyH], ...[...persons].map(([p, h]) => [`person:${p}`, h] as [string, typeof h]), ...[...jobObjects].map(([k, h]) => [`job:${k}`, h] as [string, typeof h]), ...chats.all(),
+    ...[...subagents.values()].flatMap((s) => [...s.facets]),
+  ];
+  return { objects, subagents, dir, env, clock, fake, performed, jobOf, fireJob, jobAudit, jobIds: (p: string) => host(p).jobs.list(), calendar, r2, chats, host, personHarness: (p: string) => persons.get(p), filesOf, hooks, company, companyHarness: () => companyH, ledger: () => ledgerH.instance, http, say, grant, request, journal, grantsNow, view, chatsOf, cardsOf, transcriptOf, noticesOf };
 }
 
 export type AuthorityWorld = ReturnType<typeof authorityWorld>;
