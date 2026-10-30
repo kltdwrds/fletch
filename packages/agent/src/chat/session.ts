@@ -7,7 +7,7 @@ import { codeNamespace } from "../code/tool.ts";
 import { colleaguesNamespace } from "../colleagues/tools.ts";
 import { connectorNamespaces } from "../connectors/namespaces.ts";
 import { filesNamespace } from "../files/tools.ts";
-import { acceptsImages } from "../model/routes.ts";
+import { acceptsImages, type ModelConfig } from "../model/routes.ts";
 import { jobsNamespace } from "../jobs/tools.ts";
 import { memorySpecs } from "../memory/tools.ts";
 import { documentsNamespace } from "../render/tools.ts";
@@ -39,6 +39,8 @@ export interface SessionDeps {
   queryView: (input: { view: string; sql: string }) => Promise<ViewResult>;
   /** One of this chat's cards, by id: a proposed host is written only under its approval (M25.1). */
   card: (id: string) => CardRow | null;
+  /** The deploy's model configuration (`modelConfig(env)`): whether the chat route's model takes images. */
+  models: ModelConfig;
 }
 
 export function chatNamespaces(d: SessionDeps, person: string, effects: EffectBuffer, context: TurnContext, gateState: GateState): Namespace[] {
@@ -55,7 +57,7 @@ export function chatNamespaces(d: SessionDeps, person: string, effects: EffectBu
   if (hooks.skills) namespaces.push(skillsNamespace(hooks.skills, person, hooks.skillSeen?.(person)));
   const files = hooks.files?.(person);
   const tree = hooks.tree?.(person);
-  if (files) namespaces.push(filesNamespace(files, person, `agent:${person}`, { ...(tree ? { tree } : {}), imageInput: acceptsImages("chat") }));
+  if (files) namespaces.push(filesNamespace(files, person, `agent:${person}`, { ...(tree ? { tree } : {}), imageInput: acceptsImages("chat", d.models) }));
   const documents = hooks.documents?.(person);
   if (documents) namespaces.push(documentsNamespace(documents, person, effects));
   // Code acts with the owner's egress: no outbound is even built for a turn that serves someone else.

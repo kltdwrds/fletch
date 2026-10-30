@@ -297,11 +297,11 @@ describe("gc's merged branches", () => {
 
 describe('up --var', () => {
   it('collects every --var pair, keeps the other flags, and refuses a pair that is not K=V', () => {
-    const { flags } = parseFlags(['--var', 'CHAT_PROVIDER=meta', '--paid', '--var', 'CHAT_HEDGE=off', '--ttl', '2']);
-    assert.deepEqual(flags, { var: ['CHAT_PROVIDER=meta', 'CHAT_HEDGE=off'], paid: true, ttl: '2' });
-    assert.deepEqual(varFlags(flags.var), { CHAT_PROVIDER: 'meta', CHAT_HEDGE: 'off' });
+    const { flags } = parseFlags(['--var', 'CHAT_PROVIDER=meta', '--paid', '--var', 'AI_GATEWAY_ID=fletch', '--ttl', '2']);
+    assert.deepEqual(flags, { var: ['CHAT_PROVIDER=meta', 'AI_GATEWAY_ID=fletch'], paid: true, ttl: '2' });
+    assert.deepEqual(varFlags(flags.var), { CHAT_PROVIDER: 'meta', AI_GATEWAY_ID: 'fletch' });
     assert.deepEqual(varFlags(undefined), {});
-    assert.throws(() => varFlags(['CHAT_HEDGE']), /--var takes K=V/);
+    assert.throws(() => varFlags(['CHAT_PROVIDER']), /--var takes K=V/);
     assert.throws(() => varFlags(['=off']), /--var takes K=V/);
   });
 });

@@ -14,7 +14,7 @@ export const MAX_SLOTS = 20;
 /** The slot's owner: the fixture person (test/fixtures/people.json), never a real address. */
 export const SLOT_OWNER = 'sam@solo-sam.example';
 /** The vars `pnpm preview up --var K=V` may set on a slot: how its chat reaches a model (`packages/agent/src/model/routes.ts`), nothing else. */
-export const SLOT_VAR_KEYS = ['AI_GATEWAY_ID', 'CHAT_PROVIDER', 'CHAT_HEDGE'];
+export const SLOT_VAR_KEYS = ['AI_GATEWAY_ID', 'CHAT_PROVIDER'];
 /** The memory index's shape: MEMORY_INDEX_CONFIG in packages/host-cloudflare/src/provision/resources.ts. */
 export const MEMORY_INDEX = { dimensions: 768, metric: 'cosine' };
 /** The slot Worker's entry, from packages/agent/ where its generated config is written. */

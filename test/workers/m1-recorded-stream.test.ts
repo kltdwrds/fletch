@@ -39,8 +39,7 @@ async function replay(body: string): Promise<{ message: AssistantMessage; rows: 
   const ai = { run: async () => new Response(body, { status: 200, headers: { "content-type": "text/event-stream" } }) } as unknown as Ai;
   const streamFn = createStreamFn(
     { ai, ledger: { record: async (r) => void rows.push(r) }, wait: async () => {}, now: () => 0 },
-    // The recording is Workers AI's stream, so it replays on a Workers AI route; from M22.1 the chat
-    // route's primary is OpenRouter (its chunk shape: test/workers/m22-1-hedge.test.ts).
+    // The recording is Workers AI's stream, so it replays on a Workers AI route.
     { tenant: sam.company, person: sam.email, runId: "run-recorded", route: "job" },
   );
   const message = await (await streamFn(modelFor("job"), normalizeContext({ messages: [{ role: "user", content: "x", timestamp: 0 }] }), {})).result();
