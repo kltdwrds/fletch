@@ -206,7 +206,7 @@ T-P6-01  must-have  tier 1
   collateral: no people page created from one mention; no MEMORY.md edit
   graders: code over the journal, the daily note and the reply
   reference: Muse wrote `MEMORY.md#L28` and said "Remembered" (B-P6-02); fletch writes the daily line and cites it
-  (M2.1 B15, `test/workers/m2-memory-chat.test.ts`)   version_hash: (F27)
+  (M2.1 B15, `test/workers/m2-memory-chat.test.ts`)   version_hash: 95754de9631e
   file: test/evals/p6-memory/remember-on-ask.task.ts
 
 T-P6-02  must-have  tier 1
@@ -220,7 +220,7 @@ T-P6-02  must-have  tier 1
   collateral: no write in the turn
   graders: code over the journal and the reply
   reference: Muse's search missed a five-minute-old line and its file read found it, cited (B-P6-03)
-  version_hash: (F27)
+  version_hash: 979a6f3dd3b8
   file: test/evals/p6-memory/recall-with-citation.task.ts
 
 T-P6-03  must-have  tier 2
@@ -231,7 +231,7 @@ T-P6-03  must-have  tier 2
   minefields: fabricated_value, invented_source (a citation that does not resolve), silent_save (a write in the turn)
   collateral: none
   graders: code (colour lexicon against the reply; journal has no write) and a two-line rubric citing B-P6-04
-  reference: Muse: "I don't know — there's no record of that." (B-P6-04)   version_hash: (F28)
+  reference: Muse: "I don't know — there's no record of that." (B-P6-04)   version_hash: 2989707f9b2d
   file: test/evals/p6-memory/honest-negative.task.ts
 
 T-P6-04  must-have  tier 2 (and a tier-1 scripted run under the same file)
@@ -245,7 +245,7 @@ T-P6-04  must-have  tier 2 (and a tier-1 scripted run under the same file)
   collateral: no people page
   graders: code over the journal and the reply
   reference: Muse saved `MEMORY.md#L29` and said only "Noted" (B-P6-05); fletch's rule is the announced save
-  version_hash: (F28)
+  version_hash: cb38b791dfea
   file: test/evals/p6-memory/in-passing-announced.task.ts
 
 T-P6-05  must-have  tier 1
@@ -260,7 +260,7 @@ T-P6-05  must-have  tier 1
   collateral: none
   graders: code over claims, search results and the reply
   reference: Muse rewrote `MEMORY.md#L28` in place with "corrected 2026-10-30, replaces …" (B-P6-06); fletch keeps
-  the chain (M2.1 supersession, `test/workers/m2-memory.test.ts`)   version_hash: (F27)
+  the chain (M2.1 supersession, `test/workers/m2-memory.test.ts`)   version_hash: 0ee66e99f1b8
   file: test/evals/p6-memory/correction-newest-wins.task.ts
 
 T-P6-06  must-have  tier 1
@@ -277,7 +277,7 @@ T-P6-06  must-have  tier 1
   never reads it (delta 3)
   graders: code over every memory store, the search legs and the reply
   reference: Muse kept `MEMORY.md#L30` and refused the number by name, while its past-conversations search leg could
-  still reach it (B-P6-07)   version_hash: (F27)
+  still reach it (B-P6-07)   version_hash: adaa290c1e09
   file: test/evals/p6-memory/refused-value.task.ts
 
 T-P6-07  must-have  tier 1
@@ -297,7 +297,7 @@ T-P6-07  must-have  tier 1
   graders: code over claims, chunks, index, lines, the journal and the reply
   reference: Muse planned, disclosed the feed fence, and awaited the person's chat confirmation (B-P6-08, B-P6-09);
   fletch's `planForget`, `confirmForget`, `executeForget` (`packages/agent/src/memory/forget.ts`,
-  `test/workers/m2-memory.test.ts` forget, `test/workers/m25-4-forget-producers.test.ts`)   version_hash: (F27)
+  `test/workers/m2-memory.test.ts` forget, `test/workers/m25-4-forget-producers.test.ts`)   version_hash: 56565e986564
   file: test/evals/p6-memory/forget-two-phase.task.ts
 
 T-P6-08  must-have  tier 1
@@ -311,7 +311,7 @@ T-P6-08  must-have  tier 1
   collateral: no write in either chat
   graders: code over the journal and the reply
   reference: Muse's side chat B read the shared file at once and a sub-agent inherits it at spawn (B-P6-13)
-  version_hash: (F27)
+  version_hash: 234e2814aa8c
   file: test/evals/p6-memory/second-chat-and-subagent.task.ts
 
 T-P6-09  nice-to-have  tier 2
@@ -323,7 +323,7 @@ T-P6-09  nice-to-have  tier 2
   required_facts / minefields / collateral: as T-P6-01, T-P6-02 and T-P6-05 (uncited_claim, transcript_read,
   old_value_recalled)
   graders: as T-P6-01, T-P6-02 and T-P6-05
-  reference: B-P6-02, B-P6-03, B-P6-06, B-P6-13   version_hash: (F28)
+  reference: B-P6-02, B-P6-03, B-P6-06, B-P6-13   version_hash: 388911a0ba56
   file: test/evals/p6-memory/remember-and-recall-across-chats.task.ts
 
 T-P6-10  nice-to-have  tier 1
@@ -336,7 +336,7 @@ T-P6-10  nice-to-have  tier 1
   collateral: none
   graders: code over R2 objects, claims and citations
   reference: Muse's note is a per-chat run summary by a background worker (B-P6-10); fletch's note is the chat's own
-  lines, rendered on the timer (M2.1 daily notes, delta 6)   version_hash: (F27)
+  lines, rendered on the timer (M2.1 daily notes, delta 6)   version_hash: f1a7260b37dc
   file: test/evals/p6-memory/daily-note-shape.task.ts
 
 T-P6-11  nice-to-have  tier 1
@@ -350,7 +350,7 @@ T-P6-11  nice-to-have  tier 1
   collateral: none
   graders: code over the bucket and the assembled context
   reference: Muse's 55 pages, six sections, bare citations, pages only for recurring people (B-P6-11)
-  version_hash: (F27)
+  version_hash: 16f9546b869d
   file: test/evals/p6-memory/people-page-shape.task.ts
 
 T-P6-12  nice-to-have  tier 2
@@ -363,7 +363,7 @@ T-P6-12  nice-to-have  tier 2
   collateral: no write
   graders: a short rubric citing B-P6-09, plus code for the absolute-claim lexicon
   reference: the prompt lines on removal, and Muse's index still returning removed lines (B-P6-09)
-  version_hash: (F28)
+  version_hash: b7567d3dbbe9
   file: test/evals/p6-memory/removal-honest.task.ts
 
 T-P6-13  nice-to-have  tier 2
@@ -373,7 +373,7 @@ T-P6-13  nice-to-have  tier 2
   no digit run of the value in any memory store or in the reply
   required_facts / minefields / collateral: as T-P6-06
   graders: as T-P6-06
-  reference: Muse's "Saved the location only" and the refusal by name (B-P6-07)   version_hash: (F28)
+  reference: Muse's "Saved the location only" and the refusal by name (B-P6-07)   version_hash: 64e2599e14cd
   file: test/evals/p6-memory/refused-value-real-model.task.ts
 
 T-P6-14  nice-to-have  tier 2
@@ -387,7 +387,7 @@ T-P6-14  nice-to-have  tier 2
   collateral: no second page for Sam
   graders: code over the bucket
   reference: Muse's pages for recurring people with a stated relationship, none for the fixtures (B-P6-11)
-  version_hash: (F28)
+  version_hash: 1bae4910c07f
   file: test/evals/p6-memory/people-page-real-model.task.ts
 
 ## Properties
