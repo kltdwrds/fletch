@@ -77,7 +77,7 @@ export interface EngineHooks {
   /** The company's instructions (M10.1), fenced below the standing files; standalone tenants have none. */
   companyInstructions?: () => Promise<{ tenant: string; text: string } | null>;
   /** This chat's sub-agents (M7.2); without it there is no `subagents` namespace. */
-  subagents?: SubAgentsView & { delegate(input: DelegateInput): Promise<{ ok: boolean; code?: string; reason?: string }> };
+  subagents?: SubAgentsView & { delegate(input: DelegateInput): Promise<{ ok: boolean; code?: string; reason?: string }>; stopped?(turnId: string): void };
 }
 
 /** What a projecting connector may read of this chat: the proposals pending as simulated. */

@@ -8,7 +8,7 @@
 import type { Message } from "@earendil-works/pi-ai";
 import { unfence } from "../context/fence.ts";
 import type { JournalRow } from "../grants/journal.ts";
-import { DECISION_WORDS, OUTCOME_WORDS, UNKNOWN_OUTCOME } from "../obs/activity-words.ts";
+import { DECISION_WORDS, OUTCOME_WORDS, SUMMARY_WORDS, UNKNOWN_OUTCOME } from "../obs/activity-words.ts";
 import type { TranscriptRow } from "./history.ts";
 
 export type StepKind = "read" | "edit" | "write" | "delete" | "search" | "code" | "todo" | "memory" | "load" | "launch" | "close" | "action" | "observe" | "other";
@@ -79,9 +79,15 @@ const todoItems = (a: Args): Array<{ text: string; done: boolean }> => (Array.is
 const tasksOf = (a: Args): Array<{ role: string; brief: string }> =>
   Array.isArray(a.tasks) ? (a.tasks as Array<{ role?: unknown; brief?: unknown }>).map((t) => ({ role: str(t?.role), brief: str(t?.brief) })) : Array.isArray(a.briefs) ? (a.briefs as unknown[]).map((b) => ({ role: "worker", brief: str(b) })) : [];
 
+/** The page a browse call names: its address, or the link number it was given. */
+const pageOf = (a: Args): string => str(a.url) || (typeof a.url_id === "number" ? `link ${a.url_id}` : "");
+const bytes = (s: string) => new TextEncoder().encode(s).length;
+
 /** Each tool's kind and title in code's words, by tool name; a tool not here is "Called <tool>". */
 export const STEP_WORDS: Record<string, { kind: StepKind; title: (a: Args) => string }> = {
   file_read: { kind: "read", title: (a) => `Read \`${str(a.path)}\`` },
+  browse_open: { kind: "read", title: (a) => `Read the page \`${pageOf(a)}\`` },
+  browse_live: { kind: "read", title: (a) => (pageOf(a) ? `Opened the page \`${pageOf(a)}\` in the live browser` : "Read the live browser's page again") },
   file_list: { kind: "observe", title: (a) => (str(a.prefix) ? `Listed the files under \`${str(a.prefix)}\`` : "Listed your files") },
   file_write: { kind: "write", title: (a) => `Wrote \`${str(a.path)}\`` },
   file_edit: { kind: "edit", title: (a) => `Edited \`${str(a.path)}\`` },
@@ -101,6 +107,10 @@ export const STEP_WORDS: Record<string, { kind: StepKind; title: (a: Args) => st
   memory_search: { kind: "search", title: (a) => `Searched memory for \`${str(a.query)}\`` },
   memory_get: { kind: "read", title: (a) => `Read memory \`${str(a.path)}\`` },
   memory_explain: { kind: "observe", title: () => "Looked up where a memory came from" },
+  // A job set or changed in place is a write the task names by its subject (F31, T-P5-10); turning one on or off, or
+  // removing it, is the person's card, an action.
+  jobs_create: { kind: "write", title: (a) => `Set the job \`${str(a.title)}\`` },
+  jobs_update: { kind: "edit", title: (a) => `Changed the job \`${str(a.id)}\`` },
   skill_read: { kind: "read", title: (a) => `Read the skill \`${str(a.name) || str(a.path)}\`` },
   skill_search: { kind: "search", title: (a) => `Searched skills for \`${str(a.query)}\`` },
   tool_search: {
@@ -189,8 +199,11 @@ export function detailOf(input: StepInput): StepDetail {
       break;
   }
   if (!result) lines.push(step.state === "waiting" ? "Waiting for your decision." : "No result yet.");
+  // A page read says how much came back; a file the step wrote or edited is its card (T-P5-02).
+  if (result && !result.isError && step.tool.startsWith("browse_")) lines.push(`${plural(bytes(result.text), "byte")} came back.`);
+  const files: FileCard[] = result && !result.isError && (step.kind === "write" || step.kind === "edit") && str(args.path) ? [{ path: str(args.path), preview: str(step.kind === "edit" ? args.newText : args.text).split("\n").slice(0, PREVIEW_LINES).join("\n") }] : [];
   const answered = result ? { ok: !result.isError, code: result.isError ? step.code : null, durationMs: result.durationMs, ...cut(result.text) } : null;
-  return { prose, blocks, result: answered, lines, files: [], cut: blocks.some((b) => b.cut) || answered?.cut === true };
+  return { prose, blocks, result: answered, lines, files, cut: blocks.some((b) => b.cut) || answered?.cut === true };
 }
 
 /** The step's state and code from the journal's rows for its call, the latest first: a decision's row comes after the proposal's. */
@@ -256,14 +269,47 @@ export function stepsOf(rows: readonly TranscriptRow[], journal: readonly Journa
 const textOfAssistant = (m: Message): string =>
   m.role === "assistant" && Array.isArray(m.content) ? m.content.flatMap((p) => (p.type === "text" && typeof p.text === "string" ? [p.text] : [])).join("").trim() : "";
 
+/** Each step kind's group in the summary's counts (`SUMMARY_WORDS.groups`); a tool load is counted only when it failed. */
+const SUMMARY_GROUP: Record<StepKind, keyof typeof SUMMARY_WORDS.groups | null> = {
+  read: "read", observe: "read", search: "read",
+  write: "wrote", edit: "wrote", delete: "wrote", memory: "wrote",
+  code: "ran", action: "ran", launch: "ran", close: "ran",
+  todo: "other", other: "other", load: null,
+};
+const failedState = (s: Pick<StepRecord, "state">) => s.state === "failed" || s.state === "refused";
+
 /**
- * The task's summary, its last step: the last done turn's final assistant text, then up to `SUMMARY_FILES` file cards
- * for the paths its `edit` and `write` steps changed, newest first, each with the first `PREVIEW_LINES` lines of the
- * change. Null while no turn of the task is done. Never the task's title.
+ * What a task did, by count, in `SUMMARY_WORDS` (F31, P5 delta 1): read, wrote, ran and other steps, each with how many
+ * of it failed, the files written named after "wrote". Computed from the steps' states alone, never from a model's words.
  */
-export function summaryOf(rows: readonly TranscriptRow[], steps: readonly StepRecord[], doneTurnIds: readonly string[], args: ReadonlyMap<string, Args>): StepRecord | null {
+export function countsOf(steps: readonly StepRecord[], args: ReadonlyMap<string, Args>): string {
+  const parts: string[] = [];
+  for (const g of Object.keys(SUMMARY_WORDS.groups) as Array<keyof typeof SUMMARY_WORDS.groups>) {
+    const mine = steps.filter((s) => s.kind in SUMMARY_GROUP && (SUMMARY_GROUP[s.kind as StepKind] ?? (failedState(s) ? "other" : null)) === g);
+    if (!mine.length) continue;
+    const failed = mine.filter(failedState).length;
+    const paths = g === "wrote" ? [...new Set(mine.filter((s) => s.state === "done").map((s) => str(args.get(s.callId)?.path)).filter(Boolean))].slice(0, SUMMARY_FILES) : [];
+    parts.push(SUMMARY_WORDS.groups[g].replace("{n}", String(mine.length)) + (failed ? SUMMARY_WORDS.failed.replace("{n}", String(failed)) : "") + (paths.length ? SUMMARY_WORDS.files.replace("{paths}", paths.join(", ")) : ""));
+  }
+  return capital(parts.join("; ")) || SUMMARY_WORDS.none;
+}
+
+/** The arguments of every tool call in `rows`, by call id. */
+export function argsOf(rows: readonly TranscriptRow[]): Map<string, Args> {
+  const args = new Map<string, Args>();
+  for (const { message: m } of rows) if (m.role === "assistant" && Array.isArray(m.content)) for (const p of m.content) if (p.type === "toolCall") args.set(p.id, (p.arguments ?? {}) as Args);
+  return args;
+}
+
+/**
+ * The task's summary, its last step (F13, F31): code's counts of what the task did (`countsOf`) as its words, the last
+ * done turn's final assistant text quoted as a block labelled the agent's own words, never paraphrased, then up to
+ * `SUMMARY_FILES` file cards for the paths its `edit` and `write` steps changed, newest first, each with the first
+ * `PREVIEW_LINES` lines of the change. Null while the task runs or waits, and while no turn of it is done. Never the title.
+ */
+export function summaryOf(rows: readonly TranscriptRow[], steps: readonly StepRecord[], doneTurnIds: readonly string[], args: ReadonlyMap<string, Args>, finished = true): StepRecord | null {
   const lastDone = doneTurnIds.at(-1);
-  if (lastDone === undefined) return null;
+  if (lastDone === undefined || !finished) return null;
   const said = [...rows].reverse().find((r) => r.turnId === lastDone && textOfAssistant(r.message));
   const text = said ? textOfAssistant(said.message) : "";
   const files: FileCard[] = [];
@@ -274,7 +320,7 @@ export function summaryOf(rows: readonly TranscriptRow[], steps: readonly StepRe
     if (!path || files.some((f) => f.path === path) || files.length >= SUMMARY_FILES) continue;
     files.push({ path, preview: str(s.kind === "edit" ? a.newText : a.text).split("\n").slice(0, PREVIEW_LINES).join("\n") });
   }
-  const body = cut(text);
+  const reply = text ? block(SUMMARY_WORDS.reply, text) : null;
   const at = said && typeof said.message.timestamp === "number" ? said.message.timestamp : null;
   return {
     n: steps.length + 1,
@@ -288,18 +334,17 @@ export function summaryOf(rows: readonly TranscriptRow[], steps: readonly StepRe
     startedAt: at,
     endedAt: at,
     durationMs: null,
-    detail: { prose: body.text, blocks: [], result: null, lines: [], files, cut: body.cut },
+    detail: { prose: countsOf(steps, args), blocks: reply ? [reply] : [], result: null, lines: reply ? [] : [SUMMARY_WORDS.noReply], files, cut: reply?.cut === true },
   };
 }
 
 /** The tool calls a step list counts: every call but those that are the chat itself. */
 export const stepCalls = (m: Message): number => (m.role === "assistant" && Array.isArray(m.content) ? m.content.filter((p) => p.type === "toolCall" && !NOT_STEPS.has(p.name)).length : 0);
 
-/** A task's whole timeline: its steps, cut at `STEPS_PER_TASK` with a marker, then the summary. */
-export function timelineOf(rows: readonly TranscriptRow[], journal: readonly JournalRow[], o: { chatId: string; doneTurnIds: readonly string[] }): { steps: StepRecord[]; capped: boolean } {
+/** A task's whole timeline: its steps, cut at `STEPS_PER_TASK` with a marker, then the summary once the task is `finished`. */
+export function timelineOf(rows: readonly TranscriptRow[], journal: readonly JournalRow[], o: { chatId: string; doneTurnIds: readonly string[]; finished?: boolean }): { steps: StepRecord[]; capped: boolean } {
   const all = stepsOf(rows, journal, o);
-  const args = new Map<string, Args>();
-  for (const { message: m } of rows) if (m.role === "assistant" && Array.isArray(m.content)) for (const p of m.content) if (p.type === "toolCall") args.set(p.id, (p.arguments ?? {}) as Args);
+  const args = argsOf(rows);
   const capped = all.length > STEPS_PER_TASK;
   const steps = capped ? all.slice(0, STEPS_PER_TASK - 1) : all;
   if (capped) {
@@ -308,7 +353,7 @@ export function timelineOf(rows: readonly TranscriptRow[], journal: readonly Jou
     steps.push({ n: steps.length + 1, turnId: all.at(-1)?.turnId ?? "", callId: "", kind: "marker", tool: "", title, state: "done", code: null, startedAt: null, endedAt: null, durationMs: null, detail: { prose: title, blocks: [], result: null, lines: [], files: [], cut: false } });
   }
   // The summary's file cards read every change, the hidden ones included.
-  const summary = summaryOf(rows, all, o.doneTurnIds, args);
+  const summary = summaryOf(rows, all, o.doneTurnIds, args, o.finished ?? true);
   if (summary) steps.push({ ...summary, n: steps.length + 1 });
   return { steps, capped };
 }

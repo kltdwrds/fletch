@@ -8,13 +8,15 @@
 // received. Its steps (F13) are the turns' tool calls, read by `activity-steps.ts` with the journal's outcomes.
 import type { Message } from "@earendil-works/pi-ai";
 import type { JournalRow } from "../grants/journal.ts";
-import { type StepRecord, STEPS_PER_TASK, stepCalls, timelineOf } from "./activity-steps.ts";
+import { statusWords } from "../obs/activity-words.ts";
+import { argsOf, countsOf, type StepRecord, STEPS_PER_TASK, stepCalls, stepsOf, timelineOf } from "./activity-steps.ts";
 import { type SubAgentRows, type SubAgentSection, subagentSections } from "./activity-subagents.ts";
 import { type TranscriptRow, TYPED_WITHOUT_ID } from "./history.ts";
 import type { Mailbox } from "./mailbox.ts";
 import { groupIdOf } from "./outbox.ts";
 import { promptTitle } from "./prompt-title.ts";
 import type { ChatStore, TurnRow } from "./store.ts";
+import { stopKey } from "./stop.ts";
 import type { Effect } from "./tools.ts";
 
 export type TaskStatus = "running" | "waiting" | "done" | "failed" | "stopped";
@@ -37,8 +39,12 @@ export interface TaskRecord {
   stepCount: number;
   /** The delegation groups its turns launched or received (M7.2): the sub-agent sections' join key (F14). */
   groups: string[];
-  /** A later part's summary of the task; none yet. */
-  summary: null;
+  /** Its steps that failed or were refused (F31, P5 delta 2): said beside the status, never failing the task by itself. */
+  failed: number;
+  /** The status and the failed count in `ACTIVITY_TEXT`'s words (`statusWords`): the row and the drawer's pill say this. */
+  words: string;
+  /** Code's one line (B-P5-01): the latest step's title while it runs or waits, the summary step's counts once it ended. */
+  summary: string | null;
   /** Whether its steps are cut at `STEPS_PER_TASK` (F13): the timeline then says how many are not shown. */
   capped: boolean;
 }
@@ -82,23 +88,35 @@ function record(store: ChatStore, mailbox: Mailbox, chatId: string, g: Group, ro
   const first = own.find((r) => r.turnId === anchor.id && r.message.role === "user");
   // A reply's quote is not the person's words (M29.4): the title is what they typed after it.
   const words = g.request ?? (first ? store.actions.shown(g.typedId, textOf(first.message)) : "");
-  const status = statusOf(last);
   const stepCount = own.reduce((n, r) => n + stepCalls(r.message), 0);
-  const launched = g.turns.flatMap((t) => store.committed(t.id).flatMap((o) => ((e: Effect) => (e.kind === "delegate" ? [groupIdOf(t.id, e.id)] : []))(JSON.parse(o.payload) as Effect)));
+  const delegations = g.turns.flatMap((t) => store.committed(t.id).flatMap((o) => ((e: Effect) => (e.kind === "delegate" ? [{ grp: groupIdOf(t.id, e.id), callId: e.id }] : []))(JSON.parse(o.payload) as Effect)));
+  const launched = delegations.map((d) => d.grp);
   const received = mailbox.taken().flatMap((r) => (r.kind === "internal_handoff" && r.turnId && ids.has(r.turnId) && r.scope.startsWith("delegation:") ? [r.scope.slice("delegation:".length)] : []));
+  // Work it handed to sub-agents is still its work (B-P5-08): a task whose turn finished while a delegation it launched
+  // has not handed off is running, so it never reads done before the result; a delegation the host refused never starts.
+  const refused = new Set(store.rowsOfTurns(delegations.map((d) => `subagents:${d.callId}`)).map((r) => r.turnId.slice("subagents:".length)));
+  const out = delegations.some((d) => !received.includes(d.grp) && !refused.has(d.callId));
+  // Stopped by the person once its turn ended (F31): the delegation still out was closed and the task says Stopped.
+  const status = statusOf(last) === "done" && out ? (store.meta(stopKey(last.id)) ? "stopped" : "running") : statusOf(last);
+  const steps = stepsOf(own, [], { chatId });
+  const failed = steps.filter((s) => s.state === "failed" || s.state === "refused").length;
+  const code = status === "done" || status === "running" ? null : last.code;
+  const summary = status === "running" || status === "waiting" ? (steps.at(-1)?.title ?? null) : steps.length ? countsOf(steps, argsOf(own)) : null;
   return {
     id: anchor.id,
     chatId,
     title: promptTitle(words),
     origin: g.origin,
     status,
-    code: status === "done" || status === "running" ? null : last.code,
+    code,
     startedAt: anchor.started_at,
     endedAt: status === "running" || status === "waiting" ? null : last.ended_at,
     turnIds: g.turns.map((t) => t.id),
     stepCount,
     groups: [...new Set([...launched, ...received])],
-    summary: null,
+    failed,
+    words: statusWords({ status, code, failed }),
+    summary,
     capped: stepCount > STEPS_PER_TASK,
   };
 }
@@ -123,7 +141,23 @@ export function taskOf(store: ChatStore, mailbox: Mailbox, chatId: string, id: s
 export function taskSteps(store: ChatStore, task: TaskRecord, journal: readonly JournalRow[]): StepRecord[] {
   const turnIds = new Set(task.turnIds);
   const done = task.turnIds.filter((id) => ((t) => t?.status === "done" && t.code !== "AWAITING_DECISION")(store.turn(id)));
-  return timelineOf(store.rowsOfTurns(task.turnIds), journal.filter((r) => turnIds.has(r.runId)), { chatId: task.chatId, doneTurnIds: done }).steps;
+  return timelineOf(store.rowsOfTurns(task.turnIds), journal.filter((r) => turnIds.has(r.runId)), { chatId: task.chatId, doneTurnIds: done, finished: task.status !== "running" && task.status !== "waiting" }).steps;
+}
+
+/** A task's model calls, tokens and money (F31, P5 delta 7): the Ledger's rows of the task's own turns, by run id. */
+export type TaskUsage = { ok: true; calls: number; tokens: number; costMicros: number; models: string[] } | { ok: false; code: "USAGE_UNREAD" };
+
+/** Sums the Ledger rows keyed by the task's turn ids; a Ledger that cannot be read is said by code, never as zero. */
+export async function taskUsage(rows: () => Promise<Array<{ runId: string; model: string; inputTokens: number; outputTokens: number; costMicros?: number }>>, task: TaskRecord): Promise<TaskUsage> {
+  const turns = new Set(task.turnIds);
+  let all: Awaited<ReturnType<typeof rows>>;
+  try {
+    all = await rows();
+  } catch {
+    return { ok: false, code: "USAGE_UNREAD" };
+  }
+  const mine = all.filter((r) => turns.has(r.runId));
+  return { ok: true, calls: mine.length, tokens: mine.reduce((n, r) => n + r.inputTokens + r.outputTokens, 0), costMicros: mine.reduce((n, r) => n + (r.costMicros ?? 0), 0), models: [...new Set(mine.map((r) => r.model))] };
 }
 
 type Owned = {
@@ -131,9 +165,10 @@ type Owned = {
   tasksFor(person: string): TaskRecord[] | null;
   taskFor(person: string, id: string): TaskRecord | null;
   stepsFor(person: string, task: TaskRecord): Promise<StepRecord[] | null>;
+  usageFor(person: string, task: TaskRecord): Promise<TaskUsage>;
 };
 export type TasksResult = { ok: true; tasks: TaskRecord[] } | { ok: false; code: "CHAT_NOT_OWNER" };
-export type TaskResult = { ok: true; task: TaskRecord; steps: StepRecord[]; subagents: SubAgentSection[] } | { ok: false; code: "CHAT_NOT_OWNER" | "TASK_NOT_FOUND" };
+export type TaskResult = { ok: true; task: TaskRecord; steps: StepRecord[]; subagents: SubAgentSection[]; usage: TaskUsage } | { ok: false; code: "CHAT_NOT_OWNER" | "TASK_NOT_FOUND" };
 
 /** A chat's tasks for its owner, as the `Chat` object answers them; anyone else is refused by code, never answered empty. */
 export function chatTasks(chat: Owned, person: string): TasksResult {
@@ -142,7 +177,7 @@ export function chatTasks(chat: Owned, person: string): TasksResult {
 }
 
 /**
- * One task, its steps and its sub-agent sections (F14) for the chat's owner, the sections read from the chat's own
+ * One task, its steps, its sub-agent sections (F14) and its usage (F31) for the chat's owner, the sections read from the chat's own
  * `subagents` rows and, for the owner's rows, their facets' transcripts (D-0011), only after the owner check; anyone else is `CHAT_NOT_OWNER`, a task that does not begin there
  * `TASK_NOT_FOUND`.
  */
@@ -151,5 +186,17 @@ export async function chatTask(chat: Owned, person: string, id: string, subagent
   const task = chat.taskFor(person, id);
   if (!task) return { ok: false, code: "TASK_NOT_FOUND" };
   const steps = await chat.stepsFor(person, task);
-  return steps ? { ok: true, task, ...(await subagentSections(subagents, person, task, steps)) } : { ok: false, code: "CHAT_NOT_OWNER" };
+  return steps ? { ok: true, task, ...(await subagentSections(subagents, person, task, steps)), usage: await chat.usageFor(person, task) } : { ok: false, code: "CHAT_NOT_OWNER" };
+}
+
+/**
+ * What stopping a task means (F31): a task that is not the owner's is `CHAT_NOT_OWNER`, one that does not begin there
+ * `TASK_NOT_FOUND`, one no longer running `TASK_NOT_RUNNING`; a task whose last turn is the one running stops that turn
+ * as the composer's Stop does; a task whose turn ended with a delegation still out halts that turn's delegations.
+ */
+export function taskStop(task: TaskRecord | null, owned: boolean, running: string | undefined): { halt: string } | { turn: string } | { ok: false; code: "CHAT_NOT_OWNER" | "TASK_NOT_FOUND" | "TASK_NOT_RUNNING" } {
+  if (!task) return { ok: false, code: owned ? "TASK_NOT_FOUND" : "CHAT_NOT_OWNER" };
+  const last = task.turnIds.at(-1) as string;
+  if (task.status !== "running") return { ok: false, code: "TASK_NOT_RUNNING" };
+  return running === last ? { turn: last } : { halt: last };
 }

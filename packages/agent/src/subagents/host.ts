@@ -127,6 +127,26 @@ export class SubAgentHost {
     return { ok: true, closed, settled };
   }
 
+  /**
+   * A stopped turn ends the work it launched (F31, Q25): each of its sub-agents not yet settled, and every one below
+   * it, ends `failed` with SUBAGENT_CLOSED, and its delegations are marked handed off without waking a turn, so the
+   * person's Stop is the task's last word. A run in flight finishes as closed and is not handed off.
+   */
+  stopTurn(turnId: string): void {
+    const { store } = this.d;
+    const at = this.d.now();
+    const end = (row: SubAgentRow): void => {
+      if (row.status !== "done" && row.status !== "failed") store.setStatus(row.id, "failed", at, { code: SUBAGENT_CLOSED });
+      for (const child of store.children(row.id)) end(child);
+    };
+    store.transaction(() => {
+      for (const row of store.list().filter((r) => r.turnId === turnId && r.parent === "main")) {
+        end(row);
+        store.markHandedOff(row.grp, at);
+      }
+    });
+  }
+
   /** One alarm's work: hand off a settled delegation, or run one sub-agent. Re-arms while work remains. */
   async step(): Promise<void> {
     if (this.stepping) return;

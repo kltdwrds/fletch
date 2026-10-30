@@ -13,7 +13,7 @@ export type SendResult =
   | { status: "duplicate"; id: string; ordinal: number; state: string }
   | { status: "refused"; code: "CHAT_NOT_OWNER" | "EMPTY_MESSAGE" | "MEMORY_UNAVAILABLE" | "SECRET_NOT_HELD" | "QUOTE_NOT_FOUND" };
 
-export type StopResult = { ok: true; turn: string } | { ok: false; code: "CHAT_NOT_OWNER" | "NO_TURN_RUNNING" };
+export type StopResult = { ok: true; turn: string } | { ok: false; code: "CHAT_NOT_OWNER" | "NO_TURN_RUNNING" | "TASK_NOT_FOUND" | "TASK_NOT_RUNNING" };
 
 export type ClaimResult = { ok: true } | { ok: false; code: "CHAT_NOT_OWNER" };
 

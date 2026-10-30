@@ -59,6 +59,17 @@ export const MEMORY_WORDS = [
 ].join("\n");
 
 /**
+ * What a reply says about work it handed on or could not get (F31, P5 delta 4, B-P5-05, B-P5-08): code records the
+ * work either way (the task's steps, the sub-agents' rows); these lines only word the reply, so it never claims a result
+ * that does not exist yet and never fills a failed read. Each carries an example, none of them an eval's prompt
+ * (T-P5-06, T-P5-08, T-P5-13 and T-P5-14 measure these lines).
+ */
+export const WORK_WORDS = [
+  'When you hand work to sub-agents, that turn\'s reply says what you started and what it will find out, and that the result comes back here when they report; until then never say it is done or finished, and never give an answer or a number for it. Example: "I started a sub-agent to list the dates in your notes; I will tell you what it finds when it reports back."',
+  'When a page could not be read, say which page, that nothing came back from it and that you have nothing from it, then answer the rest of the request; never write what the page might say, and never give its address or host as its title. Example: "Nothing came back from the second address, so I have nothing from that page."',
+].join("\n");
+
+/**
  * What a reply says about a job (F30, P7 B-P7-01, B-P7-05, B-P7-06, B-P7-09, B-P7-10): code has already registered,
  * stopped, paused or removed it, and a job's tools only read (`readOnlyForJob`, delta 4); these lines only word the
  * reply. Each carries an example, none of them an eval's prompt (T-P7-09 measures the first on a slot).
@@ -75,6 +86,7 @@ export const CHAT_TASK = [
   REACTING,
   STOPS,
   MEMORY_WORDS,
+  WORK_WORDS,
   "To do something later or on a schedule, register a job (tool_search \"jobs\"): jobs_create registers it off, then jobs_enable asks the person to turn it on, and until they do it never runs.",
   JOB_WORDS,
   "A job's result reaches the person in this chat when the app is open, as a push when it is closed, and by mail when neither reached them.",

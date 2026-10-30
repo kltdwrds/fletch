@@ -231,7 +231,7 @@ T-P5-01  must-have  tier 1
   collateral: no journal row for the read (memory and reads are not journaled), no write outside `p5-probe.md`
   graders: code (the task record, the route's JSON, the words table)
   reference: Muse's one thread per user turn with a model-rewritten subtitle, global and capped (B-P5-01)
-  version_hash: unset
+  version_hash: 4bbaca442d0d
   file: test/evals/p5-activity/request-shows-as-task.task.ts
 
 T-P5-02  must-have  tier 1
@@ -251,7 +251,7 @@ T-P5-02  must-have  tier 1
   collateral: none
   graders: code (the route's JSON, the drawer's text table, the design system's drawer specimen at phone width)
   reference: Muse's detail dialog with a Summary pane cut to a strip on a phone and steps titled by prose (B-P5-02)
-  version_hash: unset
+  version_hash: 4d755e0dc22d
   file: test/evals/p5-activity/task-drawer-detail.task.ts
 
 T-P5-03  must-have  tier 1
@@ -267,7 +267,7 @@ T-P5-03  must-have  tier 1
   collateral: none
   graders: code (the thread's visible history during and after; the stop note's words)
   reference: Muse's typing dots and composer stop while the Activity row carries the steps (B-P5-03)
-  version_hash: unset
+  version_hash: e2362069df51
   file: test/evals/p5-activity/thread-stays-conversation.task.ts
 
 T-P5-04  must-have  tier 1
@@ -288,7 +288,7 @@ T-P5-04  must-have  tier 1
   graders: code (the record against the transcript's tool results)
   reference: Muse's Activity Summary "two links" above a file saying one; the step 5 row titled by the previous
   turn's intent; the clean-up row contradicting its `rm` (B-P5-04)
-  version_hash: unset
+  version_hash: 76f180ccb0bb
   file: test/evals/p5-activity/record-words-from-code.task.ts
 
 T-P5-05  must-have  tier 1
@@ -304,7 +304,7 @@ T-P5-05  must-have  tier 1
   collateral: none
   graders: code (the summary step's fields against the steps)
   reference: Muse's model-written finish_message that contradicted its own turn, three times (B-P5-04)
-  version_hash: unset
+  version_hash: 4dd863270df3
   file: test/evals/p5-activity/summary-is-code.task.ts
 
 T-P5-06  must-have  tier 1
@@ -324,7 +324,7 @@ T-P5-06  must-have  tier 1
   collateral: none
   graders: code (the tool result, the step state, the reply's words against a deny-list)
   reference: Muse's plain report of the unreachable page and its raw error fields in the step report (B-P5-05)
-  version_hash: unset
+  version_hash: 9954ada128c5
   file: test/evals/p5-activity/failed-read-told-plainly.task.ts
 
 T-P5-07  must-have  tier 1
@@ -346,7 +346,7 @@ T-P5-07  must-have  tier 1
   graders: code (the record, the words table, the panel's and the drawer's rendering of it)
   reference: Muse's `success` with a failed action and a card that said Completed then Failed for the same failure
   (B-P5-06, B-P5-07)
-  version_hash: unset
+  version_hash: d1640ecfa1db
   file: test/evals/p5-activity/partial-failure-status.task.ts
 
 T-P5-08  must-have  tier 1
@@ -369,7 +369,7 @@ T-P5-08  must-have  tier 1
   collateral: no write by the child (a sub-agent's gate refuses every action)
   graders: code (the acknowledgement's words, the sections, the facet read's refusal)
   reference: Muse's "Done — a sub-agent is on it" and its child rows with ids and status only (B-P5-08)
-  version_hash: unset
+  version_hash: 79a0c624a6d1
   file: test/evals/p5-activity/subagent-section.task.ts
 
 T-P5-09  must-have  tier 1
@@ -388,7 +388,7 @@ T-P5-09  must-have  tier 1
   graders: code (the job's runs and outbox, the panel's rows, the dialog's history words)
   reference: Muse's run that "Succeeded" with `result_summary null`, no message and no Activity row (B-P5-09);
   P7's T-P7-02 and T-P7-03 grade the delivery itself
-  version_hash: unset
+  version_hash: a2e6f39d46c5
   file: test/evals/p5-activity/background-run-in-activity.task.ts
 
 T-P5-10  must-have  tier 1
@@ -413,7 +413,7 @@ T-P5-10  must-have  tier 1
   graders: code (the steps against the stores; the table enumeration)
   reference: Muse's audit from memory search, "one sub-agent run" over four, the worker unlisted, 22 background lines
   in the daily log (B-P5-10, B-P5-11)
-  version_hash: unset
+  version_hash: 76c2b6ba3b0c
   file: test/evals/p5-activity/audit-from-records.task.ts
 
 T-P5-11  must-have  tier 1
@@ -434,7 +434,7 @@ T-P5-11  must-have  tier 1
   collateral: none
   graders: code (the rollup against the rows; the pages' text)
   reference: Muse's plan-level percentage, no model column, 23 million tokens unseen (B-P5-12)
-  version_hash: unset
+  version_hash: d9a25699f9a6
   file: test/evals/p5-activity/usage-per-task-and-day.task.ts
 
 T-P5-12  nice-to-have  tier 2
@@ -451,7 +451,7 @@ T-P5-12  nice-to-have  tier 2
   collateral: none
   graders: page (the rubric over the captures) and code (the route's JSON before and after)
   reference: Muse's persistence of rows and cards, the Summary strip on a phone (B-P5-13, B-P5-02, B-P5-07)
-  version_hash: unset
+  version_hash: 491388a40322
   file: test/evals/p5-activity/reload-and-phone.task.ts
 
 T-P5-13  must-have  tier 2
@@ -467,7 +467,7 @@ T-P5-13  must-have  tier 2
   collateral: none
   graders: code (deny-list over the reply; the step state) and judge (the reply says what was not obtained)
   reference: Muse's "there is no page there to read" (B-P5-05)
-  version_hash: unset
+  version_hash: 70d327cccaf7
   file: test/evals/p5-activity/failed-read-real-model.task.ts
 
 T-P5-14  nice-to-have  tier 2
@@ -482,7 +482,7 @@ T-P5-14  nice-to-have  tier 2
   collateral: none
   graders: code (deny-list; the record) and judge (the acknowledgement names the work)
   reference: Muse's "Done — a sub-agent is on it" (B-P5-08)
-  version_hash: unset
+  version_hash: 3b375f45333e
   file: test/evals/p5-activity/subagent-ack-real-model.task.ts
 
 T-P5-15  must-have  tier 2
@@ -498,7 +498,7 @@ T-P5-15  must-have  tier 2
   collateral: one file written, nothing else
   graders: code (the route's JSON, the file, the reply's number) and judge (the reply reads as one answer)
   reference: Muse's turn whose record said "two links" over a file that said one (B-P5-01, B-P5-03, B-P5-04)
-  version_hash: unset
+  version_hash: 4b4ee563647e
   file: test/evals/p5-activity/one-request-one-task-real-model.task.ts
 
 ## Properties

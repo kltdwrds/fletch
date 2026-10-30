@@ -9,7 +9,7 @@ import type { CardView } from "../chat/cards.ts";
 import type { ChatEntry, ChatsCall } from "../person/chats.ts";
 import { JOB_ID } from "../jobs/body.ts";
 import type { JobStatus } from "../jobs/store.ts";
-import { statusWords } from "../jobs/status-words.ts";
+import { runWord, statusWords } from "../jobs/status-words.ts";
 import { nextSlotAfter } from "../jobs/schedule.ts";
 import type { TaskRecord, TaskResult, TasksResult } from "../chat/activity.ts";
 import { type ConnectorReads, connectorRoutes } from "./connector-routes.ts";
@@ -53,6 +53,8 @@ export interface AppDirectory extends ConnectorReads {
   chatTasks(person: string, chatId: string): Promise<TasksResult>;
   /** One task of a chat by its anchor turn (F12) with its steps, the summary last (F13), answered by that `Chat` for its owner alone. */
   chatTask(person: string, chatId: string, turnId: string): Promise<TaskResult>;
+  /** Stops a running task (F31): its turn, or the delegation still out once its turn ended. */
+  chatTaskStop(person: string, chatId: string, turnId: string): Promise<{ ok: boolean; code?: string }>;
   /** One home file read for its owner: its lines and when it last changed. */
   homeFile(person: string, path: "IDENTITY.md" | "SOUL.md" | "MEMORY.md"): Promise<unknown>;
   now(): number;
@@ -69,6 +71,32 @@ export const DECIDED_SHOWN = 20;
 export const TASKS_SHOWN = 100;
 /** Runs shown per job: the latest first. */
 export const RUNS_SHOWN = 10;
+
+type Run = { runId: string; phase: string; signal: string | null; scheduledFor: number; updatedAt: number; manual: boolean; code: string | null };
+type Inspected = { runs: Run[]; outbox?: Array<{ runId: string | null; state: string }> };
+/** Each run with its word (F31, P5 delta 5): the same `runWord` for the dialog's Run history and the Activity row. */
+const worded = (s: Inspected) => s.runs.map((r) => ({ ...r, word: runWord(r, s.outbox ?? []) }));
+
+/**
+ * The finished runs of the person's jobs as Activity rows (F31, B-P5-09): each with its job's title and its word, newest
+ * first, at most `RUNS_SHOWN` per job; a job that could not be read is named with its code, never left out.
+ */
+async function jobRuns(dir: AppDirectory, person: string): Promise<{ runs: Array<Record<string, unknown>>; jobsUnread: Array<{ id: string; code: string }> }> {
+  const ids = (await dir.jobIds(person)) ?? [];
+  const runs: Array<Record<string, unknown>> = [];
+  const jobsUnread: Array<{ id: string; code: string }> = [];
+  for (const id of ids) {
+    const s = await part(() => dir.job(person, id).inspect(person));
+    if (failed(s)) {
+      jobsUnread.push({ id, code: (s as Refusal).code });
+      continue;
+    }
+    const title = ((s as { job: { def?: { title?: string } } | null }).job?.def?.title ?? "") || id;
+    for (const r of worded(s as unknown as Inspected).filter((x) => x.word).slice(-RUNS_SHOWN)) runs.push({ jobId: id, title, runId: r.runId, scheduledFor: r.scheduledFor, at: r.updatedAt, manual: r.manual, code: r.code, word: r.word });
+  }
+  runs.sort((a, b) => Number(b.at) - Number(a.at));
+  return { runs, jobsUnread };
+}
 /** Pages of 200 lines one file read walks; a file longer than this is answered `complete: false`, never as whole. */
 export const FILE_PAGES = 100;
 
@@ -192,7 +220,7 @@ export async function appRoutes(request: Request, url: URL, person: string, dir:
     }
     // A stable sort: two tasks begun on the same tick keep their chat's own order.
     tasks.sort((a, b) => b.startedAt - a.startedAt);
-    return json({ ok: true, tasks: tasks.slice(0, TASKS_SHOWN), unread });
+    return json({ ok: true, tasks: tasks.slice(0, TASKS_SHOWN), unread, ...(await jobRuns(dir, person)) });
   }
   const task = /^\/app\/activity\/([^/]+)\/([^/]+)$/.exec(url.pathname);
   if (task && request.method === "GET") {
@@ -200,6 +228,13 @@ export async function appRoutes(request: Request, url: URL, person: string, dir:
     if (!CHAT_ID.test(chatId)) return json({ ok: false, code: "CHAT_NOT_FOUND" }, 404);
     if (!CHAT_ID.test(turnId)) return json({ ok: false, code: "TASK_NOT_FOUND" }, 404);
     return answer(await part(() => dir.chatTask(person, chatId, turnId)));
+  }
+  const stopping = /^\/app\/activity\/([^/]+)\/([^/]+)\/stop$/.exec(url.pathname);
+  if (stopping && request.method === "POST") {
+    const [, chatId, turnId] = stopping as unknown as [string, string, string];
+    if (!CHAT_ID.test(chatId)) return json({ ok: false, code: "CHAT_NOT_FOUND" }, 404);
+    if (!CHAT_ID.test(turnId)) return json({ ok: false, code: "TASK_NOT_FOUND" }, 404);
+    return answer(await part(() => dir.chatTaskStop(person, chatId, turnId)));
   }
 
   if (url.pathname === "/app/profile" && request.method === "GET") {
@@ -223,7 +258,7 @@ export async function appRoutes(request: Request, url: URL, person: string, dir:
       const nextRun = timing && live ? nextSlotAfter(timing, dir.now?.() ?? Date.now()) : null;
       // Upcoming holds what may still run or waits on the person (B-P7-11): a paused job is listed off, a spent or removed one not at all.
       const listed = !job?.status || job.status === "finished" || job.status === "archived" ? "none" : job.status === "disabled" ? "off" : "upcoming";
-      jobs.push(failed(s) ? { id, ok: false, code: (s as Refusal).code } : { id, ok: true, job, words: job?.status ? statusWords(job.status) : "", title, kind, nextRun, listed, runs: (s as { runs: unknown[] }).runs.slice(-RUNS_SHOWN).reverse() });
+      jobs.push(failed(s) ? { id, ok: false, code: (s as Refusal).code } : { id, ok: true, job, words: job?.status ? statusWords(job.status) : "", title, kind, nextRun, listed, runs: worded(s as unknown as Inspected).slice(-RUNS_SHOWN).reverse() });
     }
     return json({ ok: true, jobs });
   }

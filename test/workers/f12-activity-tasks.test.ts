@@ -67,7 +67,9 @@ describe("[F12] a task is a record", () => {
     expect(a).toEqual({
       ok: true,
       unread: [],
-      tasks: [{ id: turnId, chatId, title: promptTitle(PROMPT), origin: "typed", status: "done", code: null, startedAt: T0, endedAt: T0, turnIds: [turnId], stepCount: 2, groups: [], summary: null, capped: false }],
+      tasks: [{ id: turnId, chatId, title: promptTitle(PROMPT), origin: "typed", status: "done", code: null, startedAt: T0, endedAt: T0, turnIds: [turnId], stepCount: 2, groups: [], failed: 0, words: ACTIVITY_TEXT.status.done, summary: "Wrote 1 (notes/week.md)", capped: false }],
+      runs: [],
+      jobsUnread: [],
     });
     expect(promptTitle(PROMPT).length).toBeLessThanOrEqual(TITLE_FROM_PROMPT + 1);
     expect(promptTitle(PROMPT).endsWith("…")).toBe(true);
@@ -75,7 +77,7 @@ describe("[F12] a task is a record", () => {
     expect([titles(box), lines(box), glyphs(box)]).toEqual([[promptTitle(PROMPT)], [ACTIVITY_TEXT.status.done], [`glyph-${ACTIVITY_GLYPH.done}`]]);
     expect(box.text()).not.toContain(PANEL_TEXT.activityEmpty);
     // The one task opens by its chat and anchor turn.
-    expect((await w.http(ada.email, "GET", `/app/activity/${chatId}/${turnId}`)).body).toEqual({ ok: true, task: a.tasks[0], steps: expect.any(Array), subagents: [] });
+    expect((await w.http(ada.email, "GET", `/app/activity/${chatId}/${turnId}`)).body).toEqual({ ok: true, task: a.tasks[0], steps: expect.any(Array), subagents: [], usage: expect.objectContaining({ ok: true, calls: 3 }) });
   });
 
   it("a mail proposal decided later continues under the same task: waiting on Sam, then done with the continuation's turn", async () => {
@@ -144,7 +146,7 @@ describe("[F12] a task is a record", () => {
     const { chatId, result } = await w.say(ada.email, "Draft the agenda");
     const turnId = (result as { turnId: string }).turnId;
     expect((await activity(w, ada.email)).tasks.map((t) => t.id)).toEqual([turnId]);
-    expect(await activity(w, pat.email)).toEqual({ ok: true, tasks: [], unread: [] });
+    expect(await activity(w, pat.email)).toEqual({ ok: true, tasks: [], unread: [], runs: [], jobsUnread: [] });
     const open = await w.http(pat.email, "GET", `/app/activity/${chatId}/${turnId}`);
     expect([open.status, open.body.code]).toEqual([403, "CHAT_NOT_OWNER"]);
     const missing = await w.http(ada.email, "GET", `/app/activity/${chatId}/${crypto.randomUUID()}`);
