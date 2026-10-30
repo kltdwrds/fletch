@@ -19,6 +19,9 @@ The branch `claude/f40-identity-as-it-is-31e59c` is pushed. The session's permis
 "F40: identity as it is: the P14 contract check, fourteen task files, the identity lines, honest words, the last owner
 refused first". The body is the PR summary in the session transcript. Alternatively, allow `gh pr create --draft` for builder sessions (Q13).
 
+Orchestrator, 2026-10-30: PR #79 opened from the orchestrator session, so F40 is not blocked; what stays open is the
+permission for builder sessions, already listed in `WAITING-ON-KYLE.md` from Q13.
+
 ### Q29 (F34), 2026-10-30: may F34 count its last 3/3 runs, and keep the two widened must-have graders?
 
 **Blocks:** F34's verifier pass, so the part is not DONE. Everything else is in.
