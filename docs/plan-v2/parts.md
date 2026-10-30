@@ -152,3 +152,60 @@ memory with context assembly → P7 jobs, hooks and ledger → P5 and P3 activit
 from the first plan: F7 (the address survives sign-in, and its one-way record) into P1's contract; F16 (the detail
 pane per step type) and F17 (the activity eval) into P5's contract and tasks. The artifacts track (P4) continues on
 its own seams and is not a spine cluster.
+
+## F23 The loop as it is: P2's contract check and the tier-1 tasks on shipped behaviour
+
+**Read:** `docs/plan-v2/contracts/P2-loop.md` (Clauses, Tasks, the Translation's survey, mapping, deltas and Build
+notes), `test/m0/f20-contract.test.ts` (the contract check's pattern), `test/support/task.ts` and
+`test/support/contract.ts`, `test/evals/p1-reactions/harness.ts` and one P1 task pair (the world, the seed, the
+scripted model), the surveyed seams (`packages/agent/src/tools/registry.ts`, `packages/agent/src/context/assemble.ts`,
+`packages/agent/src/chat/mailbox.ts`, `packages/agent/src/chat/engine.ts`, `packages/agent/src/chat/tools.ts`,
+`packages/host/src/host.ts`) and the tests that already pin them (`test/workers/m3-tools.test.ts`,
+`test/workers/m1-context.test.ts`, `test/workers/m24-2-steering.test.ts`, `test/workers/f1-refusals.test.ts`). No
+one-way door. No live step.
+
+**Scope:** `test/evals/p2-loop/`: a `.task.ts` for every task the contract names (fifteen; the contract check needs
+each file to exist, load and carry its id and clauses), and a `.test.ts` tagged `[F23]` for the nine tier-1 tasks that
+need no new surface: T-P2-01 (the deferred load, once per chat), T-P2-02 (the stable prefix and the dated envelope),
+T-P2-03 (nothing streams before the last tool result), T-P2-05 (the steer folded in at the boundary with
+`STEER_POLICY`), T-P2-07 (the write's result before the reply; the file link graded as a markdown link, its card is
+F24's), T-P2-08 (a failed read is `isError` and plain words), T-P2-09 (`tool_search` before `HOST_PRINT_UNAVAILABLE`,
+no code in the reply), T-P2-11 (the long-history reload, without the file card) and T-P2-15 (a tool result inside its
+fence). A tool a task needs that the registry lacks (a `probe` namespace, a print feature the test host refuses) is a
+test-host fixture under `test/support/`, never a production tool. `test/m0/f23-contract.test.ts` checks P2 as F20's
+checks P1 (the planted guards are not repeated). The contract's fifteen `version_hash` lines are filled from Node's
+own loader (Q14). A defect the pinning finds is fixed in the part when it is a line, else a question in
+`QUESTIONS.md`.
+
+**Acceptance:** the nine `[F23]` tests pass; `test/m0/f23-contract.test.ts` passes with no finding; every
+`version_hash` in `contracts/P2-loop.md` is filled; `ACCEPT F23: PASS`.
+
+**Not in scope:** the status line, the file card and the job wake (F24); tier 2; any change to a clause or to a
+grader's intent; an exec surface; approvals.
+
+## F24 The thread shows the work: the status line, the file card and a job's completion wakes the agent
+
+**Read:** `docs/plan-v2/contracts/P2-loop.md` (B-P2-04, B-P2-06, B-P2-07, B-P2-10, deltas 4 to 6, the tier-2 tasks),
+the specimen `ds/specimens/loop-status.html` (the status line and the file card in both themes, drawn by the
+orchestrator before this part starts), `packages/agent/src/chat/activity-steps.ts` (`STEP_WORDS`, the wording to
+reuse), `packages/agent/src/chat/engine.ts` (`handoff`, `notify`), `packages/agent/src/jobs/notices.ts`,
+`packages/agent/src/http/app/chat.ts`, `packages/agent/src/chat/links.ts`, `docs/runbooks/evals.md`. No one-way
+door. A live step: `pnpm evals` runs from Kyle's Mac on this worktree's slot (`pnpm preview up`); if no slot can be
+leased, that is a question, not a reason to skip.
+
+**Scope:** (1) A status line under the agent's avatar while a tool runs, derived from the turn's tool frames with a
+per-tool wording table in the page (never from the model's text), gone at `turn_done` and `turn_failed` (T-P2-04).
+(2) A file card in the thread for a markdown link to a file in the agent's store, name, kind and a preview or
+glyph, drawn from the stored markdown and again after a reload (T-P2-10; then T-P2-07's link grader asks for the
+card). (3) A job's terminal result wakes the agent through the path a delegation's handoff already takes, the
+result as a harness handoff in the turn's input, an empty reply allowed on that event-driven turn and adding no
+agent entry, the notice row kept as what the person sees, a second delivery of the same completion changing
+nothing (T-P2-06). (4) Tier 2 on the slot: T-P2-13 (must-have), T-P2-12 and T-P2-14, three trials each, the
+results files committed.
+
+**Acceptance:** the `[F24]` tests for T-P2-04, T-P2-06, T-P2-10 and T-P2-07's card pass; `pnpm evals T-P2-13`
+`pass` (three of three); T-P2-12 and T-P2-14 run and their results recorded whatever the verdict, the table in the
+PR body; `ACCEPT F24: PASS`.
+
+**Not in scope:** a URL unfurl (delta 5); a `message_break` split (delta 2); an exec tool; approvals (P15); a change
+to a clause.

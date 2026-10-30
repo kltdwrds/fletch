@@ -225,3 +225,15 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   beside the lease file (`evals-<tag>.json`, mode 600) so a later run signs in instead of needing the one-time setup
   token again; a fresh lease registers anew. Rejected: a session cookie alone (thirty days, then no way back in) and a
   second registration route (the host's login contract is published, a one-way door).
+- 2026-10-29 P2 translation, five two-way deltas from Muse's loop (`docs/plan-v2/contracts/P2-loop.md`, Translation):
+  (1) the operating block stays a byte-identical stable prefix with the date in the never-stored runtime envelope,
+  not a dated system row per turn (prompt caching; the person sees neither); rejected re-sending a dated block.
+  (2) one streamed bubble per reply and no `message_break` split; `send_to_user` stays the deliberate early message
+  (streaming gives the words earlier than a held, split reply); rejected holding the reply to split it. (3) a
+  mid-turn message folds into the running turn at the next step boundary under `STEER_POLICY`, not a new turn with
+  an interruption note (the completed tool results stay in one turn); rejected ending the turn. (4) a job's terminal
+  result wakes the agent through the delegation handoff path, with an empty reply allowed on that event-driven turn
+  and the notice row kept (today the notice wakes nobody, so the agent never acts on a failure); rejected a push into
+  a running step. (5) no URL unfurl in the thread (an egress from the owner's deploy or browser on every link); a
+  link to a stored file draws a file card instead; rejected fetching previews through the Worker.
+
