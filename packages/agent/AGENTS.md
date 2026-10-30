@@ -18,7 +18,8 @@ and shown to the owner by name, never as empty or success (`test/workers/f1-refu
 - **One file vocabulary.** File tools are defined only in `packages/agent/src/files/tools.ts`, and only
   `packages/agent/src/tree/` imports `@cloudflare/computer` (`file-vocabulary*`, `test/m24/`).
 - **One model path.** The model is called only from `packages/agent/src/model/`: Workers AI over the `AI` binding,
-  through a gateway only when `AI_GATEWAY_ID` is set (`test/workers/f1-models.test.ts`).
+  through a gateway only when `AI_GATEWAY_ID` is set, and Meta's Muse Spark for chat only when `CHAT_PROVIDER=meta`
+  is set with it; no fallback model, and invalid vars fail every call by name (D-0020, `test/workers/f1-models.test.ts`).
 - **Migrations are append-only**, one list per object in `packages/agent/src/migrations/`, run in the constructor.
 - **Paid-plan bindings are optional.** `LOADER` and `IMAGES` are not in the base config, so `wrangler types` keeps
   them optional in `packages/agent/src/env.d.ts`; `create-fletch --paid` adds them.

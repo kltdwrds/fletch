@@ -7,7 +7,7 @@ decided: 2026-10-29
 decider: agent
 confirmation: review
 review-by: 2026-12-31
-revisit-when: the dry run (F20) shows unstable verdicts, previews move to an account of their own (Q3), or the agent's chat model stops being Workers AI on the pool's account
+revisit-when: the dry run (F20) shows unstable verdicts, previews move to an account of their own (Q3), or a slot's chat model needs a key the gateway cannot hold
 ---
 Ruling: a GitHub Actions workflow `tier2.yml` runs `pnpm evals <cluster>` for each cluster a PR's diff touches
 under `packages/agent/`, on a preview slot it leases with the pool's token, and posts the Markdown table as one PR
@@ -32,8 +32,10 @@ boundary (a token that deploys to the pool, held by GitHub).
   and read a slot's lease; it cannot touch production's Workers, buckets, indexes or the account's billing (D-0008's
   measured gap stands: a Worker it deploys may bind another resource, so the workflow deploys only through
   `pnpm preview up`, which binds the slot's own).
-- **No model key.** The agent's chat model on a slot is Workers AI through the slot Worker's `AI` binding
-  (`packages/agent/src/model/routes.ts`), billed to the pool's account; there is no provider key to hold.
+- **No model key.** A slot's chat model is Workers AI through the slot Worker's `AI` binding
+  (`packages/agent/src/model/routes.ts`), billed to the pool's account, unless the slot sets `CHAT_PROVIDER=meta`
+  (D-0020): then it is Muse Spark through the account's AI Gateway, whose Meta key lives on the gateway, not in
+  the agent or in CI. Either way there is no provider key for CI to hold.
 - **Where it lives:** a GitHub environment `tier2` on this repository, with the three secrets above, restricted to the
   `main` branch and PR branches of this repository (a fork's PR never sees them), and the workflow's `permissions`
   limited to `pull-requests: write` (the comment) and `contents: read`.
@@ -43,8 +45,8 @@ boundary (a token that deploys to the pool, held by GitHub).
 - **Per run:** at most 12 tasks, 3 trials each, 4 minutes per turn (`TURN_TIMEOUT_MS`), one workflow job of at most
   60 minutes; the runner stops a task at its first infra trial.
 - **Per month:** a Workers AI usage notification on the pool's account at 10 USD and the workflow disabled by hand
-  above 25 USD; the neuron price of the chat model (`@cf/zai-org/glm-5.3-flash`) at the time of acceptance is written
-  into the record's Consequences when Kyle accepts it.
+  above 25 USD; the neuron price of the default chat model (`@cf/zai-org/glm-5.3-flash`) at the time of acceptance is
+  written into the record's Consequences when Kyle accepts it.
 - **Concurrency:** one run at a time per PR (`concurrency: tier2-${{ github.head_ref }}`, cancel in progress), and the
   pool's free slots bound the number of PRs under test at once; a run with no free slot ends `infra`, never waits.
 
