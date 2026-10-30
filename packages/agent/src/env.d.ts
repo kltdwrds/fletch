@@ -13,8 +13,6 @@ interface Env {
   IMAGES?: ImagesBinding;
   /** An AI Gateway id: every model call goes through it. Unset on a self-host deploy, so no gateway option is sent (`model/routes.ts`). */
   AI_GATEWAY_ID?: string;
-  /** `openrouter` or `meta` puts the chat route on that provider's model through `AI_GATEWAY_ID`'s stored BYOK key; anything else, or no gateway, keeps Workers AI (`model/routes.ts`). */
+  /** `workers-ai` (the default) or `meta`, which puts the chat route on Muse Spark through `AI_GATEWAY_ID`'s stored BYOK key; any other value, or `meta` without a gateway, fails every model call with `MODEL_CONFIG_INVALID` (`model/routes.ts`). */
   CHAT_PROVIDER?: string;
-  /** `off` drops the chat route's hedge to Workers AI, so the configured model answers alone (`model/routes.ts`). */
-  CHAT_HEDGE?: string;
 }

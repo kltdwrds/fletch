@@ -71,4 +71,5 @@ After adding or changing a record, run `node scripts/check-decisions.mjs --write
 | [D-0017](0017-no-payment-instrument.md) | fletch holds no payment instrument and submits no payment; the person pays in a live page they take over | proposed | one-way | 2026-10-30 | 2026-12-31 |
 | [D-0018](0018-agent-name-is-the-owners-setting.md) | The agent's name and avatar are the owner's settings, written only by the owner through the app; until that setting exists the agent has no name and says so | proposed | one-way | 2026-10-30 | 2026-12-31 |
 | [D-0019](0019-operating-block-cap-6-kib.md) | The operating block's cap is 6 KiB, held by a test, so P14's identity section fits | accepted | two-way | 2026-10-30 |  |
+| [D-0020](0020-chat-model-two-providers-no-hedge.md) | The agent reaches models two ways, Workers AI and Meta through an AI Gateway, with no fallback model; invalid model vars fail every call by name | accepted | two-way | 2026-10-30 |  |
 <!-- index:end -->

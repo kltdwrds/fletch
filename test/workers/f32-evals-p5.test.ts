@@ -111,7 +111,7 @@ describe("[F32] P5 on a slot: the probe page, the prompts, the child's reads and
     const chat = { messages: [{ role: "system", content: "You are fletch." }, { role: "user", content: "hi" }] };
     expect(await wrapped.run("m", chat, {})).toBe("answer");
     const routed = { messages: [{ role: "system", content: [{ type: "text", text: "Routed." }] }] };
-    expect(await wrapped.fetch("https://workers-binding.ai/ai-gateway/gateways/g/openrouter/v1/chat/completions", { method: "POST", body: JSON.stringify(routed) })).toBe("gateway answer");
+    expect(await wrapped.fetch("https://workers-binding.ai/ai-gateway/gateways/g/custom-meta/chat/completions", { method: "POST", body: JSON.stringify(routed) })).toBe("gateway answer");
     await wrapped.run("m", { messages: [{ role: "system", content: `${VERIFIER_INSTRUCTIONS}\nmore` }] }, {});
     await wrapped.run("embed", { text: ["a"] }, {});
     expect(kept).toEqual(["You are fletch.", "Routed."]);

@@ -6,11 +6,12 @@
 //
 // From M19.1 (QYVR-169) a route with bounds in `CALL_BOUNDS` is aborted when its first token or its
 // end is late, and a 408, 5xx or first-token timeout before any token is retried once, each attempt
-// its own Ledger row; a route without bounds waits as long as Workers AI does.
+// its own Ledger row; a route without bounds waits as long as Workers AI does. A route's total bound
+// holds the whole call, retries and Retry-After waits included (D-0020).
 //
-// From M22.1 a route with a hedge in `HEDGES` (chat) races its primary against the hedge instead
-// (`hedge.ts`), and a model is reached through `transport.ts`: Workers AI over the binding, or
-// OpenRouter through the configured gateway with its stored BYOK key.
+// A model is reached through `transport.ts`: Workers AI over the binding, or Meta through the configured
+// gateway with its stored BYOK key. There is no second model behind either (D-0020), and a deploy whose
+// model vars are invalid has every call fail with `MODEL_CONFIG_INVALID` before any network.
 import {
   type AssistantMessage,
   type AssistantMessageEventStream,
@@ -20,8 +21,7 @@ import {
 } from "@earendil-works/pi-ai";
 import type { StreamFn } from "@earendil-works/pi-agent-core";
 import type { CallStatus, LedgerSink, ModelCallRow } from "../ledger/types.ts";
-import { CALL_BOUNDS, EMBEDDING_DIMENSIONS, EMBEDDING_MODEL, EMBEDDING_POOLING, hedgeFor, type ModelConfig, type Route } from "./routes.ts";
-import { callHedged } from "./hedge.ts";
+import { CALL_BOUNDS, EMBEDDING_DIMENSIONS, EMBEDDING_MODEL, EMBEDDING_POOLING, type ModelConfig, type Route } from "./routes.ts";
 import { abortable, guarded, readInto, type Served, tapped, zeroUsage } from "./read.ts";
 import { gatewayOption, providerName, requestBody, send } from "./transport.ts";
 import { StreamFault, toWire } from "./wire.ts";
@@ -93,8 +93,6 @@ async function callModel(
   stream: AssistantMessageEventStream,
 ): Promise<void> {
   const wire = toWire(context.messages);
-  const hedge = hedgeFor(who.route, deps.models);
-  if (hedge) return callHedged(deps, who, model, hedge, { messages: wire.messages, tools: wire.tools, ...(maxTokens ? { maxTokens } : {}) }, signal, stream);
   const message: AssistantMessage = {
     role: "assistant",
     content: [],
@@ -115,8 +113,8 @@ async function callModel(
     runId: who.runId,
     route: who.route,
     model: served.model ?? model.id,
-    provider: providerName(model.id, served.provider),
-    ...(served.costUsd !== undefined ? { costMicros: Math.round(served.costUsd * 1e6) } : {}),
+    ...(served.model !== undefined && served.model !== model.id ? { asked: model.id } : {}),
+    provider: providerName(model.id),
     attempt,
     status,
     code,
@@ -143,8 +141,12 @@ async function callModel(
     end(code, recorded ? detail : `${detail}; LEDGER_UNAVAILABLE: the row was not written`);
   };
 
+  // A deploy whose model vars name what it cannot reach never calls a model, and never another one instead.
+  if (deps.models?.fault) return fail(1, "refused", deps.models.fault.code, deps.models.fault.reason, null);
   const inputs = requestBody(who.route, model.id, { messages: wire.messages, tools: wire.tools, ...(maxTokens ? { maxTokens } : {}) });
   const bounds = CALL_BOUNDS[who.route];
+  // The total bound is the call's, not each attempt's: every attempt and every wait between them ends by it.
+  const deadline = bounds ? deps.now() + bounds.totalMs : Number.POSITIVE_INFINITY;
   const schedule = deps.schedule ?? ((fn: () => void, ms: number) => {
     const t = setTimeout(fn, ms);
     return () => clearTimeout(t);
@@ -170,6 +172,7 @@ async function callModel(
       );
       if (!admitted.ok) return fail(attempt, "refused", admitted.code, admitted.reason, null);
     }
+    if (deadline - deps.now() <= 0) return fail(attempt, "failed", "MODEL_CALL_TIMEOUT", `the call did not finish within ${bounds?.totalMs} ms`, null);
     let res: Response;
     timing.startedAt = deps.now();
     // This attempt's own abort: the caller's signal, or a bound that ran out before the token or the end.
@@ -180,7 +183,7 @@ async function callModel(
     const stops: Array<() => void> = [];
     if (bounds) {
       stops.push(schedule(() => { late ??= "first"; attemptAbort.abort(new Error("no first token in time")); }, bounds.firstTokenMs));
-      stops.push(schedule(() => { late ??= "total"; attemptAbort.abort(new Error("the call did not finish in time")); }, bounds.totalMs));
+      stops.push(schedule(() => { late ??= "total"; attemptAbort.abort(new Error("the call did not finish in time")); }, deadline - deps.now()));
     }
     const settle = () => {
       for (const stop of stops.splice(0)) stop();
@@ -216,6 +219,9 @@ async function callModel(
       await res.body?.cancel();
       if (attempt > MAX_RATE_LIMIT_RETRIES || wait > MAX_RETRY_AFTER_MS) {
         return fail(attempt, "rate_limited", "MODEL_RATE_LIMITED", `429 after ${attempt} attempts, retry-after ${wait} ms`, 429);
+      }
+      if (deps.now() + wait >= deadline) {
+        return fail(attempt, "rate_limited", "MODEL_RATE_LIMITED", `429 after ${attempt} attempts; a retry-after of ${wait} ms would pass the call's ${bounds?.totalMs} ms bound`, 429);
       }
       if (!(await record(row(attempt, "rate_limited", "MODEL_RATE_LIMITED", 429)))) return end("LEDGER_UNAVAILABLE", "the 429 row was not written");
       await deps.wait(wait);
@@ -289,6 +295,7 @@ export async function embed(deps: Pick<AdapterDeps, "ai" | "ledger" | "now" | "m
     const recorded = await deps.ledger.record(row(status, code, tokens)).then(() => true, () => false);
     return { ok: false, code, reason: recorded ? reason : `${reason}; LEDGER_UNAVAILABLE: the row was not written` };
   };
+  if (deps.models?.fault) return fail("refused", deps.models.fault.code, deps.models.fault.reason);
   if (deps.ledger.admit) {
     const admitted = await deps.ledger.admit({ person: who.person, runId: who.runId }).catch((err: unknown) => ({ ok: false, code: "BUDGET_UNAVAILABLE", reason: String(err) }) as const);
     if (!admitted.ok) return fail("refused", admitted.code, admitted.reason);

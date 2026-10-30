@@ -18,9 +18,9 @@
 //
 // From M22.1 the binding also answers its fetch passthrough to a gateway's provider-native path,
 // `https://workers-binding.ai/ai-gateway/gateways/<gateway>/<provider>/<endpoint>`, the path the adapter
-// takes to OpenRouter and to Meta, from the same script: the request is recorded with the model from its
-// body and the path's gateway, provider, endpoint and the request headers under `passthrough`, and its
-// chunks carry the model asked for and the host under `provider`, as OpenRouter's do.
+// takes to Meta, from the same script: the request is recorded with the model from its body and the path's
+// gateway, provider, endpoint and the request headers under `passthrough`. Every chunk names the model
+// asked for, or a text step's `servedAs` (a provider's dated id for it).
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fakeEmbedding } from "./fake-embeddings.ts";
@@ -33,20 +33,7 @@ export interface FakeUsage {
   completion?: number;
   reasoning?: number;
   cached?: number;
-  /** OpenRouter's cost of the call in US dollars, on the closing usage. */
-  cost?: number;
 }
-
-/** One OpenRouter typed reasoning item (openrouter.ai/docs reasoning-tokens). */
-export interface FakeReasoningDetail {
-  type: "reasoning.text" | "reasoning.summary" | "reasoning.encrypted";
-  text?: string;
-  summary?: string;
-  data?: string;
-}
-
-/** The host a fake OpenRouter response names, as OpenRouter's chunks do. */
-export const FAKE_OPENROUTER_HOST = "FakeHost";
 
 export interface FakeToolCall {
   id?: string;
@@ -55,7 +42,8 @@ export interface FakeToolCall {
 }
 
 export type FakeStep =
-  | { text: string; reasoning?: string; reasoningDetails?: FakeReasoningDetail[]; usage?: FakeUsage }
+  /** `servedAs` is the model the chunks name instead of the one asked for (D-0020: a dated id is priced as the one asked). */
+  | { text: string; reasoning?: string; usage?: FakeUsage; servedAs?: string }
   | { toolCall: FakeToolCall; text?: string; reasoning?: string; usage?: FakeUsage }
   | { rawToolCall: { id?: string; name: string; arguments: string }; usage?: FakeUsage }
   /** Several tool calls in one answer, in order (M25.2: a job answer with two terminal tools). */
@@ -68,8 +56,8 @@ export type FakeStep =
   | { checkpoint: string; step: FakeStep }
   /**
    * A 200 that sends nothing until `release(name)` streams all of `step`, or `drop(name)` breaks it
-   * (M22.1: the test decides which leg of a hedged call gives its first token first). Unlike a
-   * checkpoint, the script moves past it when the request arrives.
+   * (the test decides when the first token arrives). Unlike a checkpoint, the script moves past it when
+   * the request arrives.
    */
   | { hold: string; step: FakeStep }
   /** A step made from the request it answers: a model that copies what it was shown (M13's redaction scenario). */
@@ -228,7 +216,7 @@ export class FakeModel {
     if ("checkpoint" in step) return this.paused(step.checkpoint, step.step, request, n);
     if ("hold" in step) return this.held(step.hold, step.step, request, n);
     if ("fromRequest" in step) return this.respond(step.fromRequest(request), request, n);
-    return sse(chunksOf(step, n), usageOf(request, step.usage), headOf(request));
+    return sse(chunksOf(step, n), usageOf(request, step.usage), { model: ("servedAs" in step && step.servedAs) || request.model });
   }
 
   private held(name: string, inner: FakeStep, request: FakeRequest, n: number): Response {
@@ -298,12 +286,12 @@ export class FakeModel {
 // --- the recorded chat.completion.chunk stream ---------------------------------------------------
 
 type Delta = Record<string, unknown>;
-type Usage = { prompt: number; completion: number; reasoning: number; cached: number; cost?: number };
-type Head = { model: string; provider?: string };
+type Usage = { prompt: number; completion: number; reasoning: number; cached: number };
+type Head = { model: string };
 
-/** What each chunk names: the model asked for, and for OpenRouter the host that served it. */
+/** What each chunk names: the model asked for. */
 function headOf(request: FakeRequest): Head {
-  return request.passthrough ? { model: request.model, provider: FAKE_OPENROUTER_HOST } : { model: request.model };
+  return { model: request.model };
 }
 
 /** The reasoning field of the recorded stream, read from the recording itself. */
@@ -325,7 +313,6 @@ function reasoningFieldOf(sse: string): string {
 function chunksOf(step: Exclude<FakeStep, { status: number } | { drop: unknown } | { silent: true } | { checkpoint: string } | { hold: string } | { fromRequest: unknown }>, n: number): Delta[] {
   const out: Delta[] = [];
   if ("reasoning" in step && step.reasoning) out.push(...splitText(step.reasoning).map((t) => ({ [REASONING_FIELD]: t })));
-  if ("reasoningDetails" in step && step.reasoningDetails) out.push(...step.reasoningDetails.map((d) => ({ reasoning_details: [d] })));
   if ("text" in step && step.text) out.push(...textChunks(step.text));
   if ("toolCall" in step) out.push(...toolCallChunks(step.toolCall, n));
   if ("toolCalls" in step) for (const [i, c] of step.toolCalls.entries()) out.push(...rawToolCallChunks(c.id ?? `call_${n}_${i}`, c.name, JSON.stringify(c.arguments), i));
@@ -360,7 +347,7 @@ function usageOf(request: FakeRequest, usage: FakeUsage | undefined): Usage {
   const reasoning = usage?.reasoning ?? 0;
   const completion = usage?.completion ?? 8 + reasoning;
   if (completion < reasoning) throw new Error("FAKE_SCRIPT: completion tokens include reasoning tokens, so cannot be fewer");
-  return { prompt: usage?.prompt ?? Math.ceil(JSON.stringify(request.inputs.messages).length / 4), completion, reasoning, cached: usage?.cached ?? 0, ...(usage?.cost !== undefined ? { cost: usage.cost } : {}) };
+  return { prompt: usage?.prompt ?? Math.ceil(JSON.stringify(request.inputs.messages).length / 4), completion, reasoning, cached: usage?.cached ?? 0 };
 }
 
 const usageField = (prompt: number, completion: number, cached = 0) => ({
@@ -389,7 +376,7 @@ function streamChunks(deltas: Delta[], usage: Usage, served: Head): Record<strin
     ...deltas.map((d) => ({ ...head, choices: choice(d), usage: usageField(0, (isReasoning(d) ? reasoningShares : otherShares).shift() ?? 0) })),
     { ...head, choices: choice({ [REASONING_FIELD]: null }, finish), usage: usageField(0, 0) },
     { ...head, choices: [], usage: usageField(0, 0) },
-    { response: "", usage: { ...usageField(usage.prompt, usage.completion, usage.cached), ...(usage.cost !== undefined ? { cost: usage.cost } : {}) } },
+    { response: "", usage: usageField(usage.prompt, usage.completion, usage.cached) },
   ];
 }
 
