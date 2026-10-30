@@ -16,8 +16,6 @@
 //   - `mail` (payload `subject`): Sam's agent mails Pat Sam's newest reply in `c1` through `person/mail.ts`;
 //   - `offboard` (payload `who`, `deploy`): the person starts and finishes offboarding with `export`;
 //   - `shell`: the page's title, the manifest's names and the handle line.
-import { readdirSync, readFileSync } from "node:fs";
-import { join, relative } from "node:path";
 import { Type } from "@earendil-works/pi-ai";
 import { onboardingNamespace } from "../../../packages/agent/src/company/onboarding-tools.ts";
 import { SCHEMA as FILES_SCHEMA } from "../../../packages/agent/src/files/store.ts";
@@ -31,15 +29,14 @@ import { ObjectHarness } from "../../support/object-harness.ts";
 import type { ScenarioWorld } from "../../support/scenario.ts";
 import { Seeded } from "../../support/seeded.ts";
 import type { DefinedTask, TaskHarness, Turn } from "../../support/task.ts";
-import { repoRoot } from "../../support/temp-repo.ts";
 import { lifecycleWorld } from "../../workers/support/lifecycle-world.ts";
 import { CHILD_MARK, JOB_TASK_MARK, VERIFIER_MARK } from "../p5-activity/harness.ts";
 import { P9Tier1World, pat, sam } from "../p9-connectors/harness.ts";
+import { loginReachIn, sources, standingCallersIn } from "./sources.ts";
 import type { ChatLabel, Drawn, MailCall, Offboarded, P14World, Planted, Sent, Standing, ToolLine } from "./world.ts";
 
-export { pat, sam };
+export { loginReachIn, pat, sam, sources, standingCallersIn };
 
-const SRC = join(repoRoot, "packages/agent/src");
 const REQUEST_MARK = "Surface: a colleague's request";
 const settleUi = async () => {
   for (let i = 0; i < 60; i++) await new Promise((r) => setImmediate(r));
@@ -54,26 +51,6 @@ const columnsOf = (schema: string, table: string): string[] => {
   const m = new RegExp(`CREATE TABLE IF NOT EXISTS ${table} \\(([\\s\\S]*?)\\)\\s*(?:;|$)`).exec(schema);
   return (m?.[1] ?? "").split(",").map((c) => c.trim().split(/\s+/)[0] ?? "").filter((c) => c && !/^(PRIMARY|UNIQUE|FOREIGN|CHECK)$/i.test(c));
 };
-/** Every `.ts` file under `packages/agent/src`, with its path relative to it. */
-const sources = (): Array<{ file: string; text: string }> => {
-  const out: Array<{ file: string; text: string }> = [];
-  const walk = (dir: string) => {
-    for (const e of readdirSync(dir, { withFileTypes: true })) {
-      const p = join(dir, e.name);
-      if (e.isDirectory()) walk(p);
-      else if (e.name.endsWith(".ts")) out.push({ file: relative(SRC, p), text: readFileSync(p, "utf8") });
-    }
-  };
-  walk(SRC);
-  return out;
-};
-
-/** The calls of `writeStanding` in `files` (its definition aside), with the writer each passes. */
-export const standingCallersIn = (files: Array<{ file: string; text: string }>) =>
-  files.flatMap((f) => [...f.text.matchAll(/(?<!async )\bwriteStanding\(([^;]*?)\)/g)].map((m) => ({ file: f.file, writer: /"([^"]+)"\s*$/.exec(m[1] ?? "")?.[1] ?? "" })));
-/** The files in `files` that call `loginCall` or a `passkey*` or `recovery*` operation. */
-export const loginReachIn = (files: Array<{ file: string; text: string }>) => [...new Set(files.filter((f) => /\bloginCall\s*[<(]|\.\s*(passkey|recovery)\w*\s*\(/i.test(f.text)).map((f) => f.file))].sort();
-
 /** A planted tool, as a test registering one would write it. */
 export const plantedSpec = (name: string, description = "Fixture: planted."): ToolSpec => ({ name, kind: "action", label: name, description, parameters: Type.Object({}), actionKind: "test.planted", execute: async () => ({ content: [{ type: "text", text: "ran" }], details: {} }) });
 /** What a `ToolRegistry` answers when `spec` is registered: null, or the refusal's message. */

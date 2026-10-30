@@ -2,7 +2,7 @@
 // each of the check's guards; they are not repeated here). Twelve clauses and fourteen tasks, each task's file under
 // `test/evals/p14-identity/`; every clause cites evidence, every file exists, loads and matches its block; and every
 // tier-1 task F40 runs (T-P14-01 to 03 and 05 to 09) has its `version_hash` filled with its file's hash as the tier-2
-// runner computes it (Q14). T-P14-04 (the Security pane) and the tier-2 tasks (T-P14-10 to 14) are hashed by F41. The
+// runner computes it (Q14). T-P14-04 (the Security pane) and the tier-2 tasks (T-P14-10 to 14) are hashed and held by F41. The
 // operating block, with delta 1's identity section, stays under its cap (D-0019).
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -48,8 +48,7 @@ describe("[F40] the P14 contract", () => {
   it("every tier-1 version_hash F40 runs is filled and is its file's hash under Node's loader; an unfilled or stale one is named", () => {
     const contract = text();
     expect(tier1Stale(contract)).toEqual([]);
-    // T-P14-04 waits for F41.
-    expect(/T-P14-04 [\s\S]*?version_hash: (.+)/.exec(contract)?.[1]).toBe("unfilled (F41)");
+    // T-P14-04 and the tier-2 tasks are F41's (`test/workers/f41-evals-p14.test.ts`).
     // Planted: T-P14-01's line put back to unfilled is caught by id.
     const t1 = /T-P14-01 [\s\S]*?version_hash: (\S+)/.exec(contract)?.[1] as string;
     expect(t1).toMatch(/^[0-9a-f]{12}$/);
