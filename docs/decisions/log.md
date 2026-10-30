@@ -237,3 +237,8 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   a running step. (5) no URL unfurl in the thread (an egress from the owner's deploy or browser on every link); a
   link to a stored file draws a file card instead; rejected fetching previews through the Worker.
 
+- 2026-10-29 F23, from pinning P2: a `tool_search` load's result names the functions it loaded (`loaded probe:
+  callable from your next step (probe_run)`, `packages/agent/src/tools/search.ts`), so the model knows what it can
+  call without reading the reference again (T-P2-01's required fact); rejected leaving the names to the reference
+  alone. The print refusal T-P2-09 grades, `HOST_PRINT_UNAVAILABLE`, is a test-host fixture's code
+  (`test/support/p2-fixtures.ts`), not a `HostFeature`: adding one would change `@qyvr/host`'s published contract.
