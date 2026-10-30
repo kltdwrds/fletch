@@ -1,6 +1,6 @@
 // The worktree's preview slot as the tier-2 runner's `Slot` (F19): the lease `pnpm preview up` left in
-// <git common dir>/fletch-previews/, the slot's host from the pool's subdomain, a session obtained as the live exit
-// test obtains one (test/live/f1-deploy.live.test.ts: the software passkey, test/support/soft-authenticator.ts), and
+// <git common dir>/fletch-previews/, the slot's host from the pool's subdomain, a session obtained with the software
+// passkey (test/support/soft-authenticator.ts, the one @qyvr/host-cloudflare's real-ceremony test uses), and
 // one chat per trial driven over the chat socket (another opened when a prompt names it, F28). Every failure here is the slot's, an `InfraError` by code:
 //   SLOT_MISSING         no lease file, or the slot does not serve the app (`pnpm preview up` leases and deploys one)
 //   LEASE_LAPSED         the slot no longer takes this worktree's key, or its lease is another branch's or over
@@ -29,6 +29,8 @@ import { type P7Slot, p7Slot, ZONE } from "./p7-slot.ts";
 import { p9Page } from "./p9-page.ts";
 import { p12Page } from "./p12-page.ts";
 import { type P12State, p12Slot } from "./p12-slot.ts";
+import { p14Page } from "./p14-page.ts";
+import { type P14State, p14Slot } from "./p14-slot.ts";
 import { type P9State, p9Slot } from "./p9-slot.ts";
 import type { Slot } from "./runner.ts";
 import { type TestHostState, testHostReaders } from "./test-host.ts";
@@ -532,6 +534,25 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
               p12Page(base, cookie),
             )
           : null;
+      // An identity task (F41): Sam's standing files reset and a second passkey seeded, then her memory, the objects'
+      // table counts, the chat model calls, her mail rows and the chat's requests through the `p14` op, read again after
+      // each turn; the drawn name, the reloads and `/settings` in Chromium.
+      const p14 =
+        task?.cluster === "P14"
+          ? p14Slot(
+              () => chatId,
+              () => entriesOf(),
+              () => history(base, chatId, cookie),
+              async (call) => {
+                const r = await testHostOp(base, lease, { op: "p14", person: OWNER, chat: chatId, call });
+                if (!r) throw new InfraError("SLOT_MISSING", "this slot serves no test host; `pnpm preview up` deploys one");
+                return call === "read" ? (r as unknown as P14State) : null;
+              },
+              p14Page(base, cookie),
+              new URL(base).origin,
+              OWNER,
+            )
+          : null;
       const settled = (deadline: number) => async () => {
         await p3?.settle(deadline);
         await p5?.settle(deadline);
@@ -543,6 +564,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
         await p3?.refresh();
         await p9?.refresh();
         await p12?.refresh();
+        await p14?.refresh();
         await p6?.refresh(`prompt:${label}`);
         await p7?.refresh(turn.startsWith("prompt") ? "prompt" : turn);
       };
@@ -578,6 +600,11 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
           return reply;
         },
         async event(name, payload) {
+          // A P14 event (F41, scripts/evals/p14-slot.ts): the chat looked at or reloaded at a width, a settings route opened.
+          if (p14 && (await p14.event(name, payload))) {
+            await after("c1", `event:${name}`);
+            return;
+          }
           // A P12 event (F39, scripts/evals/p12-slot.ts): the chat reloaded at a width, `/settings` opened and reloaded.
           if (p12 && (await p12.event(name, payload))) {
             await after("c1", `event:${name}`);
@@ -656,6 +683,10 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
       if (p12) {
         Object.defineProperties(world, Object.getOwnPropertyDescriptors(p12.readers));
         if (task) await p12.begin(task.id, (text) => world.send(text));
+      }
+      if (p14) {
+        Object.defineProperties(world, Object.getOwnPropertyDescriptors(p14.readers));
+        await p14.begin();
       }
       return world;
     },

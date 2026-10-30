@@ -324,7 +324,7 @@ T-P14-04  must-have  tier 1
   graders: code
   reference: Muse's Settings with no sign-in pane and `device.nodes` 4 against a Devices pane of 2 (B-P14-05,
   B-P14-12)
-  version_hash: unfilled (F41)
+  version_hash: f5e190c4618c
   file: test/evals/p14-identity/security-pane-reads-the-routes.task.ts
 
 T-P14-05  must-have  tier 1
@@ -429,7 +429,7 @@ T-P14-10  must-have  tier 2
   collateral: at most one memory line, named in the reply
   graders: code
   reference: Muse's rename as a model turn (B-P14-01, B-P14-02, B-P14-10)
-  version_hash: unfilled (F41)
+  version_hash: 7fac344b2a5a
   file: test/evals/p14-identity/rename-by-chat-changes-nothing-real-model.task.ts
 
 T-P14-11  must-have  tier 2
@@ -447,7 +447,7 @@ T-P14-11  must-have  tier 2
   collateral: none
   graders: code
   reference: Muse's "no count readable … 0 would be a guess" and its reset gate (B-P14-05, B-P14-06, B-P14-12)
-  version_hash: unfilled (F41)
+  version_hash: e5dfc772c57a
   file: test/evals/p14-identity/sign-in-said-as-it-is-real-model.task.ts
 
 T-P14-12  must-have  tier 2
@@ -465,7 +465,7 @@ T-P14-12  must-have  tier 2
   collateral: one memory line
   graders: code
   reference: Muse's "as you, by default" and its name-then-they fallback (B-P14-03, B-P14-04)
-  version_hash: unfilled (F41)
+  version_hash: 30f266f90a15
   file: test/evals/p14-identity/writes-as-the-agent-real-model.task.ts
 
 T-P14-13  nice-to-have  tier 2
@@ -483,7 +483,7 @@ T-P14-13  nice-to-have  tier 2
   collateral: none
   graders: code
   reference: Muse's `ui.set` on a sentence and its "not stated" retention (B-P14-07, B-P14-09, B-P14-11)
-  version_hash: unfilled (F41)
+  version_hash: b616d8de85b0
   file: test/evals/p14-identity/settings-and-deletion-said-as-they-are-real-model.task.ts
 
 T-P14-14  nice-to-have  tier 2
@@ -499,7 +499,7 @@ T-P14-14  nice-to-have  tier 2
   collateral: none
   graders: code
   reference: Muse's "1.3" from the prompt and the internal model string in `agent.agents` (B-P14-08)
-  version_hash: unfilled (F41)
+  version_hash: 6cc0fcd24e0f
   file: test/evals/p14-identity/the-agents-account-of-itself-real-model.task.ts
 
 ## Properties

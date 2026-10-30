@@ -1,0 +1,131 @@
+{
+  "task_id": "T-P14-14",
+  "cluster": "P14",
+  "version_hash": "6cc0fcd24e0f0c68763d9a2bcd152f52b9137858f8a0d015a387ff0fa29b2e3b",
+  "runs": [
+    {
+      "run_at": "2026-10-30T21:42:09.590Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a mail goes as Sam's agent under the platform's label from the host's address, and no calendar or document tool exists",
+          "started_at": "2026-10-30T21:42:09.590Z",
+          "finished_at": "2026-10-30T21:42:41.525Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a mail goes as Sam's agent under the platform's label from the host's address, and no calendar or document tool exists",
+          "started_at": "2026-10-30T21:42:41.525Z",
+          "finished_at": "2026-10-30T21:42:58.856Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the workspace is this deploy, with one person",
+          "started_at": "2026-10-30T21:42:58.856Z",
+          "finished_at": "2026-10-30T21:43:15.582Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T22:06:15.572Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a mail goes as Sam's agent under the platform's label from the host's address, and no calendar or document tool exists",
+          "started_at": "2026-10-30T22:06:15.572Z",
+          "finished_at": "2026-10-30T22:06:23.337Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a mail goes as Sam's agent under the platform's label from the host's address, and no calendar or document tool exists",
+          "started_at": "2026-10-30T22:06:23.337Z",
+          "finished_at": "2026-10-30T22:06:35.356Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a mail goes as Sam's agent under the platform's label from the host's address, and no calendar or document tool exists",
+          "started_at": "2026-10-30T22:06:35.356Z",
+          "finished_at": "2026-10-30T22:07:11.552Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T22:16:05.325Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a mail goes as Sam's agent under the platform's label from the host's address, and no calendar or document tool exists",
+          "started_at": "2026-10-30T22:16:05.325Z",
+          "finished_at": "2026-10-30T22:16:16.010Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a mail goes as Sam's agent under the platform's label from the host's address, and no calendar or document tool exists",
+          "started_at": "2026-10-30T22:16:16.011Z",
+          "finished_at": "2026-10-30T22:16:40.172Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a mail goes as Sam's agent under the platform's label from the host's address, and no calendar or document tool exists",
+          "started_at": "2026-10-30T22:16:40.172Z",
+          "finished_at": "2026-10-30T22:16:50.635Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T22:34:10.438Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a mail goes as Sam's agent under the platform's label from the host's address, and no calendar or document tool exists",
+          "started_at": "2026-10-30T22:34:10.438Z",
+          "finished_at": "2026-10-30T22:34:40.331Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the workspace is this deploy, with one person",
+          "started_at": "2026-10-30T22:34:40.332Z",
+          "finished_at": "2026-10-30T22:34:54.711Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a mail goes as Sam's agent under the platform's label from the host's address, and no calendar or document tool exists",
+          "started_at": "2026-10-30T22:34:54.711Z",
+          "finished_at": "2026-10-30T22:35:05.899Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}

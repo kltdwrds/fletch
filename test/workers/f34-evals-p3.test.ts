@@ -178,7 +178,7 @@ describe("[F34] P3 on a slot: the probe pages, the requests, the rows, the reade
   it("each chat request's messages are kept beside its prompt, the system prompt left out, a long one in several values joined back in order", async () => {
     const body = { messages: [{ role: "system", content: "You are fletch." }, { role: "user", content: "hi" }, { role: "assistant", content: [{ type: "text", text: "hello" }] }] };
     expect(requestText(body)).toBe("hi\nhello");
-    expect(requestText({ query: { messages: [{ role: "user", content: "routed" }] } })).toBe("routed");
+    expect(requestText({ model: "muse-spark-1.3-contributor", messages: [{ role: "user", content: "routed" }] })).toBe("routed");
     expect(requestText({ text: ["embed"] })).toBeNull();
     const kept: Array<[string, unknown]> = [];
     await recordingAi({ run: async (..._: unknown[]) => "ok" }, async (p: string, b: unknown) => void kept.push([p, b])).run("m", body, {});

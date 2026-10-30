@@ -1,0 +1,119 @@
+{
+  "task_id": "T-P14-13",
+  "cluster": "P14",
+  "version_hash": "b616d8de85b0f3c76ef1483c4815aaad4f0bb1bf8a372b051e53e4c171e1615c",
+  "runs": [
+    {
+      "run_at": "2026-10-30T21:40:07.242Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply changes no setting and names Settings > Appearance and Settings > Devices",
+          "started_at": "2026-10-30T21:40:07.242Z",
+          "finished_at": "2026-10-30T21:40:38.994Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T21:40:38.995Z",
+          "finished_at": "2026-10-30T21:41:08.457Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply says the owner has no export or deletion yet and starts nothing",
+          "started_at": "2026-10-30T21:41:08.457Z",
+          "finished_at": "2026-10-30T21:41:39.285Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T22:03:51.192Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T22:03:51.192Z",
+          "finished_at": "2026-10-30T22:04:36.633Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T22:04:36.633Z",
+          "finished_at": "2026-10-30T22:05:09.888Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply says the owner has no export or deletion yet and starts nothing",
+          "started_at": "2026-10-30T22:05:09.888Z",
+          "finished_at": "2026-10-30T22:05:44.587Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T22:13:54.689Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T22:13:54.689Z",
+          "finished_at": "2026-10-30T22:14:33.286Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T22:14:33.286Z",
+          "finished_at": "2026-10-30T22:15:01.758Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T22:15:01.758Z",
+          "finished_at": "2026-10-30T22:15:35.099Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    },
+    {
+      "run_at": "2026-10-30T22:31:46.363Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply changes no setting and names Settings > Appearance and Settings > Devices",
+          "started_at": "2026-10-30T22:31:46.363Z",
+          "finished_at": "2026-10-30T22:32:41.524Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T22:32:41.524Z",
+          "finished_at": "2026-10-30T22:33:11.692Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply changes no setting and names Settings > Appearance and Settings > Devices",
+          "started_at": "2026-10-30T22:33:11.693Z",
+          "finished_at": "2026-10-30T22:33:42.771Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
+    }
+  ]
+}

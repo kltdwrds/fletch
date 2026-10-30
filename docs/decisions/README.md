@@ -55,8 +55,8 @@ After adding or changing a record, run `node scripts/check-decisions.mjs --write
 | [D-0001](0001-refusals-carry-host-codes.md) | A capability this deploy lacks is refused with a `HOST_<FEATURE>_UNAVAILABLE` code, never faked | accepted | one-way | 2026-10-20 | 2026-11-21 |
 | [D-0002](0002-first-passkey-needs-setup-token.md) | The first passkey on a deploy needs a one-time setup token minted by create-fletch | accepted | one-way | 2026-10-20 | 2026-11-21 |
 | [D-0003](0003-primitives-never-depend-on-the-app.md) | The published primitives never import the agent, and @qyvr/host imports no platform | accepted | one-way | 2026-10-19 | 2026-11-21 |
-| [D-0004](0004-paid-bindings-are-opt-in.md) | Code Mode and Images are not in the base config; create-fletch --paid adds them | accepted | two-way | 2026-10-20 |  |
-| [D-0005](0005-create-fletch-deploys-from-a-checkout.md) | create-fletch deploys the agent from a fletch checkout, not from a published package | accepted | two-way | 2026-10-20 | 2027-01-20 |
+| [D-0004](0004-paid-bindings-are-opt-in.md) | Code Mode and Images are not in the base config; create-fletch --paid adds them | superseded | two-way | 2026-10-20 |  |
+| [D-0005](0005-create-fletch-deploys-from-a-checkout.md) | create-fletch deploys the agent from a fletch checkout, not from a published package | superseded | two-way | 2026-10-20 | 2027-01-20 |
 | [D-0006](0006-one-plan-two-entry-points.md) | One plan with two entry points: roadmap work is an `F<n>` part, everything else a plain PR | superseded | two-way | 2026-10-22 | 2027-01-22 |
 | [D-0007](0007-decision-records.md) | Binding decisions are records with a status, a ratifier, a confirmation and a review date, checked in pnpm check | accepted | two-way | 2026-10-22 | 2027-01-22 |
 | [D-0008](0008-preview-slots-on-a-per-worker-token.md) | Cloud sessions deploy to a fixed pool of preview slots with a token scoped to the slot Workers alone | accepted | one-way | 2026-10-22 |  |
@@ -71,4 +71,8 @@ After adding or changing a record, run `node scripts/check-decisions.mjs --write
 | [D-0017](0017-no-payment-instrument.md) | fletch holds no payment instrument and submits no payment; the person pays in a live page they take over | proposed | one-way | 2026-10-30 | 2026-12-31 |
 | [D-0018](0018-agent-name-is-the-owners-setting.md) | The agent's name and avatar are the owner's settings, written only by the owner through the app; until that setting exists the agent has no name and says so | proposed | one-way | 2026-10-30 | 2026-12-31 |
 | [D-0019](0019-operating-block-cap-6-kib.md) | The operating block's cap is 6 KiB, held by a test, so P14's identity section fits | accepted | two-way | 2026-10-30 |  |
+| [D-0020](0020-chat-model-two-providers-no-hedge.md) | The agent reaches models two ways, Workers AI and Meta through an AI Gateway, with no fallback model; invalid model vars fail every call by name | accepted | two-way | 2026-10-30 |  |
+| [D-0021](0021-paid-bindings-opt-in-self-host.md) | Code Mode and Images are not in the base config; pnpm self-host --paid adds them | accepted | two-way | 2026-10-30 |  |
+| [D-0022](0022-self-host-deploys-from-a-checkout.md) | pnpm self-host deploys the agent from a fletch checkout on the owner's wrangler login; there is no setup package | accepted | two-way | 2026-10-30 |  |
+| [D-0023](0023-setup-token-minted-by-self-host.md) | The first passkey on a deploy needs a one-time setup token minted by pnpm self-host | proposed | one-way | 2026-10-30 | 2026-12-31 |
 <!-- index:end -->

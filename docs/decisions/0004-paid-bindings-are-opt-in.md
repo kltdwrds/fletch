@@ -1,7 +1,8 @@
 ---
 id: D-0004
 title: Code Mode and Images are not in the base config; create-fletch --paid adds them
-status: accepted
+status: superseded
+superseded-by: D-0021
 door: two-way
 decided: 2026-10-20
 decider: inherited

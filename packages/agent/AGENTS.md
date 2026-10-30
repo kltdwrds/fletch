@@ -18,10 +18,13 @@ and shown to the owner by name, never as empty or success (`test/workers/f1-refu
 - **One file vocabulary.** File tools are defined only in `packages/agent/src/files/tools.ts`, and only
   `packages/agent/src/tree/` imports `@cloudflare/computer` (`file-vocabulary*`, `test/m24/`).
 - **One model path.** The model is called only from `packages/agent/src/model/`: Workers AI over the `AI` binding,
-  through a gateway only when `AI_GATEWAY_ID` is set (`test/workers/f1-models.test.ts`).
+  through a gateway only when `AI_GATEWAY_ID` is set, and Meta's Muse Spark for chat only when `CHAT_PROVIDER=meta`
+  is set with it; no fallback model, and invalid vars fail every call by name (D-0020, `test/workers/f1-models.test.ts`).
+  Muse Spark's Contributor tier sends the chat's content to Meta, which may train on it: it is for eval slots on test
+  identities (`test/fixtures/people.json`), never an owner's deploy.
 - **Migrations are append-only**, one list per object in `packages/agent/src/migrations/`, run in the constructor.
 - **Paid-plan bindings are optional.** `LOADER` and `IMAGES` are not in the base config, so `wrangler types` keeps
-  them optional in `packages/agent/src/env.d.ts`; `create-fletch --paid` adds them.
+  them optional in `packages/agent/src/env.d.ts`; `pnpm self-host --paid` adds them (D-0021).
 - **Generated files.** `packages/agent/src/http/app/tokens.ts` and `icons.ts` come from `pnpm ds`; the pre-commit
   hook refuses a hand edit. The design sources are under `packages/agent/src/design/`.
 - **Platform docs are for the model.** `packages/agent/docs/platform/` holds manuals the agent reads at run time
@@ -39,7 +42,7 @@ One folder per concern under `packages/agent/src/`; `src/objects/` holds the Dur
 
 No tests in the package: they live in the root `test/workers/`, `test/scenarios/` and `test/m*/`, under the
 hermetic setup with the test host from `test/support/host.ts`. There is no build; `pnpm accept` bundles the Worker
-with `wrangler deploy --dry-run`, and `create-fletch` deploys it from the checkout.
+with `wrangler deploy --dry-run`, and `pnpm self-host` deploys it from the checkout (D-0022).
 
 ## Keep this file true
 

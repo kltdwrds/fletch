@@ -1,4 +1,4 @@
-// Base config of the self-host agent script; `wrangler types` reads it for Env. create-fletch writes a
+// Base config of the self-host agent script; `wrangler types` reads it for Env. `pnpm self-host` writes a
 // deploy's own copy (name, account, bucket, index, OWNER_EMAIL, TENANT_ID) and sets the MASTER_KEY
 // secret, which never appears here. No service bindings: every platform service comes from the host
 // (`src/host.ts`). The Worker Loader (Code Mode) and Images (HEIC) are paid-plan bindings a deploy adds;
@@ -32,7 +32,7 @@
   "r2_buckets": [{ "binding": "AGENT_BUCKET", "bucket_name": "qyvr-base-agent" }],
   // Semantic memory search (M12.2): the tenant's own index, one namespace per memory store.
   "vectorize": [{ "binding": "MEMORY_INDEX", "index_name": "qyvr-base-memory" }],
-  // TENANT_ID names the deploy's one tenant; OWNER_EMAIL is the owner create-fletch asks for.
+  // TENANT_ID names the deploy's one tenant; OWNER_EMAIL is the owner `pnpm self-host --owner-email` names.
   "vars": {
     "TENANT_ID": "base",
     "TENANT_SHAPE": "standalone",

@@ -49,9 +49,8 @@ something still cites a record that was replaced.
 | `packages/agent/` | `fletch-agent` (private): the agent Worker and its Durable Objects, one deploy per owner. Read `packages/agent/AGENTS.md` first. |
 | `packages/host/` | `@qyvr/host` (published): the host contracts, no platform or app imports. Read `packages/host/AGENTS.md` first. |
 | `packages/host-cloudflare/` | `@qyvr/host-cloudflare` (published): keys, passkey login and the provisioning library on Cloudflare. Read `packages/host-cloudflare/AGENTS.md` first. |
-| `packages/create-fletch/` | `create-fletch` (private): the one command that sets fletch up on an owner's account. Read `packages/create-fletch/AGENTS.md` first. |
-| `test/` | The hermetic suite and the live lane (layout below). |
-| `scripts/` | The gates, each with a `*.test.mjs` beside it; `scripts/accept.ts`, the acceptance contract; `scripts/pre-commit.ts` and `scripts/pre-push.mjs`, the git hooks; `scripts/scans.ts`, the secret and privacy scans. |
+| `test/` | The hermetic suite (layout below). |
+| `scripts/` | The gates, each with a `*.test.mjs` beside it; `scripts/accept.ts`, the acceptance contract; `scripts/pre-commit.ts` and `scripts/pre-push.mjs`, the git hooks; `scripts/scans.ts`, the secret and privacy scans; `scripts/self-host.mjs`, the owner's deploy. |
 | `docs/plan-v2/` | The parity framework, the spine's contracts (one file per cluster, from F18), the part plan, its ledgers and the builder's protocol. |
 | `docs/runbooks/` | Procedures with exact commands, one per file (`docs/runbooks/README.md` is the index). |
 | `docs/decisions/` | Decision records, their index and the log of reversible choices. |
@@ -64,8 +63,8 @@ creates it.
 ### test/
 
 `test/workers/` (Worker and Durable Object tests by milestone), `test/scenarios/` (behaviour, run twice by accept),
-`test/m0/` (the harness's own acceptance), `test/evals/` (tasks as code, one folder per cluster), `test/live/` (the
-live lane and its hermetic helpers), `test/support/` (the hermetic setup, fakes and shims), `test/fixtures/` (the only identities, in `test/fixtures/people.json`, and
+`test/m0/` (the harness's own acceptance), `test/evals/` (tasks as code, one folder per cluster),
+`test/support/` (the hermetic setup, fakes and shims), `test/fixtures/` (the only identities, in `test/fixtures/people.json`, and
 the only planted secrets). The primitives' tests sit in their packages' `test/` folders. Every top-level `describe`
 carries a part tag, `[F<n>]` for fletch's own or `[M<n>]` for one inherited from qyvr-co; `pnpm accept` selects by it.
 
@@ -78,11 +77,10 @@ carries a part tag, `[F<n>]` for fletch's own or `[M<n>]` for one inherited from
 | `pnpm harness` | The harness checks (boundaries, the file-size ratchet, test hygiene, agent docs, decision records, the plan's ledgers, shellcheck) and both scans. |
 | `pnpm test` | The gate scripts' own tests (`node --test`), then the hermetic vitest suite, about 90 s. |
 | `pnpm verify` | `check` then `test`. The release runs it on every push to main before it publishes. CI runs its steps on a PR whose diff touches code, the tests in three shards; a docs diff runs `check` alone, a contracts diff `check` and the tests related to it (`.github/workflows/ci.yml`). |
-| `pnpm accept F<n>` | A part's acceptance: lint, the tests tagged up to the part, the dry-run bundle, the scans, the harness checks, typecheck and, for F1 with an account, the live lane. Ends with one `ACCEPT` line. |
+| `pnpm accept F<n>` | A part's acceptance: lint, the tests tagged up to the part, the dry-run bundle, the scans, the harness checks and typecheck; it deploys nothing. Ends with one `ACCEPT` line. |
 | `pnpm dev` | The agent Worker under `wrangler dev` on http://localhost:8787, with local Durable Objects and R2; prints the first-passkey link. Workers AI only with `--remote-ai` (`scripts/dev.ts`). |
 | `pnpm preview` | Leases a preview slot and deploys the working tree to it, from a laptop or a cloud session (`docs/runbooks/preview.md`). |
-| `pnpm create-fletch` | Sets up a deploy; see README.md and `docs/runbooks/`. |
-| `pnpm live-sweep` | Removes `fletch-ci-` leftovers from the throwaway account (`docs/runbooks/live-deploy.md`). |
+| `pnpm self-host` | Deploys fletch from this checkout to the owner's account on their wrangler login (`docs/runbooks/self-host.md`). |
 | `pnpm evals <P<n>\|T-P<n>-<nn>>` | The tier-2 runner: a cluster's tasks on this worktree's preview slot, three trials each, a results file per task hash and one Markdown table (`docs/runbooks/evals.md`). |
 | `pnpm redact <file>` | The redaction gate over a capture before it is stored under `docs/plan-v2/evidence/`: deletes it on a secret, strips values outside the allowlist (`scripts/redact-capture.mjs`). |
 | `pnpm ds` | Compiles the design tokens; the pre-commit hook refuses a stale `tokens.ts` or `icons.ts`. |
@@ -112,7 +110,7 @@ trap with its fix; leave out exploration and dead ends; never copy a secret.
 
 ## Commits
 
-Conventional Commits (`feat(create-fletch): …`, `fix(login): …`, `docs: …`), with a subject that says what changed
+Conventional Commits (`feat(scripts): …`, `fix(login): …`, `docs: …`), with a subject that says what changed
 and why, and a DCO sign-off (`git commit -s`; CI refuses a commit without one). A part's commits name it
 (`feat(agent): F2 …`).
 
@@ -129,7 +127,7 @@ and why, and a DCO sign-off (`git commit -s`; CI refuses a commit without one). 
 - **Plant the guard.** A guard whose removal fails no test protects nothing: every check, gate and refusal has a
   test that plants the violation on the production path.
 - **Hermetic by default.** Tests see no credential and no network; the model is the scripted fake; live calls only
-  in `*.live.test.ts`. Own the store, not the clock: no sleeps and no retries (`scripts/check-test-hygiene.mjs`).
+  under `pnpm evals`, against a preview slot. Own the store, not the clock: no sleeps and no retries (`scripts/check-test-hygiene.mjs`).
 - **No backwards compatibility until fletch has users.** A removed thing is deleted outright. Delete this rule when
   the first owner other than Kyle runs a deploy.
 
@@ -159,8 +157,8 @@ hook, not a sentence. A rule changes only when Kyle agrees.
    at launch, not on their assertions. In a browser test, start a URL wait before the click that navigates
    (Promise.all of the two): the app leaves `/` for its open chat as soon as it loads, so a wait begun after the
    click can miss the URL under load and hang to the test's timeout.
-6. `pnpm create-fletch` without `--dir` writes `wrangler.jsonc` to pnpm's `INIT_CWD`, which inside the checkout is
-   the checkout itself (git-ignored, but it holds the account id and email). Always pass `--dir`.
+6. `pnpm self-host` writes packages/agent/wrangler.self-host.jsonc, git-ignored, holding the account id and
+   email. Never commit it, and never edit it: the next run writes it whole.
 7. The agent's typecheck needs `wrangler types --strict-vars=false` first (`pnpm typecheck` runs it); it writes the
    git-ignored `worker-configuration.d.ts`.
 8. Automated PR reviewers are advisory. Check each suggestion against the code and the rules here before taking it.

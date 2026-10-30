@@ -4,7 +4,7 @@
 // (`hostOf(env).budget`), the cap across tenants, to which every recorded call reports the day's total.
 import { DurableObject } from "cloudflare:workers";
 import { checkJournalRow, type JournalRow } from "../grants/journal.ts";
-import { admitPolicy, BUDGET_KEYS, type Budgets, chargeMicros, type CompanyPolicy, dayStart, decide, DEFAULT_BUDGETS, isBudgetKey, utcDay } from "../ledger/budget.ts";
+import { admitPolicy, BUDGET_KEYS, type Budgets, chargeMicros, type CompanyPolicy, dayStart, decide, DEFAULT_BUDGETS, isBudgetKey, pricedModel, utcDay } from "../ledger/budget.ts";
 import { computeRollup, type DeliveryCounts, dayBounds, type PlatformRollup, platformRollup, type Rollup } from "../ledger/rollup.ts";
 import type { Admission, AdmitResult, BrowserRow, LedgerSink, ModelCallRow, RunRow, TurnEndRow } from "../ledger/types.ts";
 import { DEFAULT_TIER, isModelTier } from "../model/routes.ts";
@@ -60,10 +60,8 @@ export class Ledger extends DurableObject<Env> implements LedgerSink {
   }
 
   async record(row: ModelCallRow): Promise<void> {
-    // The provider's own cost where its usage gave one (M22.1), else the price table's, else the unpriced fallback (M28.1).
-    const cost = row.costMicros !== undefined && Number.isFinite(row.costMicros) && row.costMicros >= 0
-      ? Math.round(row.costMicros)
-      : chargeMicros(row.model, { input: row.inputTokens, output: row.outputTokens, cached: row.cachedTokens });
+    // The price table's for the served model, else the asked one (D-0020), else the unpriced fallback (M28.1).
+    const cost = chargeMicros(pricedModel(row.model, row.asked), { input: row.inputTokens, output: row.outputTokens, cached: row.cachedTokens });
     this.sql.exec(
       "INSERT INTO model_calls (tenant, person, run_id, route, model, provider, attempt, status, code, http_status, input_tokens, output_tokens, reasoning_tokens, cached_tokens, cost_micros, at, started_at, first_token_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       row.tenant, row.person, row.runId, row.route, row.model, row.provider ?? null, row.attempt, row.status, row.code, row.httpStatus,

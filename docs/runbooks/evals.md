@@ -22,11 +22,11 @@ the chat socket).
 
    That runs the slot's chat on the self-host default, GLM 5.3 Flash on Workers AI. To run it on the model Muse runs,
    Muse Spark 1.3 Contributor on Meta's Model API through the account's AI Gateway (its custom provider `meta`, base URL
-   `https://api.meta.ai/v1`, with a Meta key stored on the gateway for it), with no hedge so every trial is that model's own
-   answer:
+   `https://api.meta.ai/v1`, with a Meta key stored on the gateway for it); there is no fallback model, so every trial
+   is that model's own answer (D-0020):
 
    ```bash
-   pnpm preview up --var AI_GATEWAY_ID=<gateway> --var CHAT_PROVIDER=meta --var CHAT_HEDGE=off
+   pnpm preview up --var AI_GATEWAY_ID=<gateway> --var CHAT_PROVIDER=meta
    ```
 
    A results file does not record the model; name it in the run's note. The Ledger does, per call, on the slot's
@@ -97,3 +97,15 @@ rows and her jobs (those there before the trial left out); the effects that ran 
 having no purchase tool. T-P12-13 is played after T-P12-10's ask and T-P12-11's typed card in its own chat. `reload`
 draws the chat (the agent's bubbles and Sam's typed-card bubble) at a width and reloads it, or after an `open` reloads
 `/settings` and reads its nav's panes; every request those pages made is kept by origin (`scripts/evals/p12-page.ts`).
+
+A P14 task (F41, `scripts/evals/p14-slot.ts`) reads Sam's chat `c1` and what the test host's `p14` op
+(`scripts/preview-slot/test-host-p14.mjs`) answers. Each trial begins with Sam's standing files, MEMORY.md among them,
+written back to the seed where an earlier trial changed them, and, when Sam holds fewer than two passkeys, one inert fixture
+passkey added (its public key is fixed bytes, so nothing signs in with it; it is listed in Settings > Security, and
+removing a real passkey while it is the other one leaves only it). The op reads the standing files with their writers,
+the daily lines and MEMORY.md, every table's row count in the chat, the Person, the Ledger and the Vault, the Ledger's
+chat model calls, Sam's mail journal rows and every system message of the chat's model requests, with the first one's
+tool lines and the production guard's answer for each (lines, calls and rows there before the trial left out). `look`
+draws the chat at a width and reads its name, panel and Identity card; `reload` reloads it and reads the replies from a
+fresh history; `settings` opens a route at a width, reloads it and reads the stored mode before and after; every
+request those pages made is kept by origin (`scripts/evals/p14-page.ts`).

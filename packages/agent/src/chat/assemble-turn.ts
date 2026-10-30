@@ -2,7 +2,7 @@
 // if due, the todo nudge, the skills shortlist and the shared context, then the assembler; the blocks it
 // placed around the transcript are recorded, so a resumed step replays them (`projection.ts`).
 import type { StreamFn } from "@earendil-works/pi-agent-core";
-import type { Message } from "@earendil-works/pi-ai";
+import type { Message, Model } from "@earendil-works/pi-ai";
 import { assemble } from "../context/assemble.ts";
 import type { Route } from "../model/routes.ts";
 import { toolReference } from "../tools/reference.ts";
@@ -34,9 +34,9 @@ export interface AssembleDeps {
   context: TurnContext;
 }
 
-export async function assembleTurn(d: AssembleDeps, turnId: string, person: string, session: ToolSession, modelId: string): Promise<{ ok: true; messages: Message[] } | { ok: false; code: string; detail: string }> {
+export async function assembleTurn(d: AssembleDeps, turnId: string, person: string, session: ToolSession, model: Model<string>): Promise<{ ok: true; messages: Message[] } | { ok: false; code: string; detail: string }> {
   const { store, hooks } = d;
-  const compacted = await compactIfDue(store, d.streamFn("compaction", person, turnId), turnId, d.now());
+  const compacted = await compactIfDue(store, d.streamFn("compaction", person, turnId), turnId, d.now(), model);
   if (!compacted.ok) return compacted;
   store.transaction(() => {
     const nudge = takeTodoNudge(store, d.now());
@@ -67,7 +67,7 @@ export async function assembleTurn(d: AssembleDeps, turnId: string, person: stri
     skills: shortlist,
     toolReference: toolReference(session.registry.namespaces, session.loaded),
     // The reactions standing now (F10): per turn, in the envelope, since a reaction changes after the message it is on.
-    envelope: { now: d.now(), timeZone, surface: "chat", modelId, owner: person, reactions: reactionsLead(store.history(), hooks.nameOf?.(owner) ?? owner) },
+    envelope: { now: d.now(), timeZone, surface: "chat", modelId: model.id, owner: person, reactions: reactionsLead(store.history(), hooks.nameOf?.(owner) ?? owner) },
     tools: session.tools,
     transcript,
   });

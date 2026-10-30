@@ -5,6 +5,7 @@
 // a row with its code and reason rather than silence, the epoch advances at the checkpoint, and the
 // todo snapshot is kept beside the summary.
 import type { StreamFn } from "@earendil-works/pi-agent-core";
+import type { Model } from "@earendil-works/pi-ai";
 import { modelFor } from "../model/routes.ts";
 import { shouldCompact, summarise, summaryMessage } from "./compaction.ts";
 import { EPOCH_KEY } from "./mailbox.ts";
@@ -13,8 +14,9 @@ import { keepTodoAtCompaction } from "./todo.ts";
 
 export type Compacted = { ok: true; record?: CompactionRecord } | { ok: false; code: string; detail: string };
 
-export async function compactIfDue(store: ChatStore, streamFn: StreamFn, turnId: string, at: number): Promise<Compacted> {
-  if (!shouldCompact(store.lastInputTokens(), modelFor("chat"))) return { ok: true };
+/** `chat` is the model this deploy's turn runs on (`modelFor("chat", modelConfig(env))`): its window sets the threshold. */
+export async function compactIfDue(store: ChatStore, streamFn: StreamFn, turnId: string, at: number, chat: Model<string>): Promise<Compacted> {
+  if (!shouldCompact(store.lastInputTokens(), chat)) return { ok: true };
   return compact(store, streamFn, turnId, at, "threshold");
 }
 

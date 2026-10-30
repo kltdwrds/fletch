@@ -40,7 +40,7 @@ export const PAGES: readonly PageRow[] = [
   { name: "goals", pattern: "^/goals$", view: "goals", example: "/goals" },
   { name: "library", pattern: "^/library$", view: "library", example: "/library" },
   ...Object.entries(COLLECTIONS).map(([c, id]) => ({ name: c, pattern: `^/library/${c}/(.+)$`, view: "library" as const, segments: true as const, example: `/library/${c}/${id}` })),
-  { name: "settings", pattern: "^/settings(?:/(?:general(?:/(?:company|loops))?|connectors(?:/[^/]+)?|permissions|devices|messaging|help))?$", view: "settings", example: "/settings/connectors" },
+  { name: "settings", pattern: "^/settings(?:/(?:general(?:/(?:company|loops))?|connectors(?:/[^/]+)?|permissions|devices|security|messaging|help))?$", view: "settings", example: "/settings/connectors" },
 ];
 
 const COMPILED = PAGES.map((p) => ({ row: p, re: new RegExp(p.pattern) }));

@@ -18,6 +18,7 @@ const WORDS: Record<string, string> = {
   MODEL_RATE_LIMITED: "Your agent did not answer: the model is busy. Try again in a minute.",
   MODEL_FIRST_TOKEN_TIMEOUT: "Your agent did not answer: the model did not start replying in time, twice, so it was stopped. Try again in a moment.",
   MODEL_CALL_TIMEOUT: "Your agent stopped: the model's reply took too long to finish. Try again, or ask for a smaller piece.",
+  MODEL_CONFIG_INVALID: "Your agent did not answer: this deploy's model settings name a model it cannot reach, so none was called. Whoever deployed it can fix the setting the reason names.",
   TURN_STEP_LIMIT: "Your agent stopped: it took too many steps without finishing. Try asking for a smaller piece.",
   MEMORY_UNAVAILABLE: "Your agent did not answer: your memory could not be read just now. Try again in a moment.",
 };

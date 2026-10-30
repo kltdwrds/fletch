@@ -85,8 +85,8 @@ export interface RunDeps {
  */
 export const SLOT_EVENTS: readonly string[] = ["decide", "tick", "reload", "open", "prompt"];
 
-/** The events only one cluster's slot world plays (F34, F37, F39): for P3 a steer or Stop while a child runs, and the children waited out; for P9 and P12 a send seen from two tabs. */
-export const CLUSTER_EVENTS: Readonly<Record<string, readonly string[]>> = { P3: ["midchild", "children"], P9: ["tabs"], P12: ["tabs"] };
+/** The events only one cluster's slot world plays (F34, F37, F39, F41): for P3 a steer or Stop while a child runs, and the children waited out; for P9 and P12 a send seen from two tabs; for P14 the drawn name looked at and a settings route opened. */
+export const CLUSTER_EVENTS: Readonly<Record<string, readonly string[]>> = { P3: ["midchild", "children"], P9: ["tabs"], P12: ["tabs"], P14: ["look", "settings"] };
 
 /** Why the runner cannot drive `task` on a slot owned by `owner`, or null: a prompt by someone else, an event the slot cannot play, a schedule. */
 export function driveable(task: DefinedTask<SlotWorld>, owner: string): string | null {

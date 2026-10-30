@@ -8,8 +8,8 @@
 //   pnpm accept F1.2      a split part
 //
 // The steps: lint, hermetic tests, the agent's dry-run bundle, the secret scan, the privacy scan, the harness
-// checks, typecheck, and the live exit test (F1) when QYVR_LIVE=1 with CF_LIVE_ACCOUNT_ID and CF_LIVE_TOKEN set, which
-// otherwise prints `live: skipped (no account)` and passes. The platform's steps (the generated-config bundle, the upstream pin check, the
+// checks and typecheck. None deploys: the proof of a real deploy is the owner's own `pnpm self-host`
+// (docs/runbooks/self-host.md). The platform's steps (the generated-config bundle, the upstream pin check, the
 // binding audit and provisioning, the adapter contract suite, the live lane and the milestone claims) stayed
 // in qyvr-co with the platform.
 import { spawnSync } from "node:child_process";
@@ -102,7 +102,7 @@ export function hermeticEnv(): NodeJS.ProcessEnv {
   };
 }
 
-/** Hermetic test files under each of `dirs`, repository-relative and sorted. */
+/** Test files under each of `dirs`, repository-relative and sorted. */
 function testFiles(dirs: string[]): string[] {
   const out: string[] = [];
   const walk = (d: string) => {
@@ -110,17 +110,17 @@ function testFiles(dirs: string[]): string[] {
       const path = join(d, entry.name);
       if (entry.isDirectory()) {
         if (entry.name !== "node_modules") walk(path);
-      } else if (entry.name.endsWith(".test.ts") && !entry.name.endsWith(".live.test.ts")) out.push(relative(root, path));
+      } else if (entry.name.endsWith(".test.ts")) out.push(relative(root, path));
     }
   };
   for (const dir of dirs) if (existsSync(dir)) walk(dir);
   return out.toSorted();
 }
 
-/** Where hermetic tests live: the agent's under test/, the primitives' and create-fletch's beside their packages. */
+/** Where hermetic tests live: the agent's under test/, the primitives' beside their packages. */
 export function testDirs(base = root): string[] {
   const packages = join(base, "packages");
-  const hosts = existsSync(packages) ? readdirSync(packages).filter((p) => p.startsWith("host") || p === "create-fletch").map((p) => join(packages, p, "test")) : [];
+  const hosts = existsSync(packages) ? readdirSync(packages).filter((p) => p.startsWith("host")).map((p) => join(packages, p, "test")) : [];
   return [join(base, "test"), ...hosts];
 }
 
@@ -162,8 +162,8 @@ function vitest(files: string[], pattern: string, env: NodeJS.ProcessEnv, label:
 
 /** The agent: the one Worker package, its config read by `wrangler types` and the dry-run bundle. */
 export const AGENT_PACKAGE = "packages/agent";
-/** Every TypeScript project: the Node side, the primitives over the Workers types, the agent, and create-fletch. */
-export const TS_PROJECTS: readonly string[] = ["tsconfig.json", "tsconfig.hosts.json", AGENT_PACKAGE, "packages/create-fletch"];
+/** Every TypeScript project: the Node side, the primitives over the Workers types, the agent, and the tier-2 runner. */
+export const TS_PROJECTS: readonly string[] = ["tsconfig.json", "tsconfig.hosts.json", AGENT_PACKAGE, "tsconfig.evals.json"];
 const HARNESS_CHECKS = [
   "scripts/check-boundaries.mjs",
   "scripts/check-file-sizes.mjs",
@@ -286,34 +286,6 @@ function harnessStep(): StepOutcome {
   return { ok: true, count: `${HARNESS_CHECKS.length} checks, ${gateTests.length} gate test files`, detail };
 }
 
-// --- the live lane --------------------------------------------------------------------------------
-
-/** The F1 exit test: a scripted deploy into a throwaway account (docs/runbooks/live-deploy.md). */
-export const LIVE_FILE = "test/live/f1-deploy.live.test.ts";
-
-/** Whether the live lane runs: `QYVR_LIVE=1` and both account variables set (non-empty). */
-export function liveEnabled(env: NodeJS.ProcessEnv): boolean {
-  return env.QYVR_LIVE === "1" && !!env.CF_LIVE_ACCOUNT_ID && !!env.CF_LIVE_TOKEN;
-}
-
-/** The live lane's environment: the account and token, and nothing else of the caller's but what a child needs. */
-export function liveEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  const { QYVR_HERMETIC: _hermetic, ...base } = hermeticEnv();
-  return { ...base, QYVR_LIVE: "1", CF_LIVE_ACCOUNT_ID: env.CF_LIVE_ACCOUNT_ID, CF_LIVE_TOKEN: env.CF_LIVE_TOKEN, ...(env.GITHUB_RUN_ID ? { GITHUB_RUN_ID: env.GITHUB_RUN_ID } : {}) };
-}
-
-/** Output lines with the token and any setup link removed, so a log never carries either. */
-export function scrubLive(out: string, token: string): string {
-  return out.split("\n").map((l) => (l.includes("?setup=") ? "[setup link hidden]" : token ? l.replaceAll(token, "[token]") : l)).join("\n");
-}
-
-function liveStep(): StepOutcome {
-  if (!liveEnabled(process.env)) return { ok: true, count: "live: skipped (no account)" };
-  const res = sh("pnpm", ["exec", "vitest", "run", LIVE_FILE], liveEnv(process.env));
-  const out = scrubLive(res.out, process.env.CF_LIVE_TOKEN as string).trim().split("\n").slice(-60);
-  return { ok: res.status === 0, count: res.status === 0 ? "live: F1 exit test passed" : "live: F1 exit test failed", detail: out.map((l) => `  ${l}`) };
-}
-
 // --- main -----------------------------------------------------------------------------------------
 
 async function main(id: string | undefined): Promise<number> {
@@ -333,7 +305,6 @@ async function main(id: string | undefined): Promise<number> {
     { n: 5, name: "privacy scan", run: privacyStep },
     { n: 6, name: "harness checks", run: harnessStep },
     { n: 7, name: "typecheck", run: typecheck },
-    { n: 8, name: "live", run: liveStep },
   ];
 
   for (const step of steps) {

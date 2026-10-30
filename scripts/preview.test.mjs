@@ -5,9 +5,9 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { down, gc, loadLease, mergedBranchHashes, parseFlags, SECRETS, tokenChecks, up, varFlags } from './preview.mjs';
+import { down, gc, loadLease, mergedBranchHashes, parseFlags, tokenChecks, up, varFlags } from './preview.mjs';
 import { fakeAccount, fakeSlot, fakeSlotsFetch, tagOf } from './preview-fakes.mjs';
-import { ownerTag, sha256Hex, slotPlan } from './preview-plan.mjs';
+import { ownerTag, SECRETS, sha256Hex, slotPlan } from './preview-plan.mjs';
 import { deprovision, INVENTORY, loadInventory, provision, saveInventory, subdomainFile } from './preview-pool.mjs';
 
 // `pnpm preview`'s commands against fakes: an account answering the wrangler calls, and slots answering /__preview/ with
@@ -297,11 +297,11 @@ describe("gc's merged branches", () => {
 
 describe('up --var', () => {
   it('collects every --var pair, keeps the other flags, and refuses a pair that is not K=V', () => {
-    const { flags } = parseFlags(['--var', 'CHAT_PROVIDER=meta', '--paid', '--var', 'CHAT_HEDGE=off', '--ttl', '2']);
-    assert.deepEqual(flags, { var: ['CHAT_PROVIDER=meta', 'CHAT_HEDGE=off'], paid: true, ttl: '2' });
-    assert.deepEqual(varFlags(flags.var), { CHAT_PROVIDER: 'meta', CHAT_HEDGE: 'off' });
+    const { flags } = parseFlags(['--var', 'CHAT_PROVIDER=meta', '--paid', '--var', 'AI_GATEWAY_ID=fletch', '--ttl', '2']);
+    assert.deepEqual(flags, { var: ['CHAT_PROVIDER=meta', 'AI_GATEWAY_ID=fletch'], paid: true, ttl: '2' });
+    assert.deepEqual(varFlags(flags.var), { CHAT_PROVIDER: 'meta', AI_GATEWAY_ID: 'fletch' });
     assert.deepEqual(varFlags(undefined), {});
-    assert.throws(() => varFlags(['CHAT_HEDGE']), /--var takes K=V/);
+    assert.throws(() => varFlags(['CHAT_PROVIDER']), /--var takes K=V/);
     assert.throws(() => varFlags(['=off']), /--var takes K=V/);
   });
 });

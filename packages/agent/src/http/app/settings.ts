@@ -11,18 +11,18 @@
 // state the objects do not and decides nothing: every action is a request the agent script and its objects answer
 // with a code, and the page says the answer in words. The panes' markup is settings-panes.ts.
 import { type IconName, ic } from "./icons.ts";
-import { COMPANY_PANE, DEVICES_PANE, GENERAL_PANE, HELP_PANE, LOOPS_PANE, MESSAGING_PANE, MODE_KEY, MODES, REPORT_DIALOG, SETTINGS_TEXT } from "./settings-panes.ts";
+import { COMPANY_PANE, DEVICES_PANE, GENERAL_PANE, HELP_PANE, LOOPS_PANE, MESSAGING_PANE, MODE_KEY, MODES, REPORT_DIALOG, SECURITY_PANE, SETTINGS_TEXT } from "./settings-panes.ts";
 
 export { MODE_KEY, MODES, SETTINGS_TEXT };
 import { CONNECT_DIALOG } from "./connectors.ts";
 
 /** The panes in the nav's order, with their titles and the canvas's glyphs (`navDefs`). */
-export const SETTINGS_PANES = ["general", "connectors", "permissions", "devices", "messaging", "help"] as const;
-export const PANE_TITLE: Record<(typeof SETTINGS_PANES)[number], string> = { general: "General", connectors: "Connectors", permissions: "Permissions", devices: "Devices", messaging: "Messaging channels", help: "Help & support" };
+export const SETTINGS_PANES = ["general", "connectors", "permissions", "devices", "security", "messaging", "help"] as const;
+export const PANE_TITLE: Record<(typeof SETTINGS_PANES)[number], string> = { general: "General", connectors: "Connectors", permissions: "Permissions", devices: "Devices", security: SETTINGS_TEXT.security, messaging: "Messaging channels", help: "Help & support" };
 /** The panes nested under a nav pane, with that pane: Back goes there, and its nav item stays current. */
 export const NESTED_PANES = { connector: "connectors", company: "general", loops: "general" } as const;
 export const NESTED_TITLE: Record<keyof typeof NESTED_PANES, string> = { connector: PANE_TITLE.connectors, company: SETTINGS_TEXT.companyRow, loops: SETTINGS_TEXT.loops };
-const PANE_GLYPH: Record<(typeof SETTINGS_PANES)[number], IconName> = { general: "gear", connectors: "plug", permissions: "shield", devices: "monitor", messaging: "chat", help: "help" };
+const PANE_GLYPH: Record<(typeof SETTINGS_PANES)[number], IconName> = { general: "gear", connectors: "plug", permissions: "shield", devices: "monitor", security: "key", messaging: "chat", help: "help" };
 /** Shown when the browser will not subscribe (Brave without Google push messaging, or notifications blocked). */
 export const PUSH_REFUSED_TEXT =
   "Your browser's push service is off or blocked, so this device cannot get notifications. In Brave, open Settings > Privacy and turn on \"Use Google services for push messaging\", then reload this page. In other browsers, allow notifications for this site. Until then your agent's updates still reach you by mail.";
@@ -33,7 +33,7 @@ export const PUSH_REFUSED_TEXT =
  * settings-panes.ts' or connectors.ts' three, shown one at a time; the connect and report dialogs open over it.
  */
 export function settingsMarkup(p: { connectors: string; connector: string; permissions: string }): string {
-  const panes: Record<string, string> = { general: GENERAL_PANE, connectors: p.connectors, connector: p.connector, permissions: p.permissions, devices: DEVICES_PANE, messaging: MESSAGING_PANE, help: HELP_PANE, company: COMPANY_PANE, loops: LOOPS_PANE };
+  const panes: Record<string, string> = { general: GENERAL_PANE, connectors: p.connectors, connector: p.connector, permissions: p.permissions, devices: DEVICES_PANE, security: SECURITY_PANE, messaging: MESSAGING_PANE, help: HELP_PANE, company: COMPANY_PANE, loops: LOOPS_PANE };
   const navBtn = (k: (typeof SETTINGS_PANES)[number]) => `<button id="set-nav-${k}">${ic(PANE_GLYPH[k], "xs")}${PANE_TITLE[k]}<span class="qf-only-phone set-chev">${ic("chev", "xs")}</span></button>`;
   return `<div id="set-dialog" class="qf-dlg qf-dlg--800" role="dialog" aria-label="${SETTINGS_TEXT.title}">
   <span class="qf-grab qf-only-phone"></span>
@@ -63,6 +63,7 @@ export const SETTINGS_CSS = `
 .set-logout { display: flex; align-items: center; gap: 10px; height: 32px; padding: 6px 8px; border-radius: var(--radius-12); color: var(--text-primary); font: 400 14px/20px var(--font-sans); text-decoration: none; width: 100%; }
 .set-logout-note { margin: 4px 8px 0; color: var(--text-secondary); font: 400 12px/16px var(--font-sans); }
 .set-logout-note:empty { display: none; }
+#set-security-pane [hidden] { display: none; }
 .qf-set-body > section, .qf-set-body > section > div:not(.qf-grp) { display: flex; flex-direction: column; gap: 16px; }
 .qf-srow .set-ico { width: 28px; display: flex; justify-content: center; color: var(--text-secondary); }
 .qf-srow .tx > .sub { display: block; }
@@ -106,7 +107,7 @@ const setDollars = (micros) => micros === 0 ? SETTINGS.free : micros < 10000 ? S
 // The dialog: which pane is shown, and on a phone whether the nav (the first page) or a pane is. A nested pane's
 // Back goes to the pane it sits under; elsewhere Back is the phone's way back to the nav.
 let setNow = "general";
-const SET_LOAD = { general: () => settings(), connectors: () => connectors(), connector: () => connectorPage(), permissions: () => permissions(), devices: () => settingsDevices(), messaging: () => delivery(), company: () => company(), loops: () => loops() };
+const SET_LOAD = { general: () => settings(), connectors: () => connectors(), connector: () => connectorPage(), permissions: () => permissions(), devices: () => settingsDevices(), security: () => security(), messaging: () => delivery(), company: () => company(), loops: () => loops() };
 function setPane(k) {
   setNow = k;
   const nested = k in SET_NESTED, top = nested ? SET_NESTED[k] : k;
@@ -154,13 +155,59 @@ $("set-back").onclick = () => history.back();
 $("set-close").onclick = () => closeDialog($("set-dialog"));
 // Log out: the host's own /logout (a same-origin POST, so the browser sends this page's Origin) ends the session and
 // clears its cookie; then the page goes to sign-in. A logout that did not go through says so and stays.
-$("logout").onclick = async () => {
+async function logout(note) {
   let r = null;
   try { r = await fetch("/logout", { method: "POST" }); } catch (e) {}
   if (r && r.ok) { location.assign("/login"); return; }
   const b = r ? await r.json().catch(() => ({})) : {};
-  coded($("logout-result"), SETTINGS.logoutFailed, b.code || (r ? "HTTP_" + r.status : "OFFLINE"));
-};
+  coded(note, SETTINGS.logoutFailed, b.code || (r ? "HTTP_" + r.status : "OFFLINE"));
+}
+$("logout").onclick = () => logout($("logout-result"));
+$("security-logout").onclick = () => logout($("security-logout-result"));
+// Security (F41, delta 4): the host's passkey routes, drawn. \`GET /login/passkeys\` lists the owner's passkeys by the
+// date each was added (never a key); Remove is \`DELETE /login/passkeys/:id\`, and a refusal stays on the pane in words
+// with its code, the row kept. A recovery sign-in (PASSKEY_REQUIRED) sees only Add a passkey; a member who is not the
+// owner (LOGIN_OWNER_REQUIRED) sees the refusal alone. Nothing is stored here; every row is the routes' answer.
+function securityAlert(text, code) {
+  const r = el("div"); r.className = "qf-srow is-static is-danger"; r.setAttribute("role", "alert"); r.dataset.code = code;
+  const t = el("span", text); t.className = "tx"; const sub = el("span"); sub.className = "sub";
+  const st = el("span"); st.className = "qf-status qf-status--fail"; st.append(el("i"), document.createTextNode(code));
+  sub.append(st); t.append(sub); r.append(t); return r;
+}
+const passkeyDate = (at) => new Date(at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+// The card keeps what it shows until the answer is in (aria-busy while it reads), then is redrawn whole from it.
+async function security(note) {
+  const card = $("passkey-card"), add = $("passkey-add"), count = $("passkey-count");
+  card.setAttribute("aria-busy", "true");
+  let r = null, b = {};
+  try { r = await api("/login/passkeys"); b = await r.json().catch(() => ({})); } catch (e) {}
+  const code = b.code || (!r ? "OFFLINE" : r.ok ? "" : "HTTP_" + r.status);
+  const recovery = code === "PASSKEY_REQUIRED", member = code === "LOGIN_OWNER_REQUIRED";
+  const list = !code && Array.isArray(b.passkeys) ? b.passkeys.slice().sort((x, y) => new Date(x.at) - new Date(y.at)) : null;
+  card.replaceChildren(add); count.hidden = !list; count.textContent = list ? String(list.length) : "";
+  $("security-intro").hidden = member; add.hidden = member;
+  $("security-sessions").hidden = recovery || member; $("security-recovery").hidden = recovery || member;
+  if (recovery || member) card.prepend(securityAlert(recovery ? SETTINGS.recoverySignIn : SETTINGS.ownerOnly, code));
+  else if (!list) { const n = el("div"); n.className = "qf-srow is-static"; couldNot(n, "your passkeys", { code: code || "BAD_ANSWER" }); card.prepend(n); }
+  for (const p of list || []) {
+    const day = passkeyDate(p.at), row = el("div"); row.className = "qf-srow is-static"; row.dataset.kind = "passkey";
+    const t = el("span", SETTINGS.passkey); t.className = "tx"; const sub = el("span", SETTINGS.added.replace("{date}", day)); sub.className = "sub"; t.append(sub);
+    const trail = el("span"); trail.className = "trail";
+    const btn = el("button", SETTINGS.remove); btn.type = "button"; btn.className = "qf-btn qf-btn--destructive"; btn.setAttribute("aria-label", SETTINGS.removeLabel.replace("{date}", day));
+    btn.onclick = () => removePasskey(p.id);
+    trail.append(btn); row.append(t, trail); card.insertBefore(row, add);
+  }
+  if (note && list) card.insertBefore(securityAlert(note.text, note.code), add);
+  card.setAttribute("aria-busy", "false");
+}
+async function removePasskey(id) {
+  let r = null;
+  try { r = await api("/login/passkeys/" + encodeURIComponent(id), { method: "DELETE" }); } catch (e) {}
+  if (r && r.ok) { security(); return; }
+  const b = r ? await r.json().catch(() => ({})) : {};
+  const code = b.code || (r ? "HTTP_" + r.status : "OFFLINE");
+  security({ text: code === "LOGIN_LAST_PASSKEY" ? SETTINGS.lastPasskey : SETTINGS.notRemoved, code });
+}
 // Appearance: the mode this browser keeps (Light, Dark or System), applied to the body's data-theme by the shell's
 // theme(). A browser that will not store it keeps the pick for this page and says nothing is wrong: it is a view choice.
 const MODES = ${JSON.stringify(MODES)};
@@ -249,6 +296,7 @@ async function devicesRow() {
 $("set-connectors").onclick = () => setGo("connectors");
 $("set-permissions").onclick = () => setGo("permissions");
 $("set-devices").onclick = () => setGo("devices");
+$("set-security").onclick = () => setGo("security");
 $("set-messaging").onclick = () => setGo("messaging");
 $("set-company").onclick = () => setGo("company");
 $("set-loops").onclick = () => setGo("loops");

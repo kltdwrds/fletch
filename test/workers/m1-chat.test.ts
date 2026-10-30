@@ -35,10 +35,7 @@ function setup(script: FakeStep[], mode?: FakeMode) {
   return { fake, chat, chatFor, waits, clock, ledgerRows };
 }
 
-/**
- * The adapter alone on the job route: an unhedged route keeps the 429 handling below. The chat route
- * sends a 429 to its hedge at once instead (M22.1, test/workers/m22-1-hedge.test.ts).
- */
+/** The adapter alone on the job route, which has no time bound: the 429 handling below runs unbounded. */
 async function jobCall(script: FakeStep[]) {
   const fake = new FakeModel(script);
   const waits: number[] = [];
@@ -96,7 +93,7 @@ describe("[M1.1] chat recovery", () => {
 });
 
 describe("[M1.1] model adapter", () => {
-  it("retries a 429 after its Retry-After and completes the call (an unhedged route)", async () => {
+  it("retries a 429 after its Retry-After and completes the call", async () => {
     const { waits, rows, message } = await jobCall([{ status: 429, retryAfter: 7 }, { text: "Hello Ada." }]);
     expect(message.stopReason).toBe("stop");
     expect(waits).toEqual([7000]);
@@ -104,7 +101,7 @@ describe("[M1.1] model adapter", () => {
     expect(message.content).toEqual([{ type: "text", text: "Hello Ada." }]);
   });
 
-  it("fails at once with MODEL_RATE_LIMITED when Retry-After is beyond the cap (an unhedged route)", async () => {
+  it("fails at once with MODEL_RATE_LIMITED when Retry-After is beyond the cap", async () => {
     const { waits, message, fake } = await jobCall([{ status: 429, retryAfter: 3600 }]);
     expect(message.errorMessage).toMatch(/^MODEL_RATE_LIMITED: /);
     expect(waits).toEqual([]);
@@ -112,8 +109,7 @@ describe("[M1.1] model adapter", () => {
   });
 
   it("a dropped stream surfaces as a failed turn, never as success", async () => {
-    // A self-host chat route is unhedged (Workers AI): the drop is the turn's one attempt. On a deploy that
-    // puts chat on OpenRouter it goes to the hedge instead (test/workers/m22-1-hedge.test.ts).
+    // A drop after the first token is the turn's: nothing is re-sent, to this model or another (D-0020).
     const dropped: FakeStep = { drop: { text: "Your Tuesday is completely free and", afterBytes: 150 } };
     const { chat, ledgerRows } = setup([dropped, dropped]);
     const socket = chat.connect();

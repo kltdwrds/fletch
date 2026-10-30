@@ -5,6 +5,33 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
+### Q38 (F41), 2026-10-30: No preview slot is free for P14's tier 2
+
+**Blocks:** F41's tier 2 (`pnpm evals P14`: T-P14-10, 11 and 12 must-have, 13 and 14 recorded) and so its DONE row.
+Everything else in F41 is built and committed on `claude/f41-identity-the-person-can-see-31e59c`: the Security pane,
+T-P14-04 under vitest with its five minefields planted, the slot's `p14` op, readers and page, every P14 hash filled,
+and `pnpm accept F41` passing (the PROGRESS row has the TREE). At 21:03Z `pnpm preview list` showed all three slots
+leased: fletch-pv-2, free when F41 was dispatched, was leased at 20:58Z by `claude/chat-provider-meta` (PR #72, open
+and active), and `pnpm preview gc --dry-run` would take back fletch-pv-1 and fletch-pv-3 only because their branches
+merged, while both serve the F37 and F39 trees for your UAT (`WAITING-ON-KYLE.md`). F41 took none of them.
+**Recommended answer:** when a slot is free (pv-2 once PR #72's session releases it, or pv-1 or pv-3 once their UAT
+is done and you release it), resume F41 on its branch: `pnpm preview up`, `pnpm evals P14`, commit the results files,
+add any instruction line a failing must-have needs, then the verifier and the DONE row. No code change is expected
+before the run; the inert passkey the `p14` op seeds is described in Q37 (e).
+
+Orchestrator, 2026-10-30: fletch-pv-1 released from F37's merged branch at 21:20Z and leased to F41, so F41 is not blocked.
+### Q36, 2026-10-30: Accept D-0023, the setup token minted by `pnpm self-host`, and mark D-0002 superseded
+
+**Blocks:** nothing that runs; D-0002's text names `create-fletch`, which is deleted (D-0022). D-0002 is an accepted
+one-way door (the login gate on a public URL), so an agent may only propose its successor: D-0023 states the same
+ruling with `pnpm self-host` as the command that mints the `SETUP_TOKEN` (only when the Worker lacks it) and prints
+`<url>/login?setup=<token>` once, on the minting run (`scripts/self-host.test.mjs` holds both). The login gate itself,
+in `@qyvr/host-cloudflare`, is unchanged; its refusal now names `pnpm self-host`.
+
+**Recommended answer:** accept D-0023 (`decider: Kyle`, `status: accepted`, with `supersedes: D-0002`), and set
+D-0002 to `status: superseded`, `superseded-by: D-0023`. The alternative is to keep D-0002 as it stands and read
+`create-fletch` in it as "the deploy command", which leaves an accepted record naming a deleted tool.
+
 ### Q34 (F40), 2026-10-30: The F40 draft PR could not be opened from the session
 
 **Blocks:** the last step of F40's protocol (KICKOFF step 7), the draft PR. Everything else in F40 is done:
@@ -148,6 +175,41 @@ F27 is DONE and nothing is blocked. The F22 and F26 builders opened their PRs th
 the free-plan spike (Q2).
 
 ## Open, not blocking
+
+### Q37 (F41), 2026-10-30: F41's two-way choices, recorded here because the decision log is at its cap
+
+**Blocks nothing; for your read.** (a) T-P14-04's graders were corrected to what the host and the specimen say: a
+Remove is answered 204 (the host's `DELETE /login/passkeys/:id`), and the recovery session is told "Add a passkey
+first" (the specimen's words); the grader names say so. (b) Pat is a member session with no passkey: the routes list
+every passkey with no person filter and only the owner registers one, so "Pat sees no passkey of Sam's" is graded as
+Pat being told only the owner manages passkeys. (c) The host refuses a recovery session's page load
+(`PASSKEY_REQUIRED`, 403), so the recovery scenario is a recovery sign-in in another tab: the cookie is swapped under
+an open Settings page and Security opened from General; the refused load is asserted too. (d) The pane keeps its list
+while it redraws and marks the card `aria-busy` until the answer is in, so a Remove never blanks the list first. (e)
+On a slot, each P14 trial adds one inert fixture passkey for Sam when she holds fewer than two, so Settings > Security
+lists two (T-P14-11); its public key is fixed bytes, so nothing signs in with it. For your UAT: remove it, not your
+own, or a removed real passkey leaves only the inert one, and signing in then needs recovery. (f) On a slot, "the
+agent mailed" reads Sam's `mail.*` journal rows that are done, and "the models used" the Ledger's chat-route calls
+since the trial began; the test host keeps every system message of a chat request (P3's and P5's first-message read
+unchanged), since the envelope that names the model is its own system message. (g) The page script stores the mode
+under `qyvr-mode` as its own constant, held equal to `MODE_KEY` by a test, because the Node script cannot load the
+Worker module that exports it. (h) On fletch-pv-1 every chat turn failed with `TOOL_IDENTITY_REFUSED:
+browse_save_login reaches "login"`: F40's guard refuses a tool whose name holds `login`, and the site-login tool
+(M24.3, a website's login kept in the vault) is registered only where a browser is bound, so no hermetic world had
+built it; main has the same fault on any deploy with a browser. F41 renames the tool `browse_keep_site`
+(`packages/agent/src/browse/tools.ts`), a name with no identity word, and leaves F40's guard as it was;
+`test/workers/f41-identity-guard.test.ts` builds the browse namespace with a browser's every dependency, reads every
+tool name in the sources against the guard, and plants the old name to see it refused. The rejected alternative was
+letting `login` through the guard for that one tool, which the verifier refused as a narrowed security check that no
+scope line or record holds. (i) Each P14 trial on a slot writes every standing file back to its seed, MEMORY.md
+included, because a memory line one trial wrote ("you go by Sam") made the next trial answer "already noted"; the op's
+read is one pure function (`p14Read` in `scripts/preview-slot/test-host-p14.mjs`) that the tier-1 world's test reads
+too, so the slot's state and the fake's cannot drift. (j) Four instruction lines in `WORK_WORDS`
+(`packages/agent/src/chat/instructions.ts`) were sharpened, each for a must-have that failed on the slot on its reply
+words, by giving the exact sentence in these words (Q18's pattern): the name line for T-P14-10 (said only about the
+agent's own name, never on "call me Sam"), the sign-in line for T-P14-11 (four sentences), and the write-as and
+call-me lines for T-P14-12 (the whole write-as sentence, no gendered pronoun even in a denial; memory_write before the
+one reply). No line was added for T-P14-14, a nice-to-have that fails 0/3 on the mail's label and address.
 
 ### Q35 (F39), 2026-10-30: T-P12-12 and T-P12-13 fail on the slot on their reply words; and F39's two-way choices
 

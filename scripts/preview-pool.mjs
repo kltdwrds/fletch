@@ -1,7 +1,9 @@
 // The pool side of `pnpm preview` (docs/preview.md): running wrangler, the account as wrangler shows it, the committed
 // inventory, deploying a slot's Worker, and `provision` and `deprovision`, which run on Kyle's wrangler login and are
 // the only commands that make or delete a Cloudflare resource. The leases are scripts/preview.mjs; the names, configs
-// and the deletion guard are scripts/preview-plan.mjs. Ported from qyvr's scripts/preview.mjs.
+// and the deletion guard are scripts/preview-plan.mjs. `pnpm self-host` (scripts/self-host.mjs) runs wrangler, reads
+// the account and deploys through the same `wranglerRunner`, `account` and `deployWith`. Ported from qyvr's
+// scripts/preview.mjs.
 import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
@@ -43,20 +45,24 @@ export const agentDir = (root) => path.join(root, 'packages', 'agent');
 export const tailOf = (out, n = 25) => out.trimEnd().split('\n').slice(-n).join('\n');
 
 /** Runs the checkout's wrangler: `{status, out}`, or the status alone when `inherit` streams it to the terminal. */
-export function wranglerRunner(root, env) {
+export function wranglerRunner(root, env, label = 'preview') {
   const bin = path.join(root, 'node_modules', '.bin', 'wrangler');
-  if (!existsSync(bin)) throw new Error('preview: wrangler is not installed here; run `pnpm install` first');
+  if (!existsSync(bin)) throw new Error(`${label}: wrangler is not installed here; run \`pnpm install\` first`);
   return (args, { cwd = root, input, inherit = false, extraEnv = {} } = {}) => {
     const r = spawnSync(bin, args, { cwd, env: { ...env, ...extraEnv }, input, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: inherit ? ['pipe', 'inherit', 'inherit'] : 'pipe' });
-    if (r.error) throw new Error(`preview: could not run wrangler: ${r.error.message}`);
+    if (r.error) throw new Error(`${label}: could not run wrangler: ${r.error.message}`);
     return { status: r.status ?? 1, out: `${r.stdout ?? ''}${r.stderr ?? ''}` };
   };
 }
 
-/** The account as wrangler sees it, over a runner. Only provisioning lists, makes and deletes. */
-export function account(run) {
+/**
+ * The account as wrangler sees it, over a runner. For the pool only provisioning lists, makes and deletes. It makes,
+ * and touches the secrets of, only what `owns` takes: a preview's name by default, a self-host deploy's own names for
+ * scripts/self-host.mjs. `label` starts each error.
+ */
+export function account(run, { label = 'preview', owns = isPreviewName } = {}) {
   const ok = (r, what) => {
-    if (r.status !== 0) throw new Error(`preview: ${what} failed:\n${tailOf(r.out)}`);
+    if (r.status !== 0) throw new Error(`${label}: ${what} failed:\n${tailOf(r.out)}`);
     return r.out;
   };
   return {
@@ -72,17 +78,17 @@ export function account(run) {
       const r = run(['deployments', 'list', '--name', name, '--json']);
       if (r.status === 0) return true;
       if (noSuchWorker(r.out)) return false;
-      throw new Error(`preview: could not tell whether Worker ${name} exists:\n${tailOf(r.out)}`);
+      throw new Error(`${label}: could not tell whether Worker ${name} exists:\n${tailOf(r.out)}`);
     },
     create(kind, name) {
-      if (!isPreviewName(name)) throw new Error(`preview: refusing to make ${name}: not a preview's name`);
+      if (!owns(name)) throw new Error(`${label}: refusing to make ${name}: not one of this command's names`);
       if (kind === 'r2') ok(run(['r2', 'bucket', 'create', name]), `making R2 ${name}`);
       else if (kind === 'vectorize') ok(run(['vectorize', 'create', name, '--dimensions', String(MEMORY_INDEX.dimensions), '--metric', MEMORY_INDEX.metric]), `making Vectorize ${name}`);
-      else throw new Error(`preview: no such kind ${kind}`);
+      else throw new Error(`${label}: no such kind ${kind}`);
     },
     /** A Worker's secrets set (a value) or deleted (null), on stdin, never printed. */
     secrets(worker, values) {
-      if (!isPreviewName(worker)) throw new Error(`preview: refusing to touch ${worker}'s secrets: not a preview's`);
+      if (!owns(worker)) throw new Error(`${label}: refusing to touch ${worker}'s secrets: not one of this command's Workers`);
       ok(run(['secret', 'bulk', '--name', worker], { input: JSON.stringify(values) }), `setting ${worker}'s secrets`);
     },
     secretNames(worker) {
@@ -117,6 +123,21 @@ export function knownSubdomain(ctx) {
 }
 
 /**
+ * `wrangler deploy -c <config>` in `cwd`: wrangler's `{status, out}` and the ndjson it wrote to its output file
+ * (`WRANGLER_OUTPUT_FILE_PATH`; '' when it wrote none), which names the Worker's tag and the URLs it serves.
+ */
+export function deployWith(run, cwd, config) {
+  const tmp = mkdtempSync(path.join(tmpdir(), 'fletch-deploy-'));
+  const out = path.join(tmp, 'out.ndjson');
+  try {
+    const r = run(['deploy', '-c', config], { cwd, extraEnv: { WRANGLER_OUTPUT_FILE_PATH: out } });
+    return { ...r, ndjson: existsSync(out) ? readFileSync(out, 'utf8') : '' };
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+/**
  * Deploys slot `n`'s Worker: the placeholder (which wipes the agent's objects) or the agent. Returns the Worker's tag
  * (the id a token policy names it by, from wrangler's output file; none on the deploy that makes the Worker), the
  * deploy's id, which the slot echoes once it serves this deploy, and the workers.dev subdomain wrangler printed.
@@ -127,15 +148,9 @@ export function deploySlot(ctx, inv, n, { placeholder = false, paid = false, var
   const dir = agentDir(ctx.root);
   ctx.write(path.join(dir, CONFIG), configText(slotConfig(ctx.readRaw(path.join(dir, 'wrangler.jsonc')), plan, { accountId: inv.accountId, placeholder, deploy, paid, vars })));
   ctx.log(`preview: deploying ${plan.worker} (${placeholder ? 'placeholder' : 'this worktree'})`);
-  const tmp = mkdtempSync(path.join(tmpdir(), 'fletch-preview-deploy-'));
-  const out = path.join(tmp, 'out.ndjson');
-  try {
-    const r = ctx.run(['deploy', '-c', CONFIG], { cwd: dir, extraEnv: { WRANGLER_OUTPUT_FILE_PATH: out } });
-    account(ctx.run).ok(r, `deploying ${plan.worker}`);
-    return { tag: workerTag(existsSync(out) ? readFileSync(out, 'utf8') : ''), deploy, subdomain: subdomainIn(r.out, plan.worker) };
-  } finally {
-    rmSync(tmp, { recursive: true, force: true });
-  }
+  const r = deployWith(ctx.run, dir, CONFIG);
+  account(ctx.run).ok(r, `deploying ${plan.worker}`);
+  return { tag: workerTag(r.ndjson), deploy, subdomain: subdomainIn(r.out, plan.worker) };
 }
 
 /** Whether a resource exists on the account but the inventory does not record it: someone else's, never touched. */

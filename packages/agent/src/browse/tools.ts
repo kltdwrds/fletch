@@ -196,7 +196,7 @@ export function browseNamespace(deps: BrowseDeps): Namespace {
     },
   };
   const save: ToolSpec<typeof SaveParams> = {
-    name: "browse_save_login",
+    name: "browse_keep_site",
     kind: "observation",
     mutates: true,
     label: "Keep this site's login",
