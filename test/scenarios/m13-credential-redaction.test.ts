@@ -33,7 +33,7 @@ function dump<T extends object>(h: ObjectHarness<T> | undefined, skip: (table: s
 
 describe("[M13] credential redaction", () => {
 
-  it("the redaction is the guard: the same copying model, given the vendor's raw answer, writes the token into memory and R2", async () => {
+  it("the redaction is the guard: the same copying model, given the vendor's raw answer, writes the token into R2, and memory refuses it on its own", async () => {
     const token = seededToken();
     const raw = await (await vendors({ githubToken: token, hostile: true })(`https://api.github.com/repos/${FIXTURE_REPO}`, { headers: { authorization: `Bearer ${token}` } })).text();
     const w = authorityWorld({
@@ -47,6 +47,8 @@ describe("[M13] credential redaction", () => {
     });
     await w.say(ada.email, "Note this.");
     expect([...w.r2.objects.values()].some((o) => o.body.includes(token))).toBe(true);
-    expect(dump(w.personHarness(ada.email)).includes(token)).toBe(true);
+    // Memory is the second guard (F27, B-P6-07): memory_write refuses the line by MEMORY_VALUE_REFUSED, so nothing lands.
+    expect(dump(w.personHarness(ada.email)).includes(token)).toBe(false);
+    expect(w.transcriptOf(ada.email).some((b) => b.includes("MEMORY_VALUE_REFUSED"))).toBe(true);
   });
 });
