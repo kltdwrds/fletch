@@ -79,10 +79,10 @@ export interface RunDeps {
 }
 
 /**
- * The events a slot world plays (F26, F30): a decision on a card, through the page's own route; a job's tick, its next
- * alarm fired by the test host; a reload, the world read again.
+ * The events a slot world plays (F26, F30, F32): a decision on a card, through the page's own route; a job's tick, its
+ * next alarm fired by the test host; a reload, the world read again; an open (P5), Sam opening the tab or a row again.
  */
-export const SLOT_EVENTS: readonly string[] = ["decide", "tick", "reload"];
+export const SLOT_EVENTS: readonly string[] = ["decide", "tick", "reload", "open"];
 
 /** Why the runner cannot drive `task` on a slot owned by `owner`, or null: a prompt by someone else, an event the slot cannot play, a schedule. */
 export function driveable(task: DefinedTask<SlotWorld>, owner: string): string | null {

@@ -451,7 +451,7 @@ T-P5-12  nice-to-have  tier 2
   collateral: none
   graders: page (the rubric over the captures) and code (the route's JSON before and after)
   reference: Muse's persistence of rows and cards, the Summary strip on a phone (B-P5-13, B-P5-02, B-P5-07)
-  version_hash: 491388a40322
+  version_hash: ec8385ce7702
   file: test/evals/p5-activity/reload-and-phone.task.ts
 
 T-P5-13  must-have  tier 2
@@ -467,7 +467,7 @@ T-P5-13  must-have  tier 2
   collateral: none
   graders: code (deny-list over the reply; the step state) and judge (the reply says what was not obtained)
   reference: Muse's "there is no page there to read" (B-P5-05)
-  version_hash: 70d327cccaf7
+  version_hash: 3b50b65434a0
   file: test/evals/p5-activity/failed-read-real-model.task.ts
 
 T-P5-14  nice-to-have  tier 2
@@ -482,7 +482,7 @@ T-P5-14  nice-to-have  tier 2
   collateral: none
   graders: code (deny-list; the record) and judge (the acknowledgement names the work)
   reference: Muse's "Done — a sub-agent is on it" (B-P5-08)
-  version_hash: 3b375f45333e
+  version_hash: 95be28aaeef3
   file: test/evals/p5-activity/subagent-ack-real-model.task.ts
 
 T-P5-15  must-have  tier 2
@@ -498,7 +498,7 @@ T-P5-15  must-have  tier 2
   collateral: one file written, nothing else
   graders: code (the route's JSON, the file, the reply's number) and judge (the reply reads as one answer)
   reference: Muse's turn whose record said "two links" over a file that said one (B-P5-01, B-P5-03, B-P5-04)
-  version_hash: 4b4ee563647e
+  version_hash: 90db0f334bda
   file: test/evals/p5-activity/one-request-one-task-real-model.task.ts
 
 ## Properties

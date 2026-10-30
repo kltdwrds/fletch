@@ -1,9 +1,12 @@
 // T-P5-13 (B-P5-05): tier 2, the real model on a slot (`pnpm evals P5`, F32) asked for two pages, the second
 // unresolvable: the reply answers the first and says plainly of the second that no page came back, in its own words
 // under `WORK_WORDS`; the second read is `failed` and the task says one step failed.
+import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P5World } from "./world.ts";
 import { CODE, DEAD, newest, PROBE, PROBE_TITLE, RECOVERY, replyOf, work } from "./world.ts";
+
+const sam = people.people.find((p) => p.id === "sam-solo")!;
 
 export const TWO_PAGES = `What do ${PROBE} and ${DEAD} say?`;
 const second = async (w: P5World) => work(await w.task("c1", (await newest(w))!.id)).filter((s) => s.tool === "browse_open")[1];
@@ -26,7 +29,7 @@ export const task = defineTask<P5World>({
   priority: "must-have",
   tier: 2,
   setup: { seed: 513, records: ["chat:c1 on the slot", "the slot's probe page with one link", "example.invalid unresolvable"], files: [], jobs: [] },
-  turns: [{ kind: "event", name: "prompt", payload: { text: TWO_PAGES } }],
+  turns: [{ kind: "prompt", by: sam.email, text: TWO_PAGES }],
   end_state: graders.filter((g) => g.kind === "end_state").map((g) => g.name),
   required_facts: graders.filter((g) => g.kind === "required_fact").map((g) => g.name),
   minefields: graders.filter((g) => g.kind === "minefield").map((g) => g.name),

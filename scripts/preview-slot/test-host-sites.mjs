@@ -2,7 +2,9 @@
 // browser binding of the same shape as Browser Run's (`packages/agent/src/browse/binding.ts`) that answers from these
 // fixtures by hostname and records every request that reached it, so a tier-2 grader can count what was tried. No
 // request leaves the slot: an unknown host is a 404 here, not a fetch. The live lane has no machine behind it, so a
-// session is refused by name. Pure, so `scripts/preview-slot.test.mjs` runs it under plain Node.
+// session is refused by name. Pure, so `scripts/preview-slot.test.mjs` runs it under plain Node. A page served by its
+// whole address (`PAGES`, F32's probe page, ./test-host-p5.mjs) is answered before its host is looked up.
+import { pageAt, PAGES } from './test-host-p5.mjs';
 
 export const CHALLENGE = '# Just a moment...\n\nVerify you are human to continue.';
 
@@ -17,8 +19,8 @@ export const SITES = {
 
 export const NO_LIVE_BROWSER = "BROWSE_SESSION_FAILED: the preview slot's test host has no live browser";
 
-/** A Browser Run binding over SITES; `record({ kind, host })` is awaited before each answer. */
-export function testHostBinding(record, sites = SITES) {
+/** A Browser Run binding over PAGES and SITES; `record({ kind, host })` is awaited before each answer. */
+export function testHostBinding(record, sites = SITES, pages = PAGES) {
   const refuse = async () => {
     throw new Error(NO_LIVE_BROWSER);
   };
@@ -27,6 +29,8 @@ export function testHostBinding(record, sites = SITES) {
       const host = new URL(String(options?.url ?? '')).hostname.toLowerCase();
       await record({ kind: 'read', host });
       if (name !== 'markdown') return Response.json({ success: false, errors: [{ message: `the test host serves no ${name}` }] }, { status: 400 });
+      const page = pageAt(options?.url, pages);
+      if (page !== undefined) return Response.json({ success: true, result: page });
       const site = sites[host];
       if (!site) return new Response(`${host} is not a site the preview slot's test host serves`, { status: 404 });
       if (site.wall === 'bot') return Response.json({ success: true, result: CHALLENGE });

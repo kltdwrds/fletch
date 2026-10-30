@@ -11,13 +11,18 @@
 //   `p6` is the memory world's call (F28, ./test-host-p6.mjs) with the named chats' stored rows; `p7` the scheduling
 //   world's (F30, ./test-host-p7.mjs).
 // - `Job` reads the probe page from a fixture and keeps a clock the `p7` op's `tick` moves (./test-host-p7.mjs).
+// - `Chat` keeps the system prompt of each chat model request, which the `p5` op reads, and `SubAgent` reads the probe
+//   page as well as its allowlist (F32, ./test-host-p5.mjs).
 import { getAgentByName } from 'agents';
 import { egressFor } from '../../packages/agent/src/connectors/egress.ts';
-import { Chat as AgentChat, Job as AgentJob, Ledger as AgentLedger, Person as AgentPerson, Vault as AgentVault } from '../../packages/agent/src/index.ts';
+import { Chat as AgentChat, Job as AgentJob, Ledger as AgentLedger, Person as AgentPerson, SubAgent as AgentSubAgent, Vault as AgentVault } from '../../packages/agent/src/index.ts';
 import { jobToolSpecs } from '../../packages/agent/src/jobs/job-tools.ts';
 import { personMemory } from '../../packages/agent/src/memory/rpc.ts';
+import { VERIFIER_INSTRUCTIONS } from '../../packages/agent/src/subagents/verifier.ts';
 import { jobName } from '../../packages/agent/src/objects/job.ts';
 import { shareNamespace } from '../../test/support/p15-fixtures.ts';
+import { childBrowse } from './test-host-child.mjs';
+import { recordingAi } from './test-host-p5.mjs';
 import { chatRows, p6Person } from './test-host-p6.mjs';
 import { clockedStorage, p7Op, probeGet, skewToNext } from './test-host-p7.mjs';
 import { SITES, testHostBinding } from './test-host-sites.mjs';
@@ -36,8 +41,31 @@ function tables(sql) {
   return JSON.stringify(names.flatMap((t) => sql.exec(`SELECT * FROM "${t}"`).toArray().map((row) => Object.fromEntries(Object.entries(row).map(([k, v]) => [k, text(v)])))));
 }
 
+const PROMPTS = 'test-host:prompt:';
+
 export class Chat extends AgentChat {
   #chain = Promise.resolve();
+
+  constructor(ctx, env) {
+    super(ctx, env);
+    // F32: each chat model request's system prompt kept, one key each (a prompt is too long to share a value), the
+    // verifier's left out; the request itself is sent unchanged.
+    this.env = { ...env, AI: recordingAi(env.AI, (p) => this.#keepPrompt(p), (p) => p.startsWith(VERIFIER_INSTRUCTIONS)) };
+  }
+
+  #keepPrompt(prompt) {
+    this.#chain = this.#chain.then(async () => {
+      const n = (await this.ctx.storage.list({ prefix: PROMPTS })).size + 1;
+      await this.ctx.storage.put(`${PROMPTS}${String(n).padStart(6, '0')}`, prompt);
+    });
+    return this.#chain;
+  }
+
+  /** The system prompt of every chat model request, in order (F32). */
+  async testHostPrompts() {
+    await this.#chain;
+    return [...(await this.ctx.storage.list({ prefix: PROMPTS })).values()];
+  }
 
   /** Appends to the chat's log, one write after another. */
   #append(kind, entry) {
@@ -128,6 +156,13 @@ export class Job extends AgentJob {
   }
 }
 
+export class SubAgent extends AgentSubAgent {
+  /** The allowlist and, on a slot, the probe page's `browse_open` over the fixture sites, the brief's addresses held (F32). */
+  reads(person, input) {
+    return [...super.reads(person, input), childBrowse(person, input.brief, testHostBinding(async () => {}))];
+  }
+}
+
 export class Person extends AgentPerson {
   async testHostDump() {
     return tables(this.ctx.storage.sql);
@@ -174,6 +209,8 @@ async function bucketText(bucket, prefix) {
   return out.join('\n');
 }
 
+/** The P5 probe's domains (F32): reopened too, so no earlier trial's failed read is remembered as a block. */
+const P5_DOMAINS = ['example.com', 'example.invalid'];
 const EMAIL = /^[^\s@]+@[^\s@]+$/;
 const CHAT_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
@@ -182,7 +219,7 @@ export async function testHost(body, env) {
   if (typeof body.person !== 'string' || !EMAIL.test(body.person)) return { status: 400, body: { error: { code: 'invalid', message: 'name the person' } } };
   const person = await getAgentByName(env.PERSON, body.person);
   if (body.op === 'reset') {
-    for (const domain of Object.keys(SITES)) await person.browseRecord({ domain, engine: null, state: 'ok', code: null });
+    for (const domain of [...Object.keys(SITES), ...P5_DOMAINS]) await person.browseRecord({ domain, engine: null, state: 'ok', code: null });
     return { status: 200, body: { reset: Object.keys(SITES) } };
   }
   if (body.op === 'state') {
@@ -214,6 +251,11 @@ export async function testHost(body, env) {
     const rows = {};
     for (const c of chats) rows[c] = await (await getAgentByName(env.CHAT, c)).testHostRows();
     return { status: 200, body: { answer, rows } };
+  }
+  if (body.op === 'p5') {
+    // F32: the P5 world (./test-host-p5.mjs): the system prompts a chat's model requests carried.
+    if (typeof body.chat !== 'string' || !CHAT_ID.test(body.chat)) return { status: 400, body: { error: { code: 'invalid', message: 'name the chat' } } };
+    return { status: 200, body: { prompts: await (await getAgentByName(env.CHAT, body.chat)).testHostPrompts() } };
   }
   if (body.op === 'p7') {
     // F30: the P7 world (./test-host-p7.mjs): Sam's jobs reset, defined, ticked and read, with the chat's notices.

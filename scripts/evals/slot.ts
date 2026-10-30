@@ -16,6 +16,8 @@ import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { EMPTY_SNAPSHOT, InfraError, reactionsOf, type SlotEntry, type SlotWorld, TurnError } from "../../test/support/evals.ts";
 import type { ChatLabel } from "../../test/evals/p6-memory/world.ts";
+import { p5Page } from "./p5-page.ts";
+import { p5Slot } from "./p5-slot.ts";
 import { type P6Call, p6Slot } from "./p6-slot.ts";
 import { p7Page } from "./p7-page.ts";
 import { type P7Slot, p7Slot, ZONE } from "./p7-slot.ts";
@@ -443,6 +445,24 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
             )
           : null;
       if (p7 && task) await p7.begin(task.id, Date.now());
+      // An activity task (F32): chat c1's tasks over the app's routes, read once each turn's task settled; the page in Chromium.
+      const p5 =
+        task?.cluster === "P5"
+          ? p5Slot(
+              () => chatId,
+              () => entriesOf(),
+              async (path) => {
+                const r = await http(base, "GET", path, { cookie });
+                return { status: r.res.status, body: r.body };
+              },
+              async () => {
+                const r = await testHostOp(base, lease, { op: "p5", person: OWNER, chat: chatId });
+                if (!r) throw new InfraError("SLOT_MISSING", "this slot serves no test host; `pnpm preview up` deploys one");
+                return (r.prompts as string[] | undefined) ?? [];
+              },
+              p5Page(base, cookie),
+            )
+          : null;
       let prompted = false;
       const after = async (label: ChatLabel, turn = `prompt:${label}`) => {
         histories.set(label, await history(base, chats.get(label) as string, cookie));
@@ -469,8 +489,14 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
             p7.started(Date.now());
           }
           prompted = true;
+          const sent = Date.now();
           const reply = await turn(base, chats.get(chat) as string, cookie, text, TURN_TIMEOUT_MS, p7 ? ZONE : "UTC");
           replies.push(reply);
+          // A P5 request is over when its task is: the sub-agents it launched handed off and the turn they woke ended.
+          if (p5)
+            await p5.settle(sent + TURN_TIMEOUT_MS).catch((e: Error) => {
+              throw e instanceof InfraError ? e : new TurnError("TURN_TIMEOUT", e.message);
+            });
           await after(chat);
           return reply;
         },
@@ -482,6 +508,11 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
           }
           if (p7 && name === "reload") {
             await after("c1", "event:reload");
+            return;
+          }
+          // A P5 `open` (F32): Sam opens the tab or the row again; every read of the world is fresh, so it is a re-read.
+          if (p5 && name === "open") {
+            await after("c1", "event:open");
             return;
           }
           if (name !== "decide") throw new TurnError("EVENT_UNSUPPORTED", name);
@@ -499,6 +530,10 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
       };
       // The P7 readers keep their getters (an unread one throws when read, not when the world is made).
       if (p7) Object.defineProperties(world, Object.getOwnPropertyDescriptors(p7.readers));
+      if (p5) {
+        Object.defineProperties(world, Object.getOwnPropertyDescriptors(p5.readers));
+        Object.defineProperties(world, { during: Object.getOwnPropertyDescriptor(p5, "during") as PropertyDescriptor, before: Object.getOwnPropertyDescriptor(p5, "before") as PropertyDescriptor });
+      }
       return world;
     },
   };

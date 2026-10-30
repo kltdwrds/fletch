@@ -38,7 +38,7 @@ the chat socket).
 4. Commit the results file(s) with the part. The exit code is 0 when every task passed, 1 otherwise.
 
 `--results <dir>` writes the results elsewhere for a dry run. A task the runner cannot drive (a prompt by anyone but
-the slot's owner, an event other than `decide`, `tick` or `reload`, or a schedule turn) stops the run by name before any
+the slot's owner, an event other than `decide`, `tick`, `reload` or `open`, or a schedule turn) stops the run by name before any
 trial; tier-1 matches are skipped and named, since they run under vitest.
 
 A P7 task (F30, `scripts/evals/p7-slot.ts`) starts each trial with Sam's jobs removed and her home zone Europe/London,
@@ -46,3 +46,11 @@ then makes the task's jobs through the slot's test host (`scripts/preview-slot/t
 job's next alarm at once (the test host moves that job's clock to it) and waits for the run, its notice and the turn the
 notice wakes; the job's page reads come from a fixture, never the network. The Upcoming tab and the job dialog are read
 in headless Chromium (`scripts/evals/p7-page.ts`), so playwright-core's Chromium must be installed (AGENTS.md, gotcha 5).
+
+A P5 task (F32, `scripts/evals/p5-slot.ts`) reads the trial's chat through the app's own routes: `/app/activity` (the
+trial's chat only) and the task drawer's route. A prompt is over when its task is no longer running, so a request that
+delegated waits for its sub-agents' handoff and the turn it wakes. The probe page `https://example.com/p5-probe` is
+served by the slot's test-host browser from a fixture (`scripts/preview-slot/test-host-p5.mjs`) and
+`example.invalid` is unreachable there; a sub-agent on the slot reads the probe page too. The system prompts are kept by
+the test host's `Chat` and read with the `p5` op; the Activity rows and the task drawer, at desktop and phone width, are
+read in headless Chromium (`scripts/evals/p5-page.ts`). An `open` event is a fresh read.
