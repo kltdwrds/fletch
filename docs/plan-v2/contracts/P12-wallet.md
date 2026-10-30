@@ -630,3 +630,5 @@ level 1 | tier 1: 0 of 9 (F38 not started); tier 2: 0 of 2 must-have (F39) | `co
 13 tasks, 5 deltas, one one-way door proposed: D-0017); interrogation 2026-10-30Z by two Opus agents under the
 orchestrator's scenario, `evidence/p12-wallet/trace.json` validates (10 steps), 77 files through `pnpm redact`;
 F38 and F39 in `parts.md` | 2026-10-30
+
+<!-- CI probe: contracts-only diff; this PR is closed unmerged. -->
