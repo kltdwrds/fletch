@@ -33,10 +33,10 @@ describe("[F28] P6 memory: the turn that saves in passing is told to name the sa
     const w = await played(scripted["T-P6-04"]!());
     const context = w.context("c1");
     const lines = MEMORY_WORDS.split("\n");
-    expect(lines).toHaveLength(5);
+    expect(lines).toHaveLength(4);
     for (const line of lines) expect(context).toContain(line);
-    expect(lines[1]).toMatch(/citation the tool returned/);
-    expect(lines[1]).toMatch(/Never save silently/);
+    expect(lines[0]).toMatch(/citation the tool returned/);
+    expect(lines[0]).toMatch(/Never save silently/);
     expect(await verdicts(w)).toEqual(Object.fromEntries(task.graders.map((g) => [g.name, true])));
   });
 

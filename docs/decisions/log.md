@@ -329,12 +329,11 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   takes a task of another cluster when its own contract has its block (B-P6-12 names T-P15-08 and T-P15-12), and the
   tier-2 tasks that repeat tier-1 ones name no clause, as P15's do.
 - 2026-10-30, F28 memory says what it did, the builder's, all two-way: the reply's memory words are `MEMORY_WORDS` in
-  `chat/instructions.ts` (Q18: instruction lines, not harness sentences), with a line that a new fact goes to today's
-  note, since the real model wrote "remember" facts into MEMORY.md, undated and unattributed (B-P6-02). A MEMORY.md
-  edit now returns the citation of each line it wrote (`citations`, "wrote MEMORY.md#L<n>"): it returned none, so the
-  model invented one a line off, and T-P6-04's graders, which read the tool's citations, could not see a silent
-  MEMORY.md save. A prompt turn may name its chat (`chat: "c2"`), so T-P6-03 and T-P6-09 say on which chat each prompt
-  runs, for the slot as for tier 1; the slot's P6 world (`scripts/evals/p6-slot.ts`, `test-host-p6.mjs`) empties Sam's
-  memory before each trial and seeds T-P6-03 and T-P6-12 through the Person, the claims minted as the upkeep mints
-  them and the forget's producers passed as tier 1 passes them; `sentIn` on a slot is the chat's stored rows. Rejected:
-  a separate slot per trial (three slots, nine leases a cluster).
+  `chat/instructions.ts` (Q18: instruction lines, not harness sentences), one line for each item F28's scope names
+  (delta 1, B-P6-07, B-P6-04, B-P6-09) and no other. A prompt turn may name its chat (`chat: "c2"`), so T-P6-03 and
+  T-P6-09 say on which chat each prompt runs, for the slot as for tier 1; the slot's P6 world
+  (`scripts/evals/p6-slot.ts`, `test-host-p6.mjs`) empties Sam's memory before each trial and seeds T-P6-03 and
+  T-P6-12 through the Person, the claims minted as the upkeep mints them and the forget's producers passed as tier 1
+  passes them; `sentIn` on a slot is the chat's stored rows. Rejected: a separate slot per trial (three slots, nine
+  leases a cluster); a line sending new facts to today's note and a MEMORY.md edit that cites its lines, both outside
+  the scope (the verifier's finding), left for a later part.

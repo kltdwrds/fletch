@@ -29,6 +29,35 @@
         }
       ],
       "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T08:19:17.988Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply names the transcript as a remaining copy",
+          "started_at": "2026-10-30T08:19:17.988Z",
+          "finished_at": "2026-10-30T08:19:44.882Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "forgot_the_producers",
+          "started_at": "2026-10-30T08:19:44.882Z",
+          "finished_at": "2026-10-30T08:20:03.563Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T08:20:03.563Z",
+          "finished_at": "2026-10-30T08:20:18.232Z"
+        }
+      ],
+      "status": "fail"
     }
   ]
 }

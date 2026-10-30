@@ -33,6 +33,36 @@
         }
       ],
       "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T08:13:39.098Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "after the stated relationship the page has the six sections",
+          "started_at": "2026-10-30T08:13:39.098Z",
+          "finished_at": "2026-10-30T08:14:13.166Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "after the stated relationship the page has the six sections",
+          "started_at": "2026-10-30T08:14:13.167Z",
+          "finished_at": "2026-10-30T08:14:58.260Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "TURN_FAILED:TURN_STEP_LIMIT",
+          "started_at": "2026-10-30T08:14:58.260Z",
+          "finished_at": "2026-10-30T08:15:24.590Z"
+        }
+      ],
+      "status": "fail"
     }
   ]
 }

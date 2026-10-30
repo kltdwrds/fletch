@@ -31,6 +31,37 @@
         }
       ],
       "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T08:16:06.296Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "one line holds the fact, and c1's first reply cites it after the write",
+          "started_at": "2026-10-30T08:16:06.296Z",
+          "finished_at": "2026-10-30T08:17:47.721Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "c2's second recall gives Markdown",
+          "started_at": "2026-10-30T08:17:47.721Z",
+          "finished_at": "2026-10-30T08:18:46.326Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "c2's second recall gives Markdown",
+          "started_at": "2026-10-30T08:18:46.327Z",
+          "finished_at": "2026-10-30T08:19:17.987Z"
+        }
+      ],
+      "status": "fail"
     }
   ]
 }

@@ -36,7 +36,7 @@ export type ExplainResult =
       supersededBy: string[];
     }
   | Refusal;
-export type WriteResult = Written | { ok: true; sha256: string; lines: number; citations: string[] } | (Refusal & { sha256?: string });
+export type WriteResult = Written | { ok: true; sha256: string; lines: number } | (Refusal & { sha256?: string });
 
 /**
  * What the chat reaches on the owner's `Person` object, over RPC in production. `also` names the other
@@ -145,8 +145,7 @@ export function memoryTools(c: MemoryToolContext): AgentTool<never>[] {
     execute: async (id, p) => {
       const r = unwrap(await c.api.memoryWrite(p as MemoryWriteInput, { requester: c.requester, setting: c.setting, source: c.source, dedupe: id, timeZone: c.timeZone }));
       if ("citation" in r) return text(`saved ${r.citation}`, r);
-      // Each line the edit wrote, cited, so a reply quotes the citation the tool returned (F28, delta 1).
-      return text(`saved MEMORY.md, now ${r.lines} lines, sha256 ${r.sha256}${r.citations.length ? `; wrote ${r.citations.join(", ")}` : ""}`, r);
+      return text(`saved MEMORY.md, now ${r.lines} lines, sha256 ${r.sha256}`, r);
     },
   };
   return [search, get, explain, write] as unknown as AgentTool<never>[];
