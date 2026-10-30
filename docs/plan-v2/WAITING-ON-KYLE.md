@@ -372,6 +372,26 @@ Kyle's own lines go under `## Steering`.
   Complete; `step-4-dom.md` the `<ol start="391">`; `answers/step-12.md` "Left behind in Muse": thread A
   `74d0a08b-d735-41eb-b98a-c5c3dd987c34`, 18 agent rows, the schedule `p3-probe-example-title-in-5-min` and run
   `87fac3d0`, 5 reaction rows, memory sections L311 to L440 of `~/memory/2026-10-30.md`, none removable by the tools).
+- [ ] 2026-10-30 uat: **F31 and F32, Activity as it is and Activity says what happened (merged, PR #55 and PR #57;
+  F34's slot will carry this tree next, else `pnpm preview up` on main).** The record's words are code's: a finished
+  task ends in a summary step with code's counts of reads, writes and failures and the final text quoted; a done task
+  with a failed read says "Complete, 1 step failed" on its row and in the drawer's pill (never a green Complete over
+  a failure, never Failed for the whole); a delegation's acknowledgement says launched and what it will find out,
+  never done; a scheduled run that did not arrive says so; the drawer's head shows the task's model calls and tokens
+  from the ledger; a running task's drawer offers Stop, which also ends the sub-agents that turn launched (Q25); a
+  failed read is said as "No page came back from <page>" and a done task's reply says what was found, not the steps
+  (F32's two `WORK_WORDS` lines, each measured by a tier-2 task). The P5 must-have tier-2 tasks pass 3 of 3 on the
+  slot and P5 is at level 2. What to try: ask for a page's title and a second page on `example.invalid` in one
+  request, read the reply and open the row in Activity (the pill, the failed step's mark, the summary at the end,
+  the head's tokens); ask for a sub-agent to read a page and press Stop in the drawer while it runs, then read what
+  the next turn says. Open for your eye, not blocking: Q25 (should Stop end the children or let them run on), Q24
+  (no hidden store about the chat; a removed job's card), and F32's prescribed phrase for a failed read ("No page
+  came back from"), an instruction line under Q18's rule that a reader might call a harness sentence in disguise.
+  Deep dive: [F31](parts.md#f31-activity-as-it-is-the-p5-contract-check-fifteen-task-files-codes-summary-a-failure-said-in-the-status-tokens-in-the-drawer-and-tier-1)
+  and [F32 in parts.md](parts.md#f32-activity-says-what-happened-p5s-tier-2-on-a-slot), [PROGRESS.md F31 and F32](PROGRESS.md),
+  [SCORECARD P5](SCORECARD.md), [Q25](QUESTIONS.md#q25-p5-f31-2026-10-30-should-stop-end-the-sub-agents-the-stopped-turn-launched-or-let-them-run-on),
+  `packages/agent/src/chat/instructions.ts` (`WORK_WORDS`), `docs/plan-v2/contracts/P5-activity.md`, the four P5
+  results files under `docs/plan-v2/evidence/results/` (T-P5-12 to 15).
 
 ## Steering
 
