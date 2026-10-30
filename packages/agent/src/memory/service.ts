@@ -2,14 +2,15 @@
 // operations plus the owner-only forget flow and entity upkeep. Personal memory is decided by
 // `PersonMemory`; company and team scope by the `Company` (M10.1), searched beside it with every
 // hit tagged by scope, and both apply the disclosure gate to each reader of the turn.
+import { credentialContent } from "../learning/referee.ts";
 import { type CompanyMemoryApi, isScopePath } from "./company.ts";
 import { readersOf } from "./disclosure.ts";
 import { type EntityInput, upsertEntity } from "./entities.ts";
 import { confirmForget, executeForget, type ForgetProducers, planForget } from "./forget.ts";
 import type { SemanticLeg } from "./semantic.ts";
-import { maxOf, type PersonMemory, refuse } from "./store.ts";
-import type { ExplainResult, GetResult, MemoryApi, MemoryWriteInput, WriteContext, WriteResult } from "./tools.ts";
 import type { SearchResult } from "./store.ts";
+import { MAX_LINE_CHARS, maxOf, type PersonMemory, refuse } from "./store.ts";
+import type { ExplainResult, GetResult, MemoryApi, MemoryWriteInput, WriteContext, WriteResult } from "./tools.ts";
 
 /** A personal file is shown to its owner alone, never while the turn answers anyone else. */
 const notOwnerOnly = refuse("MEMORY_NOT_OWNER", "personal memory files are read by their owner only");
@@ -60,9 +61,19 @@ export class MemoryService implements MemoryApi {
     return this.mem.lineSource(input, requester);
   }
 
-  /** The owner's agent writes; the setting it learned in rides with the line, and later with its claim. */
+  /**
+   * The owner's agent writes; the setting it learned in rides with the line, and later with its claim. A credential,
+   * a code, a card, an account or a government ID number is refused by code before any store sees it (B-P6-07, F27):
+   * where the thing is kept may be saved, never its value.
+   */
   async memoryWrite(input: MemoryWriteInput, ctx: WriteContext): Promise<WriteResult> {
     const writer = `agent:${this.mem.owner}`;
+    const texts = input.target === "memory" ? (input.edits ?? []).map((e) => e.text ?? "") : [input.text ?? ""];
+    // A line the store refuses for its shape (empty, too long) gets that code; only a line it would keep is read for a value.
+    for (const t of texts.filter((x) => x.trim() && x.length <= MAX_LINE_CHARS)) {
+      const what = credentialContent(t);
+      if (what) return refuse("MEMORY_VALUE_REFUSED", `the line holds ${what}, which memory never keeps; save where it is kept, not the value`);
+    }
     if (input.target === "team") {
       if (ctx.requester !== this.mem.owner) return refuse("MEMORY_NOT_OWNER", "only the person's own agent writes for them");
       if (!this.company) return refuse("MEMORY_WRITE_TARGET", "this tenant has no teams");
