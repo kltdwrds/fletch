@@ -60,6 +60,11 @@ export interface DrawnSection {
 }
 
 export interface P3World extends P5World {
+  /**
+   * The title of the probe page at `PROBE`: `PROBE_TITLE` in the tier-1 world; on a slot its own (F34), so the real
+   * verifier does not take a child's report for example.com's own home page.
+   */
+  readonly probeTitle: string;
   /** The sub-agent rows of a chat, in creation order. */
   children(chat?: ChatLabel): ChildRow[];
   /** A chat's mailbox rows, by ordinal. */

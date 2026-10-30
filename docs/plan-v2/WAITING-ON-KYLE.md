@@ -439,6 +439,43 @@ Kyle's own lines go under `## Steering`.
   is the settings pane, the grouped rows, the status pill and the prompt card as they are. Say "fine" or what to
   change under Steering before F36 starts; F35 runs meanwhile and draws none of it.
 
+- [ ] 2026-10-30 do: **sign the built-in browser back in to Muse, so P12 (wallet and payments) can be interrogated.**
+  The P12 interrogator (an Opus agent under the orchestrator's `evidence/p12-wallet/scenario.md`, ten steps, read-only
+  but for one add-method page to raise and close and one purchase ask at `https://shop.example.invalid`) ran step 0 (the
+  dump refresh: `wallet` has five read functions over `stripe-link` and `shop-pay`; no orders, receipts, budget or
+  allowance namespace; the prompt's "The user cannot create a standing Wallet budget or spending allowance") and step 1
+  (both providers `not_connected`, 0 payment methods, 0 addresses, 0 purchase approvals in history), then, at phone
+  width, clicked the "More" sheet while it was still sliding and hit Sign out instead of Settings (`POST /api/logout`
+  200 in `step-1-requests.json`; `step-1-signed-out-phone.png`). Nothing was typed on the signed-out page, no value was
+  entered anywhere, no money moved, no Add button was pressed; thread A `5153e9f6-4941-481e-94d4-b337ac917a6e` ("P12
+  dump refresh request") holds the seven probe asks. The agent stopped because signing in is yours. Once the built-in
+  browser is signed in again the orchestrator relaunches the agent at step 2 with the same scenario; until then P12 stays
+  at level 0 and the Translation waits (its fletch-side survey is done: no payment instrument, no purchase tool, every
+  budget is model spend). The rule the agent broke ("never sign out") now gets a mechanical line in the next brief:
+  no click within two seconds of a sheet or drawer opening, and never a click by coordinate on a phone-width sheet.
+- [ ] 2026-10-30 decide: **Q29: which tier-2 run counts, and may F34 keep its two widened graders.** F34 ran P3's
+  tier 2 on fletch-pv-3 and is merged BLOCKED (PR #64; `ACCEPT F34: PASS`, TREE 5249ec4d4cf9b66223883b95b30d67d739ee929f,
+  1544 tests; verifier: two blocking findings). On the final agent code (91cc684) T-P3-14 passed 3 of 3
+  (`evidence/results/a0d7857f8b13….json`) after a 1 of 3 at the same task hash on older code; T-P3-16 went 2 of 3, then
+  3 of 3 in a second run on the same code (`f40f3af15fef….json`); T-P3-17 3 of 3; T-P3-15 (nice-to-have) 2 of 3. The
+  runbook reruns only for `infra`, so the verifier counts T-P3-16's first run as the must-have's result. The two graders
+  were widened after the slot failed them, each to the instruction's own words (`WORK_WORDS` line 2's "no page came
+  back"; a check named between the negation and the verb for "not independently checked"), each with planted
+  negatives that still fail. What you decide: (1) the rule: a must-have counts one run declared before it starts on
+  the final tree, earlier runs staying as evidence (the builder's and the orchestrator's recommendation), or every
+  run on the final tree must pass; (2) keep both widenings (recommended: a grader that refuses the instruction's own
+  example grades the wrong thing). On (1) as recommended, the next pass runs one declared run each of T-P3-14 and
+  T-P3-16 at 91cc684 or later and P3 rises to level 2 on those lines; until then P3 stays at 1.
+  [Q29](QUESTIONS.md#q29-f34-2026-10-30-may-f34-count-its-last-33-runs-and-keep-the-two-widened-must-have-graders); [F34 in parts.md](parts.md#f34-delegation-says-what-happened-p3s-tier-2-on-a-slot);
+  [PR #64](https://github.com/kltdwrds/fletch/pull/64).
+- [ ] 2026-10-30 uat: **delegation on a slot after F33 and F34** (https://fletch-pv-3.edwards-ky1.workers.dev while
+  F34's lease holds, to 2026-10-31T13:27Z; after that `pnpm preview up` on main). Hand the agent a two-source question
+  and watch: the launch reply says what started and ends its turn (no polling, nothing said aside); the task drawer's
+  sub-agent section says the child's count and tokens; a page the child could not read is said in `WORK_WORDS`' words
+  ("No page came back from"); the handoff says an unpassed verdict in words and what each finding rests on; a steer
+  mid-run closes the child and starts another (Q28: the first task may read Running for ever, known). Say what reads
+  wrong; nothing here blocks.
+
 ## Steering
 
 ## Done

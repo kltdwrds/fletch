@@ -14,18 +14,20 @@ import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { EMPTY_SNAPSHOT, InfraError, reactionsOf, type SlotEntry, type SlotWorld, TurnError } from "../../test/support/evals.ts";
 import type { ChatLabel } from "../../test/evals/p6-memory/world.ts";
+import { EMPTY_SNAPSHOT, InfraError, reactionsOf, type SlotEntry, type SlotWorld, TurnError } from "../../test/support/evals.ts";
+import { type SavedPasskey, softAuthenticator } from "../../test/support/soft-authenticator.ts";
+import { origin as originOf, ownerTag, SLOT_OWNER, slotPlan } from "../preview-plan.mjs";
+import { knownSubdomain, readJson } from "../preview-pool.mjs";
+import { p3Page } from "./p3-page.ts";
+import { type P3State, p3Slot } from "./p3-slot.ts";
 import { p5Page } from "./p5-page.ts";
 import { p5Slot } from "./p5-slot.ts";
 import { type P6Call, p6Slot } from "./p6-slot.ts";
 import { p7Page } from "./p7-page.ts";
 import { type P7Slot, p7Slot, ZONE } from "./p7-slot.ts";
-import { type TestHostState, testHostReaders } from "./test-host.ts";
-import { type SavedPasskey, softAuthenticator } from "../../test/support/soft-authenticator.ts";
-import { origin as originOf, ownerTag, SLOT_OWNER, slotPlan } from "../preview-plan.mjs";
-import { knownSubdomain, readJson } from "../preview-pool.mjs";
 import type { Slot } from "./runner.ts";
+import { type TestHostState, testHostReaders } from "./test-host.ts";
 
 /** The slot's owner: the fixture person every slot is deployed for (scripts/preview-plan.mjs). */
 export const OWNER = SLOT_OWNER;
@@ -445,9 +447,10 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
             )
           : null;
       if (p7 && task) await p7.begin(task.id, Date.now());
-      // An activity task (F32): chat c1's tasks over the app's routes, read once each turn's task settled; the page in Chromium.
+      // An activity task (F32), or a delegation task beside it (F34): chat c1's tasks over the app's routes, read once
+      // each turn's task settled; the page in Chromium.
       const p5 =
-        task?.cluster === "P5"
+        task?.cluster === "P5" || task?.cluster === "P3"
           ? p5Slot(
               () => chatId,
               () => entriesOf(),
@@ -463,10 +466,34 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
               p5Page(base, cookie),
             )
           : null;
+      // A delegation task (F34): chat c1's sub-agent rows, mailbox and model requests through the `p3` op, settled when
+      // nothing it started is out; the drawer's sections and the thread in Chromium.
+      const p3 =
+        task?.cluster === "P3"
+          ? p3Slot(
+              () => chatId,
+              () => entriesOf(),
+              async (path, method = "GET") => {
+                const r = await http(base, method, path, { cookie });
+                return { status: r.res.status, body: r.body };
+              },
+              async () => {
+                const r = await testHostOp(base, lease, { op: "p3", person: OWNER, chat: chatId });
+                if (!r) throw new InfraError("SLOT_MISSING", "this slot serves no test host; `pnpm preview up` deploys one");
+                return r as unknown as P3State;
+              },
+              p3Page(base, cookie),
+            )
+          : null;
+      const settled = (deadline: number) => async () => {
+        await p3?.settle(deadline);
+        await p5?.settle(deadline);
+      };
       let prompted = false;
       const after = async (label: ChatLabel, turn = `prompt:${label}`) => {
         histories.set(label, await history(base, chats.get(label) as string, cookie));
         await refresh();
+        await p3?.refresh();
         await p6?.refresh(`prompt:${label}`);
         await p7?.refresh(turn.startsWith("prompt") ? "prompt" : turn);
       };
@@ -478,7 +505,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
         ...testHostReaders(() => entriesOf(), () => state, baseline),
         ...(p6?.readers ?? {}),
         entries: (label?: ChatLabel) => (p6 ? p6.readers.entries(label) : entriesOf(label)) as SlotEntry[],
-        async send(text, label = "c1") {
+        async send(text, label = "c1", wait = false) {
           const chat = label as ChatLabel;
           if (!chats.has(chat)) chats.set(chat, await openChat());
           // A P7 prompt is sent early in a minute, so a time it asks for "in five minutes" resolves in the minute it was
@@ -492,9 +519,10 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
           const sent = Date.now();
           const reply = await turn(base, chats.get(chat) as string, cookie, text, TURN_TIMEOUT_MS, p7 ? ZONE : "UTC");
           replies.push(reply);
-          // A P5 request is over when its task is: the sub-agents it launched handed off and the turn they woke ended.
-          if (p5)
-            await p5.settle(sent + TURN_TIMEOUT_MS).catch((e: Error) => {
+          // A P5 request is over when its task is: the sub-agents it launched handed off and the turn they woke ended; a P3
+          // one when nothing it started is out (F34). A `prompt` event with `wait` leaves its sub-agents running.
+          if (!wait)
+            await settled(sent + TURN_TIMEOUT_MS)().catch((e: Error) => {
               throw e instanceof InfraError ? e : new TurnError("TURN_TIMEOUT", e.message);
             });
           await after(chat);
@@ -515,6 +543,25 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
             await after("c1", "event:open");
             return;
           }
+          // A `prompt` event (F34): Sam's message, as a prompt turn is sent; with `wait`, its sub-agents left running.
+          if (name === "prompt") {
+            await world.send(payload.text ?? "", payload.chat ?? "c1", payload.wait === "yes");
+            return;
+          }
+          // A P3 event (F34, scripts/evals/p3-slot.ts): a steer or a Stop while a child runs, the children waited out, a reload.
+          if (p3) {
+            const deadline = Date.now() + TURN_TIMEOUT_MS;
+            const played = await p3
+              .event(name, payload, (text) => world.send(text, "c1", true), deadline)
+              .catch((e: Error) => {
+                throw e instanceof InfraError ? e : new TurnError("TURN_TIMEOUT", e.message);
+              });
+            if (played) {
+              await settled(deadline)();
+              await after("c1", `event:${name}`);
+              return;
+            }
+          }
           if (name !== "decide") throw new TurnError("EVENT_UNSUPPORTED", name);
           const cards = entriesOf().filter((e) => e.kind === "card" && e.card);
           // Unnamed (F30), the one pending card, as the tier-1 harnesses decide every pending card.
@@ -534,6 +581,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
         Object.defineProperties(world, Object.getOwnPropertyDescriptors(p5.readers));
         Object.defineProperties(world, { during: Object.getOwnPropertyDescriptor(p5, "during") as PropertyDescriptor, before: Object.getOwnPropertyDescriptor(p5, "before") as PropertyDescriptor });
       }
+      if (p3) Object.defineProperties(world, Object.getOwnPropertyDescriptors(p3.readers));
       return world;
     },
   };

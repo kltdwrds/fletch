@@ -1,0 +1,219 @@
+{
+  "task_id": "T-P3-16",
+  "cluster": "P3",
+  "version_hash": "f40f3af15fef635d2a88b7981fbbf76f539b71c1a0b4dc24a4e43e0ff222f994",
+  "runs": [
+    {
+      "run_at": "2026-10-30T13:34:47.713Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T13:34:47.713Z",
+          "finished_at": "2026-10-30T13:35:55.258Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T13:35:55.259Z",
+          "finished_at": "2026-10-30T13:37:00.965Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T13:37:00.965Z",
+          "finished_at": "2026-10-30T13:38:11.369Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-10-30T14:01:55.763Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply gives the first title and says the second page could not be read and has no title",
+          "started_at": "2026-10-30T14:01:55.764Z",
+          "finished_at": "2026-10-30T14:02:49.935Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T14:02:49.935Z",
+          "finished_at": "2026-10-30T14:03:58.954Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T14:03:58.954Z",
+          "finished_at": "2026-10-30T14:05:36.583Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
+    },
+    {
+      "run_at": "2026-10-30T14:12:26.501Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T14:12:26.501Z",
+          "finished_at": "2026-10-30T14:14:06.637Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T14:14:06.637Z",
+          "finished_at": "2026-10-30T14:14:55.216Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T14:14:55.216Z",
+          "finished_at": "2026-10-30T14:15:58.848Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    },
+    {
+      "run_at": "2026-10-30T14:20:29.007Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T14:20:29.007Z",
+          "finished_at": "2026-10-30T14:21:12.980Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T14:21:12.980Z",
+          "finished_at": "2026-10-30T14:22:17.929Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T14:22:17.929Z",
+          "finished_at": "2026-10-30T14:23:26.193Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-10-30T14:27:49.474Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T14:27:49.474Z",
+          "finished_at": "2026-10-30T14:29:06.593Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply gives the first title and says the second page could not be read and has no title",
+          "started_at": "2026-10-30T14:29:06.594Z",
+          "finished_at": "2026-10-30T14:30:55.933Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T14:30:55.933Z",
+          "finished_at": "2026-10-30T14:32:04.164Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
+    },
+    {
+      "run_at": "2026-10-30T14:43:03.724Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T14:43:03.725Z",
+          "finished_at": "2026-10-30T14:44:25.251Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T14:44:25.251Z",
+          "finished_at": "2026-10-30T14:45:31.615Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T14:45:31.615Z",
+          "finished_at": "2026-10-30T14:46:49.760Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    },
+    {
+      "run_at": "2026-10-30T15:09:31.118Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply gives the first title and says the second page could not be read and has no title",
+          "started_at": "2026-10-30T15:09:31.119Z",
+          "finished_at": "2026-10-30T15:10:34.847Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T15:10:34.847Z",
+          "finished_at": "2026-10-30T15:12:13.107Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T15:12:13.107Z",
+          "finished_at": "2026-10-30T15:13:42.073Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
+    },
+    {
+      "run_at": "2026-10-30T15:27:02.929Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T15:27:02.929Z",
+          "finished_at": "2026-10-30T15:28:29.169Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T15:28:29.170Z",
+          "finished_at": "2026-10-30T15:29:25.696Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T15:29:25.696Z",
+          "finished_at": "2026-10-30T15:30:40.753Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    }
+  ]
+}

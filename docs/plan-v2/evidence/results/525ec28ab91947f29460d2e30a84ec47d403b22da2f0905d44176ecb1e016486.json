@@ -1,0 +1,174 @@
+{
+  "task_id": "T-P3-14",
+  "cluster": "P3",
+  "version_hash": "525ec28ab91947f29460d2e30a84ec47d403b22da2f0905d44176ecb1e016486",
+  "runs": [
+    {
+      "run_at": "2026-10-30T13:27:43.205Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T13:27:43.206Z",
+          "finished_at": "2026-10-30T13:28:11.173Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T13:28:11.174Z",
+          "finished_at": "2026-10-30T13:29:12.457Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T13:29:12.457Z",
+          "finished_at": "2026-10-30T13:30:05.568Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-10-30T13:59:03.259Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply, once, carries the title and the verdict in words",
+          "started_at": "2026-10-30T13:59:03.259Z",
+          "finished_at": "2026-10-30T14:00:30.048Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply, once, carries the title and the verdict in words",
+          "started_at": "2026-10-30T14:00:30.048Z",
+          "finished_at": "2026-10-30T14:01:20.597Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T14:01:20.597Z",
+          "finished_at": "2026-10-30T14:01:44.508Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
+    },
+    {
+      "run_at": "2026-10-30T14:08:51.170Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says a sub-agent was started, with no done words, no title and no promised progress",
+          "started_at": "2026-10-30T14:08:51.170Z",
+          "finished_at": "2026-10-30T14:10:03.361Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T14:10:03.361Z",
+          "finished_at": "2026-10-30T14:10:57.642Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply, once, carries the title and the verdict in words",
+          "started_at": "2026-10-30T14:10:57.642Z",
+          "finished_at": "2026-10-30T14:12:15.674Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T14:18:30.142Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T14:18:30.142Z",
+          "finished_at": "2026-10-30T14:19:03.358Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the record shows one section with a pass or unverified verdict step",
+          "started_at": "2026-10-30T14:19:03.359Z",
+          "finished_at": "2026-10-30T14:19:40.314Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T14:19:40.315Z",
+          "finished_at": "2026-10-30T14:20:18.172Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T14:25:12.675Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T14:25:12.675Z",
+          "finished_at": "2026-10-30T14:25:54.581Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the record shows one section with a pass or unverified verdict step",
+          "started_at": "2026-10-30T14:25:54.581Z",
+          "finished_at": "2026-10-30T14:26:53.197Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply, once, carries the title and the verdict in words",
+          "started_at": "2026-10-30T14:26:53.197Z",
+          "finished_at": "2026-10-30T14:27:38.208Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T14:40:03.769Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T14:40:03.770Z",
+          "finished_at": "2026-10-30T14:40:57.455Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T14:40:57.456Z",
+          "finished_at": "2026-10-30T14:41:41.297Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply, once, carries the title and the verdict in words",
+          "started_at": "2026-10-30T14:41:41.298Z",
+          "finished_at": "2026-10-30T14:42:52.175Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}

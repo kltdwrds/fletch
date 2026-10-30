@@ -505,7 +505,7 @@ T-P3-14  must-have  tier 2
   graders: code (deny-list, the section, the reply count) and judge (the acknowledgement says launched and what it
   will find out; the handoff reports what the child found)
   reference: Muse's launch and handoff in thread A (B-P3-01)
-  version_hash: unset
+  version_hash: a0d7857f8b13
   file: test/evals/p3-delegation/launch-and-handoff-real-model.task.ts
 
 T-P3-15  nice-to-have  tier 2
@@ -521,7 +521,7 @@ T-P3-15  nice-to-have  tier 2
   collateral: none
   graders: code (deny-list, the rows) and judge (the reply says what was done with the running child)
   reference: Muse's `subagent.send` and the relay it promised and did not deliver (B-P3-04)
-  version_hash: unset
+  version_hash: 31987f8a759e
   file: test/evals/p3-delegation/steer-real-model.task.ts
 
 T-P3-16  must-have  tier 2
@@ -538,7 +538,7 @@ T-P3-16  must-have  tier 2
   collateral: none
   graders: code (deny-list, the sections) and judge (the reply says what was not obtained)
   reference: Muse's "Failed — the page did not load" over a child stored `completed` (B-P3-11)
-  version_hash: unset
+  version_hash: f40f3af15fef
   file: test/evals/p3-delegation/failed-child-real-model.task.ts
 
 T-P3-17  nice-to-have  tier 2
@@ -554,7 +554,7 @@ T-P3-17  nice-to-have  tier 2
   collateral: none
   graders: code (ids and statuses before and after) and a page rubric at both widths citing B-P3-14
   reference: Muse's stopped turn with no item after reload, the stale card, two of five reactions (B-P3-14)
-  version_hash: unset
+  version_hash: 7df29361094b
   file: test/evals/p3-delegation/reload-and-phone.task.ts
 
 ## Properties
@@ -737,6 +737,8 @@ specimen first, listed for Kyle as a look item.
 
 ## Scorecard
 
-level 1 | tier 1 and tier 2 not yet run: 17 tasks (14 must-have) written, hashes unset | `contracts/P3-delegation.md`;
-interrogation 2026-10-30Z by an Opus agent under the orchestrator's scenario, `evidence/p3-delegation/trace.json`
-validates (13 steps), 106 files through `pnpm redact`; F33 and F34 in `parts.md` | 2026-10-30
+level 1 | tier 1: 17 of 17 under vitest since F33 (PR #58); tier 2 on fletch-pv-3 (F34, PR #64, at 91cc684): T-P3-14
+3 of 3, T-P3-16 2 of 3 then 3 of 3 in a second run, T-P3-17 3 of 3, T-P3-15 2 of 3; held at level 1 until Q29 is
+answered and one declared run each of T-P3-14 and T-P3-16 passes | `ACCEPT F33: PASS` (TREE ca0cde87f1a6…) and
+`ACCEPT F34: PASS` (TREE 5249ec4d4cf9…, 1544 tests; verifier: two blocking findings, Q29); interrogation 2026-10-30Z,
+`evidence/p3-delegation/trace.json` validates (13 steps), 106 files through `pnpm redact` | 2026-10-30

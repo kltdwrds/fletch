@@ -1,0 +1,121 @@
+{
+  "task_id": "T-P3-15",
+  "cluster": "P3",
+  "version_hash": "31987f8a759e007f2827f7fd736ceeac5361a6105a7e39075c37218cabb3f6c4",
+  "runs": [
+    {
+      "run_at": "2026-10-30T13:38:25.804Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "one handoff for the surviving child",
+          "started_at": "2026-10-30T13:38:25.804Z",
+          "finished_at": "2026-10-30T13:39:49.251Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T13:39:49.251Z",
+          "finished_at": "2026-10-30T13:42:39.639Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the rows agree: a closed row and a new one, or one settled row",
+          "started_at": "2026-10-30T13:42:39.640Z",
+          "finished_at": "2026-10-30T13:43:35.221Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T13:46:03.481Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T13:46:03.481Z",
+          "finished_at": "2026-10-30T13:47:50.290Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the rows agree: a closed row and a new one, or one settled row",
+          "started_at": "2026-10-30T13:47:50.290Z",
+          "finished_at": "2026-10-30T13:49:45.610Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says the sub-agent was ended and a new one started, or that it had already finished",
+          "started_at": "2026-10-30T13:49:45.610Z",
+          "finished_at": "2026-10-30T13:50:59.520Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T14:47:01.583Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T14:47:01.583Z",
+          "finished_at": "2026-10-30T14:48:31.152Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the rows agree: a closed row and a new one, or one settled row",
+          "started_at": "2026-10-30T14:48:31.153Z",
+          "finished_at": "2026-10-30T14:50:30.737Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says the sub-agent was ended and a new one started, or that it had already finished",
+          "started_at": "2026-10-30T14:50:30.737Z",
+          "finished_at": "2026-10-30T14:51:40.377Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T15:13:53.399Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says the sub-agent was ended and a new one started, or that it had already finished",
+          "started_at": "2026-10-30T15:13:53.399Z",
+          "finished_at": "2026-10-30T15:15:06.502Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T15:15:06.502Z",
+          "finished_at": "2026-10-30T15:16:29.585Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T15:16:29.585Z",
+          "finished_at": "2026-10-30T15:18:33.209Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}
