@@ -13,6 +13,7 @@ import { createStreamFn } from "../../packages/agent/src/model/adapter.ts";
 import { modelFor } from "../../packages/agent/src/model/routes.ts";
 import { subagentsNamespace } from "../../packages/agent/src/subagents/tools.ts";
 import { FakeModel, type FakeStep } from "../support/fake-model.ts";
+import { SAID_UNCONFIRMED } from "../evals/p3-delegation/launch-and-handoff-real-model.task.ts";
 
 const T0 = Date.UTC(2026, 9, 30, 9, 0, 0);
 const LAUNCH = "I started a sub-agent to read the page; I will tell you its title when it reports back.";
@@ -54,5 +55,12 @@ describe("[F34] the launch reply is said once", () => {
     expect(await a.run()).toMatchObject({ status: "done", steps: 2 });
     const refused = loop([{ toolCall: { name: "subagents_delegate", arguments: { tasks: Array.from({ length: 9 }, () => ({ role: "worker", brief: "b" })) } }, text: LAUNCH }, { text: "I could not start nine." }]);
     expect(await refused.run()).toMatchObject({ status: "done", steps: 2 });
+  });
+
+  it("T-P3-14 hears an unverified title said with the check named; a reply that never says so still fails", () => {
+    expect(SAID_UNCONFIRMED('The title is "X" — it wasn\'t machine-verified, so take it as reported, not independently checked.')).toBe(true);
+    expect(SAID_UNCONFIRMED('The title is "X", but it was not verified.')).toBe(true);
+    expect(SAID_UNCONFIRMED('The sub-agent reported back: the title is "X".')).toBe(false);
+    expect(SAID_UNCONFIRMED('The title is "X"; I checked nothing else.')).toBe(false);
   });
 });

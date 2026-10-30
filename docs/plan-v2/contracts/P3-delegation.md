@@ -505,7 +505,7 @@ T-P3-14  must-have  tier 2
   graders: code (deny-list, the section, the reply count) and judge (the acknowledgement says launched and what it
   will find out; the handoff reports what the child found)
   reference: Muse's launch and handoff in thread A (B-P3-01)
-  version_hash: 525ec28ab919
+  version_hash: a0d7857f8b13
   file: test/evals/p3-delegation/launch-and-handoff-real-model.task.ts
 
 T-P3-15  nice-to-have  tier 2
