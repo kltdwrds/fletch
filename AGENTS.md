@@ -85,6 +85,7 @@ carries a part tag, `[F<n>]` for fletch's own or `[M<n>]` for one inherited from
 | `pnpm live-sweep` | Removes `fletch-ci-` leftovers from the throwaway account (`docs/runbooks/live-deploy.md`). |
 | `pnpm evals <P<n>\|T-P<n>-<nn>>` | The tier-2 runner: a cluster's tasks on this worktree's preview slot, three trials each, a results file per task hash and one Markdown table (`docs/runbooks/evals.md`). |
 | `pnpm redact <file>` | The redaction gate over a capture before it is stored under `docs/plan-v2/evidence/`: deletes it on a secret, strips values outside the allowlist (`scripts/redact-capture.mjs`). |
+| `pnpm evidence-mirror` | Copies what is new under `docs/plan-v2/evidence/` to a folder outside every worktree (`FLETCH_EVIDENCE_MIRROR`, default fletch-evidence in the home folder), one way: never overwrites, never deletes, never fails (`scripts/evidence-mirror.mjs`). |
 | `pnpm ds` | Compiles the design tokens; the pre-commit hook refuses a stale `tokens.ts` or `icons.ts`. |
 | `pnpm release` | Builds the two primitives and publishes the changesets (CI only; `docs/runbooks/release.md`). |
 

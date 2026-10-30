@@ -13,6 +13,7 @@
     "create-fletch": "node --conditions=development packages/create-fletch/src/index.ts",
     "preview": "node scripts/preview.mjs",
     "redact": "node scripts/redact-capture.mjs",
+    "evidence-mirror": "node scripts/evidence-mirror.mjs",
     "evals": "node --conditions=development scripts/evals.ts",
     "live-sweep": "node --conditions=development scripts/live-sweep.ts",
     "ds": "node scripts/ds-tokens.ts",
