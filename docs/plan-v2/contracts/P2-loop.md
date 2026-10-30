@@ -187,7 +187,7 @@ T-P2-01  must-have  tier 1
   collateral: messages and turns as declared, journal +1 (the load)
   graders: code (the fake model's recorded requests, the journal)
   reference: Muse step 3 (`answers/step-3.md` 1, calls 3 and 7) and step 2 (no reload, `answers/step-2.md` 1)
-  version_hash: (Build)
+  version_hash: fbc87b93ccc1
   file: test/evals/p2-loop/deferred-namespace-load.task.ts
 
 T-P2-02  must-have  tier 1
@@ -202,7 +202,7 @@ T-P2-02  must-have  tier 1
   graders: code (the recorded requests, the transcript, the frames)
   reference: Muse step 1 (`runtime.messages:deaf909b-…` and `:0309f229-…` before the user row, `answers/step-1.md` 2;
   `dump/operating-block-B.md`); fletch's shape is the Translation's delta 1
-  version_hash: (Build)
+  version_hash: 0be7efeecb68
   file: test/evals/p2-loop/operating-block-per-turn.task.ts
 
 T-P2-03  must-have  tier 1
@@ -216,7 +216,7 @@ T-P2-03  must-have  tier 1
   graders: code (frames in order, transcript rows)
   reference: Muse steps 3 and 4 (`answers/step-3.md` 2: two rows, one context item, both after the last tool
   output); fletch streams one bubble and keeps `send_to_user` for a deliberate early message (delta 2)
-  version_hash: (Build)
+  version_hash: eeb6267a88b8
   file: test/evals/p2-loop/reply-after-last-tool.task.ts
 
 T-P2-04  must-have  tier 1 (page)
@@ -230,7 +230,7 @@ T-P2-04  must-have  tier 1 (page)
   graders: code (DOM: a status element with text while running, absent after)
   reference: Muse `step-2-working.png` ("Searching docs"), `answers/step-2.md` 4; the wording map is fletch's own
   (Translation, delta 3)
-  version_hash: (Build)
+  version_hash: dceb859efbf9
   file: test/evals/p2-loop/status-while-working.task.ts
 
 T-P2-05  must-have  tier 1
@@ -248,7 +248,7 @@ T-P2-05  must-have  tier 1
   graders: code (frames, the recorded requests, transcript rows)
   reference: Muse steps 3 and 4 (`answers/step-3.md` 2, `answers/step-5.md` 4: the note verbatim); fletch folds the
   steer into the running turn instead of ending it (delta 3)
-  version_hash: (Build)
+  version_hash: 7df8fc5f7f0c
   file: test/evals/p2-loop/steer-mid-turn.task.ts
 
 T-P2-06  must-have  tier 1
@@ -266,7 +266,7 @@ T-P2-06  must-have  tier 1
   graders: code (tool result shape, the recorded requests, transcript rows, job rows)
   reference: Muse step 6 (`answers/step-6.md` 1 and 2: the running shape, the completion handoff at seq 377,
   `nothing_to_do` at seq 379); the wake is new in fletch (delta 4)
-  version_hash: (Build)
+  version_hash: 2132d7f15b1a
   file: test/evals/p2-loop/backgrounded-effect.task.ts
 
 T-P2-07  must-have  tier 1
@@ -284,7 +284,7 @@ T-P2-07  must-have  tier 1
   graders: code (journal order, file store, transcript rows)
   reference: Muse step 5 (`answers/step-5.md` 2: write at seq 333, read-back at seq 336, the row at 23:46:04.737Z;
   4: what a failed write shows, attested)
-  version_hash: (Build)
+  version_hash: 8cb737941213
   file: test/evals/p2-loop/effect-before-reply.task.ts
 
 T-P2-08  must-have  tier 1
@@ -298,7 +298,7 @@ T-P2-08  must-have  tier 1
   collateral: messages +2, turns +1
   graders: code (journal row, reply text against a deny-list of invented phrases and the planted marker)
   reference: Muse step 6 (`answers/step-6.md` 2: `success: false`, the output string; `step-6.png`)
-  version_hash: (Build)
+  version_hash: b57a0f857789
   file: test/evals/p2-loop/tool-failure-honest.task.ts
 
 T-P2-09  must-have  tier 1
@@ -313,7 +313,7 @@ T-P2-09  must-have  tier 1
   graders: code (journal rows in order, reply text)
   reference: Muse step 7 (`answers/step-7.md` 1 to 3: search, then prose); the code is fletch's own (D-0001,
   Translation, delta 5)
-  version_hash: (Build)
+  version_hash: 268919a959ed
   file: test/evals/p2-loop/unserved-capability-refused-by-name.task.ts
 
 T-P2-10  must-have  tier 1 (page)
@@ -328,7 +328,7 @@ T-P2-10  must-have  tier 1 (page)
   collateral: none (page only)
   graders: code (DOM roles and text, the history rows)
   reference: Muse steps 2 and 5 (`step-2-dom.md`, `step-5-dom.md`, `answers/step-2.md` 2, `answers/step-5.md` 2)
-  version_hash: (Build)
+  version_hash: 578222ff9b41
   file: test/evals/p2-loop/cards-from-markdown.task.ts
 
 T-P2-11  must-have  tier 1 (page)
@@ -342,7 +342,7 @@ T-P2-11  must-have  tier 1 (page)
   collateral: none (page only)
   graders: code (DOM)
   reference: Muse `step-8-dom.md`, `step-8-step3-region.png`
-  version_hash: (Build)
+  version_hash: 76076731781c
   file: test/evals/p2-loop/reload-persists.task.ts
 
 T-P2-12  nice-to-have  tier 2
@@ -356,7 +356,7 @@ T-P2-12  nice-to-have  tier 2
   collateral: reactions ≤ 1
   graders: code (frames order, reply text matches /\.\w+\D+\d+/)
   reference: Muse steps 3 and 4 (`step-3.png`): Method then Result, the 👍 at t0+11 s
-  version_hash: (Build)
+  version_hash: 91c76bfdf44d
   file: test/evals/p2-loop/long-task-shape.task.ts
 
 T-P2-13  must-have  tier 2
@@ -370,7 +370,7 @@ T-P2-13  must-have  tier 2
   fenced block, no "empty")
   reference: Muse step 6 (`step-6.png`: "there is no file at …, so there's nothing in it to report. I didn't invent
   contents for it.")
-  version_hash: (Build)
+  version_hash: bc83e039f943
   file: test/evals/p2-loop/real-model-failure-honest.task.ts
 
 T-P2-14  nice-to-have  tier 2
@@ -384,7 +384,7 @@ T-P2-14  nice-to-have  tier 2
   graders: code (reply text: /print/i, /(can['’]t|cannot|no way|unavailable|not able)/i, an alternative sentence, no
   "printed" claim)
   reference: Muse step 7 (`step-7.png`)
-  version_hash: (Build)
+  version_hash: b032203d79a8
   file: test/evals/p2-loop/real-model-refuses-by-name.task.ts
 
 T-P2-15  must-have  tier 1
@@ -399,7 +399,7 @@ T-P2-15  must-have  tier 1
   graders: code (the recorded request, tool calls)
   reference: the Properties row "external-content fencing": Muse stores results as `function_call_output` items
   (`answers/step-6.md` 2); the fence is fletch's (P1's D20, carried here)
-  version_hash: (Build)
+  version_hash: e563ee5d2edd
   file: test/evals/p2-loop/tool-result-fenced.task.ts
 
 ## Properties

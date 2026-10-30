@@ -28,7 +28,7 @@ export function toolSearchSpec(sessionRef: () => ToolSession, onLoaded: (loaded:
         if (!r.ok) throw new Error(`${r.code}: ${r.reason}`);
         if (r.loaded.length) {
           onLoaded(session.loaded);
-          lines.push(`loaded ${r.loaded.join(", ")}: callable from your next step`);
+          lines.push(`loaded ${r.loaded.join(", ")}: callable from your next step (${r.loaded.flatMap((n) => session.registry.namespace(n)?.tools.map((t) => t.name) ?? []).join(", ")})`);
         }
         if (r.already.length) lines.push(`already loaded: ${r.already.join(", ")}`);
       }
