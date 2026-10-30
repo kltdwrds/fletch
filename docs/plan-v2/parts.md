@@ -554,3 +554,111 @@ and their results recorded whatever the verdict; `ACCEPT F37: PASS`; `VERIFIER: 
 
 **Not in scope:** a change to a clause; new instruction lines beyond what a failing must-have needs, each named in the
 PR body with its task.
+
+## F38 Payments as they are: the P12 contract check, thirteen task files, the typed card shape, four instruction lines, the purchase title and tier 1
+
+**Read:** `docs/plan-v2/contracts/P12-wallet.md` (all eleven clauses, the Translation's Survey, deltas 1 to 5 and Build
+notes), `docs/plan-v2/contracts/P15-approvals.md` (B-P15-13), the P15 world and T-P15-02 under `test/evals/p15-approvals/`,
+the P9 world under `test/evals/p9-connectors/` and `test/m0/f35-contract.test.ts` as the pattern,
+`packages/agent/src/vault/typed.ts`, `packages/agent/src/chat/instructions.ts` (`WORK_WORDS`),
+`packages/agent/src/obs/activity-words.ts` (`KIND_WORDS`), `packages/agent/src/grants/engine.ts`, `grants/validate.ts`,
+`grants/constraints.ts`, `grants/journal.ts`, `chat/approvals.ts`, `jobs/job-tools.ts`, `subagents/run.ts`,
+`browse/tools.ts`, `test/workers/support/authority-world.ts` (`shop_buy`). One one-way door is proposed and touched by
+nothing here: D-0017 (`docs/decisions/0017-no-payment-instrument.md`); this part adds no instrument, no purchase tool,
+no provider host and no Wallet pane.
+
+**Scope:** (1) `test/m0/f38-contract.test.ts` holds `contracts/P12-wallet.md` (eleven clauses, thirteen tasks, every
+tier-1 `version_hash` filled). (2) Thirteen task files under `test/evals/p12-wallet/`, with a `world.ts` composing the
+P15 world's `shop_buy` and decide route, the P7 job runner and the P3 sub-agent gate (delta 4) and a `harness.ts`
+counting the tables (delta 5). (3) Delta 1: `SHAPES` gains a Luhn card-number shape and `LABELED` the card words, so
+`holdTypedSecrets` masks a typed number, code and expiry as `typed` rows; delta 2: four `WORK_WORDS` lines (a purchase
+the agent cannot pay for, a card typed in chat, an allowance or budget ask with the model-spend cap told apart, no claim
+after a handoff); delta 3: `KIND_WORDS` gains the `purchase` row. (4) Tier 1 under vitest with an `[F38]` describe:
+T-P12-01 to T-P12-09, every minefield fired in `planted.test.ts`, deltas 1 and 3 planted on the production path; the
+tier-2 tasks play under the scripted fake.
+
+**Acceptance:** `test/m0/f38-contract.test.ts` passes; the nine tier-1 tasks pass and every planted fault fails its
+grader (`test/evals/p12-wallet/planted.test.ts`); a card number typed in a chat message never reaches a transcript row,
+a bubble, a memory row or a later prompt (`test/workers/m14-chat-secrets.test.ts` or a new `[F38]` test); a
+purchase-kind journal row is titled from `KIND_WORDS`; `ACCEPT F38: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a payment instrument, a provider, a `payments` feature, a checkout card or a Wallet pane (D-0017,
+proposed); a change to a clause; tier 2 (F39); an amount in the journal; a specimen (no owner-visible surface is drawn).
+
+## F39 Payments say what happened: P12's tier 2 on a slot
+
+**Read:** `docs/plan-v2/contracts/P12-wallet.md` (B-P12-01, B-P12-02, B-P12-03, B-P12-06, B-P12-08, B-P12-11, the
+tier-2 tasks), the F38 world and tasks under `test/evals/p12-wallet/`, `packages/agent/src/chat/instructions.ts`,
+`docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q18. No one-way door. A live step: `pnpm evals` runs from Kyle's
+Mac on this worktree's slot (`pnpm preview up`); if no slot can be leased, that is a question, not a reason to skip.
+
+**Scope:** (1) The slot's browse fake answers nothing for `shop.example.invalid` and each P12 trial starts with Sam's
+grant, card and typed rows deleted by the test host. (2) Tier 2 on the slot: T-P12-10 and T-P12-11 (must-have),
+T-P12-12 and T-P12-13, three trials each, the results files committed, the table in the PR body. (3) Every P12 hash in
+the contract matches.
+
+**Acceptance:** `pnpm evals T-P12-10` and `pnpm evals T-P12-11` `pass` (three of three); T-P12-12 and T-P12-13 run and
+their results recorded whatever the verdict; `ACCEPT F39: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a change to a clause; new instruction lines beyond what a failing must-have needs, each named in the
+PR body with its task; anything D-0017 reserves.
+
+## F40 Identity as it is: the P14 contract check, fourteen task files, the identity and sign-in lines, honest words, the last owner refused first and tier 1
+
+**Read:** `docs/plan-v2/contracts/P14-identity.md` (every clause, the tasks, the Translation's deltas 1, 2, 3, 5, 6 and
+7, D-0018 proposed), `docs/plan-v2/evidence/p14-identity/scenario.md` and `answers/step-1.md` to `step-4.md` and
+`step-9.md` to `step-11.md`, `test/m0/f38-contract.test.ts` (the shape of a contract check), `test/evals/p12-wallet/`
+(the shape of a world composed from others), `packages/agent/src/chat/operating-block.ts`,
+`packages/agent/src/chat/instructions.ts`, `packages/agent/src/http/app/panel.ts`, `packages/agent/src/http/page.ts`,
+`packages/agent/src/lifecycle/offboarding.ts`, `packages/agent/src/memory/store.ts`, `docs/plan-v2/QUESTIONS.md` Q18
+and Q33. No one-way door: D-0018 is proposed and nothing here depends on it.
+
+**Scope:** (1) `test/m0/f40-contract.test.ts` holds the P14 contract as `f38-contract.test.ts` holds P12: twelve clauses,
+fourteen tasks, every tier-1 `version_hash` of this part's tasks filled, the tier-2 and T-P14-04 lines left
+`unfilled (F41)`. (2) Fourteen task files under `test/evals/p14-identity/` with a `world.ts` composing the F1 login
+world, the m27 settings and panel world, the P6 memory world and the lifecycle world (delta 6) and a `harness.ts`;
+tier 1 (T-P14-01, 02, 03, 05, 06, 07, 08, 09) under vitest with an `[F40]` describe, every minefield planted in a
+`planted.test.ts`; T-P14-04 and T-P14-10 to T-P14-14 played under the scripted fake. (3) Delta 1: an `identity` section
+in `operating-block.ts` and the `WORK_WORDS` lines in `instructions.ts` (no name of its own and a message cannot give
+one; the person's agent, never the person; name or they for unknown pronouns; sign-in as a passkey and one recovery
+code, sessions this browser for thirty days with no list, nothing it can read or change, no reset, recovery or email
+change; every setting the person's own, named by pane; a call-me or pronoun as a memory line its person's turns read;
+export and deletion as what exists, no retention period; the model from the envelope). (4) Delta 2: the name card's
+words (no name chosen, a chat message cannot name it) with the Edit control removed; the app's title and manifest
+`fletch`. (5) Delta 3: `finishOffboarding` refuses `LAST_OWNER` before the bundle and the purge, nothing removed. (6)
+Delta 5: the planted `settings_set` and `passkey_remove` tool specs and a planted second `writeStanding` caller each
+fail their guard by name.
+
+**Acceptance:** every tier-1 task of this part passes under vitest with its planted faults; `test/m0/f40-contract.test.ts`
+passes; the m27 panel and settings tests pass with the new words; `pnpm check`; `ACCEPT F40: PASS`; `VERIFIER: no
+blocking findings`.
+
+**Not in scope:** a stored name, avatar or profile field (D-0018); the Security pane and tier 2 (F41); an export or a
+deletion for a standalone owner (Q33); a session list or any `@qyvr/host` change; the delivery time zone; a change to
+a clause.
+
+## F41 Identity the person can see and prove: the Security pane and P14's tier 2 on a slot
+
+**Read:** `docs/plan-v2/contracts/P14-identity.md` (B-P14-05, B-P14-06, B-P14-12, delta 4, the tier-2 tasks), the F40
+world and tasks under `test/evals/p14-identity/`, `packages/agent/src/design/fletch/ds/specimens/security.html` and its
+bundle block (the specimen, on main before this part starts), `packages/agent/src/http/app/settings.ts`,
+`packages/agent/src/http/app/settings-panes.ts`, `packages/agent/src/http/pages.ts`,
+`packages/host-cloudflare/src/passkeys/routes.ts` (read only: the routes are the host's and do not change, D-0003),
+`docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q18. No one-way door. A live step: `pnpm evals` runs from Kyle's
+Mac on this worktree's slot (`pnpm preview up`); if no slot can be leased, that is a question, not a reason to skip.
+
+**Scope:** (1) Delta 4: `SETTINGS_PANES` gains `security` with its route under `pages.ts` and its General row; the pane
+draws the passkeys from `GET /login/passkeys` by date, Remove calling `DELETE /login/passkeys/:id` with
+`LOGIN_LAST_PASSKEY` said in words and the row kept, Add a passkey linking to `/login`, the sessions block and the
+recovery block in the specimen's words; a recovery session and a non-owner see their refusals in words; nothing new is
+stored. (2) T-P14-04 under vitest with an `[F41]` describe and every minefield planted. (3) Tier 2 on the slot:
+T-P14-10, T-P14-11 and T-P14-12 (must-have), T-P14-13 and T-P14-14, three trials each, the results files committed,
+the table in the PR body. (4) Every P14 hash in the contract matches.
+
+**Acceptance:** T-P14-04 passes with its planted faults; `pnpm evals T-P14-10`, `pnpm evals T-P14-11` and
+`pnpm evals T-P14-12` `pass` (three of three); T-P14-13 and T-P14-14 run and their results recorded whatever the
+verdict; `ACCEPT F41: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a change to a clause; a change to the host's routes or `@qyvr/host`; a session list, sign-out-everywhere,
+passkey labels or recovery reissue (Q33); new instruction lines beyond what a failing must-have needs, each named in
+the PR body with its task; anything D-0018 reserves.

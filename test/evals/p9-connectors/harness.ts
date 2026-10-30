@@ -18,16 +18,16 @@
 //   - `grant` (payload `kind`): Sam signs a standing grant for an action kind;
 //   - `expire` (payload `ms`): time passes.
 // Every event records how many requests the network had been sent when it ran (`marks`).
-import { Type } from "@earendil-works/pi-ai";
 import type { FillApi } from "../../../packages/agent/src/browse/tools.ts";
-import { egressFor, getJson } from "../../../packages/agent/src/connectors/egress.ts";
+import { egressFor } from "../../../packages/agent/src/connectors/egress.ts";
 import { SCHEMA as DELIVERY_SCHEMA } from "../../../packages/agent/src/delivery/service.ts";
 import { type VaultDirectory, vaultRoutes } from "../../../packages/agent/src/http/vault-routes.ts";
 import type { ParsedMail } from "../../../packages/agent/src/mail/mime.ts";
 import { PersonMail } from "../../../packages/agent/src/person/mail.ts";
-import type { Namespace, ToolSpec } from "../../../packages/agent/src/tools/registry.ts";
+import type { Namespace } from "../../../packages/agent/src/tools/registry.ts";
 import { VaultCore } from "../../../packages/agent/src/vault/core.ts";
 import { holdTypedSecrets } from "../../../packages/agent/src/vault/typed.ts";
+import type { FakeSite } from "../../support/browser/fake-browser.ts";
 import type { FakeStep } from "../../support/fake-model.ts";
 import { ObjectHarness } from "../../support/object-harness.ts";
 import type { Snapshot } from "../../support/scenario.ts";
@@ -38,8 +38,9 @@ import { T0, TENANT } from "../../workers/support/authority-world.ts";
 import { page } from "../../workers/support/page-harness.ts";
 import { keysFor, testMasterKey } from "../../workers/support/vault-harness.ts";
 import { P3Tier1World, pat, sam } from "../p3-delegation/harness.ts";
+import { fixtureNamespace, probeAnswer } from "./fixture-connector.ts";
 import type { AuditView, CallView, CardView, ChatLabel, GrantView, HostView, P9World, SecretView, SentView, Tabs } from "./world.ts";
-import { API_HOST, API_REF, COUNT, GITHUB_HOST, LOGIN_HOST, PROBE_API, REPO, REPO_DENIED } from "./world.ts";
+import { API_HOST, API_REF, GITHUB_HOST, LOGIN_HOST, REPO, REPO_DENIED } from "./world.ts";
 
 export { pat, sam };
 
@@ -52,6 +53,10 @@ export interface P9HarnessOptions {
   plant?: (js: string) => string;
   /** The status of each read of the Example API's probe in turn, 200 once they run out (T-P9-08: a 200, then a 401). */
   probe?: number[];
+  /** More sites the fake browser serves (P12's checkout page, F38). */
+  sites?: Record<string, FakeSite>;
+  /** Tools offered to a child for its gate to refuse (P12's `shop_buy`, F38). */
+  childTools?: (person: string) => Namespace[];
 }
 
 /** The writer the capture form and settings pass for a signed-in person. */
@@ -70,13 +75,12 @@ function fakeNetwork(probe: number[] = []) {
     const method = String(init.method ?? "GET");
     sent.push({ url, method, redirect: String(init.redirect ?? "follow") });
     const u = new URL(url);
-    if (u.hostname === API_HOST && u.pathname === "/p9-probe/count") return json({ count: COUNT, view: "all" });
-    if (u.hostname === API_HOST && u.pathname === "/p9-probe/items" && method === "POST") return json({ id: "item-1", name: JSON.parse(String(init.body ?? "{}")).name }, 201);
     if (u.hostname === API_HOST && u.pathname === "/p9-probe") {
       const status = statuses.shift() ?? 200;
       if (status !== 200) return json({ message: "Bad credentials" }, status);
     }
-    if (u.hostname === API_HOST && u.pathname === "/p9-probe") return new Response("p9 probe: the Example API answered.", { status: 200, headers: { "content-type": "text/plain" } });
+    const probe = probeAnswer(url, method, init.body === undefined ? undefined : String(init.body));
+    if (probe) return probe;
     if (u.hostname === GITHUB_HOST && u.pathname === `/repos/${REPO}`) return json({ full_name: REPO, description: "the p9 probe repository", stargazers_count: 3, open_issues_count: 1, default_branch: "main", pushed_at: "2026-10-12T09:00:00Z", html_url: `https://github.com/${REPO}` });
     if (u.hostname === GITHUB_HOST && u.pathname === `/repos/${REPO_DENIED}`) return json({ message: "Bad credentials" }, 401);
     if (u.hostname === "hacker-news.firebaseio.com" && u.pathname === "/v0/topstories.json") return json([101]);
@@ -84,50 +88,6 @@ function fakeNetwork(probe: number[] = []) {
     throw new Error(`P9_NETWORK_UNEXPECTED: ${method} ${url}`);
   };
   return { sent, fetch };
-}
-
-const Name = Type.Object({ name: Type.Optional(Type.String({ description: "The item's name." })) });
-const Url = Type.Object({ url: Type.String({ description: "The https address to read with the Example API key." }), credential: Type.Optional(Type.String({ description: "Another of the person's keys by reference, in place of the Example API key." })) });
-const None = Type.Object({});
-const text = (t: string, details: Record<string, unknown> = {}) => ({ content: [{ type: "text" as const, text: t }], details });
-
-/**
- * The fixture connector (B-P9-06): a library at the Example API reached through the Vault's egress with Sam's key.
- * `fixture_count` and `fixture_read` are observations; `fixture_create` is an action of kind `fixture.create`, so the
- * gate asks for it unless a grant Sam signed covers it. No method declares a default of its own.
- */
-function fixtureNamespace(egress: () => (req: { url: string; method?: string; headers?: Array<[string, string]>; body?: string }, purpose: string) => ReturnType<ReturnType<typeof egressFor>>): Namespace {
-  const auth: Array<[string, string]> = [["authorization", `Bearer ${API_REF}`]];
-  const count: ToolSpec<typeof None> = {
-    name: "fixture_count", kind: "observation", label: "Count the fixture library", external: true, parameters: None,
-    description: "Count every item in the person's fixture library. It counts the whole library only; it has no view by day or by folder.",
-    execute: async () => {
-      const r = (await getJson(egress(), "fixture_count", `${PROBE_API}/count`, auth)) as { count: number };
-      return text(`The fixture library holds ${r.count} items in all (this tool counts the whole library; it has no view by day).`);
-    },
-  };
-  const read: ToolSpec<typeof Url> = {
-    name: "fixture_read", kind: "observation", label: "Read with the Example API key", external: true, parameters: Url,
-    description: "Read an https address with the person's Example API key and return what it says.",
-    execute: async (_id, p) => {
-      const r = await egress()({ url: p.url, method: "GET", headers: p.credential ? [["authorization", `Bearer ${p.credential}`]] : auth }, "fixture_read");
-      if (!r.ok) throw new Error(`${r.code}: ${r.reason}`);
-      return text(`status ${r.status}\n${r.body}`);
-    },
-  };
-  const create: ToolSpec<typeof Name> = {
-    name: "fixture_create", kind: "action", label: "Create a fixture item", parameters: Name, actionKind: "fixture.create",
-    description: "Create one item in the person's fixture library.",
-    subject: () => ({ scope: "personal", connector: "fixture" }),
-    cardLines: async (a) => [`Create an item named ${String(a.name ?? "")} in your fixture library`],
-    execute: async (_id, p) => {
-      const r = await egress()({ url: `${PROBE_API}/items`, method: "POST", headers: [...auth, ["content-type", "application/json"]], body: JSON.stringify({ name: p.name ?? "" }) }, "fixture_create");
-      if (!r.ok) throw new Error(`${r.code}: ${r.reason}`);
-      if (r.status !== 201) throw new Error(`CONNECTOR_HTTP_${r.status}: ${r.body.slice(0, 200)}`);
-      return text(`Created item ${(JSON.parse(r.body) as { id: string }).id} named ${p.name ?? ""}.`);
-    },
-  };
-  return { name: "fixture", description: "count, read and add items in the person's fixture library at the Example API", deferral: "names", tools: [count, read, create] as ToolSpec[] };
 }
 
 const textOf = (content: unknown): string => (typeof content === "string" ? content : Array.isArray(content) ? content.map((c) => (c as { text?: string }).text ?? "").join("") : "");
@@ -157,8 +117,9 @@ export class P9Tier1World extends P3Tier1World implements P9World {
     const fill = (person: string): FillApi => ({ fill: (req) => vault().fill(req, { person, purpose: "browse_fill" }), scrub: (session, t) => vault().scrub(session, t) });
     super({
       script: o.script,
-      sites: { [LOGIN_HOST]: { page: { title: "Sign in", text: "Enter the code we mailed you." } } },
+      sites: { [LOGIN_HOST]: { page: { title: "Sign in", text: "Enter the code we mailed you." } }, ...(o.sites ?? {}) },
       fill,
+      ...(o.childTools ? { childTools: o.childTools } : {}),
       world: () => ({
         vault: {
           egress: (p) => egressFor(vault(), p),

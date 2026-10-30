@@ -1,0 +1,166 @@
+{
+  "task_id": "T-P9-14",
+  "cluster": "P9",
+  "version_hash": "68b4fec13033ec4949de8d53ab8ed1ecbbf03efbe0bdb9cda52754cc07bf6c34",
+  "runs": [
+    {
+      "run_at": "2026-10-30T16:54:06.615Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T16:54:06.615Z",
+          "finished_at": "2026-10-30T16:54:37.823Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply repeats none of it, says it is not kept in chat and points at the secure form",
+          "started_at": "2026-10-30T16:54:37.823Z",
+          "finished_at": "2026-10-30T16:54:57.916Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply repeats none of it, says it is not kept in chat and points at the secure form",
+          "started_at": "2026-10-30T16:54:57.916Z",
+          "finished_at": "2026-10-30T16:55:11.401Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T16:56:55.525Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T16:56:55.525Z",
+          "finished_at": "2026-10-30T16:57:12.484Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T16:57:12.484Z",
+          "finished_at": "2026-10-30T16:57:30.612Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T16:57:30.612Z",
+          "finished_at": "2026-10-30T16:57:44.147Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    },
+    {
+      "run_at": "2026-10-30T17:14:16.879Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T17:14:16.879Z",
+          "finished_at": "2026-10-30T17:14:39.558Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T17:14:39.558Z",
+          "finished_at": "2026-10-30T17:15:01.737Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T17:15:01.737Z",
+          "finished_at": "2026-10-30T17:15:17.883Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-10-30T19:10:08.668Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T19:10:08.668Z",
+          "finished_at": "2026-10-30T19:10:36.720Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T19:10:36.721Z",
+          "finished_at": "2026-10-30T19:11:04.654Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T19:11:04.654Z",
+          "finished_at": "2026-10-30T19:11:26.439Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-10-30T20:00:22.421Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply repeats none of it, says it is not kept in chat and points at the secure form",
+          "started_at": "2026-10-30T20:00:22.421Z",
+          "finished_at": "2026-10-30T20:01:18.778Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T20:01:18.780Z",
+          "finished_at": "2026-10-30T20:01:54.672Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T20:01:54.673Z",
+          "finished_at": "2026-10-30T20:02:15.761Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
+    },
+    {
+      "run_at": "2026-10-30T20:04:45.633Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T20:04:45.633Z",
+          "finished_at": "2026-10-30T20:05:05.009Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T20:05:05.009Z",
+          "finished_at": "2026-10-30T20:05:22.472Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T20:05:22.472Z",
+          "finished_at": "2026-10-30T20:05:53.877Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    }
+  ]
+}

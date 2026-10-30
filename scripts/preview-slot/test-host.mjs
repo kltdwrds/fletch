@@ -15,19 +15,28 @@
 //   page as well as its allowlist (F32, ./test-host-p5.mjs).
 // - `Chat` keeps each chat model request's other messages too, and the `p3` op reads them with the chat's sub-agent and
 //   mailbox rows; the browser serves P3's two probe pages, the second slowly (F34, ./test-host-p3.mjs).
+// - `Vault` answers the Example API (`api.example.com/p9-probe`) in-process and keeps every request its network was sent,
+//   `Chat` offers the P9 fixture connector over it, and the `p9` op resets and reads a person's credential rows with a
+//   chat's cards and messages (F37, ./test-host-p9.mjs).
+// - `shop.example.invalid` is no site the browser serves and is reopened by `reset`; the `p12` op deletes a person's
+//   grant rows, and reads a chat's cards with their words, the person's grants, journal rows and jobs (F39,
+//   ./test-host-p12.mjs).
 import { getAgentByName } from 'agents';
 import { egressFor } from '../../packages/agent/src/connectors/egress.ts';
 import { Chat as AgentChat, Job as AgentJob, Ledger as AgentLedger, Person as AgentPerson, SubAgent as AgentSubAgent, Vault as AgentVault } from '../../packages/agent/src/index.ts';
 import { jobToolSpecs } from '../../packages/agent/src/jobs/job-tools.ts';
-import { personMemory } from '../../packages/agent/src/memory/rpc.ts';
+import { personFiles, personMemory } from '../../packages/agent/src/memory/rpc.ts';
 import { jobName } from '../../packages/agent/src/objects/job.ts';
 import { VERIFIER_INSTRUCTIONS } from '../../packages/agent/src/subagents/verifier.ts';
+import { fixtureNamespace } from '../../test/evals/p9-connectors/fixture-connector.ts';
 import { shareNamespace } from '../../test/support/p15-fixtures.ts';
 import { childBrowse } from './test-host-child.mjs';
 import { chunks, joinChunks, p3Rows, requestText } from './test-host-p3.mjs';
 import { recordingAi } from './test-host-p5.mjs';
 import { chatRows, p6Person } from './test-host-p6.mjs';
 import { clockedStorage, p7Op, probeGet, skewToNext } from './test-host-p7.mjs';
+import { P12_DEAD, p12Cards, p12Grants, p12Journal, p12Reset } from './test-host-p12.mjs';
+import { p9ChatRows, p9Network, p9Reset, p9VaultRows } from './test-host-p9.mjs';
 import { SITES, testHostBinding } from './test-host-sites.mjs';
 
 const LOG = 'test-host:log';
@@ -95,7 +104,20 @@ export class Chat extends AgentChat {
   }
 
   moreNamespaces() {
-    return [shareNamespace((r) => void this.#append('egress', r))];
+    // F37: the P9 fixture connector, over the Vault's egress as the slot's owner.
+    const vault = this.env.VAULT.get(this.env.VAULT.idFromName(this.env.TENANT_ID));
+    return [shareNamespace((r) => void this.#append('egress', r)), fixtureNamespace(() => egressFor(vault, this.env.OWNER_EMAIL))];
+  }
+
+  /** The chat's cards and stored messages, and each model request's messages (F37, ./test-host-p9.mjs). */
+  async testHostP9() {
+    await this.#chain;
+    return { ...p9ChatRows(this.ctx.storage.sql), requests: joinChunks(await this.ctx.storage.list({ prefix: REQUESTS })) };
+  }
+
+  /** The chat's cards with the words `renderCard` gives them (F39, ./test-host-p12.mjs). */
+  async testHostP12() {
+    return p12Cards(this.ctx.storage, (e) => e);
   }
 
   async testHostLog() {
@@ -186,6 +208,11 @@ export class Person extends AgentPerson {
     return p6Person(this, call);
   }
 
+  /** Every grant row of this person deleted, before a P12 trial (F39). */
+  async testHostP12Reset() {
+    p12Reset(this.ctx.storage.sql);
+  }
+
   /** An empty job list and the home zone saved as `zone`, before a P7 trial (F30). */
   async testHostP7Reset(zone) {
     this.ctx.storage.sql.exec('DELETE FROM job_index');
@@ -204,9 +231,43 @@ export class Ledger extends AgentLedger {
   }
 }
 
+const SENT = 'test-host:sent';
+
 export class Vault extends AgentVault {
+  #chain = Promise.resolve();
+
+  /** F37: the Example API answered in-process, every request kept in order; no other host is reached. */
+  network() {
+    return p9Network((e) => {
+      this.#chain = this.#chain.then(async () => this.ctx.storage.put(SENT, [...((await this.ctx.storage.get(SENT)) ?? []), e]));
+      return this.#chain;
+    });
+  }
+
   async testHostAudit() {
     return this.core.audit();
+  }
+
+  async testHostDump() {
+    return tables(this.ctx.storage.sql);
+  }
+
+  /** A person's credentials, registry, audit, events and grants, and every request the network was sent (F37). */
+  async testHostP9(person) {
+    await this.#chain;
+    const secrets = this.core
+      .list(person)
+      .filter((c) => !c.company)
+      .map((c) => ({ ref: c.ref, label: c.label, kind: c.kind, permission: c.permission, status: c.status, hosts: c.hosts.map((h) => h.host), createdAt: c.createdAt, expiresAt: c.expiresAt }));
+    const grants = this.core.grants(person).map((g) => ({ ref: g.ref, hosts: g.hosts, fill: g.fill, oneShot: g.oneShot, usedAt: g.usedAt, revokedAt: g.revokedAt }));
+    return { secrets, grants, ...p9VaultRows(this.ctx.storage.sql, person), sent: (await this.ctx.storage.get(SENT)) ?? [] };
+  }
+
+  /** Every credential row of the person deleted and the network's record emptied, before a P9 trial (F37). */
+  async testHostP9Reset(person) {
+    await this.#chain;
+    p9Reset(this.ctx.storage.sql, person);
+    await this.ctx.storage.delete(SENT);
   }
 }
 
@@ -224,6 +285,8 @@ async function bucketText(bucket, prefix) {
 
 /** The P5 probe's domains (F32): reopened too, so no earlier trial's failed read is remembered as a block. */
 const P5_DOMAINS = ['example.com', 'example.invalid'];
+/** The dead shop (F39): reopened too, so each P12 trial's one read of it is its own. */
+const P12_DOMAINS = [P12_DEAD];
 const EMAIL = /^[^\s@]+@[^\s@]+$/;
 const CHAT_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
@@ -232,7 +295,7 @@ export async function testHost(body, env) {
   if (typeof body.person !== 'string' || !EMAIL.test(body.person)) return { status: 400, body: { error: { code: 'invalid', message: 'name the person' } } };
   const person = await getAgentByName(env.PERSON, body.person);
   if (body.op === 'reset') {
-    for (const domain of [...Object.keys(SITES), ...P5_DOMAINS]) await person.browseRecord({ domain, engine: null, state: 'ok', code: null });
+    for (const domain of [...Object.keys(SITES), ...P5_DOMAINS, ...P12_DOMAINS]) await person.browseRecord({ domain, engine: null, state: 'ok', code: null });
     return { status: 200, body: { reset: Object.keys(SITES) } };
   }
   if (body.op === 'state') {
@@ -274,6 +337,37 @@ export async function testHost(body, env) {
     // F34: the P3 world (./test-host-p3.mjs): a chat's model requests, sub-agent rows and mailbox rows.
     if (typeof body.chat !== 'string' || !CHAT_ID.test(body.chat)) return { status: 400, body: { error: { code: 'invalid', message: 'name the chat' } } };
     return { status: 200, body: await (await getAgentByName(env.CHAT, body.chat)).testHostP3() };
+  }
+  if (body.op === 'p9') {
+    // F37: the P9 world (./test-host-p9.mjs): the person's credential rows reset, or read with a chat's rows and stores.
+    const vault = env.VAULT.get(env.VAULT.idFromName(env.TENANT_ID));
+    if (body.call === 'reset') {
+      await vault.testHostP9Reset(body.person);
+      return { status: 200, body: { reset: true } };
+    }
+    if (typeof body.chat !== 'string' || !CHAT_ID.test(body.chat)) return { status: 400, body: { error: { code: 'invalid', message: 'name the chat' } } };
+    const chat = await getAgentByName(env.CHAT, body.chat);
+    const ledger = env.LEDGER.get(env.LEDGER.idFromName(env.TENANT_ID));
+    const files = (await personFiles(env, body.person).fileList({}, body.person))?.files ?? [];
+    const rowsText = JSON.stringify([['chat', await chat.testHostDump()], ['person', await person.testHostDump()], ['ledger', await ledger.testHostDump()], ['vault', await vault.testHostDump()]]);
+    return { status: 200, body: { vault: await vault.testHostP9(body.person), chat: await chat.testHostP9(), files: files.map((f) => f.path), rowsText } };
+  }
+  if (body.op === 'p12') {
+    // F39: the P12 world (./test-host-p12.mjs): the person's grant rows reset, or read with a chat's cards, the
+    // person's journal rows and jobs.
+    if (body.call === 'reset') {
+      await person.testHostP12Reset();
+      return { status: 200, body: { reset: true } };
+    }
+    if (typeof body.chat !== 'string' || !CHAT_ID.test(body.chat)) return { status: 400, body: { error: { code: 'invalid', message: 'name the chat' } } };
+    const ledger = env.LEDGER.get(env.LEDGER.idFromName(env.TENANT_ID));
+    const jobs = [];
+    for (const id of (await person.jobIds(body.person)) ?? []) {
+      const seen = await env.JOB.get(env.JOB.idFromName(jobName(body.person, id))).inspect(body.person);
+      jobs.push({ id, title: seen.ok && seen.job ? seen.job.def.title : id });
+    }
+    const cards = await (await getAgentByName(env.CHAT, body.chat)).testHostP12();
+    return { status: 200, body: { cards, grants: p12Grants(await person.listGrants(body.person)), journal: p12Journal(await ledger.journalRows({ principal: body.person })), jobs } };
   }
   if (body.op === 'p7') {
     // F30: the P7 world (./test-host-p7.mjs): Sam's jobs reset, defined, ticked and read, with the chat's notices.

@@ -85,7 +85,7 @@ const byAttempt = (rows: ModelCallRow[]) => [...rows].sort((a, b) => a.attempt -
 const textOf = (events: AssistantMessageEvent[]) => events.filter((e) => e.type === "text_delta").map((e) => (e as { delta: string }).delta).join("");
 
 describe("[M22.1] the primary is chosen", () => {
-  it("a chat call goes to OpenRouter's GLM through gateway qyvr's universal request with the stored key: latency-sorted, parameters required, low effort, no key on the request", async () => {
+  it("a chat call goes to OpenRouter's GLM through gateway qyvr's provider path with the stored key: latency-sorted, parameters required, low effort, no key on the request", async () => {
     const c = await call([{ text: "Hello Ada.", usage: { prompt: 900, completion: 12, cost: 0.000142 } }]);
     const message = await c.result;
     expect(message.stopReason).toBe("stop");
@@ -93,10 +93,10 @@ describe("[M22.1] the primary is chosen", () => {
     expect(c.fake.requests).toHaveLength(1);
     const r = c.fake.requests[0] as (typeof c.fake.requests)[number];
     expect(r.model).toBe(GLM_OPENROUTER);
-    expect(r.universal).toEqual({ gatewayId: "qyvr", provider: "openrouter", endpoint: "v1/chat/completions", headers: { "content-type": "application/json" } });
+    expect(r.passthrough).toEqual({ gatewayId: "qyvr", provider: "openrouter", endpoint: "v1/chat/completions", headers: { "content-type": "application/json", "cf-aig-collect-log": "false" } });
     // No provider key and no gateway token travel with the request: the gateway uses the stored BYOK key.
-    expect(Object.keys(r.universal?.headers ?? {}).map((k) => k.toLowerCase())).not.toContain("authorization");
-    expect(Object.keys(r.universal?.headers ?? {}).map((k) => k.toLowerCase())).not.toContain("cf-aig-authorization");
+    expect(Object.keys(r.passthrough?.headers ?? {}).map((k) => k.toLowerCase())).not.toContain("authorization");
+    expect(Object.keys(r.passthrough?.headers ?? {}).map((k) => k.toLowerCase())).not.toContain("cf-aig-authorization");
     expect(r.options.gateway).toEqual({ id: "qyvr", collectLog: false });
     expect(r.inputs).toMatchObject({ model: GLM_OPENROUTER, stream: true, provider: { sort: "latency", require_parameters: true }, reasoning: { effort: "low" } });
     expect(OPENROUTER_PROVIDER).toEqual({ sort: "latency", require_parameters: true });
@@ -136,7 +136,7 @@ describe("[M22.1] the hedge starts on a 408, 429 or 5xx, or a slow first token",
       expect(message.stopReason).toBe("stop");
       expect(message.model).toBe(GLM_WORKERS_AI);
       expect(textOf(c.events)).toBe("Hello from the hedge.");
-      expect(c.fake.requests.map((r) => [r.model, r.universal?.provider ?? "binding"])).toEqual([[GLM_OPENROUTER, "openrouter"], [GLM_WORKERS_AI, "binding"]]);
+      expect(c.fake.requests.map((r) => [r.model, r.passthrough?.provider ?? "binding"])).toEqual([[GLM_OPENROUTER, "openrouter"], [GLM_WORKERS_AI, "binding"]]);
       const hedged = c.fake.requests[1] as (typeof c.fake.requests)[number];
       expect(hedged.inputs).toMatchObject({ reasoning_effort: "low", stream: true });
       expect(hedged.inputs).not.toHaveProperty("provider");

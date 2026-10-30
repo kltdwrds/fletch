@@ -52,12 +52,12 @@ describe("[F1] a self-host deploy's models", () => {
     }
   });
 
-  it("a chat turn calls Workers AI's GLM over the binding with no gateway option and no universal request", async () => {
+  it("a chat turn calls Workers AI's GLM over the binding with no gateway option and no gateway passthrough", async () => {
     const { fake, result } = await turn(SELF_HOST_VARS);
     expect(result).toMatchObject({ status: "done" });
     expect(fake.requests).toHaveLength(1);
     expect(fake.requests[0]?.model).toBe("@cf/zai-org/glm-5.3-flash");
-    expect(fake.requests[0]?.universal).toBeUndefined();
+    expect(fake.requests[0]?.passthrough).toBeUndefined();
     expect(fake.requests[0]?.options).not.toHaveProperty("gateway");
   });
 
@@ -90,7 +90,7 @@ describe("[F1] a deploy that configures a gateway", () => {
     const { fake, result } = await turn(vars);
     expect(result).toMatchObject({ status: "done" });
     expect(fake.requests[0]?.model).toBe("z-ai/glm-5.3-flash");
-    expect(fake.requests[0]?.universal).toMatchObject({ gatewayId: "my-gateway", provider: "openrouter" });
+    expect(fake.requests[0]?.passthrough).toMatchObject({ gatewayId: "my-gateway", provider: "openrouter", endpoint: "v1/chat/completions" });
     expect(hedgeFor("chat", modelConfig(vars))?.model).toBe("@cf/zai-org/glm-5.3-flash");
     // Every other route stays on Workers AI.
     expect(routeModel("job", modelConfig(vars))).toBe("@cf/zai-org/glm-5.3-flash");
@@ -111,9 +111,11 @@ describe("[F1] a deploy that configures a gateway", () => {
     const { fake, result } = await turn(vars);
     expect(result).toMatchObject({ status: "done" });
     expect(fake.requests[0]?.model).toBe("muse-spark-1.3-contributor");
-    // The custom provider's path: `custom-<slug>/<path>`, the path appended to the base URL https://api.meta.ai/v1.
-    expect(fake.requests[0]?.universal).toMatchObject({ gatewayId: "my-gateway", provider: "custom-meta", endpoint: "chat/completions" });
-    expect(fake.requests[0]?.universal?.headers).not.toHaveProperty("authorization");
+    // The custom provider's path: `custom-<slug>/<path>`, the path appended to the base URL https://api.meta.ai/v1,
+    // with no provider key of its own (the gateway's stored key serves it) and the gateway's log collection off.
+    expect(fake.requests[0]?.passthrough).toMatchObject({ gatewayId: "my-gateway", provider: "custom-meta", endpoint: "chat/completions" });
+    expect(fake.requests[0]?.passthrough?.headers).not.toHaveProperty("authorization");
+    expect(fake.requests[0]?.options.gateway).toEqual({ id: "my-gateway", collectLog: false });
     expect(modelFor("chat", config)).toMatchObject({ provider: "meta", baseUrl: "binding:AI/gateway/meta", input: ["text", "image"] });
     expect(isPriced(MUSE_SPARK_CONTRIBUTOR)).toBe(true);
     expect(admitPolicy({ modelTier: DEFAULT_TIER, disabled: [] }, { person: sam.email, runId: "r", model: MUSE_SPARK_CONTRIBUTOR })).toEqual({ ok: true });

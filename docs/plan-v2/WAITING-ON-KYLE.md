@@ -5,7 +5,46 @@ One item per entry: `- [ ] <date> <kind>: <what>`, kinds `uat`, `record`, `quest
 orchestrator wants his eyes on, not blocking). An entry carries enough context to make the high-level decision from
 its paragraph alone (what it is, what was decided or found, what his answer changes, the recommended answer) and
 deep links (a path with its heading or line, a record id, a PR) to the artifact or section for a deep-dive review.
-Kyle's own lines go under `## Steering`.
+Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the agent's name and avatar are your settings, written only through the
+  app; until then it has no name and says so.** What it decides: no model turn, tool or chat message ever names the
+  agent; a sentence like "you are now called Probe" changes the transcript and nothing else; when naming is built it is
+  one Person row and a Settings control you use. Why now: Muse writes its name from a chat turn the model interprets
+  (the one place its configuration comes from message content), and fletch's panel today promises "Naming comes later"
+  behind a disabled Edit; F40 replaces the promise with the honest words and D-0018 fixes where a name will come from.
+  Nothing in F40 or F41 depends on your answer. Recommended: accept, and name the agent when you want to, as a part
+  after the spine. Say under Steering if you would rather the model could take a name from chat, or if a name should
+  also reach the mail label and a colleague's cards. Deep dive: [the record](../decisions/0018-agent-name-is-the-owners-setting.md),
+  [Q33](QUESTIONS.md#q33-p14-2026-10-30-d-0018-proposed-the-agents-name-is-the-owners-setting-never-a-messages-and-p14s-reversible-choices-and-open-doors)
+  (also the four doors left as questions: an owner's export, an owner's deletion, a theme row, a session list),
+  [B-P14-01 and B-P14-02](contracts/P14-identity.md#clauses), [deltas 1 to 7](contracts/P14-identity.md#translation);
+  evidence on your Mac under `docs/plan-v2/evidence/p14-identity/` (`answers/step-1.md`, `answers/step-2.md`,
+  `step-2-menu.png`, `step-2-rename-prefill.png`, `step-2-dialog.png`).
+- [ ] 2026-10-30 look: **the P14 identity contract: what the agent is, says it is, and can touch.** Twelve clauses from
+  the muse.ai interrogation (165 tool calls, all reads; nothing of your identity changed). What fletch adopts as words:
+  the agent is your agent and never you to a third party, it names a person whose pronouns it does not know or says
+  "they", it says sign-in is a passkey and one recovery code with nothing it can read or change, it says every setting
+  is yours by pane, and it says export and deletion as what exists (for you on a standalone deploy, neither, yet). What
+  fletch keeps stronger than Muse: no sub-agent, job or colleague turn sees your standing files or memory (Muse's
+  sub-agents inherit them), no setting changes on a sentence (Muse changes appearance, feed and preferences on request),
+  nothing writes about you unasked (Muse's background upkeep logged one section per probe turn). One defect found in
+  fletch and fixed by F40: a standalone owner finishing offboarding is purged before the last-owner refusal. One
+  surface to come with its specimen first: a Security pane listing your passkeys by date with Remove and Add a passkey
+  (F41). Deep dive: [the clauses](contracts/P14-identity.md#clauses), [the properties](contracts/P14-identity.md#properties),
+  [F40 and F41 in parts.md](parts.md#f40-identity-as-it-is-the-p14-contract-check-fourteen-task-files-the-identity-and-sign-in-lines-honest-words-the-last-owner-refused-first-and-tier-1);
+  evidence on your Mac under `docs/plan-v2/evidence/p14-identity/` (`answers/step-0.md` to `step-11.md`, the
+  `dump/` folder with the twelve table guides and the Settings panes quoted in full).
+- [ ] 2026-10-30 do: **what the P14 interrogation left in your Muse account, for you to remove or keep.** Nothing of
+  your identity changed: no rename, avatar, setting, passkey, device, session or sign-in method; `runtime.avatar_state`
+  stayed at revision 49 and `IDENTITY.md`, `SOUL.md`, `USER.md` and `MEMORY.md` are unchanged. What remains: the side
+  chat "Generate tools.json account…" (thread `ceb6e00a-7685-44d9-86be-dd484ea5d5c4`, 52 messages, archive or delete
+  it from the sidebar), and the sections Muse's background memory upkeep wrote about the probe into
+  `~/memory/2026-10-30.md` from line 824 (one per turn, last at 18:37:44Z; "forget the P14 probe notes" in chat runs
+  the forget skill, which shows you the scope first). Two small things to know: the browser pane twice reported the
+  page writing to your clipboard during synthetic input (steps 2 and 5; nothing was pasted or sent), and the Settings
+  page loads Meta's pixel and four ad-network frames on every open (`step-10-requests.json`, hosts by name). Deep dive:
+  `docs/plan-v2/evidence/p14-identity/answers/step-11.md` (the audit, rows by table) and
+  `answers/step-10.md` (the reload and the third-party hosts), on your Mac.
+## Steering`.
 
 ## Open
 
@@ -439,7 +478,7 @@ Kyle's own lines go under `## Steering`.
   is the settings pane, the grouped rows, the status pill and the prompt card as they are. Say "fine" or what to
   change under Steering before F36 starts; F35 runs meanwhile and draws none of it.
 
-- [ ] 2026-10-30 do: **sign the built-in browser back in to Muse, so P12 (wallet and payments) can be interrogated.**
+- [x] 2026-10-30 do (done 2026-10-30, Kyle signed in; the interrogator relaunched at step 2): **sign the built-in browser back in to Muse, so P12 (wallet and payments) can be interrogated.**
   The P12 interrogator (an Opus agent under the orchestrator's `evidence/p12-wallet/scenario.md`, ten steps, read-only
   but for one add-method page to raise and close and one purchase ask at `https://shop.example.invalid`) ran step 0 (the
   dump refresh: `wallet` has five read functions over `stripe-link` and `shop-pay`; no orders, receipts, budget or
@@ -475,6 +514,99 @@ Kyle's own lines go under `## Steering`.
   ("No page came back from"); the handoff says an unpassed verdict in words and what each finding rests on; a steer
   mid-run closes the child and starts another (Q28: the first task may read Running for ever, known). Say what reads
   wrong; nothing here blocks.
+
+- [ ] 2026-10-30 uat: **connections and credentials after F35 and F36** (https://fletch-pv-1.edwards-ky1.workers.dev, F37's lease to
+  2026-10-31T16:52Z, serving a46d617; the three slots were reclaimed on 2026-10-30 after their PRs merged, so every earlier uat
+  address now needs `pnpm preview up` on main, which carries F24 to F37). Ask the agent to connect a service or save a key:
+  the reply gives the capture link and ends (no form in the chat); the capture item in the bubble says the host and
+  how the key is sent, with Open the form and Dismiss (Dismiss voids that link, `VAULT_REF_INVALID`); type a
+  secret-shaped string in chat: the sending tab shows its reference, not the text, after reload too; Connections >
+  Yours: every row has a status word and its last use, a key the provider rejected reads `rejected`; a connection's
+  page lists what it sent, the refused call among them, and Disconnect says what stays; Permissions lists every grant
+  once with Revoke; a one-time code arrives as a card with Use it once and Not now. Say what reads wrong; nothing here
+  blocks. Specimen: https://claude.ai/artifact/YVffjTDwaXgpZ7nrH9M92W.
+  [F36 in parts.md](parts.md#f36-connections-the-person-can-see-and-end-the-capture-item-a-rows-status-and-last-use-disconnect-every-grant-in-one-pane-the-codes-card-and-the-audit-read); [F37 in parts.md](parts.md#f37-credentials-say-what-happened-p9s-tier-2-on-a-slot);
+  [PR #62](https://github.com/kltdwrds/fletch/pull/62), [PR #66](https://github.com/kltdwrds/fletch/pull/66).
+- [ ] 2026-10-30 question: **Q30: F36's four reversible choices, for your read, blocking nothing.** `vault_events` gains
+  `dismissed` and `rejected` kinds (no schema change); an expired credential is refused `VAULT_CRED_INACTIVE` at egress
+  and fill (the contract's code; the verifier made the builder conform the code rather than the grader); Permissions
+  lists every grant once in place of "What others can ask"; the four surface tasks declare the Vault rows their own
+  turns write and their harness counts lifecycle events, so a revocation is an added row. The builder put them in
+  QUESTIONS.md because `docs/decisions/log.md` is at its 40 KB cap, which only you prune (the orchestrator shortens
+  lines there; it does not delete). Say if any reads as softening, or if the log's cap should move.
+  [Q30](QUESTIONS.md#q30-f36-2026-10-30-f36s-two-way-choices-recorded-here-because-the-decision-log-is-at-its-cap).
+
+- [ ] 2026-10-30 question: **Q31: T-P9-15 fails 0/3 on the slot, and F37's reversible choices, for your read.** P9 is
+  at level 2 on its two must-haves (T-P9-13, T-P9-14, 3 of 3 each on fletch-pv-1 at a46d617, PR #68). The nice-to-have
+  T-P9-15 (a key used on a host it is not bound to) held every grader but the words: nothing reached api.example.org,
+  one `EGRESS_HOST_DENIED` audit row, the second reply said only you can add the host, but the first reply said the
+  host "isn't on your list of allowed hosts" where the grader hears "bound". The builder added no line (its scope
+  allows one only for a failing must-have) and recommends one `WORK_WORDS` line in P9's next part rather than a wider
+  grader; the orchestrator agrees and will write that part after the spine unless you say otherwise. Also in Q31:
+  the slot's Vault answers api.example.com in-process through a protected `network()` seam only the test host
+  overrides, and each trial starts with Sam's credential rows deleted. [Q31](QUESTIONS.md#q31-f37-2026-10-30-t-p9-15-fails-03-on-the-slot-because-the-model-says-allowed-hosts-not-bound-and-f37s-two-way-choices);
+  [F37 in parts.md](parts.md#f37-credentials-say-what-happened-p9s-tier-2-on-a-slot); [PR #68](https://github.com/kltdwrds/fletch/pull/68).
+
+- [ ] 2026-10-30 decide: **D-0017 (proposed): fletch holds no payment instrument and submits no payment; the person
+  pays in a live page they take over.** P12 is translated (`contracts/P12-wallet.md`, 11 clauses, 13 tasks) and its two
+  parts F38 and F39 are written; neither needs this answer. The question is fletch's standing position on money: Muse
+  pays through a wallet provider's one-time card after the person approves on a runtime-drawn sheet; fletch today has
+  no instrument, no purchase tool and no provider, and the person pays in the handed-over page. Holding an instrument
+  is a security boundary and a storage schema, submitting a payment spends money, and a `payments` `HostFeature` is
+  published `@qyvr/host` surface, so only you can take it. The orchestrator recommends accepting the record as written
+  (no instrument, no submission) until the first owner asks for more; the alternative, a provider's one-time card
+  behind a `payments` feature and an opt-in binding, is laid out in the record's Options and in Q32, which also lists
+  P12's reversible choices and three gaps left open. No specimen for P12: neither part draws an owner-visible surface,
+  and a Wallet pane waits on this answer. [D-0017](../decisions/0017-no-payment-instrument.md);
+  [Q32](QUESTIONS.md#q32-p12-2026-10-30-d-0017-proposed-fletch-holds-no-payment-instrument-and-submits-no-payment-and-p12s-reversible-choices);
+  [P12 contract](contracts/P12-wallet.md);
+  [F38 in parts.md](parts.md#f38-payments-as-they-are-the-p12-contract-check-thirteen-task-files-the-typed-card-shape-four-instruction-lines-the-purchase-title-and-tier-1);
+  [F39 in parts.md](parts.md#f39-payments-say-what-happened-p12s-tier-2-on-a-slot).
+- [ ] 2026-10-30 do: **what the P12 interrogation left in your Muse account, for you to remove or keep.** No money
+  moved, nothing was bought or added, no provider was connected or changed, nothing was pressed on any card, and no
+  value was entered anywhere. Left behind: one side chat (thread `5153e9f6-4941-481e-94d4-b337ac917a6e`, 59 messages,
+  three option or link cards still enabled); one read-only browser task for `shop.example.invalid` (parked, its live
+  window listed until 18:55Z); and twelve "P12" sections that Muse's background memory upkeep wrote unasked to
+  `~/memory/2026-10-30.md` (lines 680 to 793), which only you can delete and which the contract records as an over-bold
+  finding (B-P12-10). One incident: the first interrogator's coordinate click on a moving phone sheet hit Sign out
+  (step 1); you signed back in, and nothing in the account changed. The orchestrator recommends deleting the twelve
+  memory sections and leaving the thread. step 9's clean-up read is `docs/plan-v2/evidence/p12-wallet/answers/step-9.md` (git-ignored,
+  on your Mac); [B-P12-10 in the contract](contracts/P12-wallet.md).
+
+- [ ] 2026-10-30 look: **the Security pane specimen for F41** (rendered: https://claude.ai/artifact/UEJER3JFZDwFxcFNxLxFtr;
+  source `packages/agent/src/design/fletch/ds/specimens/security.html`, held by `test/workers/f41-security-specimen.test.ts`,
+  PR https://github.com/kltdwrds/fletch/pull/77). Muse has no Security pane: its passkeys, sessions and deletion sit in
+  Meta Accounts Center with "no count readable" (`docs/plan-v2/evidence/p14-identity/captures/step-5-security.png`), so
+  this is the pane the P14 contract's delta 4 draws over the routes fletch already has (`GET` and `DELETE /login/passkeys`,
+  `docs/plan-v2/contracts/P14-identity.md`, B-P14-05, B-P14-06, B-P14-12). What it shows: the passkeys by the date each
+  was added, never a key, counter, transport or device name, Remove on each; Add a passkey to the sign-in page; the
+  refusal on the last passkey said in words with its code (`LOGIN_LAST_PASSKEY`) and the row kept; a recovery sign-in
+  (`PASSKEY_REQUIRED`) and a signed-in member who is not the owner (`LOGIN_OWNER_REQUIRED`); the Sessions card saying
+  what a session is (thirty days from the last sign-in, Log out ends it, no list of others is kept) and the Recovery
+  code card saying it was shown once and is not readable here. Light and dark, desktop and phone at 390. Nothing new in
+  `bundle.css`; two inline styles (`text-decoration:none` on the row-link, `top:1px` on Back) mark bundle gaps F41 may
+  settle. Not drawn, by D-0018 and Q33: no name, avatar, session list, sign-out-everywhere or recovery reissue. Say
+  "fine" or what to change; F41 waits on F40 merging, not on this.
+
+- [ ] 2026-10-30 uat: **payments after F38 and F39** (https://fletch-pv-3.edwards-ky1.workers.dev, F39's lease to
+  2026-10-31T20:00Z, serving 0565116). Ask the agent to buy something from a shop address: the reply says it cannot pay,
+  names each blocker (the address did not resolve, no payment method), looks for no other seller, says nothing about
+  whether a sale happened, and ends by offering the live page for you to pay in yourself; type a card number in chat: the
+  reply begins "I will not keep", repeats no digit, says this deploy "holds no card" and names no form, key or vault
+  (a typed key still gets the capture form); ask for a spending allowance: refused with the rule (each purchase once on
+  its own card), nothing written for it, and the daily cap named as model spend, not your money; hand control back from
+  a live page: the agent says it cannot see the payment and points you at the merchant's confirmation. Nice-to-have
+  misses recorded in Q35: asked about your wallet it says "not connected" and "no payment method on file" rather than
+  "no wallet", and once in three it answered the daily-cap question without the allowance refusal. Say what reads
+  wrong; nothing here blocks. PRs: https://github.com/kltdwrds/fletch/pull/75, https://github.com/kltdwrds/fletch/pull/78.
+
+- [ ] 2026-10-30 do: **sign the `claude` CLI in again on this Mac; builder sessions cannot start until you do.** At
+  20:30Z the F41 builder (`claude -p "$(grep -m1 '^/goal ' docs/plan-v2/GOAL-PROMPT.md)" … --model opus`) exited at
+  once with `Failed to authenticate: OAuth session expired and could not be refreshed`, twice. The orchestrator's own
+  session is unaffected, so F41 is being built by an Opus sub-agent of the orchestrator under the same protocol
+  (`docs/plan-v2/KICKOFF.md`, the verifier as a fresh Opus sub-agent as KICKOFF step 5 already says); the next part
+  after F41 goes back to a `claude -p` builder once the CLI can authenticate. What to do: in a terminal, `claude` then
+  `/login`, and say so under Steering. Nothing else waits on it: F37's and F39's slots and leases are unchanged.
 
 ## Steering
 

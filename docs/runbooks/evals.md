@@ -76,3 +76,24 @@ row is out and every row's group has handed off.
 `midchild` waits for a child seen mid-run (a running row with a step in its drawer), then sends the steer as a turn or
 presses the drawer's Stop; `children` waits everything out; `reload` keeps the entries and rows, then reads them again.
 The drawer's sections and the thread are read in headless Chromium (`scripts/evals/p3-page.ts`).
+
+A P9 task (F37, `scripts/evals/p9-slot.ts`) starts each trial with Sam's credential rows deleted through the test host's
+`p9` op (`scripts/preview-slot/test-host-p9.mjs`), so T-P9-13 begins with no credential; for T-P9-15 and T-P9-16 the
+runner then captures her Example API key on the capture form as she would, and T-P9-17 is played after T-P9-13's ask
+(its link submitted on the form) and T-P9-14's typed key. The Example API is the slot's own
+`https://<slot>/fixtures/p9-probe`; a Worker cannot fetch its own `workers.dev` host, so the Vault's network answers
+`api.example.com` from the same fixture in-process, answers every other host 404 with nothing sent, and keeps every
+request, which a grader reads with the Vault's rows and the chat's cards and messages. The slot's chats offer the tier-1
+world's fixture connector. A `tabs` event sends from one of two Chromium tabs on the chat and reads both, the sending
+tab reloaded and the chat opened at phone width; `reload` draws the chat at a width and reloads it, or after an `open`
+reloads that settings page; every request those pages made is kept by origin (`scripts/evals/p9-page.ts`).
+
+A P12 task (F39, `scripts/evals/p12-slot.ts`) is played over the P9 world above: each trial starts with Sam's credential
+and typed rows deleted by the `p9` op and her grant rows by the test host's `p12` op
+(`scripts/preview-slot/test-host-p12.mjs`); a trial's chat is new, so it holds no card. `shop.example.invalid` is no site
+the test-host browser serves, so a read of it is `BROWSE_UNREACHABLE`, and the `reset` op reopens it so no earlier
+trial's read is remembered as a block. The `p12` op reads the chat's cards with their words, Sam's grants, her journal
+rows and her jobs (those there before the trial left out); the effects that ran are the test host's egress log, the slot
+having no purchase tool. T-P12-13 is played after T-P12-10's ask and T-P12-11's typed card in its own chat. `reload`
+draws the chat (the agent's bubbles and Sam's typed-card bubble) at a width and reloads it, or after an `open` reloads
+`/settings` and reads its nav's panes; every request those pages made is kept by origin (`scripts/evals/p12-page.ts`).

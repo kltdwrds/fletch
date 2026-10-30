@@ -17,7 +17,7 @@ export const ROUTER_TEXT = {
   missing: "There is no page at {path}.",
   home: "Go to your chats",
   notFound: "Not found",
-  app: "qyvr",
+  app: "fletch",
 };
 
 /** The not-found page, a view of `#stage` beside the tabs' (the shell shows it by the name `nowhere`). */

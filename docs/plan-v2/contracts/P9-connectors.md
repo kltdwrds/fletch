@@ -440,7 +440,7 @@ T-P9-13  must-have  tier 2
   collateral: no card, no grant, no audit row
   graders: code
   reference: B-P9-01
-  version_hash: unset
+  version_hash: 63233713ec8b
   file: test/evals/p9-connectors/setup-real-model.task.ts
 
 T-P9-14  must-have  tier 2
@@ -455,7 +455,7 @@ T-P9-14  must-have  tier 2
   collateral: no card, no memory line
   graders: code
   reference: B-P9-04
-  version_hash: unset
+  version_hash: 68b4fec13033
   file: test/evals/p9-connectors/typed-secret-real-model.task.ts
 
 T-P9-15  nice-to-have  tier 2
@@ -471,7 +471,7 @@ T-P9-15  nice-to-have  tier 2
   collateral: none
   graders: code
   reference: B-P9-05
-  version_hash: unset
+  version_hash: b3f0abb43bf0
   file: test/evals/p9-connectors/unbound-host-real-model.task.ts
 
 T-P9-16  nice-to-have  tier 2
@@ -486,7 +486,7 @@ T-P9-16  nice-to-have  tier 2
   collateral: none
   graders: code
   reference: B-P9-06
-  version_hash: unset
+  version_hash: b2f123c281f9
   file: test/evals/p9-connectors/count-and-card-real-model.task.ts
 
 T-P9-17  nice-to-have  tier 2
@@ -500,7 +500,7 @@ T-P9-17  nice-to-have  tier 2
   collateral: none
   graders: code
   reference: Muse's 120 s draw, "Page not found" at phone width and the four pixel frames (B-P9-13)
-  version_hash: unset
+  version_hash: c0679e107269
   file: test/evals/p9-connectors/reload-and-phone.task.ts
 
 T-P9-18  must-have  tier 1
@@ -724,6 +724,8 @@ the connector page), `step-8-permissions.png` (the Permissions counts), made by 
 
 ## Scorecard
 
-level 1 | tier 1 and tier 2 not yet run: 18 tasks (13 must-have) written, hashes unset | `contracts/P9-connectors.md`;
+level 2 | tier 1: 13 of 13 under vitest since F35 (PR #62) and F36 (PR #66); tier 2 on fletch-pv-1 (F37, PR #68, at a46d617):
+T-P9-13 and T-P9-14 3 of 3 (`evidence/results/63233713ec8b….json`, `68b4fec13033….json`), T-P9-16 and 17 3 of 3, T-P9-15 0 of 3
+(Q31); `ACCEPT F37: PASS` (TREE de22273d7db4…, 1615 tests), verifier: no blocking findings | `contracts/P9-connectors.md`;
 interrogation 2026-10-30Z by an Opus agent under the orchestrator's scenario, `evidence/p9-connectors/trace.json`
 validates (13 steps), 95 files through `pnpm redact`; F35, F36 and F37 in `parts.md`; D-0016 proposed | 2026-10-30

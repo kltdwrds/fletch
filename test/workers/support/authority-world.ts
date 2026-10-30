@@ -274,8 +274,9 @@ export function authorityWorld(o: WorldOptions = {}) {
         },
       },
       {
-        name: "shop_buy", kind: "action", label: "buy", description: "Fixture: buy something.", parameters: params({ item: "string", amount: "number" }), actionKind: "purchase", purchase: true,
-        subject: () => ({ scope: "personal", connector: "shop" }), amount: (a) => ({ value: Number(a.amount ?? 0), currency: "EUR" }),
+        name: "shop_buy", kind: "action", label: "buy", description: "Fixture: buy something.", parameters: params({ item: "string", amount: "number", currency: "string" }), actionKind: "purchase", purchase: true,
+        // EUR unless the call names a currency (P12's tasks propose in USD and EUR).
+        subject: () => ({ scope: "personal", connector: "shop" }), amount: (a) => ({ value: Number(a.amount ?? 0), currency: typeof a.currency === "string" ? a.currency : "EUR" }),
         execute: async (_id, a) => {
           log("shop_buy", a as Record<string, unknown>);
           return text("bought");
