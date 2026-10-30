@@ -42,14 +42,26 @@ describe('the gates are wired', () => {
     assert.match(pkg['simple-git-hooks']['pre-push'], /node scripts\/pre-push\.mjs/);
   });
 
-  it('CI and the release run pnpm verify; CI runs pnpm check alone only on a diff it judged docs only', () => {
-    for (const wf of ['.github/workflows/ci.yml', '.github/workflows/release.yml']) assert.match(read(wf), /^\s+run: pnpm verify$/m, wf);
-    assert.doesNotMatch(read('.github/workflows/release.yml'), /run: pnpm check$/m);
+  it('the release verifies main; CI runs pnpm verify on a code diff, check alone on docs, check and the related tests on contracts', () => {
+    const release = read('.github/workflows/release.yml');
+    assert.match(release, /^on:\n {2}push:\n {4}branches: \[main\]$/m, 'release.yml no longer runs on every push to main');
+    assert.match(release, /^\s+run: pnpm verify$/m);
+    assert.doesNotMatch(release, /run: pnpm check$/m);
     const ci = read('.github/workflows/ci.yml');
+    assert.match(ci, /^on:\n {2}pull_request:\n\n/m, 'ci.yml runs on pull_request alone (main is the release check job)');
     const ciSteps = ci.split(/\n {6}- /);
+    const gate = (cls) => new RegExp(`^\\s+if: steps\\.scope\\.outputs\\.class ${cls}$`, 'm');
     assert.ok(ciSteps.some((s) => /^name: Classify the diff\n\s+id: scope$/m.test(s)), 'ci.yml has no Classify the diff step');
-    for (const s of ciSteps.filter((x) => /run: pnpm verify$/m.test(x))) assert.match(s, /^\s+if: steps\.scope\.outputs\.tests == 'true'$/m, s);
-    for (const s of ciSteps.filter((x) => /run: pnpm check$/m.test(x))) assert.match(s, /^\s+if: steps\.scope\.outputs\.tests != 'true'$/m, s);
+    const verify = ciSteps.filter((x) => /run: pnpm verify$/m.test(x));
+    const check = ciSteps.filter((x) => /run: pnpm check$/m.test(x));
+    const related = ciSteps.filter((x) => /pnpm exec vitest related --run /.test(x));
+    assert.ok(verify.length && check.length && related.length, 'ci.yml lost a verify, check or contract tests step');
+    for (const s of verify) assert.match(s, gate("== 'code'"), s);
+    for (const s of check) assert.match(s, gate("!= 'code'"), s);
+    for (const s of related) assert.match(s, gate("== 'contracts'"), s);
+    // The contracts path can bring a browser test, so Chromium installs for everything but docs.
+    const [chromium] = ciSteps.filter((x) => /run: pnpm exec playwright-core install/.test(x));
+    assert.match(chromium ?? '', gate("!= 'docs'"));
   });
 
   it('Claude Code runs the hook guard, the handoff hook and the session start', () => {

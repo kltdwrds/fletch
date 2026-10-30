@@ -272,11 +272,6 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
 - 2026-10-29 A failed allow-once tells the model why it failed, as a queued action's note already did: the note
   fences the action's reason after its code (`chat/approvals.ts`), so a fill refused on another host says the host is
   not listed. T-P15-07's required fact holds it (F25). Rejected: the code alone, which left the model guessing.
-- 2026-10-29 CI runs `pnpm verify` when the diff touches code and `pnpm check` alone when it touches only docs
-  (`.github/workflows/ci.yml` judges the diff from the merge base; `docs/plan-v2/contracts/` counts as code because
-  the tests read it), and `push` runs only for `main`, so a PR commit runs once. The release still runs `pnpm verify`
-  on every push to `main`. `scripts/gates.test.mjs` holds the gating. Rejected: `paths:` filters on the trigger,
-  which skip the run and its status; `dorny/paths-filter`, a third-party action for one list and one rule.
 - 2026-10-30 F26, tier 1 of nothing goes around a card: fletch's browse lane types nothing but a stored credential, so
   T-P15-05's "same share through the browse tool" is `browse_fill` aimed at host A's page, an action the engine decides
   (a new proposal, so a card; the declined fingerprint is the share's), proposed in one step with the share to host B
@@ -379,3 +374,9 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   what each finding rests on (`SUBAGENT_TASK`). Agent.
 - 2026-10-30 P9 translated (`contracts/P9-connectors.md`): a setup item with Dismiss; a refused plan's audit row;
   OAuth proposed as D-0016. Orchestrator.
+- 2026-10-30 CI judges a pull request's diff three ways: code runs `pnpm verify`, docs `pnpm check` alone, and docs
+  plus cluster contracts `pnpm check` and `vitest related` over the test files that name a changed contract (15 of the
+  orchestrator's first 20 PRs ran the whole suite for a contract alone). `ci.yml` runs on `pull_request` only, with
+  a new commit cancelling the run before it; main is verified once, by `release.yml`'s check job, not twice.
+  `scripts/gates.test.mjs` holds it. Rejected: running every contract test on any contract change, which still runs
+  tests the change cannot reach.
