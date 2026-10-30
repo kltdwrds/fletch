@@ -531,4 +531,4 @@ specimen) and what Muse draws for a failed write (attested in `answers/step-5.md
 ## Scorecard
 
 level | must-have tasks passing | evidence (PR, accept line, verifier line) | last verified
-1 | tier 1: 9 of 9 under vitest since F23; tier 2: T-P2-13 (the must-have) not yet run, F24 runs it on the slot | PR #34 (F23), `ACCEPT F23: PASS` (TREE 3fca28613530a50983d9d38399a1b1de4f6b692f), `VERIFIER: no blocking findings` (`../PROGRESS.md` F23); `../evidence/p2-loop/trace.json` validates; parts F23 and F24 in `../parts.md` | 2026-10-29
+1 | tier 1: 9 of 9 under vitest since F23 and F24's tests; tier 2 (F24, fletch-pv-2): T-P2-13 3 of 3 (the must-have), T-P2-14 3 of 3, T-P2-12 `GRADER_THREW`; held at 1 pending Q16 (the T-P2-03 and T-P2-13 grader edits) | PR #34 (F23), `ACCEPT F23: PASS` (TREE 3fca28613530a50983d9d38399a1b1de4f6b692f), `VERIFIER: no blocking findings`; PR #36 (F24), `ACCEPT F24: PASS` (TREE 0d6700c563cd3a98754aaf2a86f33d1aa785e192), `VERIFIER: blocking findings` (Q16); results `../evidence/results/5c68eb112c78…json` (T-P2-13), `b032203d79a8…json` (T-P2-14), `91c76bfdf44d…json` (T-P2-12); `../PROGRESS.md` F23 and F24 | 2026-10-29
