@@ -554,3 +554,51 @@ and their results recorded whatever the verdict; `ACCEPT F37: PASS`; `VERIFIER: 
 
 **Not in scope:** a change to a clause; new instruction lines beyond what a failing must-have needs, each named in the
 PR body with its task.
+
+## F38 Payments as they are: the P12 contract check, thirteen task files, the typed card shape, four instruction lines, the purchase title and tier 1
+
+**Read:** `docs/plan-v2/contracts/P12-wallet.md` (all eleven clauses, the Translation's Survey, deltas 1 to 5 and Build
+notes), `docs/plan-v2/contracts/P15-approvals.md` (B-P15-13), the P15 world and T-P15-02 under `test/evals/p15-approvals/`,
+the P9 world under `test/evals/p9-connectors/` and `test/m0/f35-contract.test.ts` as the pattern,
+`packages/agent/src/vault/typed.ts`, `packages/agent/src/chat/instructions.ts` (`WORK_WORDS`),
+`packages/agent/src/obs/activity-words.ts` (`KIND_WORDS`), `packages/agent/src/grants/engine.ts`, `grants/validate.ts`,
+`grants/constraints.ts`, `grants/journal.ts`, `chat/approvals.ts`, `jobs/job-tools.ts`, `subagents/run.ts`,
+`browse/tools.ts`, `test/workers/support/authority-world.ts` (`shop_buy`). One one-way door is proposed and touched by
+nothing here: D-0017 (`docs/decisions/0017-no-payment-instrument.md`); this part adds no instrument, no purchase tool,
+no provider host and no Wallet pane.
+
+**Scope:** (1) `test/m0/f38-contract.test.ts` holds `contracts/P12-wallet.md` (eleven clauses, thirteen tasks, every
+tier-1 `version_hash` filled). (2) Thirteen task files under `test/evals/p12-wallet/`, with a `world.ts` composing the
+P15 world's `shop_buy` and decide route, the P7 job runner and the P3 sub-agent gate (delta 4) and a `harness.ts`
+counting the tables (delta 5). (3) Delta 1: `SHAPES` gains a Luhn card-number shape and `LABELED` the card words, so
+`holdTypedSecrets` masks a typed number, code and expiry as `typed` rows; delta 2: four `WORK_WORDS` lines (a purchase
+the agent cannot pay for, a card typed in chat, an allowance or budget ask with the model-spend cap told apart, no claim
+after a handoff); delta 3: `KIND_WORDS` gains the `purchase` row. (4) Tier 1 under vitest with an `[F38]` describe:
+T-P12-01 to T-P12-09, every minefield fired in `planted.test.ts`, deltas 1 and 3 planted on the production path; the
+tier-2 tasks play under the scripted fake.
+
+**Acceptance:** `test/m0/f38-contract.test.ts` passes; the nine tier-1 tasks pass and every planted fault fails its
+grader (`test/evals/p12-wallet/planted.test.ts`); a card number typed in a chat message never reaches a transcript row,
+a bubble, a memory row or a later prompt (`test/workers/m14-chat-secrets.test.ts` or a new `[F38]` test); a
+purchase-kind journal row is titled from `KIND_WORDS`; `ACCEPT F38: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a payment instrument, a provider, a `payments` feature, a checkout card or a Wallet pane (D-0017,
+proposed); a change to a clause; tier 2 (F39); an amount in the journal; a specimen (no owner-visible surface is drawn).
+
+## F39 Payments say what happened: P12's tier 2 on a slot
+
+**Read:** `docs/plan-v2/contracts/P12-wallet.md` (B-P12-01, B-P12-02, B-P12-03, B-P12-06, B-P12-08, B-P12-11, the
+tier-2 tasks), the F38 world and tasks under `test/evals/p12-wallet/`, `packages/agent/src/chat/instructions.ts`,
+`docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q18. No one-way door. A live step: `pnpm evals` runs from Kyle's
+Mac on this worktree's slot (`pnpm preview up`); if no slot can be leased, that is a question, not a reason to skip.
+
+**Scope:** (1) The slot's browse fake answers nothing for `shop.example.invalid` and each P12 trial starts with Sam's
+grant, card and typed rows deleted by the test host. (2) Tier 2 on the slot: T-P12-10 and T-P12-11 (must-have),
+T-P12-12 and T-P12-13, three trials each, the results files committed, the table in the PR body. (3) Every P12 hash in
+the contract matches.
+
+**Acceptance:** `pnpm evals T-P12-10` and `pnpm evals T-P12-11` `pass` (three of three); T-P12-12 and T-P12-13 run and
+their results recorded whatever the verdict; `ACCEPT F39: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a change to a clause; new instruction lines beyond what a failing must-have needs, each named in the
+PR body with its task; anything D-0017 reserves.

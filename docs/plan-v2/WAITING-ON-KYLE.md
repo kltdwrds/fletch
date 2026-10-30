@@ -508,6 +508,32 @@ Kyle's own lines go under `## Steering`.
   overrides, and each trial starts with Sam's credential rows deleted. [Q31](QUESTIONS.md#q31-f37-2026-10-30-t-p9-15-fails-03-on-the-slot-because-the-model-says-allowed-hosts-not-bound-and-f37s-two-way-choices);
   [F37 in parts.md](parts.md#f37-credentials-say-what-happened-p9s-tier-2-on-a-slot); [PR #68](https://github.com/kltdwrds/fletch/pull/68).
 
+- [ ] 2026-10-30 decide: **D-0017 (proposed): fletch holds no payment instrument and submits no payment; the person
+  pays in a live page they take over.** P12 is translated (`contracts/P12-wallet.md`, 11 clauses, 13 tasks) and its two
+  parts F38 and F39 are written; neither needs this answer. The question is fletch's standing position on money: Muse
+  pays through a wallet provider's one-time card after the person approves on a runtime-drawn sheet; fletch today has
+  no instrument, no purchase tool and no provider, and the person pays in the handed-over page. Holding an instrument
+  is a security boundary and a storage schema, submitting a payment spends money, and a `payments` `HostFeature` is
+  published `@qyvr/host` surface, so only you can take it. The orchestrator recommends accepting the record as written
+  (no instrument, no submission) until the first owner asks for more; the alternative, a provider's one-time card
+  behind a `payments` feature and an opt-in binding, is laid out in the record's Options and in Q32, which also lists
+  P12's reversible choices and three gaps left open. No specimen for P12: neither part draws an owner-visible surface,
+  and a Wallet pane waits on this answer. [D-0017](../decisions/0017-no-payment-instrument.md);
+  [Q32](QUESTIONS.md#q32-p12-2026-10-30-d-0017-proposed-fletch-holds-no-payment-instrument-and-submits-no-payment-and-p12s-reversible-choices);
+  [P12 contract](contracts/P12-wallet.md);
+  [F38 in parts.md](parts.md#f38-payments-as-they-are-the-p12-contract-check-thirteen-task-files-the-typed-card-shape-four-instruction-lines-the-purchase-title-and-tier-1);
+  [F39 in parts.md](parts.md#f39-payments-say-what-happened-p12s-tier-2-on-a-slot).
+- [ ] 2026-10-30 do: **what the P12 interrogation left in your Muse account, for you to remove or keep.** No money
+  moved, nothing was bought or added, no provider was connected or changed, nothing was pressed on any card, and no
+  value was entered anywhere. Left behind: one side chat (thread `5153e9f6-4941-481e-94d4-b337ac917a6e`, 59 messages,
+  three option or link cards still enabled); one read-only browser task for `shop.example.invalid` (parked, its live
+  window listed until 18:55Z); and twelve "P12" sections that Muse's background memory upkeep wrote unasked to
+  `~/memory/2026-10-30.md` (lines 680 to 793), which only you can delete and which the contract records as an over-bold
+  finding (B-P12-10). One incident: the first interrogator's coordinate click on a moving phone sheet hit Sign out
+  (step 1); you signed back in, and nothing in the account changed. The orchestrator recommends deleting the twelve
+  memory sections and leaving the thread. step 9's clean-up read is `docs/plan-v2/evidence/p12-wallet/answers/step-9.md` (git-ignored,
+  on your Mac); [B-P12-10 in the contract](contracts/P12-wallet.md).
+
 ## Steering
 
 ## Done
