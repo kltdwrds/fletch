@@ -32,6 +32,8 @@ export class TurnError extends Error {
 export interface SlotEntry {
   kind: string;
   mid?: string;
+  /** A stopped entry's turn (F34: its id in the thread). */
+  turn?: string;
   text?: string;
   reactions?: Array<{ by: "you" | "agent"; emoji: string }>;
   /** A card entry's view (`chat/cards.ts` `CardView`): the fields a grader reads. */
@@ -64,8 +66,9 @@ export interface SlotWorld extends ScenarioWorld {
   /**
    * Sends one prompt as the slot's owner into the chat `chat` labels (the first, `c1`, when unset; another label is a
    * new chat on its first prompt, F28) and resolves with the reply once the turn is done; rejects with a `TurnError`.
+   * With `wait` (F34), the sub-agents it launched are left running when the turn ends.
    */
-  send(text: string, chat?: string): Promise<string>;
+  send(text: string, chat?: string, wait?: boolean): Promise<string>;
   /** Reads an app route with the trial's session. */
   read(path: string): Promise<{ status: number; body: unknown }>;
   /**
@@ -73,7 +76,9 @@ export interface SlotWorld extends ScenarioWorld {
    * card of this chat (payload `card`: its id, `first` for the chat's first card, or unset for its pending card; `choice`)
    * through the page's route, then waits out the turn the decision continues. Rejects with a `TurnError` when there is
    * nothing to decide. A P7 world (F30) also plays `tick` (payload `job`: a title; the job's next alarm fired by the test
-   * host, waited out to its run's end and the turn its notice wakes) and `reload` (the world read again).
+   * host, waited out to its run's end and the turn its notice wakes) and `reload` (the world read again). Any world plays
+   * `prompt` (payload `text`, `chat`, `wait`) as `send` (F34); a P3 world also plays `midchild` and `children`
+   * (`scripts/evals/p3-slot.ts`).
    */
   event(name: string, payload: Record<string, string>): Promise<void>;
 }

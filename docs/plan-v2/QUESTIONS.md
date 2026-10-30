@@ -5,6 +5,42 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
+### Q29 (F34), 2026-10-30: may F34 count its last 3/3 runs, and keep the two widened must-have graders?
+
+**Blocks:** F34's verifier pass, so the part is not DONE. Everything else is in.
+- `ACCEPT F34: PASS` (TREE 5249ec4d4cf9b66223883b95b30d67d739ee929f, HEAD de740bf).
+- On fletch-pv-3 at 91cc684, the final agent code:
+  - T-P3-14 (`a0d7857f8b13`) 3/3, after a run at the same hash on 98b224f went 1/3;
+  - T-P3-16 (`f40f3af15fef`) 2/3, then 3/3;
+  - T-P3-17 3/3;
+  - T-P3-15 2/3 (nice-to-have, recorded).
+- Every trial is in `docs/plan-v2/evidence/results/`.
+- The draft PR is open on `claude/f34-delegation-says-what-happened-31e59c`.
+
+1. **Rerun selection.**
+   - **The finding:** the verifier counts T-P3-16's 2/3 on the final code as a must-have failure, because the runbook
+     reruns only for `infra`. Across all eight runs at the hash, four failed, most of them on code since changed.
+   - **The miss on the final code:** the model wrote "never loaded … couldn't reach that host" instead of
+     `WORK_WORDS`' "No page came back from".
+   - **T-P3-14:** it also had one 3/3 run on the final code, after a failed run at the same hash on older code.
+   - **The question:** does a must-have need every trial on the final tree to pass, or its declared run?
+2. **Widened graders**, each widened after the slot failed it, each with planted negatives that still fail:
+   - **T-P3-16:** `UNREAD` and `NO_TITLE` also hear "no page came back" and "nothing from". These are
+     `WORK_WORDS` line 2's own words; the old grader refused the instruction's own example. This was done before 084afe6.
+   - **T-P3-14:** `SAID_UNCONFIRMED` also hears a check named between the negation and the verb. The slot's reply was
+     "wasn't machine-verified … not independently checked".
+
+**What else changed for T-P3-14,** all named in the PR body:
+- turn.ts `endsTurnIfSaid`: a launch ends its turn once the turn has said words.
+- `WORK_WORDS` line 1 now asks for an unpassed verdict in words.
+- `SUBAGENT_TASK` now asks for what a finding rests on.
+
+The verifier notes that `saidBefore` also ends the turn after an unrelated earlier word.
+
+**Recommended answer:** both widenings are corrections, so keep them. A must-have counts the trials of one run declared
+before it starts, on the final tree; the earlier runs stay committed as evidence. Under that reading, F34 needs one
+declared run each of T-P3-14 and T-P3-16 at 91cc684 or later, which a builder can do on the next pass.
+
 ### Q18 (F26), 2026-10-30: may F26 keep `pauseWords` and the widened `claimed_sent` that T-P15-13's pass needs?
 
 **Blocks:** F26's verifier pass, so the part is not DONE. Everything else is in. `ACCEPT F26: PASS` (TREE
@@ -96,6 +132,19 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
+### Q28 (P3, P5, F34), 2026-10-30: a task whose delegation the model closed reads Running for ever
+
+**Blocks nothing.** Found while building F34's slot settle. When a steer closes a running child (`subagents_close`,
+P3 delta 2), the closed delegation hands off (its `handoff:<grp>` row is written and `handed_off_at` set), yet the first
+task's Activity row says Running with no end: `record` in `packages/agent/src/chat/activity.ts` counts a delegation as
+received only by a handoff row among the task's own turns, and this one appears to wake a turn grouped with the steer's
+task. Its drawer offers a
+Stop that halts nothing. T-P3-15's tier-1 run shows it (the first task `running`, its only child `failed
+SUBAGENT_CLOSED`, handed off), and so do the slot's F34 runs where a child was closed; no grader reads that row, so F33 and F34 pass over
+it. F34 waits on the chat's newest task only (`scripts/evals/p3-slot.ts`), as P5's
+runner does. **Recommended answer:** a part in P5's or P3's next pass counts a delegation whose every child is closed
+as settled (the task reads Done, or Stopped when the person pressed Stop), with a tier-1 task that reads the first
+task's row after a steer; two-way, no storage change.
 ### Q27 (P9), 2026-10-30: the OAuth door D-0016, a playlist left in your music account, and nine Muse credential findings fletch already rules out
 
 **Blocks nothing on the spine; two things are yours alone.** (a) `docs/decisions/0016-oauth-connectors.md` is a

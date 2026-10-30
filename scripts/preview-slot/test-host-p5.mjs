@@ -31,13 +31,13 @@ export function systemOf(body) {
 }
 
 /**
- * `ai` with every chat model request's system prompt passed to `record` first; `skip(prompt)` leaves one out (the
- * verifier's). An embedding (no messages) is not a chat request. What is sent and answered is unchanged.
+ * `ai` with every chat model request's system prompt (and its body, F34) passed to `record` first; `skip(prompt)` leaves
+ * one out (the verifier's). An embedding (no messages) is not a chat request. What is sent and answered is unchanged.
  */
 export function recordingAi(ai, record, skip = () => false) {
   const keep = async (body) => {
     const prompt = systemOf(body);
-    if (prompt !== null && !skip(prompt)) await record(prompt);
+    if (prompt !== null && !skip(prompt)) await record(prompt, body);
   };
   return new Proxy(ai, {
     get(target, prop) {

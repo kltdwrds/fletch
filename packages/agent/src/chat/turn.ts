@@ -73,6 +73,7 @@ async function turnLoop(o: TurnLoopOptions): Promise<TurnOutcome> {
   let steps = 0;
   let final = false;
   let paused = false;
+  let saidBefore = false;
   let stopped = false;
   let failure: { code: string; detail: string } | undefined;
   let barrierError: unknown;
@@ -107,7 +108,11 @@ async function turnLoop(o: TurnLoopOptions): Promise<TurnOutcome> {
           return { action: "end" };
         }
         steps++;
-        const isFinal = !message.content.some((c) => c.type === "toolCall");
+        // A step whose tools' results all ask it (`endsTurnIfSaid`: the launch of sub-agents, F34) ends the turn
+        // there once the turn has said words, beside the call or before it, so its reply is said once.
+        saidBefore ||= message.content.some((c) => c.type === "text" && c.text.trim() !== "");
+        const ends = saidBefore && toolResults.length > 0 && toolResults.every((r) => (r.details as { endsTurnIfSaid?: boolean } | undefined)?.endsTurnIfSaid === true);
+        const isFinal = ends || !message.content.some((c) => c.type === "toolCall");
         const stop = o.stopRequested?.() ?? false;
         const pause = !stop && !isFinal && (o.pauseAfter?.(message) ?? false);
         // Input the person added meanwhile is taken at this boundary while a step remains to answer it;

@@ -5,26 +5,26 @@
 // Hermetic: the readers run over Sam's real chats in the P5 tier-1 world, played by the scripted fake model, and the
 // page is the tier-1 page.
 import { describe, expect, it, vi } from "vitest";
+import { bindingPort } from "../../packages/agent/src/browse/binding.ts";
+import { readPage } from "../../packages/agent/src/browse/read.ts";
+import { WORK_WORDS } from "../../packages/agent/src/chat/instructions.ts";
+import { VERIFIER_INSTRUCTIONS } from "../../packages/agent/src/subagents/verifier.ts";
 import { type P5Page, p5Slot } from "../../scripts/evals/p5-slot.ts";
 import { driveable, type Slot, trial } from "../../scripts/evals/runner.ts";
 import { childBrowse } from "../../scripts/preview-slot/test-host-child.mjs";
 import { P5_PROBE, PAGES, recordingAi, systemOf } from "../../scripts/preview-slot/test-host-p5.mjs";
 import { testHostBinding } from "../../scripts/preview-slot/test-host-sites.mjs";
-import { VERIFIER_INSTRUCTIONS } from "../../packages/agent/src/subagents/verifier.ts";
-import { bindingPort } from "../../packages/agent/src/browse/binding.ts";
-import { readPage } from "../../packages/agent/src/browse/read.ts";
-import { EMPTY_SNAPSHOT, type SlotEntry, type SlotWorld } from "../support/evals.ts";
-import type { DefinedTask } from "../support/task.ts";
-import { PAGE, type P5HarnessOptions, P5Tier1World, pat, sam } from "../evals/p5-activity/harness.ts";
 import failedRead from "../evals/p5-activity/failed-read-real-model.task.ts";
-import { WORK_WORDS } from "../../packages/agent/src/chat/instructions.ts";
+import { type P5HarnessOptions, P5Tier1World, PAGE, pat, sam } from "../evals/p5-activity/harness.ts";
 import oneTask, { count } from "../evals/p5-activity/one-request-one-task-real-model.task.ts";
 import reload from "../evals/p5-activity/reload-and-phone.task.ts";
-import { ASK, load, read, REPLY, runs, TWO, write } from "../evals/p5-activity/runs.ts";
+import { ASK, load, REPLY, read, runs, TWO, write } from "../evals/p5-activity/runs.ts";
 import ack from "../evals/p5-activity/subagent-ack-real-model.task.ts";
 import stopTask from "../evals/p5-activity/subagent-section.task.ts";
 import type { P5World, TaskView } from "../evals/p5-activity/world.ts";
 import { DEAD, PROBE } from "../evals/p5-activity/world.ts";
+import { EMPTY_SNAPSHOT, type SlotEntry, type SlotWorld } from "../support/evals.ts";
+import type { DefinedTask } from "../support/task.ts";
 
 /** Sam's page as the tier-1 world draws it, by chat id. */
 const pageOver = (w: P5Tier1World): P5Page => ({
@@ -69,9 +69,9 @@ const run = (task: DefinedTask<P5World>, opts: () => P5HarnessOptions, worlds?: 
 describe("[F32] P5 on a slot: the probe page, the prompts, the child's reads and the readers", () => {
   it("drives every P5 tier-2 task (Sam's prompts, open), and still refuses an event the slot cannot play", () => {
     for (const t of [failedRead, oneTask, reload, ack]) expect(driveable(t as unknown as DefinedTask<SlotWorld>, sam.email)).toBeNull();
-    // Planted: T-P5-08 plays the tier-1 harness's own events (a held prompt, the children), which no slot can: refused
-    // by name before any trial.
-    expect(driveable(stopTask as unknown as DefinedTask<SlotWorld>, sam.email)).toBe("EVALS_TASK_UNDRIVABLE: turn 1 of T-P5-08 is the event prompt; the runner drives prompts and decide, tick, reload, open events only");
+    // Planted: T-P5-08 plays the tier-1 harness's own events (the children, a held prompt), which no P5 slot can: refused
+    // by name before any trial (a `prompt` event is played since F34, the children only for P3).
+    expect(driveable(stopTask as unknown as DefinedTask<SlotWorld>, sam.email)).toBe("EVALS_TASK_UNDRIVABLE: turn 2 of T-P5-08 is the event children; the runner drives prompts and decide, tick, reload, open, prompt events only");
   });
 
   it("the slot serves the tier-1 world's probe page with its one link, and example.invalid is unreachable, with no request made", async () => {
