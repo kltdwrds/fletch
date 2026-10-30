@@ -260,3 +260,7 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   `test/evals/p2-loop/real-model-failure-honest.test.ts`; the failed runs' results files stay committed. Rejected
   steering the model's wording in the prompt to fit the pattern. T-P2-12 is recorded as it ran: its graders read
   socket frames the slot world does not keep (`GRADER_THREW`), a runner gap, not a verdict on the agent.
+- 2026-10-29 orchestrator, F24 merged while BLOCKED on Q16: PR #36 went to main on green CI with `ACCEPT F24: PASS`
+  and T-P2-13 3 of 3, the part's PROGRESS row left BLOCKED and Q16 open for Kyle (the two grader edits read as
+  corrections, and his steer is to ship and review); P2 stays at level 1 until he answers. Rejected holding the PR,
+  which keeps the status line and file card off main and blocks nothing Kyle decides faster.
