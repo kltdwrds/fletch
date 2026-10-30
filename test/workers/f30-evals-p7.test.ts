@@ -93,7 +93,7 @@ describe("[F30] P7 on a slot: the runner's ticks, the test host's clock and prob
   it("drives every P7 tier-2 task (prompts, decide, tick, reload), and still refuses an event the slot cannot play", () => {
     for (const t of [oneShot, result, silence, surfaces]) expect(driveable(t as unknown as DefinedTask<SlotWorld>, sam.email)).toBeNull();
     // Planted: T-P7-05 holds a run at its model step, which no slot can do: refused by name before any trial.
-    expect(driveable(stop as unknown as DefinedTask<SlotWorld>, sam.email)).toBe("EVALS_TASK_UNDRIVABLE: turn 1 of T-P7-05 is the event hold; the runner drives prompts and decide, tick, reload events only");
+    expect(driveable(stop as unknown as DefinedTask<SlotWorld>, sam.email)).toBe("EVALS_TASK_UNDRIVABLE: turn 1 of T-P7-05 is the event hold; the runner drives prompts and decide, tick, reload, open events only");
   });
 
   it("the probe page answers from the fixture; any other url is a 404 here, recorded, and never reaches the network", async () => {
