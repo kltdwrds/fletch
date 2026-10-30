@@ -363,3 +363,52 @@ their results recorded whatever the verdict; `ACCEPT F30: PASS`; `VERIFIER: no b
 
 **Not in scope:** proactivity and the feed (Q21); a hook lane (delta 3); a job that acts (delta 4); a change to a
 clause.
+## F31 Activity as it is: the P5 contract check, fifteen task files, code's summary, a failure said in the status, tokens in the drawer and tier 1
+
+**Read:** `docs/plan-v2/contracts/P5-activity.md` (every clause, the Tasks, the Translation's deltas 1, 2, 4, 5 and 7,
+the Build notes), the P7 world and tasks under `test/evals/p7-scheduling/` as the pattern,
+`packages/agent/src/chat/activity.ts`, `activity-steps.ts`, `activity-subagents.ts`, `packages/agent/src/http/app/activity.ts`,
+`packages/agent/src/http/app/panel.ts`, `packages/agent/src/obs/activity-words.ts`, `packages/agent/src/ledger/rollup.ts`,
+`test/workers/f12-activity-records.test.ts` to `f15-activity-drawer.test.ts`, `docs/plan-v2/QUESTIONS.md` Q18 (a
+reply's required words are instruction lines, not harness sentences). No one-way door: the summary step is computed,
+the failed count is a words table, the drawer's tokens read the ledger's existing rows.
+
+**Scope:** (1) `test/m0/f31-contract.test.ts` holds the P5 contract as `f29-contract.test.ts` holds P7: fourteen
+clauses, fifteen tasks, every tier-1 `version_hash` filled. (2) The fifteen `.task.ts` files under
+`test/evals/p5-activity/` with a `world.ts` (a Chat DO, the fake network serving `https://example.com/p5-probe` with one
+link and refusing `https://example.invalid/p5-probe`, a Job DO for T-P5-09, a sub-agent for T-P5-08) and a
+`harness.ts`; tier 1 (T-P5-01 to 11) runs under vitest with a `[F31]` describe, every minefield planted in a
+`planted.test.ts`. (3) The code the deltas need: the summary step at a finished task's timeline end, code's counts of
+reads, writes and failures plus the final text quoted (delta 1; T-P5-05); the failed-step count in the status words on
+the row and the drawer's pill with its glyph (delta 2; T-P5-07); the run row's word read through the delivery's state,
+did not arrive when the outbox did not deliver (delta 5; T-P5-09); the task's model calls and tokens in the drawer's
+head from the ledger rows keyed by its turn ids (delta 7; T-P5-11); an instruction line for a delegation's
+acknowledgement, launched and never done (delta 4; T-P5-08). (4) The drawer specimen in `ds/specimens/` updated for
+the changed head before the drawer draws it (design §4.5), listed for Kyle as a look item.
+
+**Acceptance:** the eleven tier-1 tasks pass under vitest and each planted minefield fails without its guard;
+`test/m0/f31-contract.test.ts` passes; `pnpm check` and the hermetic suite green; `ACCEPT F31: PASS`;
+`VERIFIER: no blocking findings`.
+
+**Not in scope:** a self-improvement or findings store (delta 8, Q24); an audit table or an audit tool for the model
+(delta 6); the browse card's own words (P3); a job's remove and its card (P7, T-P7-13); tier 2 (F32); a code-written
+reply line (Q18); a change to a clause.
+
+## F32 Activity says what happened: P5's tier 2 on a slot
+
+**Read:** `docs/plan-v2/contracts/P5-activity.md` (B-P5-01 to B-P5-05, B-P5-08, B-P5-13, the tier-2 tasks), the F31
+world and tasks under `test/evals/p5-activity/`, `packages/agent/src/chat/instructions.ts`, `docs/runbooks/evals.md`,
+`docs/plan-v2/QUESTIONS.md` Q18. No one-way door. A live step: `pnpm evals` runs from Kyle's Mac on this worktree's
+slot (`pnpm preview up`); if no slot can be leased, that is a question, not a reason to skip.
+
+**Scope:** (1) The slot serves the probe page `https://<slot>/fixtures/p5-probe` (or the task's documented stand-in) so
+T-P5-15 reads a page the suite owns. (2) Tier 2 on the slot: T-P5-13 and T-P5-15 (must-have), T-P5-12 (page rubric at
+desktop and phone width) and T-P5-14, three trials each, the results files committed, the table in the PR body.
+(3) Every P5 hash in the contract matches.
+
+**Acceptance:** `pnpm evals T-P5-13` and `pnpm evals T-P5-15` `pass` (three of three); T-P5-12 and T-P5-14 run and
+their results recorded whatever the verdict; `ACCEPT F32: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a change to a clause; new instruction lines beyond what a failing must-have needs, each named in the
+PR body with its task.
+

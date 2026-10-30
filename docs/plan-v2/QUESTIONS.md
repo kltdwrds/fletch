@@ -107,6 +107,28 @@ some of these (a MEMORY.md edit returning each line's citation; a line sending n
 verifier called them out of F28's scope and they were removed (1d3ff3e), left for a later part. Recommended answer:
 one more P6 part after the spine ("F-next: memory's reach"), scoped to those two changes plus a `memory_write` target
 for a person page, with T-P6-09, 12, 13, 14 as its acceptance; nothing in the spine waits on it.
+### Q24 (P5), 2026-10-30: Muse keeps a store about its own work that nothing shows; a removed job's card dangles; four Muse findings
+
+**Blocks nothing.** Recorded from the P5 interrogation (`contracts/P5-activity.md`, B-P5-11 and B-P5-14, which have no
+task of their own), for Kyle's eye.
+
+1. **A store no surface lists.** Muse holds 13 `self_improvement` tables (977 `runs` rows, calibration and calculation
+   records), dreams reflections, an alignment synthesis injected into every chat and an open `boundary_overreach`
+   repair thread; its docs name no reader and no surface (`answers/step-9.md`). A background writer added 22 lines
+   about the probe chat to the daily memory log and changed `MEMORY.md` mid-chat without an ask (P6's finding again,
+   `answers/step-8.md`). fletch has no such store and delta 8 adds none; T-P5-10 enumerates the Durable Object's tables
+   to hold the line. Recommended answer: keep it so; if a lessons store is ever wanted, it is a proposed record (a
+   storage schema, one-way) with a named reader and a surface first.
+2. **A removed job's card.** Muse's `cron.remove` answered "schedule does not exist" while the job's row, its run, the
+   add mutation and the definition file stayed, and the thread's "View scheduled task" card opens an Upcoming tab
+   where the task is absent (`answers/step-12.md`). fletch's remove is P7's T-P7-13; what its card says afterwards is
+   not graded anywhere yet. Recommended answer: fold "the card says removed or opens to the record" into T-P7-13's end
+   state in a later P7 pass, not a new part.
+3. **Four Muse findings, recorded, no action:** the Activity record's words are written after the fact by a layer no
+   doc names and contradicted their turn three times (B-P5-04); a scheduled run "Succeeded" with `result_summary null`,
+   no message and no row (B-P5-09); usage is a plan percentage with no model column while the probe chat spent about
+   23 million tokens (B-P5-12); the detail dialog's Summary is a one-word strip at phone width (B-P5-02).
+
 ### Q23 (P7, F29), 2026-10-30: B-P7-01 says no card; fletch's agent-made job waits on one, and paused jobs sit under Off
 
 **Blocks nothing.** Two places where F29 grades fletch's form against a clause's wording, for Kyle's eye.
