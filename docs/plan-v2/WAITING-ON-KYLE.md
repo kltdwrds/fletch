@@ -439,6 +439,21 @@ Kyle's own lines go under `## Steering`.
   is the settings pane, the grouped rows, the status pill and the prompt card as they are. Say "fine" or what to
   change under Steering before F36 starts; F35 runs meanwhile and draws none of it.
 
+- [ ] 2026-10-30 do: **sign the built-in browser back in to Muse, so P12 (wallet and payments) can be interrogated.**
+  The P12 interrogator (an Opus agent under the orchestrator's `evidence/p12-wallet/scenario.md`, ten steps, read-only
+  but for one add-method page to raise and close and one purchase ask at `https://shop.example.invalid`) ran step 0 (the
+  dump refresh: `wallet` has five read functions over `stripe-link` and `shop-pay`; no orders, receipts, budget or
+  allowance namespace; the prompt's "The user cannot create a standing Wallet budget or spending allowance") and step 1
+  (both providers `not_connected`, 0 payment methods, 0 addresses, 0 purchase approvals in history), then, at phone
+  width, clicked the "More" sheet while it was still sliding and hit Sign out instead of Settings (`POST /api/logout`
+  200 in `step-1-requests.json`; `step-1-signed-out-phone.png`). Nothing was typed on the signed-out page, no value was
+  entered anywhere, no money moved, no Add button was pressed; thread A `5153e9f6-4941-481e-94d4-b337ac917a6e` ("P12
+  dump refresh request") holds the seven probe asks. The agent stopped because signing in is yours. Once the built-in
+  browser is signed in again the orchestrator relaunches the agent at step 2 with the same scenario; until then P12 stays
+  at level 0 and the Translation waits (its fletch-side survey is done: no payment instrument, no purchase tool, every
+  budget is model spend). The rule the agent broke ("never sign out") now gets a mechanical line in the next brief:
+  no click within two seconds of a sheet or drawer opening, and never a click by coordinate on a phone-width sheet.
+
 ## Steering
 
 ## Done
