@@ -94,7 +94,7 @@ export interface P14HarnessOptions {
   drafts?: FakeStep[];
   /** Replaces the lifecycle Company's `mayDepart` (`planted.test.ts`: the check taken out of the production path). */
   mayDepart?: (person: string) => Promise<{ ok: true } | { ok: false; code: string; reason: string }>;
-  /** Builds the world: a subclass for the tasks that read a slot's or the Security pane's world (`harness-slot.ts`). */
+  /** Builds the world: a subclass for the task that reads a slot's world (`harness-slot.ts`). */
   make?: (o: P14HarnessOptions) => P14Tier1World;
 }
 
@@ -357,7 +357,7 @@ export async function played(task: DefinedTask<P14World>, o: P14HarnessOptions, 
 
 /** Each grader's verdict on the task's turns: true where an end state or fact holds and where a minefield was not stepped on. */
 export async function graded<W extends ScenarioWorld = P14World>(task: DefinedTask<W>, o: P14HarnessOptions): Promise<Record<string, boolean>> {
-  // A slot's or the Security pane's task is played on the subclass its run's `make` builds.
+  // A slot's task is played on the subclass its run's `make` builds.
   const world = (await played(task as unknown as DefinedTask<P14World>, o)) as unknown as W;
   const out: Record<string, boolean> = {};
   for (const g of task.graders) out[g.name] = g.kind === "minefield" ? !(await g.check(world)) : await g.check(world);

@@ -260,7 +260,7 @@ describe("[M27.2] the Settings frame", () => {
     const dlg = APP_PAGE.slice(APP_PAGE.indexOf('<div id="set-dialog"'), APP_PAGE.indexOf('<div id="confirm"'));
     expect(dlg).toContain('class="qf-dlg qf-dlg--800" role="dialog" aria-label="Settings"');
     expect(ids(dlg).filter((i) => /^set-(nav|back|title|close|frame|dialog)/.test(i))).toEqual(["set-dialog", "set-frame", "set-nav", ...SETTINGS_PANES.map((k) => `set-nav-${k}`), "set-back", "set-title", "set-close"]);
-    expect(SETTINGS_PANES.map((k) => PANE_TITLE[k])).toEqual(["General", "Connectors", "Permissions", "Devices", "Messaging channels", "Help & support"]);
+    expect(SETTINGS_PANES.map((k) => PANE_TITLE[k])).toEqual(["General", "Connectors", "Permissions", "Devices", "Security", "Messaging channels", "Help & support"]);
     expect(dlg.indexOf('id="logout"')).toBeGreaterThan(dlg.indexOf('id="set-nav-help"'));
     // The settings pages' Back circles are gone; their rows and the pages' own ids stay, inside the panes.
     expect(APP_PAGE).not.toMatch(/id="(settings|connectors|connector|permissions)-back"/);

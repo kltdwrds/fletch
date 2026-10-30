@@ -1,6 +1,6 @@
 // The Settings dialog's panes as markup (M27.6; split from settings.ts for the 600-line cap, which keeps the
-// frame, the rules and the script): General, Company and Background work, Devices, Messaging channels, Help &
-// support and the Report an issue dialog, each the system's grouped cards. Settings' words live here too, so the
+// frame, the rules and the script): General, Company and Background work, Devices, Security (F41), Messaging
+// channels, Help & support and the Report an issue dialog, each the system's grouped cards. Settings' words live here too, so the
 // markup and the script read one table.
 import type { MemberSource } from "../../company/members.ts";
 import { APPS_LINK } from "../../workspace/surfaces.ts";
@@ -85,6 +85,25 @@ export const SETTINGS_TEXT = {
   token: ["token", "tokens"],
   free: "$0.00",
   cheap: "less than $0.01",
+  // Security (F41, delta 4): the words of the specimen `ds/specimens/security.html`, over the host's passkey routes.
+  security: "Security",
+  securityIntro: "A passkey is how you sign in here. Keep at least two, on different devices.",
+  passkeys: "Passkeys",
+  passkey: "Passkey",
+  added: "Added {date}",
+  remove: "Remove",
+  removeLabel: "Remove the passkey added {date}",
+  addPasskey: "Add a passkey",
+  lastPasskey: "The last passkey stays. Add another before removing this one.",
+  recoverySignIn: "Add a passkey first. A recovery sign-in cannot manage passkeys.",
+  ownerOnly: "Only the owner manages passkeys.",
+  notRemoved: "Not removed: that did not go through. Try again.",
+  sessions: "Sessions",
+  sessionLine: "This browser is signed in for thirty days from the last sign-in.",
+  sessionNote: "Log out ends it. No list of other sessions is kept here.",
+  recovery: "Recovery code",
+  recoveryLine: "Shown once, when the first passkey was added.",
+  recoveryNote: "Replaced when a passkey is added after a recovery sign-in. It is not readable here.",
 };
 
 /** The Appearance modes, stored in this browser under MODE_KEY and applied to the body's data-theme. */
@@ -116,6 +135,7 @@ export const GENERAL_PANE = `<div id="settings">
   </div></div>
   <div class="qf-grpcard">${setRow({ id: "set-connectors", glyph: "plug", title: SETTINGS_TEXT.connectors, value: "set-connectors-count" })}</div>
   <div class="qf-grpcard">${setRow({ id: "set-permissions", glyph: "shield", title: SETTINGS_TEXT.permissions })}</div>
+  <div class="qf-grpcard">${setRow({ id: "set-security", glyph: "key", title: SETTINGS_TEXT.security })}</div>
   <div class="qf-grp"><h3>${SETTINGS_TEXT.appearance}</h3><div class="qf-grpcard">
     <div id="set-appearance" class="qf-srow is-static"><span class="tx">${SETTINGS_TEXT.mode}</span><span class="seg2 set-mode" role="radiogroup" aria-label="${SETTINGS_TEXT.mode}">${MODES.map((k) => `<button id="mode-${k}" class="tab" role="radio" aria-checked="false" aria-label="${SETTINGS_TEXT.modes[k]}">${ic(MODE_GLYPH[k], "xs")}</button>`).join("")}</span></div>
   </div></div>
@@ -164,6 +184,26 @@ export const DEVICES_PANE = `<div id="set-devices-pane">
   </div></div>
   <p id="push-result" class="set-note" role="status"></p>
   <div class="qf-grp"><h3>${SETTINGS_TEXT.othersGroup}</h3><div id="device-others" class="qf-grpcard"></div></div>
+</div>`;
+
+/**
+ * Security (F41, delta 4; the specimen `ds/specimens/security.html`): the passkeys `GET /login/passkeys` lists, by the
+ * date each was added and never a key, each with Remove (`DELETE /login/passkeys/:id`), then Add a passkey to the
+ * sign-in page; what a session is, with Log out; what the recovery code is. The rows, the count and a refusal in words
+ * are the script's, from the routes' answer; nothing here is stored.
+ */
+export const SECURITY_PANE = `<div id="set-security-pane">
+  <p id="security-intro" class="qf-set-intro">${SETTINGS_TEXT.securityIntro}</p>
+  <div class="qf-grp"><h3>${SETTINGS_TEXT.passkeys}<span id="passkey-count" class="qf-chip qf-chip--count" hidden></span></h3><div id="passkey-card" class="qf-grpcard">
+    <a id="passkey-add" class="qf-srow is-link" href="/login" style="text-decoration:none">${SETTINGS_TEXT.addPasskey}</a>
+  </div></div>
+  <div id="security-sessions" class="qf-grp"><h3>${SETTINGS_TEXT.sessions}</h3><div class="qf-grpcard">
+    <div class="qf-srow is-static"><span class="tx">${SETTINGS_TEXT.sessionLine}<span class="sub">${SETTINGS_TEXT.sessionNote}</span></span><span class="trail"><button id="security-logout" class="qf-btn qf-btn--secondary" type="button">${SETTINGS_TEXT.logout}</button></span></div>
+  </div></div>
+  <p id="security-logout-result" class="set-note" role="status"></p>
+  <div id="security-recovery" class="qf-grp"><h3>${SETTINGS_TEXT.recovery}</h3><div class="qf-grpcard">
+    <div class="qf-srow is-static"><span class="tx">${SETTINGS_TEXT.recoveryLine}<span class="sub">${SETTINGS_TEXT.recoveryNote}</span></span></div>
+  </div></div>
 </div>`;
 
 /** Messaging channels: the delivery rows (time zone, mail fallback) and what was stopped. */
