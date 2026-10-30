@@ -299,3 +299,11 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   fixture sites and offer the share fixture, and answers `/__preview/test-host` only to the lease's holder; the runner
   drives `decide` events beside prompts. Rejected: an env-var switch inside the agent, which ships a test path in
   every owner's deploy.
+- 2026-10-30, F26 tier 2: a chat step that pauses on cards with no words beside its calls (the model's or a tool's)
+  gets one code-written line per card, "Waiting for your decision: <action>. It has not run yet." (`pauseWords`,
+  M19.2's rule for a tool's own words). On the slot the model proposed the share bare in most trials, even with the
+  sharpened instruction line, so the person saw a card and no reply (the results file keeps those runs). T-P15-13's `claimed_sent` also strikes "never sent"
+  and "nothing was sent" before it reads a claim (hash e729bad9eda2 → 51dd5dcb091a). Rejected: one more tool-less
+  model step after a bare pause, which changes the turn loop and every scripted card test; and grading the card's
+  status line as a reply, which weakens the task. Tension, called out: the part says reply words are instruction
+  lines; this one is code's, as a card's own status is.

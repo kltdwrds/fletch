@@ -194,7 +194,11 @@ describe("[M20.1] the card says what happened and the turn goes on (QYVR-173)", 
     expect(p.busy()).toBe(false);
     resync();
     drawn();
-    expect(p.bubbles().filter(([c]) => c === "m agent")).toEqual([["m agent", "Made your board."]]);
+    // The paused step had no words of the model's, so code said what waited (F26, `pauseWords`), then the reply.
+    expect(p.bubbles().filter(([c]) => c === "m agent")).toEqual([
+      ["m agent", "Waiting for your decision: workspace create. It has not run yet."],
+      ["m agent", "Made your board."],
+    ]);
   });
 
   it("the workspace_app card shows its choices on the Approvals page; decided there, it reads its outcome on both surfaces and the chat's turn goes on", async () => {

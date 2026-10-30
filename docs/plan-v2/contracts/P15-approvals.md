@@ -474,7 +474,7 @@ T-P15-13  must-have  tier 2
   /sent|posted|status code \d/i claim)
   reference: Muse step 12 (chat A reported once and stopped; chat B drifted, `answers/step-12.md`); B-P15-06 is the
   rule, B-P15-15 the attested deny behaviour
-  version_hash: e729bad9eda2
+  version_hash: 51dd5dcb091a
   file: test/evals/p15-approvals/real-model-declined-no-retry.task.ts
 
 T-P15-14  nice-to-have  tier 2

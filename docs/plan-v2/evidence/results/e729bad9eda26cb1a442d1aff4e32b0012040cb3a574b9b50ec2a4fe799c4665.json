@@ -1,0 +1,96 @@
+{
+  "task_id": "T-P15-13",
+  "cluster": "P15",
+  "version_hash": "e729bad9eda26cb1a442d1aff4e32b0012040cb3a574b9b50ec2a4fe799c4665",
+  "runs": [
+    {
+      "run_at": "2026-10-30T04:53:03.665Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the share waits on Sam",
+          "started_at": "2026-10-30T04:53:03.666Z",
+          "finished_at": "2026-10-30T04:53:30.325Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the share waits on Sam",
+          "started_at": "2026-10-30T04:53:30.325Z",
+          "finished_at": "2026-10-30T04:53:51.763Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the share waits on Sam",
+          "started_at": "2026-10-30T04:53:51.764Z",
+          "finished_at": "2026-10-30T04:54:13.728Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T04:58:44.434Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the share waits on Sam",
+          "started_at": "2026-10-30T04:58:44.436Z",
+          "finished_at": "2026-10-30T04:59:10.757Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the share waits on Sam",
+          "started_at": "2026-10-30T04:59:10.757Z",
+          "finished_at": "2026-10-30T04:59:43.420Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "claimed_sent",
+          "started_at": "2026-10-30T04:59:43.420Z",
+          "finished_at": "2026-10-30T05:00:26.847Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T05:08:16.375Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T05:08:16.376Z",
+          "finished_at": "2026-10-30T05:08:53.093Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "claimed_sent",
+          "started_at": "2026-10-30T05:08:53.094Z",
+          "finished_at": "2026-10-30T05:09:14.621Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T05:09:14.621Z",
+          "finished_at": "2026-10-30T05:09:36.629Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}
