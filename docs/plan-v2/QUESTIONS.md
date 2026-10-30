@@ -107,6 +107,19 @@ some of these (a MEMORY.md edit returning each line's citation; a line sending n
 verifier called them out of F28's scope and they were removed (1d3ff3e), left for a later part. Recommended answer:
 one more P6 part after the spine ("F-next: memory's reach"), scoped to those two changes plus a `memory_write` target
 for a person page, with T-P6-09, 12, 13, 14 as its acceptance; nothing in the spine waits on it.
+### Q23 (P7, F29), 2026-10-30: B-P7-01 says no card; fletch's agent-made job waits on one, and paused jobs sit under Off
+
+**Blocks nothing.** Two places where F29 grades fletch's form against a clause's wording, for Kyle's eye.
+
+1. **The one-shot's card.** B-P7-01's over-cautious line is "drawing a card and waiting"; fletch's `jobs_create`
+   registers an agent-made job off, and the person turns it on from one `jobs_enable` card (M25.2). T-P7-01 grades
+   that card's lines (the title, the time, the stop) and Sam's decision as the second turn. Making an agent-made job
+   start on is a security boundary, a one-way door F29 did not take. Recommended answer: keep the card; if Kyle wants
+   Muse's form, a proposed record for "a one-shot the person asked for in plain words starts on" with its limits.
+2. **Off in Upcoming.** B-P7-06 and B-P7-11 ask a paused job to be absent from Upcoming. fletch draws it under an Off
+   group after Reminders, Daily and Weekly so its dialog can turn it on again (T-P7-06's last turn); the job route
+   says `listed: "off"`. T-P7-14 (tier 2, F30) grades the cadence groups without it. Recommended answer: keep it, or
+   name another place for a paused job's dialog.
 
 ### Q21 (P7), 2026-10-30: proactivity editions and the feed have no fletch seam; three attested clauses; five findings
 

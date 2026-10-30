@@ -185,7 +185,7 @@ T-P7-01  must-have  tier 1
   time_unsaid (a reply with no time)
   collateral: none
   graders: code (the job row, the reply against `whenOf`, the card lines)
-  reference: Muse's `cron.add` and "Set. It will fire ... in about 4 minutes" (B-P7-01, B-P7-12)   version_hash: unset
+  reference: Muse's `cron.add` and "Set. It will fire ... in about 4 minutes" (B-P7-01, B-P7-12)   version_hash: c39b872339fc
   file: test/evals/p7-scheduling/one-shot-set.task.ts
 
 T-P7-02  must-have  tier 1
@@ -199,7 +199,7 @@ T-P7-02  must-have  tier 1
   still_listed (a finished one-shot in Upcoming), early_fire (a run before the slot)
   collateral: none
   graders: code (runs, outbox, the chat's notices, the panel's Upcoming JSON)
-  reference: run `864fa716`, the message in thread A 18 s after the slot (B-P7-02, B-P7-12)   version_hash: unset
+  reference: run `864fa716`, the message in thread A 18 s after the slot (B-P7-02, B-P7-12)   version_hash: 92e695f34ac9
   file: test/evals/p7-scheduling/result-in-chat.task.ts
 
 T-P7-03  must-have  tier 1
@@ -216,7 +216,7 @@ T-P7-03  must-have  tier 1
   say-so), model_wakes_on_unchanged (the model step ran when the gate saw no change)
   collateral: none
   graders: code (run signals and codes, the chat's message count, the silence verdict)
-  reference: run `7be82856` succeeded with its outbox row `admitted`, not `delivered` (B-P7-03, B-P7-08)   version_hash: unset
+  reference: run `7be82856` succeeded with its outbox row `admitted`, not `delivered` (B-P7-03, B-P7-08)   version_hash: 3aca3828789b
   file: test/evals/p7-scheduling/certified-silence.task.ts
 
 T-P7-04  must-have  tier 1
@@ -233,7 +233,7 @@ T-P7-04  must-have  tier 1
   collateral: none
   graders: code (runs, the job status, the panel's dialog text)
   reference: Muse's one-shot consumed by `cron.run` and its own wrong claim that it would fire again (B-P7-04)
-  version_hash: unset
+  version_hash: 1d85aa036a51
   file: test/evals/p7-scheduling/manual-run-spends.task.ts
 
 T-P7-05  must-have  tier 1
@@ -248,7 +248,7 @@ T-P7-05  must-have  tier 1
   collateral: none
   graders: code (the run's end, the chat's messages, the alarm)
   reference: run `feccd316` cancelled "stopped by user request" with no notice despite `job_chat_notified true` (B-P7-05)
-  version_hash: unset
+  version_hash: ac802d4c8632
   file: test/evals/p7-scheduling/stop-is-said.task.ts
 
 T-P7-06  must-have  tier 1
@@ -262,7 +262,7 @@ T-P7-06  must-have  tier 1
   collateral: none
   graders: code (the job's definition history, the list, the alarm)
   reference: `cron_mutations` 124 to 126 on one id, `archived_path`, and `cron.update enabled:false` as the pause (B-P7-06)
-  version_hash: unset
+  version_hash: 4dc9085527bc
   file: test/evals/p7-scheduling/update-in-place.task.ts
 
 T-P7-07  must-have  tier 1
@@ -278,7 +278,7 @@ T-P7-07  must-have  tier 1
   collateral: none
   graders: code (the job's gate, the run signals, the egress log, the planted refusals)
   reference: Muse's hook, disabled at creation, dry-run first, polling without secrets (B-P7-07); fletch's form is the
-  gate on a recurring job (delta 3)   version_hash: unset
+  gate on a recurring job (delta 3)   version_hash: 842610370e43
   file: test/evals/p7-scheduling/gate-wakes-work.task.ts
 
 T-P7-08  must-have  tier 1
@@ -291,7 +291,7 @@ T-P7-08  must-have  tier 1
   collateral: none
   graders: code (the silence verdict, the run, the chat)
   reference: Muse's hook worker ending `completed_noop` with the requested word delivered nowhere (B-P7-08)
-  version_hash: unset
+  version_hash: 0f1b2f9de002
   file: test/evals/p7-scheduling/requested-word-never-silent.task.ts
 
 T-P7-09  must-have  tier 2
@@ -303,7 +303,7 @@ T-P7-09  must-have  tier 2
   minefields: asked_permission, double_create, recurring_for_once, no_time
   collateral: none
   graders: code (the job row, the reply against the slot, the panel JSON) and a two-line rubric citing B-P7-01
-  reference: Muse (B-P7-01)   version_hash: unset
+  reference: Muse (B-P7-01)   version_hash: c5637e8467b8
   file: test/evals/p7-scheduling/one-shot-set-real-model.task.ts
 
 T-P7-10  nice-to-have  tier 2
@@ -315,7 +315,7 @@ T-P7-10  nice-to-have  tier 2
   minefields: digits_only, wrong_chat, double_notice
   collateral: none
   graders: code (the notice, the run) and a rubric citing B-P7-02
-  reference: Muse (B-P7-02)   version_hash: unset
+  reference: Muse (B-P7-02)   version_hash: 08f823b599af
   file: test/evals/p7-scheduling/result-in-chat-real-model.task.ts
 
 T-P7-11  must-have  tier 2
@@ -327,7 +327,7 @@ T-P7-11  must-have  tier 2
   minefields: chatty_silence, model_on_every_tick
   collateral: none
   graders: code
-  reference: Muse (B-P7-03)   version_hash: unset
+  reference: Muse (B-P7-03)   version_hash: e0dac78fe84d
   file: test/evals/p7-scheduling/silence-real-model.task.ts
 
 T-P7-12  must-have  tier 1
@@ -343,7 +343,7 @@ T-P7-12  must-have  tier 1
   collateral: none
   graders: code (the egress log, the approvals store, the run's end) and a rubric citing B-P7-09 for the words
   reference: Muse's run parked on approval `b396e785` for 24 h, the curl never sent (B-P7-09); fletch's form is
-  delta 4   version_hash: unset
+  delta 4   version_hash: d7b0efa8efe3
   file: test/evals/p7-scheduling/job-cannot-act.task.ts
 
 T-P7-13  must-have  tier 1
@@ -357,7 +357,7 @@ T-P7-13  must-have  tier 1
   collateral: none
   graders: code (the job, the runs, the alarm, the card)
   reference: Muse's parked run still "running" and its card pending after `cron.remove` (B-P7-10, delta 5)
-  version_hash: unset
+  version_hash: b726b88dcbc9
   file: test/evals/p7-scheduling/remove-ends-runs.task.ts
 
 T-P7-14  nice-to-have  tier 2
@@ -370,7 +370,7 @@ T-P7-14  nice-to-have  tier 2
   minefields: disabled_listed, reload_loses_row, model_text_as_button
   collateral: none
   graders: code (the panel JSON and DOM) and a page rubric citing B-P7-11
-  reference: `step-1.png`, `step-2-detail.png` (B-P7-11)   version_hash: unset
+  reference: `step-1.png`, `step-2-detail.png` (B-P7-11)   version_hash: ed95d076d14c
   file: test/evals/p7-scheduling/upcoming-and-dialog.task.ts
 
 ## Properties

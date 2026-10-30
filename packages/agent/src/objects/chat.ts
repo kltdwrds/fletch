@@ -141,12 +141,13 @@ export class Chat extends Agent<Env> {
 
   /** The owner's jobs (M15.7): each is the `Job` object named for the owner, which checks the owner again. */
   private jobsApi(): JobsApi {
-    const job = (person: string, id: string) => this.env.JOB.get(this.env.JOB.idFromName(jobName(person, id))) as unknown as Pick<Job, "inspect" | "define" | "enable" | "disable" | "remove">;
+    const job = (person: string, id: string) => this.env.JOB.get(this.env.JOB.idFromName(jobName(person, id))) as unknown as Pick<Job, "inspect" | "define" | "update" | "enable" | "disable" | "remove">;
     return {
       ids: async (person) => (await (await getAgentByName(this.env.PERSON, person)).jobIds(person)) ?? [],
       inspect: async (person, id) => (await job(person, id).inspect(person)) as Awaited<ReturnType<JobsApi["inspect"]>>,
       // `by` is the agent, not the owner: the job starts off until the owner enables it.
       define: (person, def) => job(person, def.id).define({ owner: person, by: `agent:${person}`, def }),
+      update: (person, def) => job(person, def.id).update({ owner: person, by: `agent:${person}`, def }),
       enable: (person, id) => job(person, id).enable(person),
       disable: (person, id) => job(person, id).disable(person),
       remove: (person, id) => job(person, id).remove(person),

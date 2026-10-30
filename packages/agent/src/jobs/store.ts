@@ -15,10 +15,23 @@ import { migrate } from "../migrations/engine.ts";
  */
 export type JobStatus = "active" | "needs_enable" | "disabled" | "blocked" | "needs_attention" | "finished" | "archived";
 
+/** A definition the job had before a change in place (delta 7): kept on the record, in the same JSON column as the definition. */
+export interface PastDefinition {
+  /** When it stopped being the job's definition. */
+  until: number;
+  by: string;
+  def: JobDefinition;
+}
+
+/** Earlier definitions kept per job; the oldest leave first. */
+export const HISTORY_KEPT = 20;
+
 export interface JobRow {
   id: string;
   owner: string;
   def: JobDefinition;
+  /** The definitions it had before each change in place, oldest first. */
+  history: PastDefinition[];
   sourcePath: string | null;
   sourceHash: string | null;
   status: JobStatus;
@@ -113,8 +126,9 @@ export class JobStore {
   job(): JobRow | null {
     const r = this.sql.exec<Raw>("SELECT * FROM job WHERE k = 1").toArray()[0];
     if (!r) return null;
+    const { history, ...def } = JSON.parse(String(r.def)) as JobDefinition & { history?: PastDefinition[] };
     return {
-      id: String(r.id), owner: String(r.owner), def: JSON.parse(String(r.def)) as JobDefinition,
+      id: String(r.id), owner: String(r.owner), def, history: history ?? [],
       sourcePath: (r.source_path as string | null) ?? null, sourceHash: (r.source_hash as string | null) ?? null,
       status: r.status as JobStatus, statusCode: (r.status_code as string | null) ?? null, statusReason: (r.status_reason as string | null) ?? null,
       gateState: JSON.parse(String(r.gate_state)) as GateState, lastSlot: num(r.last_slot), failures: Number(r.failures),
@@ -122,11 +136,12 @@ export class JobStore {
     };
   }
 
-  putJob(j: { id: string; owner: string; def: JobDefinition; sourcePath: string | null; sourceHash: string | null; status: JobStatus }, now: number): void {
+  /** Writes the job; its earlier definitions ride in the definition's JSON under `history`, so no column is added. */
+  putJob(j: { id: string; owner: string; def: JobDefinition; history: PastDefinition[]; sourcePath: string | null; sourceHash: string | null; status: JobStatus }, now: number): void {
     this.sql.exec(
       `INSERT INTO job (k, id, owner, def, source_path, source_hash, status, updated_at) VALUES (1, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(k) DO UPDATE SET def = excluded.def, source_path = excluded.source_path, source_hash = excluded.source_hash, status = excluded.status, status_code = NULL, status_reason = NULL, updated_at = excluded.updated_at`,
-      j.id, j.owner, JSON.stringify(j.def), j.sourcePath, j.sourceHash, j.status, now,
+      j.id, j.owner, JSON.stringify(j.history.length ? { ...j.def, history: j.history.slice(-HISTORY_KEPT) } : j.def), j.sourcePath, j.sourceHash, j.status, now,
     );
   }
 
