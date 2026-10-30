@@ -71,6 +71,21 @@ Kyle's own lines go under `## Steering`.
   [PROGRESS.md F22](PROGRESS.md), `test/evals/p1-reactions/reacting-registers.test.ts`, the `REACTING` block in
   `packages/agent/src/`.
 
+- [ ] 2026-10-29 look: **the P2 loop contract and its five deltas from Muse.** The interrogation of muse.ai (eight
+  steps in one side chat: a quick question, a deferred-tool task, a long task, a steer mid-turn, a write with a
+  barrier, a failed read plus a backgrounded command, an unserved capability, a reload) found that Muse has no text
+  channel before a turn ends (the reply is written last and may split into bubbles), that a message mid-turn ends the
+  turn and opens a new one with an interruption note, that a backgrounded command's completion opens a silent turn, and
+  that failures and refusals are prose with the mark on the tool record. fletch keeps three shapes of its own as
+  two-way calls the orchestrator took: the operating block as a cached stable prefix (delta 1), one streamed bubble and
+  no split (delta 2), a steer folded into the running turn (delta 3); and adopts two things: a job's completion wakes
+  the agent so it can act on a failure (delta 4, F24), and a file card in the thread instead of a URL unfurl (delta 5,
+  F24: no preview fetch from your deploy on every link). Say so if you want link previews, split bubbles, or the steer
+  to end the turn. Recommended: let F23 and F24 run; your findings come back as UAT items. Deep dive:
+  [Translation, deltas](contracts/P2-loop.md#translation), [the clauses](contracts/P2-loop.md#clauses),
+  [F23 and F24 in parts.md](parts.md#spine-clusters), [Q15](QUESTIONS.md#q15-p2-2026-10-29-three-things-the-p2-interrogation-attests-rather-than-instruments-and-two-dump-slice-oddities);
+  evidence on your Mac under `docs/plan-v2/evidence/p2-loop/` (`answers/step-*.md`, `step-*.png`, `trace.json`).
+
 ## Steering
 
 ## Done

@@ -30,6 +30,21 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
+### Q15 (P2), 2026-10-29: three things the P2 interrogation attests rather than instruments, and two dump-slice oddities
+
+**Blocks:** nothing. (1) `contracts/P2-loop.md` tags parts of B-P2-04 (which tool name maps to which status words:
+no table holds it), B-P2-07 (what Muse draws for a failed write: never seen) and B-P2-09 (the connect card as a
+tool-returned connection action: read from tool descriptions, not provoked) `[attested]`; fletch's shapes for them are
+its own (the Translation's deltas 6 and 7). (2) The dump slice `2026-10-29+p2-slice-2308Z` lists `process` as
+`deferred: false`, yet step 3 loaded it by name with `chat` and `todo` (`agent.context_items:281018`): either an eager
+namespace accepts a redundant load or the flag is per session. (3) The same slice holds 0 `unavailable_namespaces`
+where the 2026-09-14 probe held 9, so scenario step 7 asked for a thing no namespace serves instead of a namespace
+marked unavailable; the loader reports no unavailable state at all today.
+
+**Recommended answer:** none from you. A later P2 pass (or P15's, for the connect card) provokes (1) when it is cheap;
+(2) and (3) are notes for the next dump refresh (`INTERROGATE.md`), where the slice's `deferred` flags are compared
+against a load of each eager namespace.
+
 ### Q14 (F22), 2026-10-29: a task's version hash depends on the loader, and T-P1-02 misses on counting
 
 **Blocks:** nothing. (1) `versionHash()` hashes each grader's `toString()`; vitest's transform rewrites that source, so
