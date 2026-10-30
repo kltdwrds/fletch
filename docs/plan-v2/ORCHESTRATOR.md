@@ -34,6 +34,20 @@ because Kyle is watching and can stop it. A `/goal` survives auto-compaction and
 the note before compaction, and the next cycle re-reads the ledgers rather than trusting the summary. State lives in
 files only, so a restart costs one `cat` of each.
 
+## Who does what (Kyle, 2026-10-29)
+
+The orchestrator keeps the judgement and hands off the turns. From P3 on it does not run a cluster's Interrogate
+steps itself: it writes `scenario.md`, then launches one Opus session (`claude --model opus -p`, or an `Agent` with
+`model: opus`) whose brief names the goal, `INTERROGATE.md`, the scenario file, the evidence folder, the two commands
+that prove it done (`pnpm redact` over every file, `validateTrace` on `trace.json`) and the hard lines (identities
+from `test/fixtures/people.json`, nothing stored unredacted, approvals left to Kyle). The orchestrator then reads the
+raw `answers/step-*.md` and rows itself, never the agent's summary, and writes the contract, the Translation, the
+deltas, the one-way doors and the scorecard row; contract drafting may also go to Opus with the orchestrator
+reviewing, and the verifier catches what it misses. The same holds for any turn-heavy, mechanically checkable work.
+Files are the channel both ways: a fresh agent sees only its brief, the orchestrator only the files, and a check
+decides doneness. A `fork` inherits this context but runs on this model and saves nothing. P2 was the last cluster
+interrogated in the orchestrator's own context (hours of browser polling on the larger model).
+
 ## Kyle's check-in
 
 Open `WAITING-ON-KYLE.md`. UAT what it asks you to look at and tick it, or write what is wrong as a task; accept or
