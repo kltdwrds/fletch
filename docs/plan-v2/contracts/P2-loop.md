@@ -529,4 +529,4 @@ specimen) and what Muse draws for a failed write (attested in `answers/step-5.md
 ## Scorecard
 
 level | must-have tasks passing | evidence (PR, accept line, verifier line) | last verified
-1 | none yet (F23 lands the tier-1 tasks, F24 the surfaces and tier 2) | interrogated and translated 2026-10-29 (this file; `../evidence/p2-loop/trace.json` validates); parts F23 and F24 in `../parts.md` | 2026-10-29
+1 | tier 1: 9 of 9 under vitest since F23; tier 2: T-P2-13 (the must-have) not yet run, F24 runs it on the slot | PR #34 (F23), `ACCEPT F23: PASS` (TREE 3fca28613530a50983d9d38399a1b1de4f6b692f), `VERIFIER: no blocking findings` (`../PROGRESS.md` F23); `../evidence/p2-loop/trace.json` validates; parts F23 and F24 in `../parts.md` | 2026-10-29
