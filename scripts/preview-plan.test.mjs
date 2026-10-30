@@ -17,6 +17,7 @@ import {
   r2Names,
   record,
   SLOT_OWNER,
+  SLOT_VAR_KEYS,
   slotConfig,
   slotPlan,
   subdomainIn,
@@ -102,6 +103,16 @@ describe('preview plan: the slot config', () => {
     assert.deepEqual(paid.worker_loaders, [{ binding: 'LOADER' }]);
     assert.deepEqual(paid.images, { binding: 'IMAGES' });
     assert.equal(slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', paid: true, placeholder: true }).worker_loaders, undefined);
+  });
+
+  it("sets the model vars --var names, over the base config and under the slot's own, and refuses any other var", () => {
+    const vars = { AI_GATEWAY_ID: 'fletch', CHAT_PROVIDER: 'meta', CHAT_HEDGE: 'off' };
+    assert.deepEqual(Object.keys(vars), SLOT_VAR_KEYS);
+    const c = slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', vars });
+    assert.deepEqual(c.vars, { ...BASE.vars, ...vars, TENANT_ID: plan.name, OWNER_EMAIL: SLOT_OWNER, PREVIEW_SERVING: 'app', PREVIEW_DEPLOY: 'x' });
+    assert.throws(() => slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', vars: { TENANT_ID: 'other' } }), /--var takes only .*; not TENANT_ID/);
+    assert.throws(() => slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', vars: { MASTER_KEY: 'k' } }), /not MASTER_KEY/);
+    assert.equal(app.vars.CHAT_PROVIDER, undefined);
   });
 
   it('refuses a base config with a key or binding a slot does not know, rather than copy it', () => {

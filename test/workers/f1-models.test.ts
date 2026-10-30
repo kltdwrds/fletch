@@ -1,7 +1,7 @@
 // F1: how a deploy reaches models. A self-host deploy (spec section 2, "Assumed") sends every route to
 // Workers AI over the AI binding with no key and no AI Gateway option; a gateway is used only when the
-// deploy sets `AI_GATEWAY_ID`, and OpenRouter (BYOK through that gateway) only when it also sets
-// `CHAT_PROVIDER = "openrouter"`. Every claim runs the production engine, adapter and Ledger over the
+// deploy sets `AI_GATEWAY_ID`, and a gateway provider (BYOK through that gateway: OpenRouter, or Meta's
+// Model API as the custom provider `meta`) only when it also sets `CHAT_PROVIDER`. Every claim runs the production engine, adapter and Ledger over the
 // scripted fake, with the vars create-fletch's template actually ships.
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
@@ -9,7 +9,8 @@ import { parseJsonc, TEMPLATE } from "../../packages/create-fletch/src/init.ts";
 import { ChatEngine, type EngineCtx } from "../../packages/agent/src/chat/engine.ts";
 import { admitPolicy, isPriced } from "../../packages/agent/src/ledger/budget.ts";
 import { embed } from "../../packages/agent/src/model/adapter.ts";
-import { type ChatRoute, DEFAULT_TIER, hedgeFor, isOpenRouter, modelConfig, modelFor, ROUTES, routeModel, SELF_HOST_MODELS } from "../../packages/agent/src/model/routes.ts";
+import { acceptsImages, type ChatRoute, DEFAULT_TIER, hedgeFor, modelConfig, modelFor, MUSE_SPARK_CONTRIBUTOR, providerOf, ROUTES, routeModel, SELF_HOST_MODELS } from "../../packages/agent/src/model/routes.ts";
+import { providerName, requestBody } from "../../packages/agent/src/model/transport.ts";
 import { Ledger } from "../../packages/agent/src/objects/ledger.ts";
 import { FakeModel } from "../support/fake-model.ts";
 import { harnessNamespace, ObjectHarness } from "../support/object-harness.ts";
@@ -40,12 +41,12 @@ describe("[F1] a self-host deploy's models", () => {
     expect(TEMPLATE_VARS).not.toHaveProperty("AI_GATEWAY_ID");
     expect(TEMPLATE_VARS).not.toHaveProperty("CHAT_PROVIDER");
     expect(modelConfig(SELF_HOST_VARS)).toEqual(SELF_HOST_MODELS);
-    expect(SELF_HOST_MODELS).toEqual({ gatewayId: null, chatProvider: "workers-ai" });
+    expect(SELF_HOST_MODELS).toEqual({ gatewayId: null, chatProvider: "workers-ai", hedge: true });
   });
 
-  it("no route names an OpenRouter model and none hedges", () => {
+  it("no route names a gateway provider's model and none hedges", () => {
     for (const route of Object.keys(ROUTES) as ChatRoute[]) {
-      expect(isOpenRouter(routeModel(route, SELF_HOST_MODELS)), route).toBe(false);
+      expect(providerOf(routeModel(route, SELF_HOST_MODELS)), route).toBe("workers-ai");
       expect(modelFor(route, SELF_HOST_MODELS).provider, route).toBe("cloudflare-workers-ai");
       expect(hedgeFor(route, SELF_HOST_MODELS), route).toBeUndefined();
     }
@@ -100,5 +101,47 @@ describe("[F1] a deploy that configures a gateway", () => {
     const { fake } = await turn({ ...SELF_HOST_VARS, CHAT_PROVIDER: "openrouter" });
     expect(fake.requests[0]?.model).toBe("@cf/zai-org/glm-5.3-flash");
     expect(fake.requests[0]?.options).not.toHaveProperty("gateway");
+  });
+
+  it("CHAT_PROVIDER=meta puts chat on Muse Spark 1.3 Contributor as the gateway's custom provider: priced, in the default tier, taking images, hedged to Workers AI", async () => {
+    const vars = { ...SELF_HOST_VARS, AI_GATEWAY_ID: "my-gateway", CHAT_PROVIDER: "meta" };
+    const config = modelConfig(vars);
+    expect(config).toEqual({ gatewayId: "my-gateway", chatProvider: "meta", hedge: true });
+    expect(routeModel("chat", config)).toBe("muse-spark-1.3-contributor");
+    const { fake, result } = await turn(vars);
+    expect(result).toMatchObject({ status: "done" });
+    expect(fake.requests[0]?.model).toBe("muse-spark-1.3-contributor");
+    // The custom provider's path: `custom-<slug>/<path>`, the path appended to the base URL https://api.meta.ai/v1.
+    expect(fake.requests[0]?.universal).toMatchObject({ gatewayId: "my-gateway", provider: "custom-meta", endpoint: "chat/completions" });
+    expect(fake.requests[0]?.universal?.headers).not.toHaveProperty("authorization");
+    expect(modelFor("chat", config)).toMatchObject({ provider: "meta", baseUrl: "binding:AI/gateway/meta", input: ["text", "image"] });
+    expect(isPriced(MUSE_SPARK_CONTRIBUTOR)).toBe(true);
+    expect(admitPolicy({ modelTier: DEFAULT_TIER, disabled: [] }, { person: sam.email, runId: "r", model: MUSE_SPARK_CONTRIBUTOR })).toEqual({ ok: true });
+    expect(acceptsImages("chat", config)).toBe(true);
+    expect(hedgeFor("chat", config)?.model).toBe("@cf/zai-org/glm-5.3-flash");
+    // Every other route stays on Workers AI.
+    expect(routeModel("subagent", config)).toBe("@cf/zai-org/glm-5.3-flash");
+  });
+
+  it("Meta's request is Chat Completions with the flat reasoning_effort and usage in the stream, and nothing OpenRouter-shaped", () => {
+    const body = requestBody("chat", MUSE_SPARK_CONTRIBUTOR, { messages: [], tools: [], maxTokens: 100 });
+    expect(body).toEqual({ model: MUSE_SPARK_CONTRIBUTOR, messages: [], stream: true, stream_options: { include_usage: true }, max_tokens: 100, reasoning_effort: "low" });
+    expect(body).not.toHaveProperty("provider");
+    expect(body).not.toHaveProperty("tool_choice");
+    expect(providerName(MUSE_SPARK_CONTRIBUTOR, undefined)).toBe("meta");
+  });
+
+  it("a CHAT_PROVIDER this file does not know, or one without a gateway, keeps chat on Workers AI", () => {
+    expect(modelConfig({ AI_GATEWAY_ID: "g", CHAT_PROVIDER: "openai" })).toEqual({ gatewayId: "g", chatProvider: "workers-ai", hedge: true });
+    expect(modelConfig({ CHAT_PROVIDER: "meta" })).toEqual(SELF_HOST_MODELS);
+  });
+
+  it("CHAT_HEDGE=off drops the hedge: the configured model answers alone, and nothing changes on Workers AI", () => {
+    const off = modelConfig({ AI_GATEWAY_ID: "g", CHAT_PROVIDER: "meta", CHAT_HEDGE: "off" });
+    expect(off.hedge).toBe(false);
+    expect(hedgeFor("chat", off)).toBeUndefined();
+    expect(routeModel("chat", off)).toBe(MUSE_SPARK_CONTRIBUTOR);
+    expect(hedgeFor("chat", modelConfig({ AI_GATEWAY_ID: "g", CHAT_PROVIDER: "openrouter", CHAT_HEDGE: "ON" }))?.model).toBe("@cf/zai-org/glm-5.3-flash");
+    expect(modelConfig({ CHAT_HEDGE: "off" })).toEqual({ ...SELF_HOST_MODELS, hedge: false });
   });
 });

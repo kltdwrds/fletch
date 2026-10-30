@@ -5,40 +5,59 @@
 // How a deploy reaches models is its own configuration (`modelConfig`), never a hardcoded gateway: a
 // self-host deploy (spec section 2, "Assumed") sends every route to Workers AI over the binding and no
 // gateway option at all. Setting the `AI_GATEWAY_ID` var routes every call through that AI Gateway, and
-// `CHAT_PROVIDER = "openrouter"` with a gateway id makes the chat route's primary the same model on
-// OpenRouter, served with the BYOK key stored in that gateway, with Workers AI as its hedge (M22.1, D1
-// amended 2026-10-15).
+// `CHAT_PROVIDER` with a gateway id moves the chat route's primary to that provider's one model, served
+// with the BYOK key stored in the gateway for it, with Workers AI as its hedge (M22.1, D1 amended
+// 2026-10-15): `openrouter` is GLM 5.3 Flash on OpenRouter; `meta` is Muse Spark 1.3 Contributor on Meta's
+// own Model API, reached as the gateway's custom provider `meta` (2026-10-30, for the parity loop's tier-2
+// runs). `CHAT_HEDGE = "off"` drops the hedge, so an eval of the configured model is answered by it alone.
 import type { Model } from "@earendil-works/pi-ai";
 
-/** GLM 5.3 Flash on Workers AI: every route's model by default, and the chat route's hedge under OpenRouter. */
+/** GLM 5.3 Flash on Workers AI: every route's model by default, and the chat route's hedge under a gateway provider. */
 export const GLM_WORKERS_AI = "@cf/zai-org/glm-5.3-flash";
-/** GLM 5.3 Flash on OpenRouter (D1 amended): the chat route's primary only when a deploy configures it. */
+/** GLM 5.3 Flash on OpenRouter (D1 amended): the chat route's primary under `CHAT_PROVIDER = "openrouter"`. */
 export const GLM_OPENROUTER = "z-ai/glm-5.3-flash";
+/**
+ * Muse Spark 1.3 Contributor on Meta's Model API (dev.meta.ai, 2026-10-30): the model Muse runs, at
+ * Contributor prices, in exchange for Meta training on what is sent. For the parity loop's evals, which
+ * carry only `test/fixtures/people.json` identities, never a deploy whose owner has not agreed to that.
+ * Meta redacts the reasoning text for API keys, so a turn on it shows no thinking.
+ */
+export const MUSE_SPARK_CONTRIBUTOR = "muse-spark-1.3-contributor";
+
+/** Where the chat route's primary runs: Workers AI over the binding, or a provider the gateway holds a key for. */
+export type ChatProvider = "workers-ai" | "openrouter" | "meta";
+/** The one model each gateway provider serves; the chat route calls it under that `CHAT_PROVIDER`. */
+export const PROVIDER_MODELS: Readonly<Record<Exclude<ChatProvider, "workers-ai">, string>> = Object.freeze({ openrouter: GLM_OPENROUTER, meta: MUSE_SPARK_CONTRIBUTOR });
 
 /** How this deploy reaches models, read from its vars by `modelConfig`. */
 export interface ModelConfig {
   /** The AI Gateway every call goes through; null sends no gateway option. */
   gatewayId: string | null;
-  /** The chat route's primary: Workers AI, or OpenRouter through the gateway's stored BYOK key. */
-  chatProvider: "workers-ai" | "openrouter";
+  /** The chat route's primary: Workers AI, or a provider through the gateway's stored BYOK key. */
+  chatProvider: ChatProvider;
+  /** Whether the chat route races its hedge; off, the primary answers alone and its failure is the step's. */
+  hedge: boolean;
 }
 /** A self-host deploy's models (spec section 2): Workers AI over the binding, no gateway, no key. */
-export const SELF_HOST_MODELS: ModelConfig = Object.freeze({ gatewayId: null, chatProvider: "workers-ai" });
+export const SELF_HOST_MODELS: ModelConfig = Object.freeze({ gatewayId: null, chatProvider: "workers-ai", hedge: true });
 
-/** The vars `modelConfig` reads; both optional, so a deploy that sets neither is a self-host one. */
+/** The vars `modelConfig` reads; all optional, so a deploy that sets none is a self-host one. */
 export interface ModelVars {
   AI_GATEWAY_ID?: string;
   CHAT_PROVIDER?: string;
+  CHAT_HEDGE?: string;
 }
 /**
- * A deploy's model configuration from its vars. OpenRouter is reached only through a gateway (its key is
- * stored there, never in the Worker), so `CHAT_PROVIDER = "openrouter"` without `AI_GATEWAY_ID` keeps the
- * chat route on Workers AI.
+ * A deploy's model configuration from its vars. A gateway provider is reached only through a gateway (its
+ * key is stored there, never in the Worker), so `CHAT_PROVIDER` without `AI_GATEWAY_ID` keeps the chat
+ * route on Workers AI, as does a value this file does not know: a typo never sends a request anywhere.
  */
 export function modelConfig(env: ModelVars): ModelConfig {
   const gatewayId = env.AI_GATEWAY_ID?.trim() || null;
-  const chatProvider = gatewayId && env.CHAT_PROVIDER?.trim().toLowerCase() === "openrouter" ? "openrouter" : "workers-ai";
-  return { gatewayId, chatProvider };
+  const named = env.CHAT_PROVIDER?.trim().toLowerCase() ?? "";
+  const chatProvider: ChatProvider = gatewayId && Object.hasOwn(PROVIDER_MODELS, named) ? (named as ChatProvider) : "workers-ai";
+  const hedge = env.CHAT_HEDGE?.trim().toLowerCase() !== "off";
+  return { gatewayId, chatProvider, hedge };
 }
 
 /** Each route's model on a self-host deploy; `routeModel` applies a deploy's configuration. */
@@ -56,9 +75,9 @@ export const ROUTES = {
 export type ChatRoute = keyof typeof ROUTES;
 export type Route = ChatRoute | "embedding";
 
-/** The model `route` calls under `config`: OpenRouter's GLM for chat when configured, else the route's own. */
+/** The model `route` calls under `config`: the configured provider's model for chat, else the route's own. */
 export function routeModel(route: ChatRoute, config: ModelConfig = SELF_HOST_MODELS): string {
-  return route === "chat" && config.chatProvider === "openrouter" ? GLM_OPENROUTER : ROUTES[route];
+  return route === "chat" && config.chatProvider !== "workers-ai" ? PROVIDER_MODELS[config.chatProvider] : ROUTES[route];
 }
 
 /**
@@ -70,11 +89,15 @@ export const EMBEDDING_DIMENSIONS = 768;
 export const EMBEDDING_POOLING = "cls";
 
 /**
- * Models served by OpenRouter (M22.1): reached as a universal request through the configured gateway,
- * never over a key in tenant code. Any other model id is Workers AI's.
+ * The provider that serves a model (M22.1): a gateway provider's model is reached as a universal request
+ * through the configured gateway, never over a key in tenant code; any other model id is Workers AI's.
  */
-const OPENROUTER_MODELS: ReadonlySet<string> = new Set([GLM_OPENROUTER]);
-export const isOpenRouter = (model: string): boolean => OPENROUTER_MODELS.has(model);
+export function providerOf(model: string): ChatProvider {
+  for (const [provider, m] of Object.entries(PROVIDER_MODELS)) if (m === model) return provider as ChatProvider;
+  return "workers-ai";
+}
+/** pi's provider name for a model's host, as its messages and Ledger rows carry it. */
+export const piProvider = (model: string): string => (providerOf(model) === "workers-ai" ? "cloudflare-workers-ai" : providerOf(model));
 /**
  * OpenRouter's provider routing for the chat route (D1 amended): the fastest host first, and only
  * hosts that honour every parameter sent (`tools`, `reasoning`), so a host that would drop either is
@@ -87,8 +110,8 @@ export const OPENROUTER_PROVIDER = { sort: "latency", require_parameters: true }
  * within `delayMs`, the same request goes to `model`; the first stream to give a token is the turn's
  * and the other is aborted. `delayMs` starts at 5 s, about the 75th to 80th percentile of Workers AI's
  * first token on staging (proposals/2026-10-15-chat-latency-research.md) and above OpenRouter's p90.
- * A hedge applies only while the chat route's primary is OpenRouter; on Workers AI there is nothing to
- * hedge against.
+ * A hedge applies only while the chat route's primary is OpenRouter and the deploy has not set
+ * `CHAT_HEDGE = "off"`; on Workers AI there is nothing to hedge against.
  */
 export interface Hedge {
   model: string;
@@ -98,18 +121,18 @@ export const HEDGES: Partial<Record<Route, Hedge>> = { chat: { model: GLM_WORKER
 /** The hedge `route` races under `config`, if any. */
 export function hedgeFor(route: Route, config: ModelConfig = SELF_HOST_MODELS): Hedge | undefined {
   const hedge = HEDGES[route];
-  return hedge && route === "chat" && routeModel("chat", config) !== hedge.model ? hedge : undefined;
+  return hedge && route === "chat" && config.hedge && routeModel("chat", config) !== hedge.model ? hedge : undefined;
 }
 
 /**
  * Model tiers a company policy picks from (M10.2): the models its members' agents may call. The
  * Ledger refuses a call to a model outside the tier before it is made. `standard` is every model a
- * route, a hedge or a configured chat provider names today, so the default changes nothing; `economy`
- * is D1's default model alone, GLM 5.3 Flash, on both hosts the chat route may use.
+ * route, a hedge or a chat provider names today, so the default changes nothing; `economy` is D1's
+ * default model alone, GLM 5.3 Flash, on both hosts the chat route may use.
  */
 export const MODEL_TIERS = {
   economy: [GLM_OPENROUTER, GLM_WORKERS_AI],
-  standard: [...new Set<string>([...Object.values(ROUTES), GLM_OPENROUTER, ...Object.values(HEDGES).map((h) => h.model)])],
+  standard: [...new Set<string>([...Object.values(ROUTES), ...Object.values(PROVIDER_MODELS), ...Object.values(HEDGES).map((h) => h.model)])],
 } as const satisfies Record<string, readonly string[]>;
 export type ModelTier = keyof typeof MODEL_TIERS;
 export const DEFAULT_TIER: ModelTier = "standard";
@@ -118,13 +141,17 @@ export const isModelTier = (t: unknown): t is ModelTier => typeof t === "string"
 /** pi's API name for this adapter: OpenAI chat completions carried by the `AI` binding, to Workers AI or through a gateway. */
 export const BINDING_API = "workers-ai-binding";
 
-/** GLM 5.3 Flash's window is its model page's (fetched 2026-10-12); others take a conservative default. */
-const CONTEXT_WINDOW: Record<string, number> = { [GLM_WORKERS_AI]: 1_048_576, [GLM_OPENROUTER]: 1_048_576 };
 /**
- * Reasoning effort per route (M18.3), sent as `reasoning_effort` to Workers AI and as
+ * GLM 5.3 Flash's window is its model page's (fetched 2026-10-12); Muse Spark 1.3 Contributor's is
+ * Meta's model page (dev.meta.ai, fetched 2026-10-30); others take a conservative default.
+ */
+const CONTEXT_WINDOW: Record<string, number> = { [GLM_WORKERS_AI]: 1_048_576, [GLM_OPENROUTER]: 1_048_576, [MUSE_SPARK_CONTRIBUTOR]: 1_048_576 };
+/**
+ * Reasoning effort per route (M18.3), sent as `reasoning_effort` to Workers AI and to Meta, and as
  * `reasoning: { effort }` to OpenRouter (M22.1). GLM 5.3 Flash takes `low`, `high` or `max`, defaults
- * to `max` and cannot turn reasoning off (its model page, fetched 2026-10-15); a route absent here
- * sends none and keeps that default until its cost is measured.
+ * to `max` and cannot turn reasoning off (its model page, fetched 2026-10-15); Muse Spark takes `none`
+ * to `xhigh` (`max` only on the standard tier; dev.meta.ai, 2026-10-30), so the chat route's `low` is
+ * on both. A route absent here sends none and keeps the model's default until its cost is measured.
  */
 export type ReasoningEffort = "low" | "high" | "max";
 export const REASONING_EFFORT: Partial<Record<Route, ReasoningEffort>> = { chat: "low" };
@@ -147,9 +174,15 @@ const MAX_TOKENS: Partial<Record<Route, number>> = { verifier: 2_048, caption: 1
 /**
  * What each model takes as input (M24.3): GLM 5.3 Flash takes images on both hosts, by OpenRouter's
  * model list (`input_modalities` text, image, video) and Workers AI's model page ("Vision: Yes"),
- * both read 2026-10-16. A model absent here takes text alone, so an image never reaches one unasked.
+ * both read 2026-10-16; Muse Spark 1.3 Contributor takes `image_url` parts in user messages by Meta's
+ * Chat Completions reference (dev.meta.ai, 2026-10-30). A model absent here takes text alone, so an
+ * image never reaches one unasked.
  */
-const MODEL_INPUT: Record<string, ReadonlyArray<"text" | "image">> = { [GLM_OPENROUTER]: ["text", "image"], [GLM_WORKERS_AI]: ["text", "image"] };
+const MODEL_INPUT: Record<string, ReadonlyArray<"text" | "image">> = {
+  [GLM_OPENROUTER]: ["text", "image"],
+  [GLM_WORKERS_AI]: ["text", "image"],
+  [MUSE_SPARK_CONTRIBUTOR]: ["text", "image"],
+};
 const inputOf = (model: string): Array<"text" | "image"> => [...(MODEL_INPUT[model] ?? ["text"])];
 /** Whether a route's model, and its hedge's, take image input: an image goes to the model only then. */
 export const acceptsImages = (route: ChatRoute, config: ModelConfig = SELF_HOST_MODELS): boolean =>
@@ -161,8 +194,8 @@ export function modelFor(route: ChatRoute, config: ModelConfig = SELF_HOST_MODEL
     id,
     name: id,
     api: BINDING_API,
-    provider: isOpenRouter(id) ? "openrouter" : "cloudflare-workers-ai",
-    baseUrl: isOpenRouter(id) ? "binding:AI/gateway/openrouter" : "binding:AI",
+    provider: piProvider(id),
+    baseUrl: providerOf(id) === "workers-ai" ? "binding:AI" : `binding:AI/gateway/${providerOf(id)}`,
     input: inputOf(id),
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
     reasoning: true,
