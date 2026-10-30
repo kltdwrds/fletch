@@ -69,4 +69,5 @@ After adding or changing a record, run `node scripts/check-decisions.mjs --write
 | [D-0015](0015-tier2-evals-in-ci.md) | Tier-2 evals run in CI on a PR touching the agent, with the slot token and a Workers AI spend cap as repository secrets | proposed | one-way | 2026-10-29 | 2026-12-31 |
 | [D-0016](0016-oauth-connectors.md) | Connectors that authenticate by OAuth authorization code get a redirect route, a state store and token refresh on the agent | proposed | one-way | 2026-10-30 | 2026-12-31 |
 | [D-0017](0017-no-payment-instrument.md) | fletch holds no payment instrument and submits no payment; the person pays in a live page they take over | proposed | one-way | 2026-10-30 | 2026-12-31 |
+| [D-0018](0018-agent-name-is-the-owners-setting.md) | The agent's name and avatar are the owner's settings, written only by the owner through the app; until that setting exists the agent has no name and says so | proposed | one-way | 2026-10-30 | 2026-12-31 |
 <!-- index:end -->
