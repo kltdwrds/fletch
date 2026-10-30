@@ -132,6 +132,32 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
+### Q32 (P12), 2026-10-30: D-0017 proposed: fletch holds no payment instrument and submits no payment; and P12's reversible choices
+
+**Blocks nothing; a one-way door for you to accept, amend or reject.** The P12 interrogation found Muse's wallet to be a
+provider's (Link by Stripe, Shop Pay): card entry only on the provider's page, a one-time virtual card funded after
+the person approves on a runtime-drawn payment sheet, no standing allowance, spend state in three runtime tables that
+held no row, both providers `not_connected` in the account. fletch has no instrument kind, no production tool with
+`purchase: true`, a grants engine that never lets a purchase run under a lasting grant, read-only jobs, refused
+sub-agents, and a browse handoff in which the person pays. The two agree on everything but reach. The orchestrator
+wrote `docs/decisions/0017-no-payment-instrument.md` (proposed, `decider: agent`): the agent keeps no payment
+instrument of any shape and never submits a payment; a purchase is proposed to the person's card and, allowed once,
+handed over in the live page where the person pays; a purchase that cannot be handed over is refused in words; a card
+typed in chat is held as a `typed` secret and expires unused. If wrong, the one path is a provider's one-time card
+behind a `payments` `HostFeature`, an opt-in binding and a spend table, never a stored card number. Nothing in F38 or
+F39 depends on the answer. **Recommended answer:** accept D-0017 as the standing position until the first owner asks
+the agent to pay for something it cannot hand over; then a part under P12 with the provider path's clauses.
+Three gaps the contract leaves open on it: a decline or a re-authentication fletch could produce (none without a
+provider); a Wallet pane that says "none here" (a surface the person would reach for, a specimen and a part after your
+answer); an expiry or a code typed without a number (the card words hold "cvc 123", a bare "12/30" is not held).
+P12's reversible choices (the decision log is at its cap, Q30): (a) a Luhn card shape and the card words in
+`vault/typed.ts`, held like any typed secret rather than refusing the message; (b) four `WORK_WORDS` lines for the
+refusal, the typed card, the allowance ask and the handoff's return, graded by deny-lists, no code-written reply (Q18);
+(c) a `purchase` row in `KIND_WORDS`, the amount staying on the card and never in the journal; (d) the P12 world
+composed from the P15, P7 and P3 worlds, no wallet fixture that pretends to a provider; (e) every count graded
+against the tables, never the model's history; (f) the evidence folder keeps `scenario.md` step 3 with the fixture
+address masked by the redaction gate (the step had already run; restoring it was not worth a second pass).
+
 ### Q31 (F37), 2026-10-30: T-P9-15 fails 0/3 on the slot because the model says "allowed hosts", not "bound"; and F37's two-way choices
 
 **Blocks nothing; for your read.** On fletch-pv-1 at a46d617, T-P9-15 (nice-to-have) failed 3/3 on "the first reply
