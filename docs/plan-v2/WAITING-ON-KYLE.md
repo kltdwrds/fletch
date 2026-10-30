@@ -588,6 +588,18 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
   settle. Not drawn, by D-0018 and Q33: no name, avatar, session list, sign-out-everywhere or recovery reissue. Say
   "fine" or what to change; F41 waits on F40 merging, not on this.
 
+- [ ] 2026-10-30 uat: **payments after F38 and F39** (https://fletch-pv-3.edwards-ky1.workers.dev, F39's lease to
+  2026-10-31T20:00Z, serving 0565116). Ask the agent to buy something from a shop address: the reply says it cannot pay,
+  names each blocker (the address did not resolve, no payment method), looks for no other seller, says nothing about
+  whether a sale happened, and ends by offering the live page for you to pay in yourself; type a card number in chat: the
+  reply begins "I will not keep", repeats no digit, says this deploy "holds no card" and names no form, key or vault
+  (a typed key still gets the capture form); ask for a spending allowance: refused with the rule (each purchase once on
+  its own card), nothing written for it, and the daily cap named as model spend, not your money; hand control back from
+  a live page: the agent says it cannot see the payment and points you at the merchant's confirmation. Nice-to-have
+  misses recorded in Q35: asked about your wallet it says "not connected" and "no payment method on file" rather than
+  "no wallet", and once in three it answered the daily-cap question without the allowance refusal. Say what reads
+  wrong; nothing here blocks. PRs: https://github.com/kltdwrds/fletch/pull/75, https://github.com/kltdwrds/fletch/pull/78.
+
 ## Steering
 
 ## Done
