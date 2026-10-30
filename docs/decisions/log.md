@@ -375,8 +375,9 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   (`SubAgent.reads`, overridden only there); the slot's thread drops the never-drawn reasoning. T-P5-15's count
   parser reads "Link count: 1"; T-P5-13's grader stays F31's and the failing must-haves got `WORK_WORDS` lines.
   Agent.
-- 2026-10-30 P3 translated (`contracts/P3-delegation.md`, "Deltas"): eight two-way deltas, among them a steer of a
-  running child is a close and a new delegation said so (no send, no resume) and a Stop settles the children it
-  stopped (F31, Q25). No one-way door. Orchestrator.
+- 2026-10-30 P3 translated (`contracts/P3-delegation.md`): a steer is a close and a new delegation; a Stop settles
+  its children (F31, Q25). No one-way door. Orchestrator.
 - 2026-10-30 F33: the drawer's Stop draws a stopped entry and tells the next turn (`haltNote`); task usage counts
   child and verifier calls; the delegate schemas drop `maxItems` so the gate's SUBAGENT_FANOUT_CAP answers. Agent.
+- 2026-10-30 P9 translated (`contracts/P9-connectors.md`): a setup item with Dismiss; a refused plan's audit row;
+  OAuth proposed as D-0016. Orchestrator.

@@ -392,6 +392,41 @@ Kyle's own lines go under `## Steering`.
   [SCORECARD P5](SCORECARD.md), [Q25](QUESTIONS.md#q25-p5-f31-2026-10-30-should-stop-end-the-sub-agents-the-stopped-turn-launched-or-let-them-run-on),
   `packages/agent/src/chat/instructions.ts` (`WORK_WORDS`), `docs/plan-v2/contracts/P5-activity.md`, the four P5
   results files under `docs/plan-v2/evidence/results/` (T-P5-12 to 15).
+- [ ] 2026-10-30 decide: **D-0016, OAuth connectors (proposed one-way door), and a playlist to delete.** fletch connects
+  a provider by a token or a login the person enters on the capture form; Muse's provider connectors are OAuth grants
+  through the provider's consent page. A redirect route that receives codes and a refresh-token kind in the Vault are
+  a security boundary and a storage schema, so the record is proposed, not taken: accept it (a part after the spine),
+  reject it (OAuth-only providers stay refused by name) or say what to change. Separately, Muse created a playlist
+  `p9 probe` in your music account during the P9 interrogation (step 6: a method default overrode the group's `ask`,
+  no card); the connector cannot delete it, so it is yours to remove in the provider's app. Deep dive:
+  [D-0016](../decisions/0016-oauth-connectors.md),
+  [Q27](QUESTIONS.md#q27-p9-2026-10-30-the-oauth-door-d-0016-a-playlist-left-in-your-music-account-and-nine-muse-credential-findings-fletch-already-rules-out),
+  [contract, One-way doors](contracts/P9-connectors.md), `docs/plan-v2/evidence/p9-connectors/answers/step-6.md` and
+  `step-12.md` ("Left behind in Muse").
+- [ ] 2026-10-30 look: **the P9 credentials and connectors contract and its nine deltas from Muse.** The interrogation
+  of muse.ai (one side chat, 13 steps, 95 files through `pnpm redact`, no value entered, nothing pressed on a card,
+  nothing connected or disconnected) found that a secret typed in chat is refused "not in memory, not in a file" and
+  then kept in clear in four rows and drawn unmasked after reload; a setup card has no Cancel, shows no host and
+  leaves an abandoned session nobody can remove; a write ran with no card because a method's default overrode the
+  group's `ask`; a read and a write wrote no audit row; no table holds a connection's status and a connection dropped
+  with nothing told; Permissions says Connectors 12 while the tool lists 6; the mail is read for a sign-in code with
+  no separate ask; `device.list` says 4 where Settings shows 2 and `device.unpair` runs on the model's confirmation;
+  `/settings` at phone width is "Page not found" and a reload loads four marketing pixel frames. The contract
+  translates each into fletch's rule (a setup is a link the person opens and a chat item they can dismiss; the sending
+  tab masks what it sent; a refused plan writes its audit row; a row has a status word and a last use; Disconnect is
+  on the row and says what remains from a fixed list; every grant in one pane with the same counts; the code's
+  approval is a card; what the agent counts is what the pane lists; a reply says what this deploy has no surface for)
+  with the rejected alternative beside each; one one-way door proposed (D-0016, above). F35 (tier 1, the bubble fix,
+  the audit row, four instruction lines), F36 (the surfaces, after their specimens) and F37 (tier 2) follow. What to
+  read: the Clauses and the Deltas; say under Steering if a delta reads wrong, in particular delta 1 (a setup item
+  with Dismiss and no pending vault row) and delta 5 (no background health check: a status changes at a use). Deep
+  dive: [contract](contracts/P9-connectors.md),
+  [Q27](QUESTIONS.md#q27-p9-2026-10-30-the-oauth-door-d-0016-a-playlist-left-in-your-music-account-and-nine-muse-credential-findings-fletch-already-rules-out),
+  [F35 to F37 in parts.md](parts.md#f35-credentials-as-they-are-the-p9-contract-check-eighteen-task-files-the-sending-tabs-mask-the-refused-plans-audit-row-four-instruction-lines-and-tier-1),
+  [SCORECARD P9](SCORECARD.md), evidence on your Mac under `docs/plan-v2/evidence/p9-connectors/` (`answers/step-0.md`
+  to `step-12.md`; `step-2-card.png` the card with no Cancel; `step-4-reload.png` the marker drawn back;
+  `step-6.png` the write with no card; `step-8-permissions.png` Connectors 12; `step-10.png` two of four devices;
+  `step-11-settings-reload-phone.png` "Page not found"; `answers/step-12.md` "Left behind in Muse").
 
 ## Steering
 
