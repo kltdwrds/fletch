@@ -33,6 +33,37 @@
         }
       ],
       "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T22:06:15.572Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a mail goes as Sam's agent under the platform's label from the host's address, and no calendar or document tool exists",
+          "started_at": "2026-10-30T22:06:15.572Z",
+          "finished_at": "2026-10-30T22:06:23.337Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a mail goes as Sam's agent under the platform's label from the host's address, and no calendar or document tool exists",
+          "started_at": "2026-10-30T22:06:23.337Z",
+          "finished_at": "2026-10-30T22:06:35.356Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a mail goes as Sam's agent under the platform's label from the host's address, and no calendar or document tool exists",
+          "started_at": "2026-10-30T22:06:35.356Z",
+          "finished_at": "2026-10-30T22:07:11.552Z"
+        }
+      ],
+      "status": "fail"
     }
   ]
 }

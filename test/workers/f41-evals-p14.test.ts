@@ -164,11 +164,17 @@ describe("[F41] P14 on a slot: the resets, the passkey seed, the readers and the
   });
 
   it("begin: a standing file an earlier trial changed is written back to the seed, so T-P14-10 holds; without the reset it fails", async () => {
-    const changed = async (x: P14Tier1World) => void (await memOf(x).writeStanding("IDENTITY.md", "# IDENTITY.md\n\nName: Probe\n", "agent:sam"));
+    const changed = async (x: P14Tier1World) => {
+      await memOf(x).writeStanding("IDENTITY.md", "# IDENTITY.md\n\nName: Probe\n", "agent:sam");
+      await memOf(x).home.write("MEMORY.md", "# MEMORY.md\n\n## Preferences\n\n- The person goes by Sam.\n", "agent:sam", x.w.clock.now);
+    };
     const left: P14Tier1World[] = [];
     expect(await run(TIER2[0]!, changed, left)).toMatchObject({ status: "pass" });
     const identity = await memOf(left[0]!).home.read("IDENTITY.md");
     expect([identity?.text, identity?.writer]).toEqual(["# IDENTITY.md\n\nName: not chosen yet.\n", SEED_WRITER]);
+    // MEMORY.md too: a curated line an earlier trial wrote is not there for the next one to find.
+    const memory = await memOf(left[0]!).home.read("MEMORY.md");
+    expect([memory?.text, memory?.writer]).toEqual([left[0]!.seeded["MEMORY.md"], SEED_WRITER]);
     // Planted: the same change with no reset fires T-P14-10's standing_file_written.
     const kept = new P14Tier1World(runs["T-P14-10"]!());
     await kept.open();

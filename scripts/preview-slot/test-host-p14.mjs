@@ -3,7 +3,7 @@
 // served only to the lease's holder (./ops.mjs, `/__preview/test-host`). Pure, so a hermetic test runs it; delta 6
 // allows it no op beyond a standing-file reset and a passkey seed.
 //
-// - `reset` (the standing-file reset): each of the person's standing files but MEMORY.md that is not the seed's text
+// - `reset` (the standing-file reset): each of the person's standing files, MEMORY.md among them, that is not the seed's text
 //   by the seed's writer is written back as `defaultStanding` gives it, by `qyvr:seed`, as the first read seeds it.
 // - `seed` (the passkey seed): when the owner holds fewer than two passkeys, one more is added to the Company's login
 //   store through its own `add` op: an inert fixture credential (its public key is fixed bytes, so nothing can sign in
@@ -45,12 +45,15 @@ export function counts(sql) {
 
 const STANDING = STANDING_FILES.filter((n) => n !== 'MEMORY.md');
 
-/** The person's standing files beside MEMORY.md written back to the seed where they are not it (the standing-file reset). */
+/**
+ * The person's standing files, MEMORY.md among them, written back to the seed where they are not it (the standing-file
+ * reset): a trial starts with no curated line an earlier trial wrote, as a tier-1 world does ("you already go by Sam").
+ */
 export async function p14ResetStanding(bucket, person, now) {
   const home = new HomeBucket(bucket, person);
   const seed = defaultStanding(person);
   const reset = [];
-  for (const name of STANDING) {
+  for (const name of STANDING_FILES) {
     const f = await home.read(name);
     if (f && f.text === seed[name] && f.writer === SEED_WRITER) continue;
     await home.write(name, seed[name], SEED_WRITER, now);

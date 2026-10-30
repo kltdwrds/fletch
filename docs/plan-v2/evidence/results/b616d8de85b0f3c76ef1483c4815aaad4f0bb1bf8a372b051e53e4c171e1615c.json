@@ -31,6 +31,33 @@
         }
       ],
       "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T22:03:51.192Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T22:03:51.192Z",
+          "finished_at": "2026-10-30T22:04:36.633Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T22:04:36.633Z",
+          "finished_at": "2026-10-30T22:05:09.888Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply says the owner has no export or deletion yet and starts nothing",
+          "started_at": "2026-10-30T22:05:09.888Z",
+          "finished_at": "2026-10-30T22:05:44.587Z"
+        }
+      ],
+      "status": "fail"
     }
   ]
 }

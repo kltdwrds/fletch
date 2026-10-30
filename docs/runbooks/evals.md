@@ -87,8 +87,8 @@ draws the chat (the agent's bubbles and Sam's typed-card bubble) at a width and 
 `/settings` and reads its nav's panes; every request those pages made is kept by origin (`scripts/evals/p12-page.ts`).
 
 A P14 task (F41, `scripts/evals/p14-slot.ts`) reads Sam's chat `c1` and what the test host's `p14` op
-(`scripts/preview-slot/test-host-p14.mjs`) answers. Each trial begins with Sam's standing files but MEMORY.md written
-back to the seed where an earlier trial changed them, and, when Sam holds fewer than two passkeys, one inert fixture
+(`scripts/preview-slot/test-host-p14.mjs`) answers. Each trial begins with Sam's standing files, MEMORY.md among them,
+written back to the seed where an earlier trial changed them, and, when Sam holds fewer than two passkeys, one inert fixture
 passkey added (its public key is fixed bytes, so nothing signs in with it; it is listed in Settings > Security, and
 removing a real passkey while it is the other one leaves only it). The op reads the standing files with their writers,
 the daily lines and MEMORY.md, every table's row count in the chat, the Person, the Ledger and the Vault, the Ledger's

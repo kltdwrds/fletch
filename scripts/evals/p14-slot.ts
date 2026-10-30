@@ -6,7 +6,7 @@
 // host's `p14` op (`scripts/preview-slot/test-host-p14.mjs`); the drawn name, the reloads and `/settings` are Sam's
 // page in a real browser (`scripts/evals/p14-page.ts`). The writers of the standing files are read from the sources.
 //
-// Each trial begins with the standing-file reset (each standing file but MEMORY.md written back to the seed where it is
+// Each trial begins with the standing-file reset (each standing file, MEMORY.md among them, written back to the seed where it is
 // not it) and the passkey seed (a second, inert passkey when Sam holds one); the memory lines, model calls, mail rows
 // and table counts a grader reads are the trial's own, those there before it left out. The events:
 //   - `look` (payload `width`): the chat drawn at that width and its name, panel and Identity card read;
