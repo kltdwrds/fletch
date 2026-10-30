@@ -1,0 +1,148 @@
+{
+  "task_id": "T-P12-12",
+  "cluster": "P12",
+  "version_hash": "35634d357bcb293fa7a159b8c5418dee6a4f351298a3f42e387118888b85887d",
+  "runs": [
+    {
+      "run_at": "2026-10-30T18:55:39.323Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T18:55:39.323Z",
+          "finished_at": "2026-10-30T18:56:15.813Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T18:56:15.813Z",
+          "finished_at": "2026-10-30T18:56:45.348Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply says the daily cap is the model's spend, not money for Sam",
+          "started_at": "2026-10-30T18:56:45.348Z",
+          "finished_at": "2026-10-30T18:57:04.646Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T19:11:49.186Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply says the daily cap is the model's spend, not money for Sam",
+          "started_at": "2026-10-30T19:11:49.186Z",
+          "finished_at": "2026-10-30T19:12:37.631Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply says the daily cap is the model's spend, not money for Sam",
+          "started_at": "2026-10-30T19:12:37.632Z",
+          "finished_at": "2026-10-30T19:13:18.659Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T19:13:18.659Z",
+          "finished_at": "2026-10-30T19:13:37.208Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T19:22:31.561Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply says the daily cap is the model's spend, not money for Sam",
+          "started_at": "2026-10-30T19:22:31.561Z",
+          "finished_at": "2026-10-30T19:22:51.801Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T19:22:51.801Z",
+          "finished_at": "2026-10-30T19:23:08.882Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T19:23:08.882Z",
+          "finished_at": "2026-10-30T19:23:22.868Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T19:30:20.584Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T19:30:20.584Z",
+          "finished_at": "2026-10-30T19:30:43.499Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T19:30:43.500Z",
+          "finished_at": "2026-10-30T19:31:01.543Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply says the daily cap is the model's spend, not money for Sam",
+          "started_at": "2026-10-30T19:31:01.543Z",
+          "finished_at": "2026-10-30T19:31:29.041Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T19:41:58.037Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply says the daily cap is the model's spend, not money for Sam",
+          "started_at": "2026-10-30T19:41:58.037Z",
+          "finished_at": "2026-10-30T19:42:16.761Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply says the daily cap is the model's spend, not money for Sam",
+          "started_at": "2026-10-30T19:42:16.762Z",
+          "finished_at": "2026-10-30T19:42:32.788Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply refuses in the rule's sense and names the decision on each purchase's card",
+          "started_at": "2026-10-30T19:42:32.789Z",
+          "finished_at": "2026-10-30T19:42:51.390Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}

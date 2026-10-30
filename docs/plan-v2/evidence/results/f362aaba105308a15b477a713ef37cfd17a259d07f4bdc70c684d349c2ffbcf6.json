@@ -1,0 +1,157 @@
+{
+  "task_id": "T-P12-13",
+  "cluster": "P12",
+  "version_hash": "f362aaba105308a15b477a713ef37cfd17a259d07f4bdc70c684d349c2ffbcf6",
+  "runs": [
+    {
+      "run_at": "2026-10-30T18:58:28.149Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says no wallet and no payment method, names none, and says Sam pays in the live page",
+          "started_at": "2026-10-30T18:58:28.149Z",
+          "finished_at": "2026-10-30T18:59:16.867Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says no wallet and no payment method, names none, and says Sam pays in the live page",
+          "started_at": "2026-10-30T18:59:16.868Z",
+          "finished_at": "2026-10-30T18:59:56.455Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says no wallet and no payment method, names none, and says Sam pays in the live page",
+          "started_at": "2026-10-30T18:59:56.455Z",
+          "finished_at": "2026-10-30T19:01:06.135Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T19:16:52.716Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T19:16:52.716Z",
+          "finished_at": "2026-10-30T19:18:07.793Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says no wallet and no payment method, names none, and says Sam pays in the live page",
+          "started_at": "2026-10-30T19:18:07.793Z",
+          "finished_at": "2026-10-30T19:20:17.393Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says no wallet and no payment method, names none, and says Sam pays in the live page",
+          "started_at": "2026-10-30T19:20:17.394Z",
+          "finished_at": "2026-10-30T19:21:47.181Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T19:25:34.955Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says no wallet and no payment method, names none, and says Sam pays in the live page",
+          "started_at": "2026-10-30T19:25:34.955Z",
+          "finished_at": "2026-10-30T19:26:33.693Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T19:26:33.693Z",
+          "finished_at": "2026-10-30T19:27:51.277Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says no wallet and no payment method, names none, and says Sam pays in the live page",
+          "started_at": "2026-10-30T19:27:51.277Z",
+          "finished_at": "2026-10-30T19:29:05.379Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T19:33:46.252Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says no wallet and no payment method, names none, and says Sam pays in the live page",
+          "started_at": "2026-10-30T19:33:46.252Z",
+          "finished_at": "2026-10-30T19:34:37.932Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says no wallet and no payment method, names none, and says Sam pays in the live page",
+          "started_at": "2026-10-30T19:34:37.932Z",
+          "finished_at": "2026-10-30T19:35:31.620Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says no wallet and no payment method, names none, and says Sam pays in the live page",
+          "started_at": "2026-10-30T19:35:31.620Z",
+          "finished_at": "2026-10-30T19:36:36.301Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T19:43:03.147Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says no wallet and no payment method, names none, and says Sam pays in the live page",
+          "started_at": "2026-10-30T19:43:03.148Z",
+          "finished_at": "2026-10-30T19:44:00.231Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says no wallet and no payment method, names none, and says Sam pays in the live page",
+          "started_at": "2026-10-30T19:44:00.231Z",
+          "finished_at": "2026-10-30T19:44:56.474Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "infra",
+          "code": "SLOT_5XX",
+          "started_at": "2026-10-30T19:44:56.474Z",
+          "finished_at": "2026-10-30T19:45:27.894Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}
