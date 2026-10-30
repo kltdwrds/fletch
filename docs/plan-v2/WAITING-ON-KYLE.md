@@ -600,6 +600,14 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
   "no wallet", and once in three it answered the daily-cap question without the allowance refusal. Say what reads
   wrong; nothing here blocks. PRs: https://github.com/kltdwrds/fletch/pull/75, https://github.com/kltdwrds/fletch/pull/78.
 
+- [ ] 2026-10-30 do: **sign the `claude` CLI in again on this Mac; builder sessions cannot start until you do.** At
+  20:30Z the F41 builder (`claude -p "$(grep -m1 '^/goal ' docs/plan-v2/GOAL-PROMPT.md)" … --model opus`) exited at
+  once with `Failed to authenticate: OAuth session expired and could not be refreshed`, twice. The orchestrator's own
+  session is unaffected, so F41 is being built by an Opus sub-agent of the orchestrator under the same protocol
+  (`docs/plan-v2/KICKOFF.md`, the verifier as a fresh Opus sub-agent as KICKOFF step 5 already says); the next part
+  after F41 goes back to a `claude -p` builder once the CLI can authenticate. What to do: in a terminal, `claude` then
+  `/login`, and say so under Steering. Nothing else waits on it: F37's and F39's slots and leases are unchanged.
+
 ## Steering
 
 ## Done
