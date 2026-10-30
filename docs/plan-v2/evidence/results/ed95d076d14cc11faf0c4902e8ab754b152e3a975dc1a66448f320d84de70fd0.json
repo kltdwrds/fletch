@@ -1,0 +1,38 @@
+{
+  "task_id": "T-P7-14",
+  "cluster": "P7",
+  "version_hash": "ed95d076d14cc11faf0c4902e8ab754b152e3a975dc1a66448f320d84de70fd0",
+  "runs": [
+    {
+      "run_at": "2026-10-30T09:59:10.134Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the dialog shows the badge in words, the time, the collapsed run history and the fixed actions",
+          "started_at": "2026-10-30T09:59:10.134Z",
+          "finished_at": "2026-10-30T09:59:19.590Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the dialog shows the badge in words, the time, the collapsed run history and the fixed actions",
+          "started_at": "2026-10-30T09:59:19.590Z",
+          "finished_at": "2026-10-30T09:59:27.775Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the dialog shows the badge in words, the time, the collapsed run history and the fixed actions",
+          "started_at": "2026-10-30T09:59:27.775Z",
+          "finished_at": "2026-10-30T09:59:37.658Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}
