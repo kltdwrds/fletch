@@ -412,3 +412,57 @@ their results recorded whatever the verdict; `ACCEPT F32: PASS`; `VERIFIER: no b
 **Not in scope:** a change to a clause; new instruction lines beyond what a failing must-have needs, each named in the
 PR body with its task.
 
+
+## F33 Delegation as it is: the P3 contract check, seventeen task files, the steer and refusal words, a child's failed count and tokens, a bare number as text and tier 1
+
+**Read:** `docs/plan-v2/contracts/P3-delegation.md` (every clause, the Tasks, the Translation's deltas 2, 4, 5, 6 and 8,
+the Build notes), the P5 world and tasks under `test/evals/p5-activity/` as the pattern (`subagent-section.task.ts` in
+particular), `packages/agent/src/subagents/` (`depth.ts`, `host.ts`, `run.ts`, `store.ts`, `tools.ts`, `verifier.ts`,
+`namespaces.ts`), `packages/agent/src/chat/mailbox.ts`, `chat/engine.ts`, `chat/stop.ts`, `chat/steering.ts`,
+`chat/activity-subagents.ts`, `chat/instructions.ts` (`WORK_WORDS`), `packages/agent/src/jobs/model.ts`
+(`readOnlyForJob`), `test/workers/m7-subagents.test.ts`, `m25-4-subagents.test.ts`, `f14-activity-subagents.test.ts`,
+`docs/plan-v2/QUESTIONS.md` Q18 (a reply's required words are instruction lines, not harness sentences) and Q25 (a
+Stop ends the stopped turn's children; F31's choice stands). No one-way door: no new table, no new tool; two
+instruction lines, two words over stored columns, one rendering fix.
+
+**Scope:** (1) `test/m0/f33-contract.test.ts` holds the P3 contract as `f31-contract.test.ts` holds P5: fourteen
+clauses, seventeen tasks, every tier-1 `version_hash` filled. (2) The seventeen `.task.ts` files under
+`test/evals/p3-delegation/` with a `world.ts` extending P5's (a Chat DO with the fake network serving
+`https://example.com/p3-probe` and refusing `https://example.invalid/p3-probe`, a child that needs two alarms, a
+coordinator with two workers, a Job DO for T-P3-10, two members Sam Solo and Pat Solo for T-P3-12, the verifier's
+fake model scripted per variant for T-P3-07) and a `harness.ts`; tier 1 (T-P3-01 to 13) runs under vitest with a
+`[F33]` describe, every minefield planted in a `planted.test.ts`. (3) The code the deltas need: an instruction line in
+`WORK_WORDS` for a steer of a running child, a close and a new delegation said so, never a message claimed sent or
+progress promised (delta 2; T-P3-04); an instruction line for a refused delegation, what could not start and why
+(delta 6; T-P3-08); the child's failed-step count in its section's status words through P5's one words table
+(delta 4; T-P3-11); the child's tokens in its section head from `subagents.tokens` (delta 5; T-P3-12); the thread's
+renderer drawing a reply that is only a number as text, never an `<ol start>` marker (delta 8; T-P3-05). (4) The task
+drawer specimen in `ds/specimens/` updated for the changed section head (the failed count, the tokens) before the
+drawer draws it (design §4.5), listed for Kyle as a look item.
+
+**Acceptance:** the thirteen tier-1 tasks pass under vitest and each planted minefield fails without its guard;
+`test/m0/f33-contract.test.ts` passes; `pnpm check` and the hermetic suite green; `ACCEPT F33: PASS`;
+`VERIFIER: no blocking findings`.
+
+**Not in scope:** a send to a running child or a resume (rejected in deltas 2 and 3); a per-child money cap (a storage
+change); a change to the daily caps (`ledger/budget.ts`); the Activity row's title and summary words (P5); the
+reactions' own rules (P1); a job's run record beyond the spawn and the delivery word (P7, P5); tier 2 (F34); a
+code-written reply line (Q18); a change to a clause.
+
+## F34 Delegation says what happened: P3's tier 2 on a slot
+
+**Read:** `docs/plan-v2/contracts/P3-delegation.md` (B-P3-01, B-P3-04, B-P3-07, B-P3-11, B-P3-14, the tier-2 tasks),
+the F33 world and tasks under `test/evals/p3-delegation/`, `packages/agent/src/chat/instructions.ts`,
+`docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q18. No one-way door. A live step: `pnpm evals` runs from Kyle's
+Mac on this worktree's slot (`pnpm preview up`); if no slot can be leased, that is a question, not a reason to skip.
+
+**Scope:** (1) The slot serves the probe pages `https://<slot>/fixtures/p3-probe` (a title and three links) and
+`https://<slot>/fixtures/p3-probe-2` (served slowly, so a steer can arrive while a child reads it), or the task's
+documented stand-in. (2) Tier 2 on the slot: T-P3-14 and T-P3-16 (must-have), T-P3-15 and T-P3-17, three trials
+each, the results files committed, the table in the PR body. (3) Every P3 hash in the contract matches.
+
+**Acceptance:** `pnpm evals T-P3-14` and `pnpm evals T-P3-16` `pass` (three of three); T-P3-15 and T-P3-17 run and
+their results recorded whatever the verdict; `ACCEPT F34: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a change to a clause; new instruction lines beyond what a failing must-have needs, each named in the
+PR body with its task.

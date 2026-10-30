@@ -375,3 +375,8 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   (`SubAgent.reads`, overridden only there); the slot's thread drops the never-drawn reasoning. T-P5-15's count
   parser reads "Link count: 1"; T-P5-13's grader stays F31's and the failing must-haves got `WORK_WORDS` lines.
   Agent.
+- 2026-10-30 P3 translated (`contracts/P3-delegation.md`): eight two-way deltas, a child starts from its brief (shipped,
+  now held by a task), a steer of a running child is a close and a new delegation said so (no send, no resume), a
+  Stop settles the children it stopped (F31, Q25), a child's row carries its failed-step count in P5's words table,
+  a section shows the child's tokens, a refused delegation is said as what could not start and why, a job's run
+  spawns nothing, a reply that is only a number is text. No one-way door. Orchestrator.

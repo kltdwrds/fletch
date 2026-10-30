@@ -96,6 +96,26 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
+### Q26 (P3), 2026-10-30: six Muse delegation findings fletch already rules out, recorded for Kyle's read
+
+**Blocks nothing.** The P3 interrogation (one side chat, thread A, 13 steps, 106 files through `pnpm redact`) found
+six things in Muse's delegation that fletch's shipped seams already refuse; the contract holds each as a clause and a
+task so they stay refused. (1) Every child inherits the parent's whole context: 129 items beside a 322-character
+brief, about 300,000 input tokens for a one-line read; thread A's 14 children spent 5.66 million input tokens
+(B-P3-02; fletch's child starts from its brief, `run.ts`). (2) `subagent.list` in a brand-new side chat returned 20 of
+the owner's children from other chats and schedules, 36 of 50 at the end (B-P3-12; fletch's store is per chat,
+`SUBAGENT_NOT_YOURS`, `CHAT_NOT_OWNER`). (3) The composer's Stop ended only the parent's sentence; the child ran on,
+completed 90 s later and re-answered the stopped question, the person told nothing (B-P3-06; F31's `stopTurn`, Q25).
+(4) No verifier: a check happened only because the person asked, as three of the parent's own fetches; 82 monitor
+decisions judged nothing about correctness (B-P3-07; `verifier.ts`). (5) A scheduled run spawned two parentless
+worker roots and a sub-agent and wrote "Delivered to user in this chat" into its own record before any delivery
+(B-P3-10; `readOnlyForJob`, P5 delta 5). (6) A delegation wrote unasked: one memory section per turn, five 👍
+reactions of which the page drew two, and a schedule the tools called gone while six scheduler tables kept it
+(B-P3-13). Two choices in the contract are Kyle's to read, both two-way: a steer of a running child is a close and a
+new delegation said so, no send into a facet (delta 2); a reply that is only a number is drawn as text (delta 8, a
+renderer fix in P2's surface). Evidence: `docs/plan-v2/evidence/p3-delegation/answers/step-1.md`, `step-2.md`,
+`step-5.md`, `step-6.md`, `step-8.md`, `step-10.md`, `step-12.md`; `contracts/P3-delegation.md`.
+
 ### Q25 (P5, F31), 2026-10-30: should Stop end the sub-agents the stopped turn launched, or let them run on?
 
 T-P5-08's stop variant says the parent reads `stopped` and the child says what became of it, never `running`. F31
