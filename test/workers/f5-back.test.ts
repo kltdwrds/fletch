@@ -176,7 +176,7 @@ describe("[F5] back closes an overlay without an address, and only it", () => {
 
 describe("[F5] Settings has addresses", () => {
   it("every pane has an address in the grammar, and nothing else under /settings is a page", () => {
-    const pages = ["/settings", "/settings/general", "/settings/general/company", "/settings/general/loops", "/settings/connectors", "/settings/connectors/host%3Aapi.example.com", "/settings/permissions", "/settings/devices", "/settings/messaging", "/settings/help"];
+    const pages = ["/settings", "/settings/general", "/settings/general/company", "/settings/general/loops", "/settings/connectors", "/settings/connectors/host%3Aapi.example.com", "/settings/permissions", "/settings/devices", "/settings/security", "/settings/messaging", "/settings/help"];
     expect(pages.map((x) => pageOf(x)?.row.name)).toEqual(pages.map(() => "settings"));
     for (const x of ["/settings/", "/settings/nope", "/settings/connectors/", "/settings/connectors/a/b", "/settings/company", "/settingsx"]) expect([x, pageOf(x)]).toEqual([x, null]);
   });

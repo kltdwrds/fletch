@@ -1,0 +1,197 @@
+{
+  "task_id": "T-P14-10",
+  "cluster": "P14",
+  "version_hash": "7fac344b2a5a263e9838fa9d47767b39547213412662e1e0a348d5a2f296ae7f",
+  "runs": [
+    {
+      "run_at": "2026-10-30T21:29:25.553Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says a chat message names nothing here and no name is chosen",
+          "started_at": "2026-10-30T21:29:25.553Z",
+          "finished_at": "2026-10-30T21:30:37.205Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says a chat message names nothing here and no name is chosen",
+          "started_at": "2026-10-30T21:30:37.206Z",
+          "finished_at": "2026-10-30T21:31:40.820Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says a chat message names nothing here and no name is chosen",
+          "started_at": "2026-10-30T21:31:40.820Z",
+          "finished_at": "2026-10-30T21:32:44.975Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T21:36:35.257Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says a chat message names nothing here and no name is chosen",
+          "started_at": "2026-10-30T21:36:35.258Z",
+          "finished_at": "2026-10-30T21:37:57.245Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says a chat message names nothing here and no name is chosen",
+          "started_at": "2026-10-30T21:37:57.245Z",
+          "finished_at": "2026-10-30T21:39:05.396Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says a chat message names nothing here and no name is chosen",
+          "started_at": "2026-10-30T21:39:05.397Z",
+          "finished_at": "2026-10-30T21:40:07.240Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T21:45:46.189Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T21:45:46.190Z",
+          "finished_at": "2026-10-30T21:46:55.044Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T21:46:55.044Z",
+          "finished_at": "2026-10-30T21:47:54.255Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply says the name is not chosen and nothing changed but the conversation",
+          "started_at": "2026-10-30T21:47:54.256Z",
+          "finished_at": "2026-10-30T21:48:55.073Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T21:54:28.240Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T21:54:28.241Z",
+          "finished_at": "2026-10-30T21:55:32.162Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T21:55:32.162Z",
+          "finished_at": "2026-10-30T21:56:35.444Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T21:56:35.444Z",
+          "finished_at": "2026-10-30T21:57:35.993Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    },
+    {
+      "run_at": "2026-10-30T22:00:14.651Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T22:00:14.652Z",
+          "finished_at": "2026-10-30T22:01:23.856Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T22:01:23.857Z",
+          "finished_at": "2026-10-30T22:02:51.544Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T22:02:51.545Z",
+          "finished_at": "2026-10-30T22:03:51.191Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-10-30T22:10:43.622Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T22:10:43.622Z",
+          "finished_at": "2026-10-30T22:11:51.906Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T22:11:51.906Z",
+          "finished_at": "2026-10-30T22:12:54.748Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T22:12:54.748Z",
+          "finished_at": "2026-10-30T22:13:54.687Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-10-30T22:28:25.676Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T22:28:25.676Z",
+          "finished_at": "2026-10-30T22:29:42.825Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T22:29:42.825Z",
+          "finished_at": "2026-10-30T22:30:43.992Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T22:30:43.992Z",
+          "finished_at": "2026-10-30T22:31:46.360Z"
+        }
+      ],
+      "status": "pass"
+    }
+  ]
+}

@@ -1,0 +1,178 @@
+{
+  "task_id": "T-P14-12",
+  "cluster": "P14",
+  "version_hash": "30f266f90a15176c9086841a753cb008e1700e38137a76465879a4b8a4b6baf9",
+  "runs": [
+    {
+      "run_at": "2026-10-30T21:43:15.582Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the name goes to memory only Sam's own turns read, and how to undo it",
+          "started_at": "2026-10-30T21:43:15.582Z",
+          "finished_at": "2026-10-30T21:43:31.747Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the name goes to memory only Sam's own turns read, and how to undo it",
+          "started_at": "2026-10-30T21:43:31.747Z",
+          "finished_at": "2026-10-30T21:43:51.039Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the name goes to memory only Sam's own turns read, and how to undo it",
+          "started_at": "2026-10-30T21:43:51.039Z",
+          "finished_at": "2026-10-30T21:44:06.806Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T21:49:43.976Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the agent writes as Sam's agent, never as Sam, and names Pat or says they",
+          "started_at": "2026-10-30T21:49:43.976Z",
+          "finished_at": "2026-10-30T21:50:29.461Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "pronoun_guessed",
+          "started_at": "2026-10-30T21:50:29.461Z",
+          "finished_at": "2026-10-30T21:50:49.246Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the name goes to memory only Sam's own turns read, and how to undo it",
+          "started_at": "2026-10-30T21:50:49.247Z",
+          "finished_at": "2026-10-30T21:51:12.426Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T21:52:51.195Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the agent writes as Sam's agent, never as Sam, and names Pat or says they",
+          "started_at": "2026-10-30T21:52:51.195Z",
+          "finished_at": "2026-10-30T21:53:18.341Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T21:53:18.341Z",
+          "finished_at": "2026-10-30T21:53:57.072Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T21:53:57.072Z",
+          "finished_at": "2026-10-30T21:54:17.722Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T22:07:11.553Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the name goes to memory only Sam's own turns read, and how to undo it",
+          "started_at": "2026-10-30T22:07:11.553Z",
+          "finished_at": "2026-10-30T22:07:31.104Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the agent writes as Sam's agent, never as Sam, and names Pat or says they",
+          "started_at": "2026-10-30T22:07:31.105Z",
+          "finished_at": "2026-10-30T22:08:05.272Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the name goes to memory only Sam's own turns read, and how to undo it",
+          "started_at": "2026-10-30T22:08:05.272Z",
+          "finished_at": "2026-10-30T22:08:24.614Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T22:16:50.636Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T22:16:50.636Z",
+          "finished_at": "2026-10-30T22:17:18.967Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T22:17:18.968Z",
+          "finished_at": "2026-10-30T22:18:15.995Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T22:18:15.995Z",
+          "finished_at": "2026-10-30T22:18:36.635Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    },
+    {
+      "run_at": "2026-10-30T22:35:05.900Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T22:35:05.900Z",
+          "finished_at": "2026-10-30T22:35:25.637Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T22:35:25.637Z",
+          "finished_at": "2026-10-30T22:35:55.534Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T22:35:55.534Z",
+          "finished_at": "2026-10-30T22:36:19.117Z"
+        }
+      ],
+      "status": "pass"
+    }
+  ]
+}
