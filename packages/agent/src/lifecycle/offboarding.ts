@@ -27,6 +27,8 @@ export interface OffboardingCompany {
   propose(person: string, input: unknown): Promise<{ ok: true; proposal: Proposal } | Refusal>;
   /** The policy and the members' names, so pages about members can be told and left out. */
   offboardingPolicy(person: string): Promise<{ ok: true; memberPagesInExport: boolean; members: Array<{ email: string; name: string }> } | Refusal>;
+  /** Whether the person may leave at all: the last owner may not, and is told so before anything is built or purged. */
+  mayDepart(person: string): Promise<{ ok: true } | Refusal>;
   depart(person: string): Promise<{ ok: true } | Refusal>;
 }
 
@@ -174,6 +176,9 @@ export async function finishOffboarding(deps: OffboardingDeps, actor: Actor, cho
   if (choice !== "export" && choice !== "convert") return { ok: false, code: "OFFBOARD_CHOICE_INVALID", reason: "the choice is export or convert" };
   const pending = deps.pending.get();
   if (pending) return { ok: false, code: "CONVERSION_PENDING", reason: `the conversion to ${pending.tenant} was asked for and has not completed; nothing was purged` };
+  // The seat is asked about first (F40, P14 delta 3): a person who may not leave, the last owner, keeps every row.
+  const may = await deps.company.mayDepart(person);
+  if (!may.ok) return { ok: false, code: may.code, reason: `${may.reason}; nothing was exported or purged` };
   const bundle = await bundleFor(deps, person);
   if (!bundle.ok) return bundle;
   if (choice === "export") {

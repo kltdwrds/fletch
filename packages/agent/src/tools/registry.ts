@@ -82,6 +82,23 @@ export function searchTerms(query: string): string[] {
   return query.toLowerCase().split(/[^a-z0-9_-]+/).filter((t) => t.length > 1 && !STOP.has(t));
 }
 
+/**
+ * What no tool may reach (F40, P14 B-P14-02, B-P14-05 to 07, delta 5): the agent's name, the person's profile, a
+ * setting, a passkey, a session, sign-in, recovery, an export or the account. A tool whose name holds one of these
+ * words, or whose description offers to change one of them, is refused when its registry is built, so no turn of a
+ * chat, a request or a sub-agent is ever offered one. Exporting work (a file, the notes) is work, not identity: only
+ * an export of the account or its data is refused. The tests plant a `settings_set` and a `passkey_remove`.
+ */
+export const IDENTITY_TOOL_WORDS: readonly string[] = ["identity", "setting", "settings", "theme", "language", "notification", "notifications", "profile", "avatar", "pronoun", "pronouns", "passkey", "passkeys", "session", "sessions", "login", "logout", "signin", "signout", "recovery", "recover", "password", "account"];
+export const IDENTITY_TOOL_OFFER =
+  /\b(passkeys?|recovery codes?|log ?out|sign[- ]?out|delete (?:the |your |an )?account|export (?:the |your |all )?(?:data|account)|(?:change|set|switch|update|toggle|turn (?:on|off)) (?:a |the |your |their )?(?:settings?|theme|language|notifications?|profile|avatar|password|e-?mail address|agent'?s name))\b/i;
+
+/** The identity word a tool's name holds or its description offers, or null: the guard `ToolRegistry` applies. */
+export function identityReach(spec: Pick<ToolSpec, "name" | "description">): string | null {
+  const word = spec.name.split("_").find((w) => IDENTITY_TOOL_WORDS.includes(w));
+  return word ?? IDENTITY_TOOL_OFFER.exec(spec.description)?.[0]?.toLowerCase() ?? null;
+}
+
 /** The namespaces of one tenant's agent, fixed at construction; loads are per session. */
 export class ToolRegistry {
   readonly namespaces: readonly Namespace[];
@@ -93,6 +110,8 @@ export class ToolRegistry {
       for (const t of ns.tools) {
         if (!NAME.test(t.name)) throw new Error(`TOOL_NAME_INVALID: ${t.name}`);
         if (seen.has(t.name)) throw new Error(`TOOL_NAME_DUPLICATE: ${t.name}`);
+        const reach = identityReach(t);
+        if (reach) throw new Error(`TOOL_IDENTITY_REFUSED: ${t.name} reaches "${reach}", which only the person changes`);
         seen.add(t.name);
       }
     }

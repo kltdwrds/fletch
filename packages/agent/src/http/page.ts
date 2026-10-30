@@ -46,7 +46,7 @@ export const APP_PAGE = `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F3F6F4" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#111714" media="(prefers-color-scheme: dark)">
-<title>qyvr</title>
+<title>fletch</title>
 <link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials">
 <style>${PAGE_CSS}</style>
 </head>
@@ -71,8 +71,8 @@ ${ROUTER_SCRIPT}
 </html>`;
 
 export const MANIFEST = JSON.stringify({
-  name: "qyvr",
-  short_name: "qyvr",
+  name: "fletch",
+  short_name: "fletch",
   start_url: "/",
   scope: "/",
   display: "standalone",

@@ -135,14 +135,22 @@ export class CompanyMembers {
     return this.sql.exec<Row>("SELECT * FROM members ORDER BY email").toArray().map(toMember);
   }
 
+  /** Whether `email` may leave (F40, P14 delta 3): asked before anything of theirs is purged, and again by `depart`. */
+  mayDepart(email: string): { ok: true } | { ok: false; code: "NOT_A_MEMBER" | "LAST_OWNER" } {
+    const m = this.lookup(email);
+    if (!m) return { ok: false, code: "NOT_A_MEMBER" };
+    if (m.role === "owner" && this.list().filter((x) => x.role === "owner").length === 1) return { ok: false, code: "LAST_OWNER" };
+    return { ok: true };
+  }
+
   /**
    * Offboarding releases the seat (M11): the member's row goes, and a tenant-file row stays gone when
    * the file is re-applied, until an admin invites the person again. The last owner cannot leave.
    */
   depart(email: string): { ok: true } | { ok: false; code: "NOT_A_MEMBER" | "LAST_OWNER" } {
+    const may = this.mayDepart(email);
     const m = this.lookup(email);
-    if (!m) return { ok: false, code: "NOT_A_MEMBER" };
-    if (m.role === "owner" && this.list().filter((x) => x.role === "owner").length === 1) return { ok: false, code: "LAST_OWNER" };
+    if (!may.ok || !m) return may.ok ? { ok: false, code: "NOT_A_MEMBER" } : may;
     this.sql.exec("DELETE FROM members WHERE email = ?", m.email);
     this.sql.exec("INSERT OR REPLACE INTO departures (email, at) VALUES (?, ?)", m.email, this.now());
     return { ok: true };

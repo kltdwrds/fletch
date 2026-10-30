@@ -16,5 +16,6 @@ export interface PersonCompanyApi {
   memoryAppend: CompanyMemoryApi["append"];
   promotionPropose(person: string, input: unknown): Promise<{ ok: true; proposal: Proposal } | { ok: false; code: string; reason: string }>;
   offboardingPolicy: OffboardingDeps["company"]["offboardingPolicy"];
+  mayDepart: OffboardingDeps["company"]["mayDepart"];
   depart: OffboardingDeps["company"]["depart"];
 }
