@@ -42,11 +42,14 @@ describe('the gates are wired', () => {
     assert.match(pkg['simple-git-hooks']['pre-push'], /node scripts\/pre-push\.mjs/);
   });
 
-  it('CI and the release run pnpm verify', () => {
-    for (const wf of ['.github/workflows/ci.yml', '.github/workflows/release.yml']) {
-      assert.match(read(wf), /^\s+run: pnpm verify$/m, wf);
-      assert.doesNotMatch(read(wf), /run: pnpm check$/m, wf);
-    }
+  it('CI and the release run pnpm verify; CI runs pnpm check alone only on a diff it judged docs only', () => {
+    for (const wf of ['.github/workflows/ci.yml', '.github/workflows/release.yml']) assert.match(read(wf), /^\s+run: pnpm verify$/m, wf);
+    assert.doesNotMatch(read('.github/workflows/release.yml'), /run: pnpm check$/m);
+    const ci = read('.github/workflows/ci.yml');
+    const ciSteps = ci.split(/\n {6}- /);
+    assert.ok(ciSteps.some((s) => /^name: Classify the diff\n\s+id: scope$/m.test(s)), 'ci.yml has no Classify the diff step');
+    for (const s of ciSteps.filter((x) => /run: pnpm verify$/m.test(x))) assert.match(s, /^\s+if: steps\.scope\.outputs\.tests == 'true'$/m, s);
+    for (const s of ciSteps.filter((x) => /run: pnpm check$/m.test(x))) assert.match(s, /^\s+if: steps\.scope\.outputs\.tests != 'true'$/m, s);
   });
 
   it('Claude Code runs the hook guard, the handoff hook and the session start', () => {
