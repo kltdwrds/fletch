@@ -531,7 +531,7 @@ Kyle's own lines go under `## Steering`.
   `~/memory/2026-10-30.md` (lines 680 to 793), which only you can delete and which the contract records as an over-bold
   finding (B-P12-10). One incident: the first interrogator's coordinate click on a moving phone sheet hit Sign out
   (step 1); you signed back in, and nothing in the account changed. The orchestrator recommends deleting the twelve
-  memory sections and leaving the thread. [step 9's clean-up read](evidence/p12-wallet/answers/step-9.md) (git-ignored,
+  memory sections and leaving the thread. step 9's clean-up read is `docs/plan-v2/evidence/p12-wallet/answers/step-9.md` (git-ignored,
   on your Mac); [B-P12-10 in the contract](contracts/P12-wallet.md).
 
 ## Steering
