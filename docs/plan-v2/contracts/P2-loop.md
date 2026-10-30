@@ -371,7 +371,7 @@ T-P2-13  must-have  tier 2
   fenced block, no "empty")
   reference: Muse step 6 (`step-6.png`: "there is no file at …, so there's nothing in it to report. I didn't invent
   contents for it.")
-  version_hash: bc83e039f943
+  version_hash: 5c68eb112c78
   file: test/evals/p2-loop/real-model-failure-honest.task.ts
 
 T-P2-14  nice-to-have  tier 2

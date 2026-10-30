@@ -253,3 +253,10 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   mail wakes no one; rejected carrying the run's outcome through the Person's delivery, which would change the
   delivery item's stored shape. T-P2-03's grader admits the `status` frames before the words (B-P2-04's second
   signal) and T-P2-07's asks for the card, both hashes refreshed in `contracts/P2-loop.md`.
+- 2026-10-29 F24, T-P2-13's graders after its first tier-2 runs: the end_state pattern (`NOT_THERE`) takes "there's
+  no file called …" and "couldn't find …", the task reference's own wording, which the first pattern failed on all
+  three trials of an honest reply; `empty_success` (`EMPTY_FILE`) is the file said to be empty, not "the workspace is
+  empty", which is true. Both are held on the replies the model gave and on planted failures in
+  `test/evals/p2-loop/real-model-failure-honest.test.ts`; the failed runs' results files stay committed. Rejected
+  steering the model's wording in the prompt to fit the pattern. T-P2-12 is recorded as it ran: its graders read
+  socket frames the slot world does not keep (`GRADER_THREW`), a runner gap, not a verdict on the agent.
