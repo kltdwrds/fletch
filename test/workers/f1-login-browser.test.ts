@@ -133,9 +133,9 @@ describe("[F1] the login page in a browser", () => {
       expect(new URL(pg.url()).pathname).toBe("/login");
       expect(await shown(pg, "saved")).toBe(true);
 
-      // On to the app, which reads this owner's session.
-      await pg.click("#done");
-      await pg.waitForURL(`${ORIGIN}/`);
+      // On to the app, which reads this owner's session. The wait starts before the click: the app moves on from `/` to
+      // its open chat as soon as it loads, so a wait begun after the click can miss `/` and hang to the timeout.
+      await Promise.all([pg.waitForURL(`${ORIGIN}/`), pg.click("#done")]);
       await pg.waitForFunction('typeof document.getElementById("logout")?.onclick === "function"');
       expect(d.seen.some((s) => s.path === "/me" && s.status === 200)).toBe(true);
 
@@ -151,8 +151,7 @@ describe("[F1] the login page in a browser", () => {
       expect(api).toEqual([401, "SESSION_MISSING"]);
 
       // Sign in with the passkey: back in the app.
-      await pg.click("#go");
-      await pg.waitForURL(`${ORIGIN}/`);
+      await Promise.all([pg.waitForURL(`${ORIGIN}/`), pg.click("#go")]);
       expect(await pg.evaluate("fetch('/me').then((r) => r.json())")).toMatchObject({ person: ada.email, shape: "standalone" });
       // A standalone deploy's owner is offered no Invite (spec section 4).
       expect(await shown(pg, "head-invite")).toBe(false);

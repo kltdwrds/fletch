@@ -156,8 +156,9 @@ hook, not a sentence. A rule changes only when Kyle agrees.
    run a workspace script with `node --conditions=development`, or build them with `pnpm -r --filter "./packages/host*" build`.
 5. The browser tests need the Chromium that the pinned `playwright-core` names. CI and the cloud session start
    install it; another build (a cloud image's own under `/opt/pw-browsers`) fails the `*-browser` and `m29-*` tests
-   at launch, not on their assertions. On 4 vCPUs `test/workers/f1-login-browser.test.ts` can time out on a cold
-   full run and pass alone: run it alone before calling it a failure.
+   at launch, not on their assertions. In a browser test, start a URL wait before the click that navigates
+   (Promise.all of the two): the app leaves `/` for its open chat as soon as it loads, so a wait begun after the
+   click can miss the URL under load and hang to the test's timeout.
 6. `pnpm create-fletch` without `--dir` writes `wrangler.jsonc` to pnpm's `INIT_CWD`, which inside the checkout is
    the checkout itself (git-ignored, but it holds the account id and email). Always pass `--dir`.
 7. The agent's typecheck needs `wrangler types --strict-vars=false` first (`pnpm typecheck` runs it); it writes the
