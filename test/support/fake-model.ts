@@ -20,7 +20,7 @@
 // `https://workers-binding.ai/ai-gateway/gateways/<gateway>/<provider>/<endpoint>`, the path the adapter
 // takes to Meta, from the same script: the request is recorded with the model from its body and the path's
 // gateway, provider, endpoint and the request headers under `passthrough`. Every chunk names the model
-// asked for, or a text step's `servedAs` (a provider's dated id for it).
+// asked for, or the streamed step's `servedAs` (a provider's dated id for it), whatever shape carries it.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fakeEmbedding } from "./fake-embeddings.ts";
@@ -41,15 +41,17 @@ export interface FakeToolCall {
   arguments: Record<string, unknown>;
 }
 
+/** `servedAs` is the model a streamed step's chunks name instead of the one asked for (D-0020: a dated id is priced as the one asked). */
+type Served = { servedAs?: string };
+
 export type FakeStep =
-  /** `servedAs` is the model the chunks name instead of the one asked for (D-0020: a dated id is priced as the one asked). */
-  | { text: string; reasoning?: string; usage?: FakeUsage; servedAs?: string }
-  | { toolCall: FakeToolCall; text?: string; reasoning?: string; usage?: FakeUsage }
-  | { rawToolCall: { id?: string; name: string; arguments: string }; usage?: FakeUsage }
+  | ({ text: string; reasoning?: string; usage?: FakeUsage } & Served)
+  | ({ toolCall: FakeToolCall; text?: string; reasoning?: string; usage?: FakeUsage } & Served)
+  | ({ rawToolCall: { id?: string; name: string; arguments: string }; usage?: FakeUsage } & Served)
   /** Several tool calls in one answer, in order (M25.2: a job answer with two terminal tools). */
-  | { toolCalls: FakeToolCall[]; text?: string; usage?: FakeUsage }
+  | ({ toolCalls: FakeToolCall[]; text?: string; usage?: FakeUsage } & Served)
   | { status: number; retryAfter?: number; message?: string }
-  | { drop: { text: string; afterBytes: number } }
+  | ({ drop: { text: string; afterBytes: number } } & Served)
   /** A 200 whose body never sends a token and stays open until the request's signal aborts (M19.1). */
   | { silent: true }
   /** Streams the role chunk and first delta of `step`, then waits until `release(name)` or `drop(name)`. */
@@ -96,6 +98,7 @@ export class FakeModel {
   private readonly waiters = new Map<string, Waiter[]>();
   private readonly arrivals = new Map<string, number>();
   private readonly arrivalListeners: Array<{ name: string; n: number; resolve: () => void }> = [];
+  private readonly requestListeners: Array<{ n: number; resolve: () => void }> = [];
 
   private readonly script: FakeStep[];
   private readonly mode: FakeMode;
@@ -136,6 +139,12 @@ export class FakeModel {
     return new Promise((resolve) => this.arrivalListeners.push({ name, n, resolve }));
   }
 
+  /** Resolves when the `n`th generation request has arrived, whatever its step: a test waits on the request, not on turns of the loop. */
+  requested(n: number): Promise<void> {
+    if (this.requests.length >= n) return Promise.resolve();
+    return new Promise((resolve) => this.requestListeners.push({ n, resolve }));
+  }
+
   /** Lets every request waiting at `name` finish its step, and moves the script past it. */
   release(name: string): void {
     const ws = this.take(name);
@@ -164,6 +173,10 @@ export class FakeModel {
     if (model === FAKE_EMBEDDING_MODEL) return this.embed(inputs, options) as unknown as Response;
     const request = { model, inputs, options, ...(passthrough ? { passthrough } : {}) } as FakeRequest;
     this.requests.push(request);
+    for (const l of this.requestListeners.filter((x) => x.n <= this.requests.length)) {
+      this.requestListeners.splice(this.requestListeners.indexOf(l), 1);
+      l.resolve();
+    }
     if (!request.options?.returnRawResponse || !request.inputs?.stream) {
       throw new Error("FAKE_CONTRACT: the adapter must ask for a raw streaming response");
     }
@@ -194,7 +207,7 @@ export class FakeModel {
       return new Response(JSON.stringify({ errors: [{ message: step.message ?? `status ${step.status}` }] }), { status: step.status, headers });
     }
     if ("drop" in step) {
-      const bytes = encoder.encode(sseBody(textChunks(step.drop.text), usageOf(request, undefined), headOf(request)));
+      const bytes = encoder.encode(sseBody(textChunks(step.drop.text), usageOf(request, undefined), headOf(request, step)));
       const cut = bytes.slice(0, step.drop.afterBytes);
       const body = new ReadableStream<Uint8Array>({
         start(controller) {
@@ -216,12 +229,12 @@ export class FakeModel {
     if ("checkpoint" in step) return this.paused(step.checkpoint, step.step, request, n);
     if ("hold" in step) return this.held(step.hold, step.step, request, n);
     if ("fromRequest" in step) return this.respond(step.fromRequest(request), request, n);
-    return sse(chunksOf(step, n), usageOf(request, step.usage), { model: ("servedAs" in step && step.servedAs) || request.model });
+    return sse(chunksOf(step, n), usageOf(request, step.usage), headOf(request, step));
   }
 
   private held(name: string, inner: FakeStep, request: FakeRequest, n: number): Response {
     if ("status" in inner || "drop" in inner || "silent" in inner || "checkpoint" in inner || "hold" in inner || "fromRequest" in inner) throw new Error("FAKE_SCRIPT: a hold wraps a streamed step");
-    const whole = encoder.encode(sseBody(chunksOf(inner, n), usageOf(request, inner.usage), headOf(request)));
+    const whole = encoder.encode(sseBody(chunksOf(inner, n), usageOf(request, inner.usage), headOf(request, inner)));
     const body = new ReadableStream<Uint8Array>({
       start: (controller) => {
         // A leg aborted while held has already errored its body; a later release or drop is a no-op.
@@ -263,7 +276,7 @@ export class FakeModel {
   private paused(name: string, inner: FakeStep, request: FakeRequest, n: number): Response {
     if ("status" in inner || "drop" in inner || "silent" in inner || "checkpoint" in inner || "hold" in inner || "fromRequest" in inner) throw new Error("FAKE_SCRIPT: a checkpoint wraps a streamed step");
     // The role chunk and the first delta (a tool call's name, for a tool step) arrive before the pause.
-    const chunks = streamChunks(chunksOf(inner, n), usageOf(request, inner.usage), headOf(request));
+    const chunks = streamChunks(chunksOf(inner, n), usageOf(request, inner.usage), headOf(request, inner));
     const head = chunks.slice(0, 2).map(lineOf).join("");
     const tail = encoder.encode(`${chunks.slice(2).map(lineOf).join("")}data: [DONE]\n\n`);
     const body = new ReadableStream<Uint8Array>({
@@ -289,9 +302,9 @@ type Delta = Record<string, unknown>;
 type Usage = { prompt: number; completion: number; reasoning: number; cached: number };
 type Head = { model: string };
 
-/** What each chunk names: the model asked for. */
-function headOf(request: FakeRequest): Head {
-  return { model: request.model };
+/** What each chunk names: the step's `servedAs`, else the model asked for. */
+function headOf(request: FakeRequest, step?: Served): Head {
+  return { model: step?.servedAs || request.model };
 }
 
 /** The reasoning field of the recorded stream, read from the recording itself. */

@@ -516,7 +516,7 @@ export class ChatEngine {
         messages = replayed.messages;
       } else {
         const deps = { store: this.store, hooks: this.hooks, projections: this.projections, now: this.now, streamFn: (r: Route, p: string, id: string) => this.streamFn(r, p, id), context: this.contextOf(turnId, person) };
-        const assembled = await assembleTurn(deps, turnId, person, session, model.id);
+        const assembled = await assembleTurn(deps, turnId, person, session, model);
         if (!assembled.ok) return this.failTurn(turnId, assembled.code, assembled.detail);
         messages = assembled.messages;
       }

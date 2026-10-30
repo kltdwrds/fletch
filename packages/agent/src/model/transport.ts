@@ -52,12 +52,17 @@ export function requestBody(route: Route, model: string, parts: RequestParts): R
   };
 }
 
+/** A request this deploy's model configuration cannot send: refused by its code before any network (D-0001). */
+export class ModelConfigInvalid extends Error {
+  readonly code = "MODEL_CONFIG_INVALID";
+}
+
 /** Sends one request; resolves with the provider's raw response, whatever its status. */
 export function send(ai: Ai, model: string, body: Record<string, unknown>, signal: AbortSignal, config: ModelConfig = SELF_HOST_MODELS): Promise<Response> {
   const gateway = gatewayOption(config);
   if (providerOf(model) === "meta") {
     // `modelConfig` names Meta only with a gateway configured; this guards a caller that skipped it.
-    if (!gateway) return Promise.reject(new Error("MODEL_CONFIG_INVALID: Meta is reached only through an AI Gateway; set AI_GATEWAY_ID"));
+    if (!gateway) return Promise.reject(new ModelConfigInvalid("Meta is reached only through an AI Gateway; set AI_GATEWAY_ID"));
     // The gateway's provider-native path over the binding's fetch passthrough, pre-authenticated in-account: a
     // custom provider is served there and on `/compat`, not by the deprecated universal request, which answers
     // it with 502 (gateway error 2006). The `Ai` type does not declare `fetch` yet; it exists at run time.

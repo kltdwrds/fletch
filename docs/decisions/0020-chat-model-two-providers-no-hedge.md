@@ -36,6 +36,16 @@ eval to measure the configured model alone. OpenRouter had no remaining user.
   for, so a provider's dated id is charged its own price, never the unpriced fallback. The `provider` column holds
   `workers-ai` or `meta`.
 
+## Consequences
+
+- **Muse Spark is for evals, not owners.** The Contributor tier is priced in exchange for Meta training on what is
+  sent, so `CHAT_PROVIDER=meta` sends each chat's content to Meta, who may train on it. That is at odds with
+  VISION.md's promise that an owner's conversations pass through no one else, so it is meant for the parity loop's
+  eval slots, whose chats carry only `test/fixtures/people.json` identities, never an owner's deploy (the README's
+  Models table, `packages/agent/AGENTS.md` and the comment on `MUSE_SPARK_CONTRIBUTOR` say the same).
+- A refused chat row names the provider and model the vars asked for (`meta` and Muse Spark, or the unknown value),
+  never the Workers AI model the faulted config falls back to.
+
 ## Options
 
 - **Chosen:** two providers, one builder, no fallback.

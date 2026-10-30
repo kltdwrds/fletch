@@ -31,7 +31,18 @@ export interface ModelConfig {
   /** The chat route's provider; `workers-ai` whenever `fault` is set, so nothing else branches on a bad config. */
   chatProvider: ChatProvider;
   /** Vars this deploy cannot serve: every model call fails with this before any network (D-0001, D-0020). */
-  fault?: { code: "MODEL_CONFIG_INVALID"; reason: string };
+  fault?: ModelConfigFault;
+}
+/**
+ * Why a deploy's model vars cannot be served, and what they asked the chat route for: `provider` is the
+ * `CHAT_PROVIDER` value, `model` the model it names (`unknown` for a provider this file does not know). A
+ * refused chat row names these, never the Workers AI model the deploy did not ask for.
+ */
+export interface ModelConfigFault {
+  code: "MODEL_CONFIG_INVALID";
+  reason: string;
+  provider: string;
+  model: string;
 }
 /** A self-host deploy's models (spec section 2): Workers AI over the binding, no gateway, no key. */
 export const SELF_HOST_MODELS: ModelConfig = Object.freeze({ gatewayId: null, chatProvider: "workers-ai" });
@@ -51,9 +62,10 @@ export function modelConfig(env: ModelVars): ModelConfig {
   const gatewayId = env.AI_GATEWAY_ID?.trim() || null;
   const named = env.CHAT_PROVIDER?.trim().toLowerCase() ?? "";
   if (named === "" || named === "workers-ai") return { gatewayId, chatProvider: "workers-ai" };
-  const fault = (reason: string): ModelConfig => ({ gatewayId, chatProvider: "workers-ai", fault: { code: "MODEL_CONFIG_INVALID", reason } });
-  if (named !== "meta") return fault(`CHAT_PROVIDER is "${named.slice(0, 40)}"; it takes workers-ai or meta`);
-  if (!gatewayId) return fault("CHAT_PROVIDER=meta is reached only through an AI Gateway, and AI_GATEWAY_ID is not set");
+  const asked = named.slice(0, 40);
+  const fault = (reason: string, model: string): ModelConfig => ({ gatewayId, chatProvider: "workers-ai", fault: { code: "MODEL_CONFIG_INVALID", reason, provider: asked, model } });
+  if (named !== "meta") return fault(`CHAT_PROVIDER is "${asked}"; it takes workers-ai or meta`, "unknown");
+  if (!gatewayId) return fault("CHAT_PROVIDER=meta is reached only through an AI Gateway, and AI_GATEWAY_ID is not set", MUSE_SPARK_CONTRIBUTOR);
   return { gatewayId, chatProvider: "meta" };
 }
 

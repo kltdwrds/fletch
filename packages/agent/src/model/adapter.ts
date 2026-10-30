@@ -23,7 +23,7 @@ import type { StreamFn } from "@earendil-works/pi-agent-core";
 import type { CallStatus, LedgerSink, ModelCallRow } from "../ledger/types.ts";
 import { CALL_BOUNDS, EMBEDDING_DIMENSIONS, EMBEDDING_MODEL, EMBEDDING_POOLING, type ModelConfig, type Route } from "./routes.ts";
 import { abortable, guarded, readInto, type Served, tapped, zeroUsage } from "./read.ts";
-import { gatewayOption, providerName, requestBody, send } from "./transport.ts";
+import { gatewayOption, ModelConfigInvalid, providerName, requestBody, send } from "./transport.ts";
 import { StreamFault, toWire } from "./wire.ts";
 import { traceChat } from "../obs/spans.ts";
 
@@ -136,13 +136,15 @@ async function callModel(
     stream.push({ type: "error", reason: message.stopReason, error: message });
     stream.end(message);
   };
-  const fail = async (attempt: number, status: CallStatus, code: string, detail: string, httpStatus: number | null) => {
-    const recorded = await record(row(attempt, status, code, httpStatus));
+  const fail = async (attempt: number, status: CallStatus, code: string, detail: string, httpStatus: number | null, names?: { model: string; provider: string }) => {
+    const recorded = await record({ ...row(attempt, status, code, httpStatus), ...names });
     end(code, recorded ? detail : `${detail}; LEDGER_UNAVAILABLE: the row was not written`);
   };
 
   // A deploy whose model vars name what it cannot reach never calls a model, and never another one instead.
-  if (deps.models?.fault) return fail(1, "refused", deps.models.fault.code, deps.models.fault.reason, null);
+  // Its chat row names what the vars asked for, not the Workers AI model the faulted config falls back to.
+  const fault = deps.models?.fault;
+  if (fault) return fail(1, "refused", fault.code, fault.reason, null, who.route === "chat" ? { model: fault.model, provider: fault.provider } : undefined);
   const inputs = requestBody(who.route, model.id, { messages: wire.messages, tools: wire.tools, ...(maxTokens ? { maxTokens } : {}) });
   const bounds = CALL_BOUNDS[who.route];
   // The total bound is the call's, not each attempt's: every attempt and every wait between them ends by it.
@@ -210,6 +212,10 @@ async function callModel(
           continue;
         }
         return fail(attempt, "failed", l.code, l.detail, null);
+      }
+      if (err instanceof ModelConfigInvalid) {
+        timing.startedAt = null;
+        return fail(attempt, "refused", err.code, err.message, null);
       }
       return fail(attempt, "failed", "MODEL_CALL_FAILED", String(err), null);
     }

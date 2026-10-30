@@ -117,13 +117,14 @@ deploy (another `--name` and `--dir`) for the other address.
 
 ### Models
 
-Every model call goes to Workers AI over the Worker's `AI` binding: no provider key, and the usage counts against
-your account's Workers AI allowance. Two vars change that, both optional:
+By default every model call goes to Workers AI over the Worker's `AI` binding: no provider key, and the usage counts
+against your account's Workers AI allowance. Optionally, two vars send every call through an AI Gateway and the chat
+route to Meta's Muse Spark:
 
 | Var | Meaning | Default |
 |---|---|---|
 | `AI_GATEWAY_ID` | An AI Gateway in your account. When set, every Workers AI call goes through it with its log collection off, and the chat route may use a gateway provider. | unset: the binding direct |
-| `CHAT_PROVIDER` | `workers-ai` or `meta`. `meta` sends the chat route to Muse Spark 1.3 Contributor through the gateway's custom provider `meta` (base URL `https://api.meta.ai/v1`), with the Meta key stored on the gateway (bring your own key). Requires `AI_GATEWAY_ID`. | `workers-ai` |
+| `CHAT_PROVIDER` | `workers-ai` or `meta`. `meta` sends the chat route to Muse Spark 1.3 Contributor through the gateway's custom provider `meta` (base URL `https://api.meta.ai/v1`), with the Meta key stored on the gateway (bring your own key). Requires `AI_GATEWAY_ID`. The Contributor tier sends each chat's content to Meta, which may train on it: it is meant for eval slots on test identities, not an owner's deploy. | `workers-ai` |
 
 There is no fallback model: a failed Muse Spark call is reported by name, never re-sent to Workers AI. A value the
 agent cannot serve (`meta` without a gateway, or any other provider) fails every model call with

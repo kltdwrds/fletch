@@ -150,6 +150,29 @@ describe("[F1] a deploy that configures a gateway", () => {
     expect(rows.map((r) => [r.model, r.provider])).toEqual([["muse-spark-1.3-contributor-2026", "meta"]]);
     expect(rows[0]?.costMicros).toBe(costMicros(MUSE_SPARK_CONTRIBUTOR, { input: 2_000, output: 50, cached: 0 }).micros);
   });
+
+  it("the fake names a served id from every step shape that streams a whole answer, held and paused ones included", async () => {
+    const served = "muse-spark-1.3-contributor-2026";
+    const steps: FakeStep[] = [
+      { toolCall: { name: "t", arguments: {} }, servedAs: served },
+      { rawToolCall: { name: "t", arguments: "{}" }, servedAs: served },
+      { toolCalls: [{ name: "t", arguments: {} }], servedAs: served },
+      { hold: "h", step: { text: "held", servedAs: served } },
+      { checkpoint: "c", step: { text: "paused", servedAs: served } },
+    ];
+    const fake = new FakeModel(steps);
+    const ask = () => fake.binding.run(MUSE_SPARK_CONTRIBUTOR, { messages: [], stream: true }, { returnRawResponse: true });
+    const body = (res: Response) => res.text();
+    for (let i = 0; i < 3; i++) expect(await body(await ask())).toContain(`"model":"${served}"`);
+    const held = ask();
+    await fake.reached("h");
+    fake.release("h");
+    expect(await body(await held)).toContain(`"model":"${served}"`);
+    const paused = await ask();
+    await fake.reached("c");
+    fake.release("c");
+    expect(await body(paused)).toContain(`"model":"${served}"`);
+  });
 });
 
 describe("[F1] model vars this deploy cannot serve are refused by name (D-0001)", () => {
@@ -158,14 +181,27 @@ describe("[F1] model vars this deploy cannot serve are refused by name (D-0001)"
     expect(result).toMatchObject({ status: "failed", code: "MODEL_CONFIG_INVALID" });
     expect((result as { detail: string }).detail).toContain("AI_GATEWAY_ID");
     expect(fake.requests).toHaveLength(0);
-    expect((await calls()).map((r) => [r.status, r.code, r.startedAt])).toEqual([["refused", "MODEL_CONFIG_INVALID", null]]);
+    // The row names what the vars asked for, Muse on Meta, not the Workers AI model the faulted config falls back to.
+    expect((await calls()).map((r) => [r.status, r.code, r.startedAt, r.model, r.provider])).toEqual([["refused", "MODEL_CONFIG_INVALID", null, MUSE_SPARK_CONTRIBUTOR, "meta"]]);
   });
 
   it("a CHAT_PROVIDER this deploy does not know fails with MODEL_CONFIG_INVALID naming the var and the value, even with a gateway", async () => {
-    const { fake, result } = await turn({ ...SELF_HOST_VARS, AI_GATEWAY_ID: "my-gateway", CHAT_PROVIDER: "openrouter" });
+    const { fake, result, calls } = await turn({ ...SELF_HOST_VARS, AI_GATEWAY_ID: "my-gateway", CHAT_PROVIDER: "openrouter" });
     expect(result).toMatchObject({ status: "failed", code: "MODEL_CONFIG_INVALID" });
     expect((result as { detail: string }).detail).toMatch(/CHAT_PROVIDER.*openrouter/);
     expect(fake.requests).toHaveLength(0);
+    expect((await calls()).map((r) => [r.status, r.code, r.model, r.provider])).toEqual([["refused", "MODEL_CONFIG_INVALID", "unknown", "openrouter"]]);
+  });
+
+  it("a caller that hands the adapter Meta without a gateway is refused MODEL_CONFIG_INVALID before any network, and its row says so", async () => {
+    const skipped = { gatewayId: null, chatProvider: "meta" } as const;
+    const fake = new FakeModel([{ text: "never" }]);
+    const rows: ModelCallRow[] = [];
+    const chat = createStreamFn({ ai: fake.binding as unknown as Ai, ledger: { record: async (r) => void rows.push(r) }, wait: async () => {}, now: () => T0, models: skipped }, { tenant: "base", person: sam.email, runId: "c", route: "chat" });
+    const message = await (await chat(modelFor("chat", skipped), normalizeContext({ messages: [{ role: "user", content: "hi", timestamp: T0 }] }), {})).result();
+    expect(message.errorMessage).toMatch(/^MODEL_CONFIG_INVALID: Meta is reached only through an AI Gateway/);
+    expect(fake.requests).toHaveLength(0);
+    expect(rows.map((r) => [r.status, r.code, r.model, r.provider, r.startedAt])).toEqual([["refused", "MODEL_CONFIG_INVALID", MUSE_SPARK_CONTRIBUTOR, "meta", null]]);
   });
 
   it("the fault holds every route, embeddings included: none falls back to Workers AI", async () => {
@@ -176,16 +212,19 @@ describe("[F1] model vars this deploy cannot serve are refused by name (D-0001)"
     expect(embedded.fake.embeddingRequests).toHaveLength(0);
     expect(embedded.rows.map((r) => [r.route, r.status, r.code])).toEqual([["embedding", "refused", "MODEL_CONFIG_INVALID"]]);
     const fake = new FakeModel([{ text: "never" }]);
-    const job = createStreamFn({ ai: fake.binding as unknown as Ai, ledger: { record: async () => {} }, wait: async () => {}, now: () => T0, models: modelConfig(bad) }, { tenant: "base", person: sam.email, runId: "j", route: "job" });
+    const jobRows: ModelCallRow[] = [];
+    const job = createStreamFn({ ai: fake.binding as unknown as Ai, ledger: { record: async (r) => void jobRows.push(r) }, wait: async () => {}, now: () => T0, models: modelConfig(bad) }, { tenant: "base", person: sam.email, runId: "j", route: "job" });
     const message = await (await job(modelFor("job", modelConfig(bad)), normalizeContext({ messages: [{ role: "user", content: "hi", timestamp: T0 }] }), {})).result();
     expect(message.errorMessage).toMatch(/^MODEL_CONFIG_INVALID: /);
     expect(fake.requests).toHaveLength(0);
+    // A job's row names the job route's own model: the vars asked nothing else for it.
+    expect(jobRows.map((r) => [r.status, r.model, r.provider])).toEqual([["refused", GLM_WORKERS_AI, "workers-ai"]]);
   });
 });
 
 describe("[F1] with no fallback model, the chat route's total bound holds the whole call (D-0020)", () => {
-  /** A chat call on `vars` whose clock moves only by the adapter's Retry-After waits; the test fires the bounds. */
-  function chatCall(vars: Record<string, string>, script: FakeStep[]) {
+  /** A chat call on `vars` whose clock moves only by the adapter's Retry-After waits (each `overrun` ms longer than asked); the test fires the bounds. */
+  function chatCall(vars: Record<string, string>, script: FakeStep[], overrun = 0) {
     const fake = new FakeModel(script);
     const clock = { t: T0 };
     const timers: Array<{ f: () => void; ms: number; cancelled?: boolean }> = [];
@@ -200,7 +239,7 @@ describe("[F1] with no fallback model, the chat route's total bound holds the wh
     const config = modelConfig(vars);
     const streamFn = createStreamFn(
       { ai: fake.binding as unknown as Ai, ledger: { record: async (r) => void rows.push(r) }, wait: async (ms) => {
-        clock.t += ms;
+        clock.t += ms + overrun;
       }, now: () => clock.t, schedule, models: config },
       { tenant: "base", person: sam.email, runId: "r", route: "chat" },
     );
@@ -222,12 +261,21 @@ describe("[F1] with no fallback model, the chat route's total bound holds the wh
 
   it("on Workers AI, an attempt after a Retry-After wait gets only what is left of the bound", async () => {
     const c = chatCall(SELF_HOST_VARS, [{ status: 429, retryAfter: 50 }, { silent: true }]);
-    for (let i = 0; i < 50 && c.fake.requests.length < 2; i++) await new Promise((r) => setImmediate(r));
+    await c.fake.requested(2);
     expect(c.fake.requests).toHaveLength(2);
     expect(c.live().map((t) => t.ms)).toEqual([BOUNDS.firstTokenMs, BOUNDS.totalMs - 50_000]);
     c.live().find((t) => t.ms === BOUNDS.totalMs - 50_000)?.f();
     const message = await c.result;
     expect(message.errorMessage).toMatch(/^MODEL_CALL_TIMEOUT: /);
     expect(c.rows.map((r) => [r.attempt, r.status, r.code])).toEqual([[1, "rate_limited", "MODEL_RATE_LIMITED"], [2, "failed", "MODEL_CALL_TIMEOUT"]]);
+  });
+
+  it("a wait that overran the Retry-After past the bound ends the call MODEL_CALL_TIMEOUT before another attempt is sent", async () => {
+    // The 50 s wait asked for takes 190 s (an evicted isolate, a slow alarm): no time is left, so no second request.
+    const c = chatCall(SELF_HOST_VARS, [{ status: 429, retryAfter: 50 }, { text: "too late" }], 140_000);
+    const message = await c.result;
+    expect(message.errorMessage).toMatch(/^MODEL_CALL_TIMEOUT: the call did not finish within 180000 ms/);
+    expect(c.fake.requests).toHaveLength(1);
+    expect(c.rows.map((r) => [r.attempt, r.status, r.code, r.startedAt])).toEqual([[1, "rate_limited", "MODEL_RATE_LIMITED", T0], [2, "failed", "MODEL_CALL_TIMEOUT", null]]);
   });
 });
