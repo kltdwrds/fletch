@@ -86,6 +86,18 @@ Kyle's own lines go under `## Steering`.
   [F23 and F24 in parts.md](parts.md#spine-clusters), [Q15](QUESTIONS.md#q15-p2-2026-10-29-three-things-the-p2-interrogation-attests-rather-than-instruments-and-two-dump-slice-oddities);
   evidence on your Mac under `docs/plan-v2/evidence/p2-loop/` (`answers/step-*.md`, `step-*.png`, `trace.json`).
 
+- [ ] 2026-10-29 look: **the loop-status specimen (F24's surfaces).** Two things F24 will draw, settled in the design
+  system first: the working line while a tool runs (the dots the thread already shows for "Thinking…", now with the
+  activity in words from a table in the page: "Searching the web", "Reading p2-barrier.md"; Muse centres an avatar with
+  a chip under it, fletch has no avatar in the thread, so the line stands where the reply will), and the file card
+  inside the agent's bubble for a file it wrote (name, kind, four lines of preview, a link to the Library's viewer; the
+  task drawer's card reused). A URL stays a link; a failure and a refusal are sentences. F24 starts once F23 lands;
+  your findings come back as UAT. Rendered: https://claude.ai/artifact/Jx4GCJjJwCcdCMpYCkaziZ (light and dark, desktop
+  and a 390 stage). Deep dive: `packages/agent/src/design/fletch/ds/specimens/loop-status.html`, the bundle block
+  "Loop status and the file card (chat), P2" in `packages/agent/src/design/fletch/ds/components/bundle.css`,
+  `test/workers/f24-loop-status-specimen.test.ts`, [B-P2-04 and B-P2-10](contracts/P2-loop.md#clauses),
+  [deltas 5 and 6](contracts/P2-loop.md#translation).
+
 ## Steering
 
 ## Done

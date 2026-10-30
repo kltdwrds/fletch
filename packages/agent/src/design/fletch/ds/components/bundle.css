@@ -566,6 +566,22 @@ body{background:var(--bg-primary);color:var(--text-primary);font-family:var(--fo
 .qf-msg--user>.qf-reaction{align-self:flex-end}
 .qf-msg>.qf-msgact,.qf-msg>.qf-react{align-self:flex-start;margin-inline-start:4px}
 
+/* ===== Loop status and the file card (chat), P2: what the thread shows while the agent works and when it hands over
+   a file, from the muse.ai capture of 2026-10-29 (docs/plan-v2/contracts/P2-loop.md, B-P2-04 and B-P2-10, deltas 5
+   and 6). Specimen: ds/specimens/loop-status.html. The working line (.qf-busy) is the in-thread dots the page already
+   draws for "Thinking…", now with the running tool's activity in words from a table in the page (never the tool's
+   identifier, never the model's text); it stands where the reply will and goes at turn_done or turn_failed. A file
+   the agent links from its store is a card, the task drawer's .qf-fcard inside the agent bubble as .qf-fcard--chat: a
+   link to the Library's viewer with the name, the kind and up to four lines of preview. A URL stays a link; a failure
+   or a refusal is a sentence in the bubble, no card, no chip, no code. */
+.qf-busy{display:inline-flex;align-items:center;gap:8px;min-height:24px;color:var(--text-secondary);font:400 13px/18px var(--font-sans)}
+.qf-busy .qf-dots{flex-shrink:0}
+.qf-fcard--chat{max-width:320px;background:var(--bg-primary);color:inherit;text-decoration:none}
+.qf-fcard--chat:hover{background:var(--fill-secondary-elevated-hover)}
+.qf-fcard--chat:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.qf-fcard--chat .pv{height:calc(4 * 18px + 8px)}
+.qf-bubble--agent>.qf-fcard--chat{margin-block:8px 0}
+
 /* Share targets */
 .qf-share{display:flex;gap:24px;padding:4px 0;justify-content:center;flex-wrap:wrap}
 .qf-share>div{display:flex;flex-direction:column;align-items:center;gap:8px;width:64px}
