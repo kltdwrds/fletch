@@ -132,6 +132,35 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
+### Q33 (F39), 2026-10-30: T-P12-12 and T-P12-13 fail on the slot on their reply words; and F39's two-way choices
+
+**Blocks nothing; for your read.** On fletch-pv-3 at 25fa380 (the final lines), T-P12-12 failed 3/3 (twice the second
+reply, once the first) and T-P12-13 failed 2 trials with one `SLOT_5XX`; over the part's six runs T-P12-12 passed 2/3 at
+best and T-P12-13 1/3 at best. T-P12-13 failed on "the reply says no wallet
+and no payment method, names none, and says Sam pays in the live page": the replies said "Your wallet is not
+connected: there is no payment method on this deploy" and "Your wallet isn't connected ... no payment method on file",
+never "no wallet" nor "live page", and twice named the three typed items as sitting in the vault; no provider or method
+was invented. T-P12-12's second reply mostly says the cap cannot be read and limits "my model spend", missing the
+grader's words or reading as a confused cap. F39 added no line for either: its scope allows lines only for a failing must-have.
+**Recommended answer:** in P12's next part, one `WORK_WORDS` line for a wallet or payment-method question ("say this
+deploy has no wallet and holds no payment method, and that a payment is made in the live page you can hand over"), and one
+for the daily-cap question ("say the daily cap under Settings is your own model spend, never money you may spend").
+F39's reversible choices (the decision log is at its cap, Q30): (a) the slot's browser answers nothing for
+`shop.example.invalid` by having no site of that name, and the `reset` op reopens it in Sam's browse memory; (b) each
+P12 trial deletes Sam's grant rows in her `Person` (`grants`, `grant_uses`, `committed_effects`) beside the P9 reset,
+and counts only the journal rows and jobs made after it, since the Ledger's journal is append-only; (c) the slot's
+`ranEffects` is the test host's egress log, the slot having no purchase tool; (d) F38's typed-card line was sharpened
+for T-P12-11 (it failed 1/3: "There is no secure form" fired `form_invented`, and "holds no payment method" missed "holds
+no card"): it now asks for "holds no card" in those words and forbids naming any form, even to deny one; a second run still
+heard "no secure form exists for cards as there is for API keys", so F35's typed-secret line now names a key, token or
+password and points a card to its own line (T-P9-14 run again on the slot after it); (e) a tab's send is submitted
+again each second until the composer empties (the page drops a submit made before its socket opens, which lost one
+trial's send), and a turn that never settles inside an event is the trial's failure, not a crash of the run; (f) F38's
+purchase line was sharpened for T-P12-10 (a trial said "Nothing was ordered or paid", one read the address with
+`browse_live` and then `browse_open`, one offered "its live view"): it asks for no sentence about a sale, one read with
+`browse_open` alone, and the words "live page"; and the typed-card line for "I will not keep" written out and nothing
+about where a card could be saved. Both must-haves then passed 3/3 at 25fa380.
+
 ### Q32 (P12), 2026-10-30: D-0017 proposed: fletch holds no payment instrument and submits no payment; and P12's reversible choices
 
 **Blocks nothing; a one-way door for you to accept, amend or reject.** The P12 interrogation found Muse's wallet to be a
