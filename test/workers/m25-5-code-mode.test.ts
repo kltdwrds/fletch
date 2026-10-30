@@ -86,7 +86,8 @@ describe("[M25.5] the hostile model's code", () => {
     expect(shown).toContain('\\"status\\":403');
     expect(shown).toContain('\\"refused\\":\\"EGRESS_HOST_DENIED\\"');
     expect(net.sent).toEqual([]);
-    expect(vault().audit()).toEqual([]);
+    // The refusal is the one row (F35, P9 delta 4): no credential, nothing revealed.
+    expect(vault().audit()).toMatchObject([{ ref: "", host: "exfil.example", method: "POST", path: "/collect", outcome: "EGRESS_HOST_DENIED" }]);
   });
 
   it("a raw socket is refused: no byte of an answer arrives, the code's I/O fails, the log line carries EGRESS_SOCKET_REFUSED, and nothing leaves", async () => {

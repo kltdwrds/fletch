@@ -372,6 +372,87 @@ Kyle's own lines go under `## Steering`.
   Complete; `step-4-dom.md` the `<ol start="391">`; `answers/step-12.md` "Left behind in Muse": thread A
   `74d0a08b-d735-41eb-b98a-c5c3dd987c34`, 18 agent rows, the schedule `p3-probe-example-title-in-5-min` and run
   `87fac3d0`, 5 reaction rows, memory sections L311 to L440 of `~/memory/2026-10-30.md`, none removable by the tools).
+- [ ] 2026-10-30 uat: **F31 and F32, Activity as it is and Activity says what happened (merged, PR #55 and PR #57;
+  F34's slot will carry this tree next, else `pnpm preview up` on main).** The record's words are code's: a finished
+  task ends in a summary step with code's counts of reads, writes and failures and the final text quoted; a done task
+  with a failed read says "Complete, 1 step failed" on its row and in the drawer's pill (never a green Complete over
+  a failure, never Failed for the whole); a delegation's acknowledgement says launched and what it will find out,
+  never done; a scheduled run that did not arrive says so; the drawer's head shows the task's model calls and tokens
+  from the ledger; a running task's drawer offers Stop, which also ends the sub-agents that turn launched (Q25); a
+  failed read is said as "No page came back from <page>" and a done task's reply says what was found, not the steps
+  (F32's two `WORK_WORDS` lines, each measured by a tier-2 task). The P5 must-have tier-2 tasks pass 3 of 3 on the
+  slot and P5 is at level 2. What to try: ask for a page's title and a second page on `example.invalid` in one
+  request, read the reply and open the row in Activity (the pill, the failed step's mark, the summary at the end,
+  the head's tokens); ask for a sub-agent to read a page and press Stop in the drawer while it runs, then read what
+  the next turn says. Open for your eye, not blocking: Q25 (should Stop end the children or let them run on), Q24
+  (no hidden store about the chat; a removed job's card), and F32's prescribed phrase for a failed read ("No page
+  came back from"), an instruction line under Q18's rule that a reader might call a harness sentence in disguise.
+  Deep dive: [F31](parts.md#f31-activity-as-it-is-the-p5-contract-check-fifteen-task-files-codes-summary-a-failure-said-in-the-status-tokens-in-the-drawer-and-tier-1)
+  and [F32 in parts.md](parts.md#f32-activity-says-what-happened-p5s-tier-2-on-a-slot), [PROGRESS.md F31 and F32](PROGRESS.md),
+  [SCORECARD P5](SCORECARD.md), [Q25](QUESTIONS.md#q25-p5-f31-2026-10-30-should-stop-end-the-sub-agents-the-stopped-turn-launched-or-let-them-run-on),
+  `packages/agent/src/chat/instructions.ts` (`WORK_WORDS`), `docs/plan-v2/contracts/P5-activity.md`, the four P5
+  results files under `docs/plan-v2/evidence/results/` (T-P5-12 to 15).
+- [ ] 2026-10-30 decide: **D-0016, OAuth connectors (proposed one-way door), and a playlist to delete.** fletch connects
+  a provider by a token or a login the person enters on the capture form; Muse's provider connectors are OAuth grants
+  through the provider's consent page. A redirect route that receives codes and a refresh-token kind in the Vault are
+  a security boundary and a storage schema, so the record is proposed, not taken: accept it (a part after the spine),
+  reject it (OAuth-only providers stay refused by name) or say what to change. Separately, Muse created a playlist
+  `p9 probe` in your music account during the P9 interrogation (step 6: a method default overrode the group's `ask`,
+  no card); the connector cannot delete it, so it is yours to remove in the provider's app. Deep dive:
+  [D-0016](../decisions/0016-oauth-connectors.md),
+  [Q27](QUESTIONS.md#q27-p9-2026-10-30-the-oauth-door-d-0016-a-playlist-left-in-your-music-account-and-nine-muse-credential-findings-fletch-already-rules-out),
+  [contract, One-way doors](contracts/P9-connectors.md), `docs/plan-v2/evidence/p9-connectors/answers/step-6.md` and
+  `step-12.md` ("Left behind in Muse").
+- [ ] 2026-10-30 look: **the P9 credentials and connectors contract and its nine deltas from Muse.** The interrogation
+  of muse.ai (one side chat, 13 steps, 95 files through `pnpm redact`, no value entered, nothing pressed on a card,
+  nothing connected or disconnected) found that a secret typed in chat is refused "not in memory, not in a file" and
+  then kept in clear in four rows and drawn unmasked after reload; a setup card has no Cancel, shows no host and
+  leaves an abandoned session nobody can remove; a write ran with no card because a method's default overrode the
+  group's `ask`; a read and a write wrote no audit row; no table holds a connection's status and a connection dropped
+  with nothing told; Permissions says Connectors 12 while the tool lists 6; the mail is read for a sign-in code with
+  no separate ask; `device.list` says 4 where Settings shows 2 and `device.unpair` runs on the model's confirmation;
+  `/settings` at phone width is "Page not found" and a reload loads four marketing pixel frames. The contract
+  translates each into fletch's rule (a setup is a link the person opens and a chat item they can dismiss; the sending
+  tab masks what it sent; a refused plan writes its audit row; a row has a status word and a last use; Disconnect is
+  on the row and says what remains from a fixed list; every grant in one pane with the same counts; the code's
+  approval is a card; what the agent counts is what the pane lists; a reply says what this deploy has no surface for)
+  with the rejected alternative beside each; one one-way door proposed (D-0016, above). F35 (tier 1, the bubble fix,
+  the audit row, four instruction lines), F36 (the surfaces, after their specimens) and F37 (tier 2) follow. What to
+  read: the Clauses and the Deltas; say under Steering if a delta reads wrong, in particular delta 1 (a setup item
+  with Dismiss and no pending vault row) and delta 5 (no background health check: a status changes at a use). Deep
+  dive: [contract](contracts/P9-connectors.md),
+  [Q27](QUESTIONS.md#q27-p9-2026-10-30-the-oauth-door-d-0016-a-playlist-left-in-your-music-account-and-nine-muse-credential-findings-fletch-already-rules-out),
+  [F35 to F37 in parts.md](parts.md#f35-credentials-as-they-are-the-p9-contract-check-eighteen-task-files-the-sending-tabs-mask-the-refused-plans-audit-row-four-instruction-lines-and-tier-1),
+  [SCORECARD P9](SCORECARD.md), evidence on your Mac under `docs/plan-v2/evidence/p9-connectors/` (`answers/step-0.md`
+  to `step-12.md`; `step-2-card.png` the card with no Cancel; `step-4-reload.png` the marker drawn back;
+  `step-6.png` the write with no card; `step-8-permissions.png` Connectors 12; `step-10.png` two of four devices;
+  `step-11-settings-reload-phone.png` "Page not found"; `answers/step-12.md` "Left behind in Muse").
+- [ ] 2026-10-30 look: **the connections specimen for F36** (rendered: https://claude.ai/artifact/YVffjTDwaXgpZ7nrH9M92W;
+  source `packages/agent/src/design/fletch/ds/specimens/connections.html`, held by
+  `test/workers/f36-connections-specimen.test.ts`). From the muse.ai capture (`step-2-card.png`, `step-1-connected.png`,
+  `step-8.png`, `step-8-permissions.png`): the capture item in the agent's bubble with the host, how the key is sent and
+  its state (Open the form, Dismiss; entered; dismissed), where Muse's card has no Cancel and no host; the Connected
+  rows with a status word and the last use, where Muse's have neither; one connection's page with its hosts, grants,
+  what it sent (the audit rows, the refused call among them) and Disconnect saying what stays; the Permissions pane
+  with every grant once (one use or standing, when it ends, Revoke) and counts from the same rows, where Muse's say 12
+  against 6; the one-time code's card. Light and dark, desktop and phone. Nothing new in `bundle.css`: every surface
+  is the settings pane, the grouped rows, the status pill and the prompt card as they are. Say "fine" or what to
+  change under Steering before F36 starts; F35 runs meanwhile and draws none of it.
+
+- [ ] 2026-10-30 do: **sign the built-in browser back in to Muse, so P12 (wallet and payments) can be interrogated.**
+  The P12 interrogator (an Opus agent under the orchestrator's `evidence/p12-wallet/scenario.md`, ten steps, read-only
+  but for one add-method page to raise and close and one purchase ask at `https://shop.example.invalid`) ran step 0 (the
+  dump refresh: `wallet` has five read functions over `stripe-link` and `shop-pay`; no orders, receipts, budget or
+  allowance namespace; the prompt's "The user cannot create a standing Wallet budget or spending allowance") and step 1
+  (both providers `not_connected`, 0 payment methods, 0 addresses, 0 purchase approvals in history), then, at phone
+  width, clicked the "More" sheet while it was still sliding and hit Sign out instead of Settings (`POST /api/logout`
+  200 in `step-1-requests.json`; `step-1-signed-out-phone.png`). Nothing was typed on the signed-out page, no value was
+  entered anywhere, no money moved, no Add button was pressed; thread A `5153e9f6-4941-481e-94d4-b337ac917a6e` ("P12
+  dump refresh request") holds the seven probe asks. The agent stopped because signing in is yours. Once the built-in
+  browser is signed in again the orchestrator relaunches the agent at step 2 with the same scenario; until then P12 stays
+  at level 0 and the Translation waits (its fletch-side survey is done: no payment instrument, no purchase tool, every
+  budget is model spend). The rule the agent broke ("never sign out") now gets a mechanical line in the next brief:
+  no click within two seconds of a sheet or drawer opening, and never a click by coordinate on a phone-width sheet.
 
 ## Steering
 

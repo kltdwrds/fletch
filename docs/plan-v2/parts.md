@@ -466,3 +466,91 @@ their results recorded whatever the verdict; `ACCEPT F34: PASS`; `VERIFIER: no b
 
 **Not in scope:** a change to a clause; new instruction lines beyond what a failing must-have needs, each named in the
 PR body with its task.
+
+## F35 Credentials as they are: the P9 contract check, eighteen task files, the sending tab's mask, the refused plan's audit row, four instruction lines and tier 1
+
+**Read:** `docs/plan-v2/contracts/P9-connectors.md` (every clause, the Tasks, the Translation's deltas 2, 3, 4 and 9,
+the Build notes), the P3 world and tasks under `test/evals/p3-delegation/` as the pattern, `packages/agent/src/vault/`
+(`core.ts`, `hosts.ts`, `grants.ts`, `tools.ts`, `typed.ts`, `otp.ts`), `packages/agent/src/egress/` (`policy.ts`,
+`module.ts`), `packages/agent/src/connectors/`, `packages/agent/src/chat/gate.ts`, `chat/instructions.ts`
+(`WORK_WORDS`), `packages/agent/src/http/app/chat.ts` (`taken`, `nameSent`), `packages/agent/src/http/vault-routes.ts`,
+`test/workers/m13-capture.test.ts`, `m13-vault.test.ts`, `m14-chat-secrets.test.ts`, `m25-1-proposed-host.test.ts`,
+`docs/plan-v2/QUESTIONS.md` Q18 and Q27. No one-way door: D-0016 (OAuth) is proposed and nothing here depends on it;
+no new table, no new tool; one client fix, one audit row on an existing table, four instruction lines.
+
+**Scope:** (1) `test/m0/f35-contract.test.ts` holds the P9 contract as `f33-contract.test.ts` holds P3: fourteen
+clauses, eighteen tasks, every tier-1 `version_hash` filled for the tasks that run here. (2) The eighteen `.task.ts`
+files under `test/evals/p9-connectors/` with a `world.ts` extending P3's (a Chat and a Vault Durable Object, the fake
+network serving `https://api.example.com/p9-probe` and refusing `https://api.example.org/p9-probe` with no request
+made, a fixture connector with one `observation` method `count` and one `action` method `create` through the chat
+gate, the GitHub and hackernews connectors against the fake network, a fake mailbox for T-P9-11, two push
+subscriptions for T-P9-12) and a `harness.ts`; tier 1 (T-P9-01, 03, 04, 05, 06, 07, 11, 12, 18) runs under vitest with
+an `[F35]` describe, every minefield planted in a `planted.test.ts`; T-P9-02, 08, 09 and 10 are written to grade F36's
+form and skipped by name until F36 lands, their files saying so. (3) The code the deltas need: the sending tab's
+bubble takes the held text from the frame, never its own `textContent` (delta 2; T-P9-04); a refused plan
+(`EGRESS_CRED_HOST_DENIED`, `EGRESS_CRED_UNKNOWN`, `EGRESS_HOST_DENIED`) writes one `egress_audit` row with outcome
+`refused` and the code before `egressFetch` returns (delta 4; T-P9-05); four lines in `WORK_WORDS`: a setup reply
+gives the link, names the host, asks for no value and ends the turn (T-P9-01); a secret typed in chat is refused as a
+keeper, never repeated, pointed at the entry surface (T-P9-04); asked about devices or sessions the reply says what
+this deploy has and invents no count (T-P9-12); a connector's count is the number the tool returned or what could not
+be counted, never a bare number for a view the connector lacks (T-P9-16's line, graded in tier 2) (delta 3).
+
+**Acceptance:** the nine tier-1 tasks pass under vitest and each planted minefield fails without its guard; the four
+F36 tasks are skipped by name with F36 named; `test/m0/f35-contract.test.ts` passes; `pnpm check` and the hermetic
+suite green; `ACCEPT F35: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** any owner-visible surface (F36: the capture item, the row's status word and last use, Disconnect,
+the grants pane, the OTP card, the audit read); OAuth (D-0016, proposed); device pairing or a session list; a
+background health check; tier 2 (F37); a code-written reply line (Q18); a change to a clause.
+
+## F36 Connections the person can see and end: the capture item, a row's status and last use, Disconnect, every grant in one pane, the code's card and the audit read
+
+**Read:** `docs/plan-v2/contracts/P9-connectors.md` (B-P9-02, B-P9-08, B-P9-09, B-P9-10, B-P9-11, the Translation's
+deltas 1, 5, 6, 7, 8 and 9), the F35 world and the four skipped tasks under `test/evals/p9-connectors/`, the specimens
+the orchestrator lists in `WAITING-ON-KYLE.md` under `ds/specimens/` for this part (the capture item, the Connected row
+and connector page, the Permissions counts), `packages/agent/src/http/app/connectors.ts`, `http/connector-routes.ts`,
+`http/vault-routes.ts`, `http/app/settings-panes.ts`, `packages/agent/src/vault/core.ts` (`revoke`, `removeCompany`,
+`grants`, `audit`, `approveOneTimeCode`), `packages/agent/src/objects/vault.ts`, `packages/agent/src/grants/engine.ts`
+(`FRESH_CARD_KINDS`), `packages/agent/src/chat/gate.ts`, P15's contract for the card's shape. No one-way door: every
+change reads or exposes rows that exist; two new card kinds on the existing card machinery; no new table.
+
+**Scope:** (1) The capture item: the link `credential_request` returns is drawn as a chat item with the host, the kind
+and "not entered yet", a Dismiss that voids the ref (`VAULT_REF_INVALID` afterwards), "entered" from the
+`vault_events` `captured` row; the same at phone width and after a reload (T-P9-02). (2) The Connected "Yours" row
+shows `CredentialInfo.status` as a word and the newest `egress_audit` row's `at` as the last use; the connector's
+detail pane lists the ref's audit rows read-only through `audit()` exposed on the Vault object's RPC (T-P9-08). (3)
+Disconnect on the row calls `/vault/revoke` as writer `settings`, which also revokes the ref's `credential_grants`
+and the authority grants that name it, writes a `vault_events` `revoked` row and keeps the audit rows;
+`removeCompany` does the same; a chat ask to disconnect is an action `credentials.revoke` in `FRESH_CARD_KINDS`; the
+reply's "what remains" is a fixed list in `WORK_WORDS` (T-P9-09). (4) The Permissions pane lists credential grants
+from `grants(person)` beside the authority grants, every count computed from the same rows, a standing grant saying
+"until you revoke it" (T-P9-10). (5) The browse fill that needs a one-time code raises a `credentials.otp` card
+naming the site and the mailbox; the press calls `approveOneTimeCode` (T-P9-11's card path). (6) The four skipped
+tasks run under an `[F36]` describe with their minefields planted; every tier-1 `version_hash` in the contract filled.
+
+**Acceptance:** T-P9-02, 08, 09 and 10 pass under vitest and each planted minefield fails without its guard; the F35
+tasks still pass; `test/m0/f35-contract.test.ts` passes with every tier-1 hash filled; `pnpm check` and the hermetic
+suite green; `ACCEPT F36: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** OAuth (D-0016); a background health check (a status changes at a use); device pairing or removal;
+the company admin surface beyond `removeCompany`'s event row (M28); the catalogue's Available rows; tier 2 (F37); a
+change to a clause.
+
+## F37 Credentials say what happened: P9's tier 2 on a slot
+
+**Read:** `docs/plan-v2/contracts/P9-connectors.md` (B-P9-01, B-P9-04, B-P9-05, B-P9-06, B-P9-13, the tier-2 tasks),
+the F35 and F36 world and tasks under `test/evals/p9-connectors/`, `packages/agent/src/chat/instructions.ts`,
+`docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q18. No one-way door. A live step: `pnpm evals` runs from Kyle's
+Mac on this worktree's slot (`pnpm preview up`); if no slot can be leased, that is a question, not a reason to skip.
+
+**Scope:** (1) The slot serves `https://<slot>/fixtures/p9-probe` as api.example.com's stand-in and refuses the
+api.example.org stand-in, with the runner capturing a credential for it as the person before T-P9-15; the fixture
+connector of the F35 world on the slot for T-P9-16. (2) Tier 2 on the slot: T-P9-13 and T-P9-14 (must-have), T-P9-15,
+T-P9-16 and T-P9-17, three trials each, the results files committed, the table in the PR body. (3) Every P9 hash in
+the contract matches.
+
+**Acceptance:** `pnpm evals T-P9-13` and `pnpm evals T-P9-14` `pass` (three of three); T-P9-15, T-P9-16 and T-P9-17 run
+and their results recorded whatever the verdict; `ACCEPT F37: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a change to a clause; new instruction lines beyond what a failing must-have needs, each named in the
+PR body with its task.
