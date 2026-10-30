@@ -224,7 +224,7 @@ describe("[F37] P9 on a slot: the probe host, the fixture connector, the rows, t
     expect(forms).toEqual([formOfLink(link, "v1")]);
     expect(forms[0]).toMatchObject({ ref: API_REF, host: API_HOST, setup: "s1", value: "v1" });
     const none = p9Slot(() => "c", async (call) => (call === "read" ? state("nothing") : null), async () => 201, () => [], "https://x.example", page, () => "v");
-    await expect(none.begin("T-P9-17", async () => "")).rejects.toThrow("P9_NO_LINK");
+    await expect(none.begin("T-P9-17", async () => "")).rejects.toMatchObject({ code: "P9_NO_LINK" });
   });
 
   it("planted: a sending tab that draws the typed value fails T-P9-14 on the slot's readers; a read of another chat is not made", async () => {

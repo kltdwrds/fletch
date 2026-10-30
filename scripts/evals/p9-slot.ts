@@ -23,6 +23,7 @@ import setup from "../../test/evals/p9-connectors/setup-real-model.task.ts";
 import typed from "../../test/evals/p9-connectors/typed-secret-real-model.task.ts";
 import type { AuditView, CallView, CardView, ChatLabel, GrantView, HostView, P9SlotWorld, SecretView, SentView, Tabs } from "../../test/evals/p9-connectors/world.ts";
 import { API_HOST, API_REF } from "../../test/evals/p9-connectors/world.ts";
+import { TurnError } from "../../test/support/evals.ts";
 
 /** What the test host's `p9` op answers for a chat. */
 export interface P9State {
@@ -177,7 +178,8 @@ export function p9Slot(c1: () => string, op: P9Op, capture: CaptureForm, prompts
         await send(setup.turns[0]?.kind === "event" ? String(setup.turns[0].payload?.text) : "");
         await refresh();
         const link = results().map((r) => /\/vault\/capture\?\S+/.exec(r.text)?.[0]).find(Boolean);
-        if (!link) throw new Error("P9_NO_LINK: T-P9-13's ask returned no capture link");
+        // The ask's link is the agent's to make: a trial without one is its failure, not the slot's.
+        if (!link) throw new TurnError("P9_NO_LINK", "T-P9-13's ask returned no capture link");
         const status = await capture(formOfLink(link, value()));
         if (status !== 201) throw new Error(`P9_LINK_NOT_SUBMITTED: the capture form answered ${status}`);
         await send(typed.turns[0]?.kind === "event" ? String(typed.turns[0].payload?.text) : "");
