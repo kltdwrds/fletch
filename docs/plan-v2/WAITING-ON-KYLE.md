@@ -98,26 +98,28 @@ Kyle's own lines go under `## Steering`.
   `test/workers/f24-loop-status-specimen.test.ts`, [B-P2-04 and B-P2-10](contracts/P2-loop.md#clauses),
   [deltas 5 and 6](contracts/P2-loop.md#translation).
 
-- [ ] 2026-10-29 uat: **decide the two P15 approval cards, live, within ten minutes.** The P15 interrogation
-  (safety, approvals, grants) needs one Muse approval card allowed and one denied, to see what Muse does after each;
-  the orchestrator never presses Allow or Deny. Muse's cards expire ten minutes after they are raised (card expiry in
-  permissions.history), so the two raised on 2026-10-30 at 01:04Z and 01:08Z timed out before you could see them,
-  and that is now captured as step 4. Steps 5 and 6 therefore need you at the keyboard for one short window: the
-  orchestrator raises two fresh cards in two new side chats and you decide each within ten minutes. Card 1 asks
-  "Allow Muse to share information with httpbin.org?" (a POST of the words `p15 probe`): press **Allow once**, the
-  narrowest of its choices (not "Always allow this site", nor anything in the panel's "More allow options" menu).
-  Card 2 asks the same for httpbingo.org: press **Deny**. Each card sits above its own chat's composer and pauses
-  only that chat; the profile panel's approvals tab lists both under "Needs review". Leave any other pending card (a
-  scheduled task's) alone. One thing to know: after the httpbingo.org card timed out, Muse retried the POST in the
-  same turn with a new command, which raised a fresh card on its own; the httpbin.org turn reported the timeout and
-  did not retry. Say under Steering when you have a window; the orchestrator then captures steps 5 and 6: whether the
-  allowed POST runs once and from which turn, the decision in permissions.history, the same ask again (a new card,
-  since "once"), and the denial's words, its finality and what Muse offers instead. Deep dive:
-  the scenario, steps 2 to 6 (`evidence/p15-approvals/scenario.md`, on your Mac), the timed-out cards' chats
-  https://muse.ai/thread/287a0b56-6551-474c-b6fb-faa30761aeca and
+- [ ] 2026-10-29 uat: **decide the two P15 approval cards, live, within ten minutes.** The P15 interrogation (safety,
+  approvals, grants) needs one Muse approval card allowed and one denied, to see what Muse does after each; the
+  orchestrator never presses Allow or Deny. Muse's cards expire ten minutes after they are raised (card expiry in
+  permissions.history), so the two raised on 2026-10-30 at 01:04Z and 01:08Z timed out before you could see them, and
+  that is now captured as step 4. Steps 5 and 6 therefore need you at the keyboard for one short window: the
+  orchestrator raises two fresh cards in two new side chats and you decide each within ten minutes. Card 1 asks "Allow
+  Muse to share information with httpbin.org?" (a POST of the words `p15 probe`): press **Allow once**, the narrowest
+  of its choices (not "Always allow this site", nor anything in the panel's "More allow options" menu). Card 2 asks
+  the same for httpbingo.org: press **Deny**. Each card sits above its own chat's composer and pauses only that chat;
+  the profile panel's approvals tab lists both under "Needs review". Leave any other pending card (a scheduled task's)
+  alone. One thing to know: after the httpbingo.org card timed out, Muse retried the POST in the same turn with a new
+  command, which raised a fresh card on its own; the httpbin.org turn reported the timeout and did not retry. The
+  httpbingo.org turn went on to raise six cards in all, re-aimed two of them at postman-echo.com and example.com, then tried the
+  POST through the browser; every card timed out and nothing was sent (step 12). Say under Steering when you have a
+  window; the orchestrator then captures steps 5 and 6: whether the allowed POST runs once and from which turn, the
+  decision in permissions.history, the same ask again (a new card, since "once"), and the denial's words, its finality
+  and what Muse offers instead. Deep dive: the scenario, steps 2 to 6 (`evidence/p15-approvals/scenario.md`, on your
+  Mac), the timed-out cards' chats https://muse.ai/thread/287a0b56-6551-474c-b6fb-faa30761aeca and
   https://muse.ai/thread/06684629-39d4-492c-a02c-a79b1d5f279f, the pass's continuing chat
   https://muse.ai/thread/38531e29-650e-4669-852e-35d1c606c46b; evidence on your Mac under
-  `docs/plan-v2/evidence/p15-approvals/` (`answers/step-2.md` to `answers/step-4.md`, `step-4.png`).
+  `docs/plan-v2/evidence/p15-approvals/` (`answers/step-2.md` to `answers/step-4.md`, `answers/step-12.md`,
+  `step-4.png`).
 
 - [ ] 2026-10-29 question: **Q16, two grader edits in F24 the verifier calls softening.** F24 shipped the status
   line, the file card and the job wake with `ACCEPT F24: PASS` and T-P2-13 (the P2 tier-2 must-have) 3 of 3 on
@@ -150,6 +152,22 @@ Kyle's own lines go under `## Steering`.
   anything that reads wrong under Steering; nothing is blocked on this. Deep dive:
   [F24 in parts.md](parts.md#f24-the-thread-shows-the-work-the-status-line-the-file-card-and-a-jobs-completion-wakes-the-agent),
   [PROGRESS.md F24](PROGRESS.md), `packages/agent/src/http/app/thread-work.ts`, `packages/agent/src/chat/job-wake.ts`.
+
+- [ ] 2026-10-29 look: **the P15 approvals contract and its eight deltas from Muse.** The interrogation of muse.ai
+  (three side chats, steps 0 to 12 of the scenario, run by an Opus agent that never pressed Allow or Deny, entered no
+  credential and changed no grant) is now `contracts/P15-approvals.md`: fifteen clauses on the card, its expiry, what
+  follows a timeout, where grants live, discretion's three layers, the vault, CAPTCHAs, Stop, limits and the reload;
+  fifteen tasks; eight deltas. The decisions worth your eye, each a two-way door the orchestrator took: fletch's card
+  never expires and does not block the turn (Muse's ten-minute "Timed out", after which its turn may ask again); a
+  bot check is refused by name and a memory line grants nothing (Muse solved the reCAPTCHA demo on a line in your
+  memory file); a decided card keeps its words in the thread; no cross-chat review bar; no permissions tool for the
+  model; side chats and discretion out of scope until P3. Two parts follow: F25 (tier 1 on what is shipped) and F26
+  (the egress-level gate, the bot wall, the rate limit, tier 2). Deep dive:
+  [the contract](contracts/P15-approvals.md), [its deltas](contracts/P15-approvals.md#translation),
+  [Q17](QUESTIONS.md#q17-p15-2026-10-29-one-attested-clause-and-four-findings-from-the-p15-interrogation),
+  [F25 and F26 in parts.md](parts.md#f25-approvals-as-they-are-p15s-contract-check-and-the-tier-1-tasks-on-shipped-behaviour),
+  evidence on your Mac under `docs/plan-v2/evidence/p15-approvals/` (`answers/step-0.md` to `step-12.md`,
+  `step-9.png` the solved check, `step-12-chatB.png` the drift, `step-12-approvals-panel.png` the history).
 
 ## Steering
 
