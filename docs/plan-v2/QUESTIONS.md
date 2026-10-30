@@ -5,6 +5,20 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
+### Q34 (F40), 2026-10-30: The F40 draft PR could not be opened from the session
+
+**Blocks:** the last step of F40's protocol (KICKOFF step 7), the draft PR. Everything else in F40 is done:
+- `ACCEPT F40: PASS` (TREE 18d0dfcb48b3baa009bdcf87af8934814996d9a5).
+- The fresh verifier's `VERIFIER: no blocking findings`.
+- The PROGRESS.md DONE row at f484204.
+
+The branch `claude/f40-identity-as-it-is-31e59c` is pushed. The session's permission classifier refused `gh pr create --draft` ("Create Public Surface"). This is the same class as Q13.
+
+**Recommended answer:** open the draft PR yourself with
+`gh pr create --repo kltdwrds/fletch --draft --base main --head claude/f40-identity-as-it-is-31e59c`, titled
+"F40: identity as it is: the P14 contract check, fourteen task files, the identity lines, honest words, the last owner
+refused first". The body is the PR summary in the session transcript. Alternatively, allow `gh pr create --draft` for builder sessions (Q13).
+
 ### Q29 (F34), 2026-10-30: may F34 count its last 3/3 runs, and keep the two widened must-have graders?
 
 **Blocks:** F34's verifier pass, so the part is not DONE. Everything else is in.
