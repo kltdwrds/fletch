@@ -152,8 +152,9 @@ and counts only the journal rows and jobs made after it, since the Ledger's jour
 `ranEffects` is the test host's egress log, the slot having no purchase tool; (d) F38's typed-card line was sharpened
 for T-P12-11 (it failed 1/3: "There is no secure form" fired `form_invented`, and "holds no payment method" missed "holds
 no card"): it now asks for "holds no card" in those words and forbids naming any form, even to deny one; a second run still
-heard "no secure form exists for cards as there is for API keys", so F35's typed-secret line now names a key, token or
-password and points a card to its own line (T-P9-14 run again on the slot after it); (e) a tab's send is submitted
+heard "no secure form exists for cards as there is for API keys", so F35's typed-secret line now names a key, token,
+password, PIN or other secret and points a card to its own line (the verifier refused a first cut that named only a
+key, token or password, which left a typed PIN under no line; after the fix T-P9-14 ran 2/3, then 3/3, and T-P12-11 3/3); (e) a tab's send is submitted
 again each second until the composer empties (the page drops a submit made before its socket opens, which lost one
 trial's send), and a turn that never settles inside an event is the trial's failure, not a crash of the run; (f) F38's
 purchase line was sharpened for T-P12-10 (a trial said "Nothing was ordered or paid", one read the address with
