@@ -65,12 +65,14 @@ export class P9SurfaceTier1World extends P9Tier1World implements P9SurfaceWorld 
   }
 
   /**
-   * The Vault as these tasks change it: its event log (`<kind>:<event>`, `none` where no secret row exists) and the
-   * audit rows, both append-only, so a disconnect or a dismiss is an added row, never a row gone; the rest as P9's.
+   * The Vault as these tasks change it: its credentials' lifecycle events (`<kind>:<event>`, `none` where no secret row
+   * exists) and the audit rows, both append-only, so a disconnect or a dismiss is an added row, never a row gone. A
+   * provider's `rejected` answer belongs to the use its audit row already counts, so it is not counted again; the rest
+   * as P9's.
    */
   async snapshot(): Promise<Snapshot> {
     const base = await super.snapshot();
-    const events = this.vaultH.rows("SELECT e.event, s.kind FROM vault_events e LEFT JOIN secrets s ON s.owner = e.owner AND s.ref = e.ref ORDER BY e.id").map((r) => `${r.kind ?? "none"}:${String(r.event)}`);
+    const events = this.vaultH.rows("SELECT e.event, s.kind FROM vault_events e LEFT JOIN secrets s ON s.owner = e.owner AND s.ref = e.ref WHERE e.event != 'rejected' ORDER BY e.id").map((r) => `${r.kind ?? "none"}:${String(r.event)}`);
     return { ...base, vault: [...events, ...this.auditRows().map((a) => `audit:${a.host}:${a.outcome}`)] };
   }
 

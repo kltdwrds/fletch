@@ -23,7 +23,8 @@ export type EgressCode =
   | "EGRESS_COMPANY_GRANT_REQUIRED"
   | "EGRESS_HOST_POLICY"
   | "EGRESS_CRED_REVOKED"
-  | "EGRESS_CRED_EXPIRED"
+  // An expired credential is the Vault's own `VAULT_CRED_INACTIVE` at the egress too (P9 contract, T-P9-08).
+  | "VAULT_CRED_INACTIVE"
   | "EGRESS_CRED_SPENT"
   | "EGRESS_GRANT_REQUIRED"
   | "EGRESS_GRANT_INVALID"

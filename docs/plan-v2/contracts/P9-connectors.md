@@ -356,7 +356,7 @@ T-P9-08  must-have  tier 1
   collateral: audit rows for the three uses
   graders: code
   reference: Muse's 12 rows with no word against 10 then 6 connected, the connection dropped unsaid (B-P9-08)
-  version_hash: 80fe9dcbafca
+  version_hash: 5a6c4a4cf5d5
   file: test/evals/p9-connectors/status-is-stored-and-said.task.ts
 
 T-P9-09  must-have  tier 1

@@ -42,7 +42,7 @@ export const CONNECTION_TEXT = {
 export function outcomeWords(outcome: string): string {
   if (outcome === "resolved") return "sent";
   if (outcome.startsWith("rejected by the provider")) return outcome;
-  if (outcome === "EGRESS_CRED_EXPIRED") return "refused: the key has expired";
+  if (outcome === "VAULT_CRED_INACTIVE") return "refused: the key has expired";
   if (outcome === "EGRESS_CRED_REVOKED") return "refused: the key was revoked";
   if (outcome === "EGRESS_CRED_HOST_DENIED" || outcome === "EGRESS_HOST_DENIED") return "refused before anything left: the host is not bound";
   return "refused before anything left";

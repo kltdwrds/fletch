@@ -96,22 +96,19 @@ the free-plan spike (Q2).
 
 ## Open, not blocking
 
-### Q28 (F36), 2026-10-30: may T-P9-08 grade `EGRESS_CRED_EXPIRED`, and may the four surface tasks declare their Vault changes?
+### Q28 (F36), 2026-10-30: F36's two-way choices, recorded here because the decision log is at its cap
 
-**Blocks nothing; F36 ran with the changes below, said in each file.** (a) The contract's T-P9-08 says the expired
-key's read "is refused `VAULT_CRED_INACTIVE`"; fletch's egress refuses a read with an expired key
-`EGRESS_CRED_EXPIRED` (`vault/core.ts`, the egress), and `VAULT_CRED_INACTIVE` is what issuing a grant on one gives.
-The grader now looks for `EGRESS_CRED_EXPIRED`: the same check, the code fletch says. Ask: change the contract line's
-code to match, or say the grant path is the one to grade. (b) Three of the four tasks had `collateral: {}` though
-their own turns write to the Vault (a dismissal, a 401's `rejected` row, a revocation, audit rows); each now declares
-exactly those, and their harness (`test/evals/p9-connectors/harness-surface.ts`) snapshots the Vault's append-only
-event log and audit rows, so a revocation is an added row rather than a row gone. Nothing undeclared passes. Say if
-either reads as softening (as Q16 asked of F24). Evidence: `test/evals/p9-connectors/status-is-stored-and-said.task.ts`,
-`planted-surface.test.ts`; `contracts/P9-connectors.md` T-P9-08. (c) Two-way choices F36 made, here because the decision log is at its
-40 KB cap (`scripts/check-decisions.mjs`; pruning it is for its owner): `vault_events` gains `dismissed` (detail:
-the link's setup id, so a later ask's link still works) and `rejected` (a provider's 401 or 403; the audit outcome
-stays `resolved`, as T-P9-07 needs), with no schema change; Permissions lists every grant once, replacing "What
-others can ask"; the Connected "Yours" rows keep expired and spent keys and leave out held codes and typed secrets.
+**Blocks nothing; for your read.** The decision log is at its 40 KB cap (`scripts/check-decisions.mjs`; pruning it
+is for its owner), so F36's reversible choices are here. (a) `vault_events` gains `dismissed` (its detail names the
+link's setup id, so a later ask's link for the same name still works) and `rejected` (a provider's 401 or 403, by
+`provider`; the audit outcome stays `resolved`, as T-P9-07 needs); no schema change. (b) An expired credential is
+refused `VAULT_CRED_INACTIVE` at the egress and the fill too, as T-P9-08 names it; `EGRESS_CRED_EXPIRED` is gone.
+(c) Permissions lists every grant once, replacing "What others can ask"; the Connected "Yours" rows keep expired and
+spent keys and leave out held codes and typed secrets. (d) The four surface tasks declare the Vault rows their own
+turns write, within their contract lines (T-P9-02 a dismissal, T-P9-08 the audit rows of its three uses, T-P9-09 the
+revocation); their harness (`test/evals/p9-connectors/harness-surface.ts`) counts the Vault's lifecycle events and
+audit rows, so a revocation is an added row rather than a row gone. Recommended answer: none needed; move any of these
+into a record if others come to rely on it.
 
 ### Q27 (P9), 2026-10-30: the OAuth door D-0016, a playlist left in your music account, and nine Muse credential findings fletch already rules out
 

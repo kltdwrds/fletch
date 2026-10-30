@@ -119,7 +119,7 @@ describe("[M13] one-time codes", () => {
     expect(await w.vault().approveOneTimeCode({ ref, host: SHOP_LOGIN }, by(ada.email))).toMatchObject({ ok: true, grant: { oneShot: true, fill: true } });
     expect(await w.fill(other.email, ref, SHOP_LOGIN, OTP_FIELD)).toMatchObject({ ok: false, code: "EGRESS_CRED_UNKNOWN" });
     w.clock.now += 10 * 60_000;
-    expect(await w.fill(ada.email, ref, SHOP_LOGIN, OTP_FIELD)).toMatchObject({ ok: false, code: "EGRESS_CRED_EXPIRED" });
+    expect(await w.fill(ada.email, ref, SHOP_LOGIN, OTP_FIELD)).toMatchObject({ ok: false, code: "VAULT_CRED_INACTIVE" });
     expect(w.vault().list(ada.email).find((c) => c.ref === ref)).toMatchObject({ kind: "one-time-code", status: "expired" });
     expect(w.typed).toEqual([]);
   });

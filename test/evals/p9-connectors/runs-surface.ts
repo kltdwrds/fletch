@@ -44,7 +44,7 @@ export const surfaceRuns: Record<string, () => P9HarnessOptions> = {
       call("fixture_read", { url: PROBE_API }, "read2"),
       replyFrom((r) => (/status 401/.test(lastResult(r)) ? `${API_HOST} rejected your key (HTTP 401), so nothing was read. Only you can reconnect it, in Settings > Connectors.` : "It read fine.")),
       call("fixture_read", { url: `https://${OLD_HOST}/p9-probe`, credential: OLD_REF }, "read3"),
-      replyFrom((r) => `Refused before anything was sent: ${/EGRESS_[A-Z_]+/.exec(lastResult(r))?.[0] ?? "no code"}. Your key for ${OLD_HOST} has expired; only you can reconnect it.`),
+      replyFrom((r) => `Refused before anything was sent: ${/(EGRESS|VAULT)_[A-Z_]+/.exec(lastResult(r))?.[0] ?? "no code"}. Your key for ${OLD_HOST} has expired; only you can reconnect it.`),
     ],
   }),
   "T-P9-09": () => ({

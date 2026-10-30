@@ -497,7 +497,7 @@ export class VaultCore extends SealedVault {
       const row = this.sql("SELECT kind, permission, expires_at, revoked_at, used_at FROM secrets WHERE owner = ? AND ref = ?", owner, ref)[0];
       if (!row) return { ok: false, code: "EGRESS_CRED_UNKNOWN", reason: `${ref} is not in the vault for ${ctx.person || "this person"}` };
       const status = this.status(row);
-      if (status !== "active") return { ok: false, code: status === "revoked" ? "EGRESS_CRED_REVOKED" : status === "spent" ? "EGRESS_CRED_SPENT" : "EGRESS_CRED_EXPIRED", reason: `${ref} is ${status}` };
+      if (status !== "active") return { ok: false, code: status === "revoked" ? "EGRESS_CRED_REVOKED" : status === "spent" ? "EGRESS_CRED_SPENT" : "VAULT_CRED_INACTIVE", reason: `${ref} is ${status}` };
       const entry = this.entries(owner).find((e) => e.ref === ref && e.host === host);
       if (!entry || (method === "FILL" ? !entry.fills : !entry.methods.includes(method))) return { ok: false, code: "EGRESS_CRED_HOST_DENIED", reason: `${ref} is not registered for ${method} on ${host}` };
       let grant: string | undefined;

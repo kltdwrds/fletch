@@ -88,6 +88,12 @@ describe("[F36] a disconnect asked in chat is the person's card", () => {
       expect(transcript(w)).toContain("CARD_NOT_APPROVED");
       expect(w.secrets().find((s) => s.ref === API_REF)?.status).toBe("active");
     });
+    it("with credentials.otp taken out of the fresh-card kinds, a standing grant for a mailed code's use is signed", async () => {
+      const w = await world([]);
+      expect((await standing(w, "credentials.otp")).status).not.toBe(201);
+      (FRESH_CARD_KINDS as string[]).splice(FRESH_CARD_KINDS.indexOf("credentials.otp"), 1);
+      expect((await standing(w, "credentials.otp")).status).toBe(201);
+    });
   });
 });
 
@@ -127,6 +133,10 @@ describe("[F36] a company connector's removal", () => {
     const put = await w.vault().putCompany({ connector: "github", value: seededToken(), hosts: [{ host: "api.github.com", methods: ["GET"], header: "authorization", prefix: "Bearer " }], by: sam.email });
     expect(put.ok).toBe(true);
     const ref = w.vaultH.rows("SELECT ref FROM company_refs")[0]?.ref as string;
+    // A standing grant on the company's key (the company's own grants have no route of their own yet).
+    const issue = (w.vault() as unknown as { issue: (o: string, via: string, i: unknown) => Promise<{ ok: boolean }> }).issue.bind(w.vault());
+    expect(await issue("", "settings", { ref, hosts: ["api.github.com"], methods: ["GET"], expiresInMs: 86_400_000 })).toMatchObject({ ok: true });
+    expect(w.vaultH.rows("SELECT COUNT(*) AS n FROM credential_grants WHERE ref = ? AND revoked_at IS NULL", ref)).toEqual([{ n: 1 }]);
     expect(w.vault().removeCompany("github", sam.email)).toBe(true);
     expect(w.vaultH.rows("SELECT event, by FROM vault_events WHERE ref = ? AND event = 'revoked'", ref)).toEqual([{ event: "revoked", by: sam.email }]);
     expect(w.vaultH.rows("SELECT COUNT(*) AS n FROM credential_grants WHERE ref = ? AND revoked_at IS NULL", ref)).toEqual([{ n: 0 }]);
