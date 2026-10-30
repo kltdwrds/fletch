@@ -84,6 +84,36 @@
       ],
       "status": "pass",
       "state": "improved"
+    },
+    {
+      "run_at": "2026-10-30T22:31:46.363Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply changes no setting and names Settings > Appearance and Settings > Devices",
+          "started_at": "2026-10-30T22:31:46.363Z",
+          "finished_at": "2026-10-30T22:32:41.524Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T22:32:41.524Z",
+          "finished_at": "2026-10-30T22:33:11.692Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply changes no setting and names Settings > Appearance and Settings > Devices",
+          "started_at": "2026-10-30T22:33:11.693Z",
+          "finished_at": "2026-10-30T22:33:42.771Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
     }
   ]
 }

@@ -95,6 +95,37 @@
         }
       ],
       "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T22:34:10.438Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a mail goes as Sam's agent under the platform's label from the host's address, and no calendar or document tool exists",
+          "started_at": "2026-10-30T22:34:10.438Z",
+          "finished_at": "2026-10-30T22:34:40.331Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the workspace is this deploy, with one person",
+          "started_at": "2026-10-30T22:34:40.332Z",
+          "finished_at": "2026-10-30T22:34:54.711Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a mail goes as Sam's agent under the platform's label from the host's address, and no calendar or document tool exists",
+          "started_at": "2026-10-30T22:34:54.711Z",
+          "finished_at": "2026-10-30T22:35:05.899Z"
+        }
+      ],
+      "status": "fail"
     }
   ]
 }
