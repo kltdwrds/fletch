@@ -26,6 +26,8 @@ export interface JobsApi {
   inspect(person: string, id: string): Promise<{ ok: true; job: (JobRow & { cadence: string }) | null; runs: JobRun[] } | { ok: false; code: string; reason?: string }>;
   /** Registers the job as the agent did, so it starts off. */
   define(person: string, def: JobDefinition): Promise<Registered>;
+  /** Changes the job in place as the agent did (delta 7): the same id, the earlier definition kept on its record. */
+  update(person: string, def: JobDefinition): Promise<Registered>;
   enable(person: string, id: string): Promise<{ ok: true } | { ok: false; code: string; reason?: string }>;
   disable(person: string, id: string): Promise<{ ok: true } | { ok: false; code: string; reason?: string }>;
   /** Removes the person's job (M25.6): archived, gone from their list, its runs kept. */
@@ -286,6 +288,54 @@ export function jobsNamespace(api: JobsApi, o: JobsOptions): Namespace {
     },
   };
 
+  const update: ToolSpec = {
+    name: "jobs_update",
+    kind: "observation",
+    label: "Change a job",
+    description:
+      "Change one of the person's jobs in place: its title, instructions, schedule, zone, gate or stop. It keeps its id and its past runs, and the definition before the change is kept on the job's record, which the person can read in its run history. Pass only what changes. A change to what the job reads or does (instructions or gate) turns a job that is on off until the person turns it on again: call jobs_enable with the id after. To pause a job, use jobs_disable; to stop it for good, jobs_remove.",
+    parameters: Type.Object({
+      id: Type.String({ description: "The job id." }),
+      title: Type.Optional(Type.String({ minLength: 1, maxLength: 80 })),
+      instructions: Type.Optional(Type.String({ minLength: 1, maxLength: 4000, description: "What each run should do and report, in Markdown." })),
+      schedule: Type.Optional(Schedule_),
+      zone: Type.Optional(Type.String({ description: "An IANA zone such as Europe/London." })),
+      gate: Type.Optional(Gate_),
+      no_gate_reason: Type.Optional(Type.String({ minLength: 1, maxLength: 200 })),
+      stop: Type.Optional(Stop_),
+    }),
+    mutates: true,
+    execute: async (_callId, p) => {
+      const a = p as { id: string; title?: string; instructions?: string; schedule?: ScheduleInput; zone?: string; gate?: Gate; no_gate_reason?: string; stop?: StopCondition };
+      const seen = await api.inspect(o.principal, String(a.id));
+      if (!seen.ok || !seen.job || seen.job.status === "archived") return fail(seen.ok ? "JOB_UNKNOWN" : seen.code, `no job ${a.id} of the person's to change`);
+      const old = seen.job.def;
+      const zone = a.zone?.trim() || old.timing.zone;
+      if (!validZone(zone)) return fail("SCHEDULE_ZONE_REQUIRED", `${zone} is not an IANA time zone, e.g. Europe/London`);
+      const s = a.schedule ? scheduleOf(a.schedule, zone, o.now()) : { ok: true as const, schedule: old.timing.schedule };
+      if (!s.ok) return fail(s.code, s.reason);
+      const timing = checkTiming({ schedule: s.schedule, zone, ...(old.timing.jitterSeconds !== undefined ? { jitterSeconds: old.timing.jitterSeconds } : {}) });
+      if (!timing.ok) return fail(timing.code, timing.reason);
+      const at = runonceAt(s.schedule, zone);
+      if (at !== null && at <= o.now()) return fail("SCHEDULE_PAST", `${(s.schedule as { at: string }).at} (${zone}) is not after now`);
+      const gate = a.gate ?? old.gate;
+      if (!checkGate(gate)) return fail("JOB_GATE_INVALID", "a gate is url, watermark or threshold over an https url");
+      const denied = gateHostRefusal(gate);
+      if (denied) return fail("JOB_GATE_HOST_DENIED", `a job can watch any public https website by its name, not an IP address, a private name, a platform host or an address with a port or login: ${denied}`);
+      const reason = a.no_gate_reason?.trim() || old.noGateReason;
+      if (s.schedule.kind !== "runonce" && !gate && !reason) return fail("JOB_GATE_REQUIRED", "a recurring job takes a gate (url, watermark or threshold), or no_gate_reason saying why it must run every time");
+      const stop: StopCondition = s.schedule.kind === "runonce" ? { kind: "after_runs", runs: 1 } : (a.stop ?? (old.timing.schedule.kind === "runonce" ? { kind: "turned_off" } : old.stop));
+      if (!checkStop(stop)) return fail("JOB_STOP_INVALID", "stop is after_runs with runs, until with a YYYY-MM-DD date, first_report or turned_off");
+      const { noGateReason: _, ...rest } = old;
+      const def: JobDefinition = { ...rest, title: a.title?.trim() || old.title, instructions: a.instructions?.trim() || old.instructions, timing: timing.timing, gate, stop, ...(reason && !gate ? { noGateReason: reason } : {}) };
+      const r = await api.update(o.principal, def);
+      if (!r.ok) return fail(r.code, r.reason);
+      const when = whenOf(def.timing);
+      const off = r.status === "needs_enable" && seen.job.status === "active" ? ` What it reads or does changed, so it is off until the person turns it on: call jobs_enable with id ${def.id}.` : "";
+      return ok(`Changed job ${def.id} in place (${when}), currently ${statusWords(r.status)}. Its earlier definition is kept on its record.${off}`, { id: def.id, status: r.status, when });
+    },
+  };
+
   const list: ToolSpec = {
     name: "jobs_list",
     kind: "observation",
@@ -363,5 +413,5 @@ export function jobsNamespace(api: JobsApi, o: JobsOptions): Namespace {
     },
   };
 
-  return { name: "jobs", description: "jobs: register a job that runs later or on a schedule, list, turn on (the person approves) and off, remove (the person approves)", deferral: "names", tools: [create, list, enable, disable, remove] };
+  return { name: "jobs", description: "jobs: register a job that runs later or on a schedule, list, change in place, turn on (the person approves) and off, remove (the person approves)", deferral: "names", tools: [create, list, update, enable, disable, remove] };
 }

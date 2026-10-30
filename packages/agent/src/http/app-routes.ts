@@ -221,7 +221,9 @@ export async function appRoutes(request: Request, url: URL, person: string, dir:
       const title = (job as { def?: { title?: string } } | null)?.def?.title ?? "";
       const kind = timing?.schedule.kind ?? null;
       const nextRun = timing && live ? nextSlotAfter(timing, dir.now?.() ?? Date.now()) : null;
-      jobs.push(failed(s) ? { id, ok: false, code: (s as Refusal).code } : { id, ok: true, job, words: job?.status ? statusWords(job.status) : "", title, kind, nextRun, runs: (s as { runs: unknown[] }).runs.slice(-RUNS_SHOWN).reverse() });
+      // Upcoming holds what may still run or waits on the person (B-P7-11): a paused job is listed off, a spent or removed one not at all.
+      const listed = !job?.status || job.status === "finished" || job.status === "archived" ? "none" : job.status === "disabled" ? "off" : "upcoming";
+      jobs.push(failed(s) ? { id, ok: false, code: (s as Refusal).code } : { id, ok: true, job, words: job?.status ? statusWords(job.status) : "", title, kind, nextRun, listed, runs: (s as { runs: unknown[] }).runs.slice(-RUNS_SHOWN).reverse() });
     }
     return json({ ok: true, jobs });
   }

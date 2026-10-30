@@ -18,9 +18,10 @@ import { describeStop, type JobDefinition, parseJobBody } from "./body.ts";
 import { type EventEvaluation, EventLog, evaluateEvent, type EventVerdict, type JobEvent } from "./events.ts";
 import { evaluateGate, type GateResult, type Observation } from "./gates.ts";
 import type { JobModelInput } from "./model.ts";
-import { describeCadence, dueSlot, fromZoned, jitterMs, nextSlotAfter } from "./schedule.ts";
+import { describeCadence, dueSlot, jitterMs, nextSlotAfter } from "./schedule.ts";
 import { BUILTIN_STEPS, type CompleteResult, type StepHandler, transient } from "./steps.ts";
-import { type JobRow, type JobRun, JobStore, ledgerRow, type OutboxRow, type StepRow, type ToolCallRow } from "./store.ts";
+import { failedLine, pastUntil, sha256, stoppedLine, stopsAfter } from "./ends.ts";
+import { type JobRow, type JobRun, JobStore, ledgerRow, type OutboxRow, type PastDefinition, type StepRow, type ToolCallRow } from "./store.ts";
 import { errorName, log } from "../obs/log.ts";
 
 /** A step's lease: if its instance dies, the alarm armed for the lease's end resumes it. */
@@ -80,11 +81,6 @@ export interface JobInspection {
   steps: StepRow[];
   outbox: OutboxRow[];
   calls: ToolCallRow[];
-}
-
-async function sha256(text: string): Promise<string> {
-  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 const notOwner = (): JobRefusal => ({ ok: false, code: "JOB_NOT_OWNER", reason: "only the job's owner can do this" });
@@ -160,7 +156,7 @@ export class JobEngine {
     const status = byOwner ? "active" : "needs_enable";
     const now = this.deps.now();
     this.store.transaction(() => {
-      this.store.putJob({ id: def.id, owner, def, sourcePath: source?.path ?? null, sourceHash: source?.hash ?? null, status }, now);
+      this.store.putJob({ id: def.id, owner, def, history: existing?.history ?? [], sourcePath: source?.path ?? null, sourceHash: source?.hash ?? null, status }, now);
       // Occurrences before a job existed are not its to run: the first is strictly after now. A removed
       // job made again starts as a new one, its old runs kept (M25.6).
       if (!existing) this.store.updateJob({ last_slot: now }, now);
@@ -186,9 +182,41 @@ export class JobEngine {
     if (!job) return { ok: false, code: "JOB_UNKNOWN", reason: "no job here" };
     if (job.owner !== by) return notOwner();
     if (job.status === "archived") return archived();
-    this.store.transaction(() => this.store.updateJob({ status: "disabled", status_code: "JOB_DISABLED_BY_OWNER", status_reason: "turned off by its owner" }, this.deps.now()));
+    const now = this.deps.now();
+    this.store.transaction(() => this.store.updateJob({ status: "disabled", status_code: "JOB_DISABLED_BY_OWNER", status_reason: "turned off by its owner" }, now));
+    await this.stopRun(job, "JOB_STOPPED_BY_OWNER", "turned off by its owner while this run was in progress", now);
     await this.arm();
     return { ok: true };
+  }
+
+  /** A change in place (delta 7): same id and runs, the old definition kept. The agent's change to what the job reads or does starts it off, as a job it registers does. */
+  async update(a: { owner: string; by: string; def: JobDefinition }): Promise<Registered> {
+    const job = this.store.job();
+    if (!job) return { ok: false, code: "JOB_UNKNOWN", reason: "no job here" };
+    if (job.owner !== a.owner || job.id !== a.def.id) return notOwner();
+    if (job.status === "archived") return archived();
+    if (job.status === "finished") return { ok: false, code: "JOB_FINISHED", reason: "the job already ran to its stop; make a new one" };
+    if (this.store.activeRun()) return { ok: false, code: "JOB_RUN_IN_PROGRESS", reason: "a run is in progress; change it after the run ends" };
+    const now = this.deps.now();
+    const reads = (d: JobDefinition) => JSON.stringify([d.instructions, d.gate, d.steps]);
+    const status = a.by !== a.owner && job.status === "active" && reads(a.def) !== reads(job.def) ? "needs_enable" : job.status;
+    this.store.transaction(() => {
+      this.store.putJob({ id: job.id, owner: job.owner, def: a.def, history: [...job.history, { until: now, by: a.by, def: job.def }], sourcePath: job.sourcePath, sourceHash: job.sourceHash, status }, now);
+      // `putJob` clears the status words; a job still off keeps saying why. Occurrences before the change are not its to run.
+      this.store.updateJob({ last_slot: Math.max(now, job.lastSlot ?? now), ...(status === job.status ? { status_code: job.statusCode, status_reason: job.statusReason } : {}) }, now);
+    });
+    await this.arm();
+    return { ok: true, status, cadence: describeCadence(a.def.timing) };
+  }
+
+  /** The owner's stop or remove ends the run in flight (deltas 1, 5): failed, said at once, never notify or silent. One outcome per run: a queued result stands, a late step changes nothing. */
+  private async stopRun(job: JobRow, code: string, reason: string, now: number): Promise<void> {
+    const run = this.store.activeRun();
+    if (!run || this.store.outbox().some((o) => o.runId === run.runId)) return;
+    this.store.transaction(() => this.store.updateRun(run.runId, { phase: "done", signal: "failed", code, reason, lease_until: null, timeout_at: null, retry_at: null, ledger_synced: 0 }, now));
+    await this.tell(job, stoppedLine(job.def.title, code), run.runId, now);
+    await this.deliver(now);
+    await this.syncLedger();
   }
 
   /**
@@ -201,11 +229,8 @@ export class JobEngine {
     if (job.owner !== by) return notOwner();
     if (job.status !== "archived") {
       const now = this.deps.now();
-      const run = this.store.activeRun();
-      this.store.transaction(() => {
-        if (run) this.store.updateRun(run.runId, { phase: "done", signal: "failed", code: "JOB_ARCHIVED", reason: "the job was removed while this run was in progress", lease_until: null, timeout_at: null, retry_at: null, ledger_synced: 0 }, now);
-        this.store.updateJob({ status: "archived", status_code: "JOB_ARCHIVED", status_reason: "removed by its owner", next_probe: null, backoff_until: null }, now);
-      });
+      this.store.transaction(() => this.store.updateJob({ status: "archived", status_code: "JOB_ARCHIVED", status_reason: "removed by its owner", next_probe: null, backoff_until: null }, now));
+      await this.stopRun(job, "JOB_ARCHIVED", "the job was removed while this run was in progress", now);
       await this.syncLedger();
       await this.arm();
     }
@@ -262,9 +287,9 @@ export class JobEngine {
     return { ok: true };
   }
 
-  status(): (JobRow & { cadence: string }) | null {
+  status(): (Omit<JobRow, "history"> & { cadence: string; history: Array<PastDefinition & { cadence: string }> }) | null {
     const job = this.store.job();
-    return job ? { ...job, cadence: describeCadence(job.def.timing) } : null;
+    return job ? { ...job, cadence: describeCadence(job.def.timing), history: job.history.map((h) => ({ ...h, cadence: describeCadence(h.def.timing) })) } : null;
   }
 
   /** The job with its runs, their steps and the outbox, for its owner alone. */
@@ -309,7 +334,7 @@ export class JobEngine {
     }
     const writer = obj.customMetadata?.writer ?? job.owner;
     const status = writer !== job.owner ? "needs_enable" : job.status === "needs_attention" ? "active" : job.status;
-    this.store.transaction(() => this.store.putJob({ id: job.id, owner: job.owner, def: parsed.def, sourcePath: job.sourcePath, sourceHash: hash, status }, now));
+    this.store.transaction(() => this.store.putJob({ id: job.id, owner: job.owner, def: parsed.def, history: job.history, sourcePath: job.sourcePath, sourceHash: hash, status }, now));
   }
 
   private async tick(job: JobRow, now: number): Promise<void> {
@@ -395,6 +420,8 @@ export class JobEngine {
       ...(job.gateState.mark ? { mark: job.gateState.mark } : {}),
       complete: (input) => this.deps.complete({ person: job.owner, runId: run.runId, ceiling: job.def.ceilingTokens, tools: this.deps.tools?.(job.owner, job.id) ?? [], ...input }),
     });
+    // The owner's stop or remove may land while the handler ran (`stopRun`): the run keeps the outcome it was given.
+    if (this.ended(run.runId)) return;
     if (outcome.kind === "silent") {
       // Certified silence: the step, its calls and the watermark commit together, then the run ends silent.
       const { claim } = outcome;
@@ -430,6 +457,7 @@ export class JobEngine {
     }
     const hashes = await Promise.all((outcome.notices ?? []).map((t) => sha256(`${job.def.chat}\n${t}`)));
     this.store.transaction(() => {
+      if (this.ended(run.runId)) return;
       this.store.endStep(run.runId, run.step, "done", outcome.output, now);
       if (outcome.calls) this.store.recordCalls(run.runId, run.step, outcome.calls);
       for (const [i, text] of (outcome.notices ?? []).entries()) this.store.queue({ id: `${run.runId}:${run.step}:${i}`, runId: run.runId, chat: job.def.chat, contentHash: hashes[i] as string, text }, now);
@@ -438,19 +466,23 @@ export class JobEngine {
     // The next step runs at the next alarm, armed now: each step is its own invocation.
   }
 
+  /** Whether a run already has its one outcome. */
+  private ended(runId: string): boolean {
+    return this.store.run(runId)?.phase === "done";
+  }
+
   private async finish(run: JobRun, end: { signal: "notify" | "nothing_to_report" | "failed" | "blocked"; code?: string; reason?: string; nextProbe?: number }, now: number, strike: boolean): Promise<void> {
+    if (this.ended(run.runId)) return;
     const job = this.store.job() as JobRow;
     this.store.transaction(() => {
       this.store.updateRun(run.runId, { phase: "done", signal: end.signal, code: end.code ?? null, reason: end.reason ?? null, next_probe: end.nextProbe ?? null, lease_until: null, timeout_at: null, retry_at: null, ledger_synced: 0 }, now);
       if (end.signal === "notify" || end.signal === "nothing_to_report") this.store.updateJob({ failures: 0, backoff_until: null }, now);
-      if (job.def.timing.schedule.kind === "runonce" && !run.manual && end.signal !== "failed") this.store.updateJob({ status: "finished" }, now);
+      // A one-shot is spent by the first run to end, scheduled or the person's, however it ends (B-P7-04).
+      if (job.def.timing.schedule.kind === "runonce") this.store.updateJob({ status: "finished" }, now);
       else if (end.signal !== "failed" && end.signal !== "blocked" && stopsAfter(job, end.signal, this.store.runs())) this.store.updateJob({ status: "finished", status_code: "JOB_STOPPED", status_reason: `stopped ${describeStop(job.def.stop)}` }, now);
     });
     // A failed run is said (M25.6): a run the person asked for always, a scheduled one on its first failure in a row.
-    if (end.signal === "failed" && strike && (run.manual || job.failures === 0)) {
-      const when = run.manual ? ` when you ran it (${new Date(now).toISOString().slice(0, 19).replace("T", " ")} UTC)` : "";
-      await this.tell(job, `${job.def.title} did not finish${when}: ${end.code ?? "JOB_FAILED"} (${end.reason ?? "no reason given"}).${run.manual ? "" : " It will try again at its next scheduled time; I will not repeat this one."}`, run.runId, now);
-    }
+    if (end.signal === "failed" && strike && (run.manual || job.failures === 0)) await this.tell(job, failedLine(job, { manual: run.manual, code: end.code ?? "JOB_FAILED", reason: end.reason ?? "no reason given", now }), run.runId, now);
     if (strike) await this.strike(job, end.code ?? "JOB_FAILED", end.reason ?? "", now);
   }
 
@@ -559,24 +591,6 @@ export class JobEngine {
     if (times.length) await this.host.storage.setAlarm(Math.min(...times));
     else await this.host.storage.deleteAlarm();
   }
-}
-
-/** Whether a run that just ended meets the job's stop condition (M25.2); the person's "run now" counts too. */
-function stopsAfter(job: JobRow, signal: "notify" | "nothing_to_report", runs: JobRun[]): boolean {
-  const stop = job.def.stop;
-  if (!stop) return false;
-  if (stop.kind === "first_report") return signal === "notify";
-  if (stop.kind === "after_runs") return runs.filter((r) => r.phase === "done" && (r.signal === "notify" || r.signal === "nothing_to_report")).length >= stop.runs;
-  return false;
-}
-
-/** Whether an `until` stop's local date has ended in the job's zone. */
-function pastUntil(job: JobRow, now: number): boolean {
-  const stop = job.def.stop;
-  if (stop?.kind !== "until") return false;
-  const [y, m, d] = stop.date.split("-").map(Number) as [number, number, number];
-  const next = new Date(Date.UTC(y, m - 1, d + 1));
-  return now >= fromZoned(next.getUTCFullYear(), next.getUTCMonth() + 1, next.getUTCDate(), 0, 0, job.def.timing.zone);
 }
 
 /** The run rows a test or status page reads. */

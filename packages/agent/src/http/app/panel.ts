@@ -39,13 +39,15 @@ export const PANEL_TEXT = {
   expired: "This permission has expired.",
   grantsUnread: "Could not read whether this permission still stands just now. Reload the page to try again.",
   remindersEmpty: "No reminders yet. Ask your agent to remind you of something.",
-  groups: { runonce: "Reminders", daily: "Daily", weekly: "Weekly", monthly: "Monthly", yearly: "Yearly", unread: "Not read just now" },
+  groups: { runonce: "Reminders", daily: "Daily", weekly: "Weekly", monthly: "Monthly", yearly: "Yearly", unread: "Not read just now", off: "Off" },
   /** The interval group's title, one per cadence: `{n}` is the job's minutes. */
   every: ["Every minute", "Every {n} minutes"],
   next: "Next",
   noNext: "Not scheduled",
   runs: "Run history",
   noRuns: "No runs yet.",
+  /** An earlier definition in the run history (delta 7): `{when}` is the time it was changed. */
+  earlier: "Before {when}",
   runNow: "Run now",
   jobOff: "Turn off",
   jobOn: "Turn on",
@@ -120,6 +122,8 @@ button.prow:hover { background: var(--fill-secondary); }
 .job-run { display: flex; align-items: center; gap: 8px; height: 28px; }
 .job-run span:last-child { font-size: 11px; line-height: 13px; }
 .job-run-label { flex: 1; }
+.job-earlier { display: flex; flex-direction: column; gap: 2px; padding: 4px 0; font-size: 11px; line-height: 13px; }
+.job-earlier p { margin: 0; color: var(--text-secondary); }
 .job-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--status-success); }
 .job-dot--bad { background: var(--status-error); }
 .job-dot--wait { background: var(--fill-tertiary); }
@@ -165,7 +169,7 @@ ${PANEL_TABS.map((k) => `      <button id="panel-tab-${k}" class="tab" role="tab
   <div id="job-dialog" class="qf-dlg" role="dialog" aria-labelledby="job-title" hidden>
     <div class="qf-dlg-head" style="align-items:center"><div style="flex:1"><span id="job-state" class="qf-chip qf-chip--white"></span></div>${closeBtn("job-back")}</div>
     <div class="qf-dlg-body">
-      <div><h2 id="job-title"></h2><p id="job-words"></p></div>
+      <div><h2 id="job-title"></h2><p id="job-words"></p><p id="job-about" class="t-cap t-2"></p></div>
       <button id="job-runs-toggle" class="job-runs-toggle" aria-expanded="true" aria-controls="job-runs">${PANEL_TEXT.runs}<span id="job-runs-chev" class="qf-acc-chev">${ic("chevdown", "2xs")}</span></button>
       <div id="job-runs-acc" class="qf-acc"><div id="job-runs"></div></div>
       <div id="job-actions" class="qf-dlg-act--eq"><button id="job-run" class="qf-btn qf-btn--secondary">${PANEL_TEXT.runNow}</button><button id="job-toggle" class="qf-btn qf-btn--secondary"></button><button id="job-remove" class="qf-btn qf-btn--destructive">${PANEL_TEXT.jobRemove}</button></div>
@@ -300,7 +304,7 @@ const sheetApprovals = latest(async (current) => {
 // and monthly and yearly follow Weekly in the same form, so every listed job is drawn somewhere.
 const JOB_KINDS = ["runonce", "daily", "interval", "weekly", "monthly", "yearly"];
 const everyOf = (job) => (job.job && job.job.def && job.job.def.timing && job.job.def.timing.schedule.every) || 0;
-const groupOf = (job) => !job.ok || !JOB_KINDS.includes(job.kind) ? "unread" : job.kind === "interval" ? "interval:" + everyOf(job) : job.kind;
+const groupOf = (job) => !job.ok || !JOB_KINDS.includes(job.kind) ? "unread" : job.listed === "off" ? "off" : job.kind === "interval" ? "interval:" + everyOf(job) : job.kind;
 const groupTitle = (g) => g.startsWith("interval:") ? (+g.slice(9) === 1 ? PANEL.every[0] : PANEL.every[1].replace("{n}", g.slice(9))) : PANEL.groups[g];
 const jobLine = (job) => (job.job ? job.job.cadence : "") + (job.words && job.words !== "on" ? " · " + job.words : "");
 const sheetReminders = latest(async (current) => {
@@ -308,13 +312,15 @@ const sheetReminders = latest(async (current) => {
   let j;
   try { j = await getJson("/app/jobs"); } catch (e) { if (current()) couldNot($("jobs-note"), "your jobs", e); return; }
   if (!current()) return;
-  $("jobs-note").textContent = j.jobs.length ? "" : PANEL.remindersEmpty;
-  if (!j.jobs.length) return;
-  const order = (g) => { const k = g.split(":")[0]; return (k === "unread" ? 99 : JOB_KINDS.indexOf(k)) * 1e6 + (+g.split(":")[1] || 0); };
-  const groups = [...new Set(j.jobs.map(groupOf))].sort((x, y) => order(x) - order(y));
+  // A spent or removed job is not upcoming; a paused one is listed under Off, where its dialog turns it on again.
+  const shown = j.jobs.filter((x) => !x.ok || x.listed !== "none");
+  $("jobs-note").textContent = shown.length ? "" : PANEL.remindersEmpty;
+  if (!shown.length) return;
+  const order = (g) => { const k = g.split(":")[0]; return (k === "unread" ? 99 : k === "off" ? 98 : JOB_KINDS.indexOf(k)) * 1e6 + (+g.split(":")[1] || 0); };
+  const groups = [...new Set(shown.map(groupOf))].sort((x, y) => order(x) - order(y));
   for (const g of groups) {
     heading(list, groupTitle(g));
-    for (const job of j.jobs.filter((x) => groupOf(x) === g)) {
+    for (const job of shown.filter((x) => groupOf(x) === g)) {
       if (!job.ok) { const r = prow(list, { glyph: "clock", round: true, title: job.id, desc: "" }); couldNot(r.children[1].children[1], "this job", job); continue; }
       const r = prow(list, { glyph: job.kind === "runonce" ? "bell" : "clock", round: true, title: job.title || job.id, desc: jobLine(job), tap: () => openJob(job) });
       r.dataset.job = job.id;
@@ -332,6 +338,8 @@ function drawJob(job) {
   $("job-state").textContent = (job.words || "").replace(/^./, (c) => c.toUpperCase());
   $("job-title").textContent = job.title || job.id;
   $("job-words").textContent = jobLine(job) + (job.nextRun ? " · " + PANEL.next + ": " + whenOf(job.nextRun) : on ? "" : " · " + PANEL.noNext);
+  // The job's instructions are its owner's words, drawn as text and never as a control (T-P7-04).
+  $("job-about").textContent = (job.job && job.job.def && job.job.def.instructions) || "";
   $("job-run").hidden = !on;
   $("job-toggle").textContent = on ? PANEL.jobOff : PANEL.jobOn; $("job-toggle").dataset.action = on ? "disable" : "enable";
   const runs = $("job-runs"); runs.replaceChildren();
@@ -342,6 +350,12 @@ function drawJob(job) {
     const dot = el("span"); dot.className = "job-dot" + (r.signal === "failed" || r.signal === "blocked" ? " job-dot--bad" : r.phase === "done" ? "" : " job-dot--wait");
     const label = el("span", ((r.phase === "done" && RUN_SIGNAL[r.signal]) || RUN_PHASE[r.phase] || r.phase) + " · " + (r.manual ? PANEL.runManual : PANEL.runScheduled)); label.className = "t-cap t-2 job-run-label";
     row.append(dot, label, el("span", whenOf(r.scheduledFor))); runs.append(row);
+  }
+  // The definitions it had before each change in place (delta 7), newest first, as text: the cadence and the instructions.
+  for (const h of ((job.job && job.job.history) || []).slice().reverse()) {
+    const row = el("div"); row.className = "job-earlier";
+    row.append(el("span", PANEL.earlier.replace("{when}", whenOf(h.until))), el("p", (h.cadence || "") + " · " + ((h.def && h.def.instructions) || "")));
+    runs.append(row);
   }
 }
 function openJob(job) {

@@ -205,7 +205,7 @@ describe("[M25.2] the saved home zone", () => {
 
 describe("[M25.2] replay safety", () => {
   const options = (w: ReturnType<typeof authorityWorld>, request: string | undefined) => {
-    const jobs = { ids: async (p: string) => w.host(p).jobs.list(), inspect: async (p: string, id: string) => w.jobOf(p, id).instance.inspect(p) as never, define: (p: string, d: never) => w.jobOf(p, (d as { id: string }).id).instance.define({ owner: p, by: `agent:${p}`, def: d }), enable: async () => ({ ok: true as const }), disable: async () => ({ ok: true as const }), remove: async () => ({ ok: true as const }), homeZone: async () => "UTC" };
+    const jobs = { ids: async (p: string) => w.host(p).jobs.list(), inspect: async (p: string, id: string) => w.jobOf(p, id).instance.inspect(p) as never, define: (p: string, d: never) => w.jobOf(p, (d as { id: string }).id).instance.define({ owner: p, by: `agent:${p}`, def: d }), update: (p: string, d: never) => w.jobOf(p, (d as { id: string }).id).instance.update({ owner: p, by: `agent:${p}`, def: d }), enable: async () => ({ ok: true as const }), disable: async () => ({ ok: true as const }), remove: async () => ({ ok: true as const }), homeZone: async () => "UTC" };
     return jobsNamespace(jobs, { principal: ada.email, chatId: "chat-ada", zone: () => "UTC", request: () => request, now: () => w.clock.now, separate: { text: () => "Remind me to stretch, another one too.", spent: () => false, spend: () => undefined } }).tools.find((t) => t.name === "jobs_create")!;
   };
   const args = { title: "Stretch", instructions: "Remind me to stretch.", schedule: { kind: "runonce", in_minutes: 5 }, separate: true };

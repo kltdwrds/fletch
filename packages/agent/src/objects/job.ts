@@ -77,6 +77,11 @@ export class Job extends DurableObject<Env> {
     return this.engine.define(a);
   }
 
+  /** A change in place (delta 7): the same id, the earlier definition kept on the record. */
+  async update(a: { owner: string; by: string; def: JobDefinition }) {
+    return this.engine.update(a);
+  }
+
   async enable(by: string) {
     return this.engine.enable(by);
   }

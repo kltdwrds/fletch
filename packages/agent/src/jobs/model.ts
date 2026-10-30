@@ -14,7 +14,7 @@ import { createStreamFn } from "../model/adapter.ts";
 import { type ModelConfig, modelFor } from "../model/routes.ts";
 import type { ToolSpec } from "../tools/registry.ts";
 import { readOnlyForJob, TERMINAL_SPECS, TERMINAL_TOOLS } from "./job-tools.ts";
-import { type CallRecord, certifySilence, type SilenceClaim } from "./silence.ts";
+import { type CallRecord, certifySilence, replyRule, type SilenceClaim } from "./silence.ts";
 
 export const JOB_TASK =
   "You are running one step of a scheduled job for the person. Follow the job's instructions over the input, reading with your tools where the instructions need it; you cannot change anything. End with exactly one terminal tool, alone: report with the text to tell the person, or nothing_to_report when the work ran and found nothing material.";
@@ -86,7 +86,7 @@ export async function jobLoop(call: (messages: Message[]) => Promise<AssistantMe
       return typeof t === "string" && t.trim() ? { ok: true, kind: "report", text: scrubSurrogates(t.trim()), calls } : fail("JOB_REPORT_INVALID", "report takes the text to deliver");
     }
     if (terminal) {
-      const verdict = certifySilence(terminal.arguments, calls, a.gateObserved === true);
+      const verdict = certifySilence(terminal.arguments, calls, a.gateObserved === true, replyRule.asks(a.instructions));
       if (verdict.ok) return { ok: true, kind: "silent", claim: verdict.claim, calls };
       const why = verdict.codes.map((c) => `${c.code}: ${c.reason}`).join("; ");
       if (++rejected >= MAX_REJECTED_SILENCE) return fail("SILENCE_UNCERTIFIED", why);

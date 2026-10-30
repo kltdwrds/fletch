@@ -56,9 +56,10 @@ export function parseClaim(args: unknown): SilenceClaim | null {
  * The checklist, each item decided from the run's log: the work ran (a read in this run succeeded, or
  * the gate opened on a fresh observation), no material result, every piece of evidence is a successful
  * call of this run, every read the run depended on was available and none failed and was routed around,
- * and a watermark to write. A failure lists every item that did not hold.
+ * and a watermark to write; and, when the job's instructions ask for a reply (`replyAsked`), never silence at all (B-P7-08,
+ * delta 2). A failure lists every item that did not hold.
  */
-export function certifySilence(args: unknown, log: CallRecord[], gateObserved: boolean): SilenceVerdict {
+export function certifySilence(args: unknown, log: CallRecord[], gateObserved: boolean, replyAsked = false): SilenceVerdict {
   const claim = parseClaim(args);
   if (!claim) return { ok: false, codes: [{ code: "SILENCE_CLAIM_INVALID", reason: "nothing_to_report takes work, material_result, evidence, dependencies and watermark" }] };
   const codes: Array<{ code: SilenceCode; reason: string }> = [];
@@ -66,6 +67,7 @@ export function certifySilence(args: unknown, log: CallRecord[], gateObserved: b
   const good = new Set(reads.filter((c) => c.ok).map((c) => c.id));
   if (good.size === 0 && !gateObserved) codes.push({ code: "SILENCE_NO_WORK", reason: "no read in this run succeeded, so nothing was checked" });
   if (claim.material_result) codes.push({ code: "SILENCE_MATERIAL_RESULT", reason: "the run found a material result: call report" });
+  else if (replyAsked) codes.push({ code: "SILENCE_MATERIAL_RESULT", reason: "the job's instructions ask for a reply, so its answer is the result: call report" });
   const stale = claim.evidence.filter((e) => !(good.has(e) || (e === "gate" && gateObserved)));
   if (!claim.evidence.length || stale.length) codes.push({ code: "SILENCE_STALE_EVIDENCE", reason: claim.evidence.length ? `not a successful call of this run: ${stale.join(", ")}` : "no evidence named" });
   const failed = reads.filter((c) => !c.ok);
@@ -81,3 +83,14 @@ export function certifySilence(args: unknown, log: CallRecord[], gateObserved: b
   if (!mark || mark.length > MAX_WATERMARK) codes.push({ code: "SILENCE_NO_WATERMARK", reason: `a watermark of 1 to ${MAX_WATERMARK} characters is written for the next run` });
   return codes.length ? { ok: false, codes } : { ok: true, claim: { ...claim, watermark: mark } };
 }
+
+/**
+ * Whether a job's instructions ask for a reply on every run (B-P7-08, delta 2): "reply with the word done", "always tell
+ * me", "tell me the time". A conditional ask ("tell me when it passes 40", "say nothing if nothing changed") is not one.
+ */
+export function asksForReply(instructions: string): boolean {
+  return /\b(reply|respond|answer)\s+(with|by|saying)\b/i.test(instructions) || /\b(always|every time)\b[^.]*\b(tell|reply|say|report|send)\b/i.test(instructions) || /\btell me\b(?![^.]*\b(only|when|if|whether|once)\b)/i.test(instructions);
+}
+
+/** The reply rule as the job's model step reads it: one holder, so a planted test can take the guard away (F29). */
+export const replyRule = { asks: asksForReply };

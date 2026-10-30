@@ -37,6 +37,8 @@ import { legFor } from "../../../packages/agent/src/memory/semantic.ts";
 import { PersonMemory } from "../../../packages/agent/src/memory/store.ts";
 import { Company } from "../../../packages/agent/src/objects/company.ts";
 import { type JobDeps, JobEngine } from "../../../packages/agent/src/jobs/engine.ts";
+import { type AuditRow, egressFetch } from "../../../packages/agent/src/egress/module.ts";
+import { publicHostFor, rulesFor } from "../../../packages/agent/src/vault/hosts.ts";
 import { jobToolSpecs } from "../../../packages/agent/src/jobs/job-tools.ts";
 import { completeForJob } from "../../../packages/agent/src/jobs/model.ts";
 import type { JobsApi } from "../../../packages/agent/src/jobs/tools.ts";
@@ -103,6 +105,8 @@ export interface WorldOptions {
   jobs?: boolean;
   /** Fixture run steps (`fixture:<name>`) the `Job` engines offer beside the built-in ones (F24). */
   jobSteps?: JobDeps["steps"];
+  /** The network a job's gate and `page_read` reach through the real egress module (F29); each request is kept in `jobAudit`. */
+  jobFetch?: (url: string, init: RequestInit) => Promise<Response>;
   /** The Vault's listing for the connectors page (M23.5): each person's own credentials and the company's, never a value. */
   credentials?: (person: string) => Promise<import("../../../packages/agent/src/vault/core.ts").CredentialInfo[]>;
   /** The Renderer the chats' `documents` namespace reaches (M24.3); with it, each `Person` serves documents and signed links. */
@@ -167,9 +171,13 @@ export function authorityWorld(o: WorldOptions = {}) {
   };
 
   /** One `Job` object per owner and id, as `objects/job.ts` names them; its chat notices go to the real chats. */
+  const jobAudit: AuditRow[] = [];
+  const jobFetch = o.jobFetch;
   const jobDeps: JobDeps = {
     now: () => clock.now,
-    get: () => async () => ({ ok: false, code: "EGRESS_UNAVAILABLE", reason: "no egress in this world" }) as never,
+    get: jobFetch
+      ? (person, purpose) => (url, headers) => egressFetch({ fetch: jobFetch, reveal: async () => ({ ok: false, code: "EGRESS_CRED_UNKNOWN", reason: "none" }), audit: (r) => void jobAudit.push(r), now: () => clock.now, hosts: rulesFor([]), publicHost: publicHostFor(purpose) }, { url, method: "GET", headers }, { person, purpose })
+      : () => async () => ({ ok: false, code: "EGRESS_UNAVAILABLE", reason: "no egress in this world" }) as never,
     ledger: { recordRun: (row) => ledgerH.instance.recordRun(row) },
     complete: (a) => completeForJob({ ai: aiBinding as unknown as Ai, ledger: ledgerH.instance, tenant: TENANT, now: () => clock.now, wait: async () => {} }, a),
     chat: (chatId) => ({ notify: async (n) => chats.harness(chatId).instance.notify(n), hasNotice: async (id) => chats.harness(chatId).instance.hasNotice(id) }),
@@ -193,6 +201,7 @@ export function authorityWorld(o: WorldOptions = {}) {
     ids: async (p) => host(p).jobs.list(),
     inspect: async (p, id) => jobOf(p, id).instance.inspect(p) as never,
     define: (p, def) => jobOf(p, def.id).instance.define({ owner: p, by: `agent:${p}`, def }),
+    update: (p, def) => jobOf(p, def.id).instance.update({ owner: p, by: `agent:${p}`, def }),
     enable: (p, id) => jobOf(p, id).instance.enable(p),
     disable: (p, id) => jobOf(p, id).instance.disable(p),
     remove: (p, id) => jobOf(p, id).instance.remove(p),
@@ -501,7 +510,7 @@ export function authorityWorld(o: WorldOptions = {}) {
     for (let i = 0; i < limit && h.alarmAt !== null && h.alarmAt <= clock.now; i++) await h.fireAlarm();
   };
 
-  return { dir, env, clock, fake, performed, jobOf, fireJob, jobIds: (p: string) => host(p).jobs.list(), calendar, r2, chats, host, personHarness: (p: string) => persons.get(p), filesOf, hooks, company, companyHarness: () => companyH, ledger: () => ledgerH.instance, http, say, grant, request, journal, grantsNow, view, chatsOf, cardsOf, transcriptOf, noticesOf };
+  return { dir, env, clock, fake, performed, jobOf, fireJob, jobAudit, jobIds: (p: string) => host(p).jobs.list(), calendar, r2, chats, host, personHarness: (p: string) => persons.get(p), filesOf, hooks, company, companyHarness: () => companyH, ledger: () => ledgerH.instance, http, say, grant, request, journal, grantsNow, view, chatsOf, cardsOf, transcriptOf, noticesOf };
 }
 
 export type AuthorityWorld = ReturnType<typeof authorityWorld>;

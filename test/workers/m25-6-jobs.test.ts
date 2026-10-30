@@ -166,7 +166,8 @@ describe("[M25.6] a job can be removed", () => {
     expect(w.fake.requests).toEqual([]);
   });
 
-  it("a run in progress is ended as failed JOB_ARCHIVED, without a strike and without a notice", async () => {
+  // From F29 (P7 delta 5) the stop is said: one line in the chat, never a result and never silence.
+  it("a run in progress is ended as failed JOB_ARCHIVED, without a strike, and the stop is said in the chat once", async () => {
     const w = jobWorld({ script: [], steps: stepped() });
     w.claimChat();
     await w.define({ steps: [{ kind: "fixture:hold" }, { kind: "notify" }] });
@@ -177,7 +178,7 @@ describe("[M25.6] a job can be removed", () => {
     expect(w.runs()).toMatchObject([{ phase: "done", signal: "failed", code: "JOB_ARCHIVED" }]);
     expect(w.engine().store.job()?.failures).toBe(0);
     await w.settle();
-    expect(texts(w)).toEqual([]);
+    expect(texts(w)).toEqual(["Test job was stopped: you removed the job while it was running, so this run ended without a result (JOB_ARCHIVED)."]);
   });
 
   it("making the same job again after removal starts it as new, its old runs kept", async () => {
