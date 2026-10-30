@@ -1,0 +1,38 @@
+{
+  "task_id": "T-P6-14",
+  "cluster": "P6",
+  "version_hash": "1bae4910c07f57bfdf2892a2da6355fbca381646a7530c0289b697176c4abeef",
+  "runs": [
+    {
+      "run_at": "2026-10-30T07:40:05.692Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "after the stated relationship the page has the six sections",
+          "started_at": "2026-10-30T07:40:05.692Z",
+          "finished_at": "2026-10-30T07:41:20.837Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "after the stated relationship the page has the six sections",
+          "started_at": "2026-10-30T07:41:20.838Z",
+          "finished_at": "2026-10-30T07:42:15.945Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "after the stated relationship the page has the six sections",
+          "started_at": "2026-10-30T07:42:15.945Z",
+          "finished_at": "2026-10-30T07:42:57.580Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}
