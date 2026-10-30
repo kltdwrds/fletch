@@ -3,8 +3,8 @@
 // deploy sets `AI_GATEWAY_ID`, and a gateway provider (BYOK through that gateway: OpenRouter, or Meta's
 // Model API as the custom provider `meta`) only when it also sets `CHAT_PROVIDER`. Every claim runs the production engine, adapter and Ledger over the
 // scripted fake, with the vars the agent's base config ships (`pnpm self-host` adds a model var only when asked).
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { experimental_readRawConfig } from "wrangler";
 import { ChatEngine, type EngineCtx } from "../../packages/agent/src/chat/engine.ts";
 import { admitPolicy, isPriced } from "../../packages/agent/src/ledger/budget.ts";
 import { embed } from "../../packages/agent/src/model/adapter.ts";
@@ -18,8 +18,8 @@ import people from "../fixtures/people.json" with { type: "json" };
 const sam = people.people.find((p) => p.id === "sam-solo")!;
 const T0 = Date.UTC(2026, 9, 20, 9, 0, 0);
 
-/** The vars a deploy ships, read from packages/agent/wrangler.jsonc itself (its comments are whole lines). */
-const TEMPLATE_VARS = (JSON.parse(readFileSync("packages/agent/wrangler.jsonc", "utf8").replace(/^\s*\/\/.*$/gm, "")) as { vars: Record<string, string> }).vars;
+/** The vars a deploy ships, read from packages/agent/wrangler.jsonc with wrangler's own reader, as scripts/preview-plan.mjs does. */
+const TEMPLATE_VARS = experimental_readRawConfig({ config: "packages/agent/wrangler.jsonc" }).rawConfig.vars as Record<string, string>;
 const SELF_HOST_VARS: Record<string, string> = { ...TEMPLATE_VARS, TENANT_ID: "base", OWNER_EMAIL: sam.email };
 
 /** One chat turn through the production engine and Ledger, on an env with `vars`. */

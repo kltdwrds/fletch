@@ -5,7 +5,7 @@ import path from 'node:path';
 import { beforeEach, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { selfHost } from './self-host.mjs';
-import { NAME_RE, parseSelfHostArgs, SELF_HOST_CONFIG, SELF_HOST_VAR_KEYS, secretsToMint, selfHostConfig, setupLink } from './self-host-plan.mjs';
+import { NAME_RE, parseSelfHostArgs, SELF_HOST_CONFIG, SELF_HOST_VAR_KEYS, secretsToMint, selfHostConfig, selfHostEnv, setupLink } from './self-host-plan.mjs';
 import { fakeAccount } from './preview-fakes.mjs';
 
 // `pnpm self-host` (scripts/self-host.mjs, scripts/self-host-plan.mjs): the arguments and their refusals, the deploy's
@@ -19,6 +19,7 @@ const BASE = experimental_readRawConfig({ config: BASE_PATH }).rawConfig;
 const SUB = 'example-sub';
 const ACCT = 'a'.repeat(32);
 const EMAIL = 'sam@solo-sam.example';
+const OTHER = 'pat@solo-sam.example';
 const APP = `https://sam.${SUB}.workers.dev`;
 
 const args = (...extra) => ['--name', 'sam', '--owner-email', EMAIL, ...extra];
@@ -55,6 +56,21 @@ describe('self-host: arguments', () => {
     for (const v of ['TENANT_ID=x', 'OWNER_EMAIL=x', 'MASTER_KEY=k', 'CHAT_PROVIDER', '=meta']) assert.equal(refusal(args('--var', v)), 'SELF_HOST_VAR_UNKNOWN', v);
   });
 
+  it("refuses a preview slot's name, which would adopt the slot's Worker, bucket and index", () => {
+    for (const name of ['fletch-pv-3', 'fletch-pv-a-b']) assert.equal(refusal(['--name', name, '--owner-email', EMAIL]), 'SELF_HOST_NAME_RESERVED', name);
+    assert.equal(parseSelfHostArgs(['--name', 'fletch-pvx', '--owner-email', EMAIL]).name, 'fletch-pvx');
+  });
+
+  it('refuses a model var the agent would ignore: an unknown provider, meta without a gateway, an empty gateway', () => {
+    for (const v of [['CHAT_PROVIDER=openai'], ['CHAT_PROVIDER=Meta', 'AI_GATEWAY_ID=gw'], ['CHAT_PROVIDER=meta'], ['CHAT_PROVIDER=meta', 'AI_GATEWAY_ID= '], ['AI_GATEWAY_ID=']]) {
+      const r = parseSelfHostArgs(args(...v.flatMap((x) => ['--var', x]))).refusal;
+      assert.equal(r?.code, 'SELF_HOST_VAR_INVALID', v.join(' '));
+    }
+    assert.match(parseSelfHostArgs(args('--var', 'CHAT_PROVIDER=meta')).refusal.reason, /AI_GATEWAY_ID/);
+    assert.deepEqual(parseSelfHostArgs(args('--var', 'CHAT_PROVIDER=workers-ai')).vars, { CHAT_PROVIDER: 'workers-ai' });
+    assert.deepEqual(parseSelfHostArgs(args('--var', 'AI_GATEWAY_ID=gw')).vars, { AI_GATEWAY_ID: 'gw' });
+  });
+
   it('refuses an account id that is not 32 hex, and an option it does not know', () => {
     assert.equal(refusal(args('--account-id', 'abc')), 'SELF_HOST_ACCOUNT_INVALID');
     assert.equal(refusal(args('--token', 'x')), 'SELF_HOST_ARG_UNKNOWN');
@@ -66,6 +82,30 @@ describe('self-host: arguments', () => {
     assert.equal(r.status, 1);
     assert.match(r.stderr, /^self-host: SELF_HOST_VAR_UNKNOWN: .*CHAT_HEDGE/);
     assert.equal(r.stdout, '');
+  });
+});
+
+describe('self-host: the environment wrangler runs in', () => {
+  const env = {
+    PATH: '/bin',
+    HOME: '/h',
+    CLOUDFLARE_API_TOKEN: 't',
+    CLOUDFLARE_API_KEY: 'k',
+    CLOUDFLARE_EMAIL: 'e',
+    CLOUDFLARE_ACCOUNT_ID: 'b'.repeat(32),
+    CF_API_TOKEN: 't',
+    CF_API_KEY: 'k',
+    CF_EMAIL: 'e',
+    CF_ACCOUNT_ID: 'b'.repeat(32),
+    CLAUDE_CODE_OAUTH_TOKEN: 'o',
+  };
+
+  it("carries no credential and no account but --account-id's, so wrangler runs on the owner's own login", () => {
+    const out = selfHostEnv(env, undefined);
+    for (const k of Object.keys(env).filter((k) => !['PATH', 'HOME'].includes(k))) assert.equal(out[k], undefined, k);
+    assert.deepEqual([out.PATH, out.HOME], ['/bin', '/h']);
+    assert.equal(selfHostEnv(env, ACCT).CLOUDFLARE_ACCOUNT_ID, ACCT);
+    assert.equal(env.CLOUDFLARE_API_KEY, 'k');
   });
 });
 
@@ -122,12 +162,14 @@ describe('self-host: a run', () => {
     root: REPO,
     run: acct.run,
     readRaw: () => BASE,
+    read: (file) => acct.configs.get(file) ?? null,
     write: (file, text) => acct.configs.set(file, text),
     log: (l) => lines.push(l),
     ...extra,
   });
   const opts = parseSelfHostArgs(args());
   const since = (i) => acct.calls.slice(i);
+  const CONFIG_FILE = path.join(REPO, 'packages', 'agent', SELF_HOST_CONFIG);
 
   beforeEach(() => {
     acct = fakeAccount({ subdomain: SUB, slotsByWorker: new Map() });
@@ -184,6 +226,57 @@ describe('self-host: a run', () => {
     assert.equal(r.code, 'SELF_HOST_NOT_LOGGED_IN');
     assert.match(r.reason, /wrangler login/);
     assert.deepEqual(acct.calls, ['whoami --json']);
+    assert.equal(acct.configs.has(CONFIG_FILE), false);
+  });
+
+  it('refuses SELF_HOST_OWNER_CHANGE when the deploy was made for another owner, naming both, before it writes or calls anything', async () => {
+    await selfHost(ctx(), opts);
+    const written = acct.configs.get(CONFIG_FILE);
+    const before = acct.calls.length;
+    const r = await selfHost(ctx(), parseSelfHostArgs(['--name', 'sam', '--owner-email', OTHER]));
+    assert.equal(r.code, 'SELF_HOST_OWNER_CHANGE');
+    assert.ok(r.reason.includes(EMAIL) && r.reason.includes(OTHER), r.reason);
+    assert.deepEqual(since(before), []);
+    assert.equal(acct.configs.get(CONFIG_FILE), written);
+    // The same owner, however it is spelled, is no change; another deploy's config guards nothing here.
+    assert.equal((await selfHost(ctx(), parseSelfHostArgs(['--name', 'sam', '--owner-email', EMAIL.toUpperCase()]))).ok, true);
+    assert.equal((await selfHost(ctx(), parseSelfHostArgs(['--name', 'pat', '--owner-email', OTHER]))).ok, true);
+  });
+
+  it('refuses SELF_HOST_CONFIG_INVALID for a base config it cannot derive from, or an earlier config that is not JSON, before any call', async () => {
+    const bad = await selfHost(ctx({ readRaw: () => ({ ...BASE, d1_databases: [{ binding: 'DB', database_id: 'prod' }] }) }), opts);
+    assert.equal(bad.code, 'SELF_HOST_CONFIG_INVALID');
+    assert.match(bad.reason, /d1_databases/);
+    acct.configs.set(CONFIG_FILE, '// half\n{ "name": ');
+    assert.equal((await selfHost(ctx(), opts)).code, 'SELF_HOST_CONFIG_INVALID');
+    assert.deepEqual(acct.calls, []);
+  });
+
+  it('keeps a bucket another run made between the listing and its own create', async () => {
+    const race = (a, o) => {
+      if (a.join(' ') === 'r2 bucket create sam-agent') {
+        acct.calls.push(a.join(' '));
+        acct.r2.set('sam-agent', 0);
+        return { status: 1, out: 'The bucket you tried to create already exists [code: 10004]' };
+      }
+      return acct.run(a, o);
+    };
+    const r = await selfHost(ctx({ run: race }), opts);
+    assert.deepEqual(r, { ok: true, url: APP });
+    assert.ok(lines.includes('R2 bucket sam-agent: already there, kept.'));
+  });
+
+  it("refuses SELF_HOST_INDEX_SHAPE for an existing index the agent's embeddings do not fit, before it writes or deploys", async () => {
+    for (const shape of [{ dimensions: 1024, metric: 'cosine' }, { dimensions: 768, metric: 'euclidean' }]) {
+      acct = fakeAccount({ subdomain: SUB, slotsByWorker: new Map() });
+      acct.vectorize.add('sam-memory');
+      acct.indexShapes.set('sam-memory', shape);
+      const r = await selfHost(ctx(), opts);
+      assert.equal(r.code, 'SELF_HOST_INDEX_SHAPE', JSON.stringify(shape));
+      assert.match(r.reason, /768 and cosine/);
+      assert.deepEqual(acct.deployed, []);
+      assert.equal(acct.configs.has(CONFIG_FILE), false);
+    }
   });
 
   it('refuses SELF_HOST_DEPLOY_FAILED with wrangler\'s last lines when the deploy fails, and sets no secret', async () => {

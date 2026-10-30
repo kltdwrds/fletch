@@ -44,6 +44,10 @@ prints the setup link once (D-0023). The code is `scripts/self-host.mjs` (the ru
    pnpm self-host --name sam --owner-email sam@solo-sam.example
    ```
 
+   Each run writes the deploy's config whole from what it is given, so repeat `--paid` and every `--var` each time:
+   one left out is dropped from the deploy. A different `--owner-email` is refused (`SELF_HOST_OWNER_CHANGE`); to hand
+   the deploy to another owner on purpose, delete the generated config first.
+
 ## What you see
 
 A first run prints the bucket and the index as `ready`, the deploy, both secrets as `set`, then
@@ -59,9 +63,15 @@ A refusal is one line on stderr, `self-host: <CODE>: <reason>`, with exit code 1
 | `SELF_HOST_NAME_INVALID` | The name is not 2 to 31 characters of a-z, 0-9 and `-` starting with a letter. | Pick another name. |
 | `SELF_HOST_EMAIL_INVALID` | `--owner-email` is missing or not an address. | Give the owner's address. |
 | `SELF_HOST_ACCOUNT_INVALID` | `--account-id` is not 32 hexadecimal characters. | Copy it from `pnpm exec wrangler whoami`. |
+| `SELF_HOST_NAME_RESERVED` | The name starts with `fletch-pv-`, the preview pool's slots. | Pick another name. |
 | `SELF_HOST_VAR_UNKNOWN` | A `--var` other than `AI_GATEWAY_ID` or `CHAT_PROVIDER`, or one without `=`. | Drop it. |
+| `SELF_HOST_VAR_INVALID` | `CHAT_PROVIDER` is not `workers-ai` or `meta`, `meta` comes without an `AI_GATEWAY_ID`, or `AI_GATEWAY_ID` is empty. | Fix the value. |
 | `SELF_HOST_ARG_UNKNOWN` | An option it does not know, or one without its value. | Check the command against step 2. |
+| `SELF_HOST_WRANGLER_MISSING` | wrangler is not installed in this checkout. | `pnpm install`, then run again. |
+| `SELF_HOST_CONFIG_INVALID` | packages/agent/wrangler.jsonc has a binding a self-host deploy does not know, or the generated config from an earlier run is not JSON. | Pull a fixed checkout, or delete the generated config. |
+| `SELF_HOST_OWNER_CHANGE` | The deploy was made for another owner; this run would lock that owner out. | Run with the first owner's address, or delete the generated config to hand it over. |
 | `SELF_HOST_NOT_LOGGED_IN` | `wrangler whoami` finds no login. | `pnpm exec wrangler login`, then run again. |
+| `SELF_HOST_INDEX_SHAPE` | `<name>-memory` already exists with other dimensions or another metric than 768 and cosine. | Pick another name, or delete that index if nothing in it is needed. |
 | `SELF_HOST_DEPLOY_FAILED` | A wrangler step failed (listing, making, deploying, secrets), with wrangler's last lines, or the deploy named no `workers.dev` URL. No secret is set before the deploy succeeds. | Fix what wrangler said and run again. |
 
 A lost setup link, before any passkey was registered: set a new token and open `/login?setup=<that value>`.

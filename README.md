@@ -52,8 +52,9 @@ timed this path on a real account yet. A packaged setup that needs no checkout i
    `--account-id <32 hex>` (`pnpm exec wrangler whoami` lists them).
 
 What it does, in order: checks the arguments (`SELF_HOST_NAME_INVALID`, `SELF_HOST_EMAIL_INVALID`,
-`SELF_HOST_VAR_UNKNOWN`) and that wrangler is logged in (`SELF_HOST_NOT_LOGGED_IN`) before anything is made; makes
-the bucket and the index when the account lacks them; writes `packages/agent/wrangler.self-host.jsonc` (git-ignored:
+`SELF_HOST_VAR_UNKNOWN` and the others in the runbook), that a rerun names the same owner (`SELF_HOST_OWNER_CHANGE`)
+and that wrangler is logged in (`SELF_HOST_NOT_LOGGED_IN`) before anything is made; makes the bucket and the index
+when the account lacks them; writes `packages/agent/wrangler.self-host.jsonc` (git-ignored:
 it holds your account id and email) and runs `wrangler deploy` from it; sets the `MASTER_KEY` and `SETUP_TOKEN`
 Worker secrets when the Worker lacks them; and prints `fletch is deployed: <url>`. A failed wrangler step stops it
 with `SELF_HOST_DEPLOY_FAILED` and wrangler's last lines. Every refusal is one line, `self-host: <CODE>: <reason>`,
@@ -78,8 +79,9 @@ that spends the code and shows a fresh one. Only a hash of the code is stored (i
 
 Run the same command again whenever you like. A second run makes nothing, sets no secret and prints no setup link:
 it redeploys the Worker from the checkout, so after a `git pull` it is also how you update. It writes the generated
-config whole each time, so give the same `--owner-email`: the deploy's passkeys, sessions and recovery code belong
-to that address, and another would be locked out of them.
+config whole each time, so repeat `--paid` and every `--var` (one left out is dropped) and give the same
+`--owner-email`: the deploy's passkeys, sessions and recovery code belong to that address, so another is refused
+with `SELF_HOST_OWNER_CHANGE`.
 
 ### Models
 

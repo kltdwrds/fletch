@@ -72,11 +72,12 @@ export const tagOf = (name) => sha256Hex(name).slice(0, 32);
 
 /**
  * An account as wrangler shows it, wired to `slots` (by Worker name): a deploy sets what the slot serves, and the
- * placeholder's deploy (its config tombstones the agent's classes) deletes the agent's objects. `fail` makes every call
+ * placeholder's deploy (its config tombstones the agent's classes) deletes the agent's objects. An index's shape is
+ * what made it (`indexShapes`), else 768 and cosine. `fail` makes every call
  * starting with one of its strings fail; `stale` makes a secrets write build on the version before the last write.
  */
 export function fakeAccount({ subdomain, slotsByWorker }) {
-  const s = { r2: new Map(), vectorize: new Set(), workers: new Set(), secrets: new Map(), before: new Map(), stale: false, deployed: [], calls: [], fail: [], configs: new Map() };
+  const s = { r2: new Map(), vectorize: new Set(), indexShapes: new Map(), workers: new Set(), secrets: new Map(), before: new Map(), stale: false, deployed: [], calls: [], fail: [], configs: new Map() };
   const okOut = (out = 'ok') => ({ status: 0, out });
   s.run = (args, opts = {}) => {
     const line = args.join(' ');
@@ -89,7 +90,11 @@ export function fakeAccount({ subdomain, slotsByWorker }) {
     if (a === 'delete') return s.workers.delete(args[2]) ? okOut() : { status: 1, out: '[code: 10007]' };
     if (a === 'r2' && c === 'create') return s.r2.set(args[3], 0) && okOut();
     if (a === 'r2' && c === 'delete') return s.r2.get(args[3]) > 0 ? { status: 1, out: '[code: 10008]' } : s.r2.delete(args[3]) && okOut();
-    if (a === 'vectorize' && b === 'create') return s.vectorize.add(c) && okOut();
+    if (a === 'vectorize' && b === 'create') return s.vectorize.add(c) && s.indexShapes.set(c, { dimensions: Number(args[4]), metric: args[6] }) && okOut();
+    if (a === 'vectorize' && b === 'get') {
+      if (!s.vectorize.has(c)) return { status: 1, out: 'not found [code: 3000]' };
+      return okOut(JSON.stringify({ name: c, config: s.indexShapes.get(c) ?? { dimensions: 768, metric: 'cosine' } }, null, 2));
+    }
     if (a === 'vectorize' && b === 'delete') return s.vectorize.delete(c) ? okOut() : { status: 1, out: 'no such' };
     if (a === 'whoami') return okOut('logged in');
     if (a === 'deploy') {
