@@ -21,7 +21,7 @@ export const ACCOUNT_ID = '62b4c5143baaabf42b828a0d7a6b272e';
 export const SECRETS = ['MASTER_KEY', 'SETUP_TOKEN'];
 
 const USAGE = `usage: pnpm preview <command>
-  up [--slot n] [--ttl hours] [--paid]   lease a slot (or renew this worktree's) and deploy the working tree to it
+  up [--slot n] [--ttl hours] [--paid] [--var K=V]...   lease a slot (or renew this worktree's) and deploy the working tree to it; --var sets a model var (AI_GATEWAY_ID, CHAT_PROVIDER, CHAT_HEDGE)
   status                  this worktree's lease and what its slot answers
   tail                    wrangler tail on its slot's Worker
   down                    release its slot: placeholder (the agent's objects deleted), new secrets, bucket and index emptied
@@ -159,7 +159,7 @@ export async function waitReady(ctx, plan, id) {
  * the last left (the placeholder's deploy deletes the agent's objects; the ops empty the bucket and index) and gets new
  * secrets. Returns the plan and the setup token for the slot's first passkey.
  */
-export async function up(ctx, { slot, ttlHours = DEFAULT_TTL_HOURS, paid = false } = {}) {
+export async function up(ctx, { slot, ttlHours = DEFAULT_TTL_HOURS, paid = false, vars = {} } = {}) {
   const inv = needInventory(ctx);
   const held = loadLease(ctx);
   let claim;
@@ -184,7 +184,7 @@ export async function up(ctx, { slot, ttlHours = DEFAULT_TTL_HOURS, paid = false
     const setupToken = await rotate(ctx, plan, auth);
     saveLease(ctx, { ...loadLease(ctx), setupToken });
   }
-  const d = deploySlot(ctx, inv, plan.n, { paid });
+  const d = deploySlot(ctx, inv, plan.n, { paid, vars });
   await waitReady(ctx, plan, d.deploy);
   return { plan, setupToken: loadLease(ctx).setupToken };
 }
@@ -332,11 +332,23 @@ export function parseFlags(args) {
   const rest = [];
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
-    if (['--account', '--slot', '--slots', '--ttl', '--template', '--group', '--admin-env', '--env-file'].includes(a)) flags[a.slice(2)] = args[++i];
+    if (a === '--var') flags.var = [...(flags.var ?? []), args[++i]];
+    else if (['--account', '--slot', '--slots', '--ttl', '--template', '--group', '--admin-env', '--env-file'].includes(a)) flags[a.slice(2)] = args[++i];
     else if (a.startsWith('--')) flags[a.slice(2)] = true;
     else rest.push(a);
   }
   return { flags, rest };
+}
+
+/** `--var K=V` pairs as an object; a pair without `=` or with an empty key is refused. */
+export function varFlags(pairs = []) {
+  const out = {};
+  for (const pair of pairs) {
+    const i = (pair ?? '').indexOf('=');
+    if (i < 1) throw new Error(`preview: --var takes K=V, not ${JSON.stringify(pair)}`);
+    out[pair.slice(0, i)] = pair.slice(i + 1);
+  }
+  return out;
 }
 
 const intFlag = (v, what) => {
@@ -393,8 +405,10 @@ async function main(argv) {
   };
   const setupLink = (plan, token) => (token ? `${origin(plan)}/login?setup=${token}` : 'already used by this lease (or not kept)');
   if (command === 'up') {
-    const { plan, setupToken } = await up(ctx, { slot: intFlag(flags.slot, 'slot'), ttlHours: intFlag(flags.ttl, 'ttl') ?? DEFAULT_TTL_HOURS, paid: flags.paid === true });
-    console.log(`preview: slot ${plan.n} serves this worktree\n  app    ${origin(plan)}\n  setup  ${setupLink(plan, setupToken)}\n  owner  the fixture person, tenant ${plan.name}\n  release it with \`pnpm preview down\` before this branch's PR merges`);
+    const vars = varFlags(flags.var);
+    const { plan, setupToken } = await up(ctx, { slot: intFlag(flags.slot, 'slot'), ttlHours: intFlag(flags.ttl, 'ttl') ?? DEFAULT_TTL_HOURS, paid: flags.paid === true, vars });
+    const model = Object.keys(vars).length ? `\n  model  ${Object.entries(vars).map(([k, v]) => `${k}=${v}`).join(' ')}` : '';
+    console.log(`preview: slot ${plan.n} serves this worktree\n  app    ${origin(plan)}\n  setup  ${setupLink(plan, setupToken)}\n  owner  the fixture person, tenant ${plan.name}${model}\n  release it with \`pnpm preview down\` before this branch's PR merges`);
   } else if (command === 'status') {
     const { lease, plan, auth } = held();
     const full = (await op(ctx, plan, 'GET', 'lease', auth)).body;

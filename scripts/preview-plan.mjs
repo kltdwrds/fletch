@@ -13,6 +13,8 @@ export const DEFAULT_TTL_HOURS = 24;
 export const MAX_SLOTS = 20;
 /** The slot's owner: the fixture person (test/fixtures/people.json), never a real address. */
 export const SLOT_OWNER = 'sam@solo-sam.example';
+/** The vars `pnpm preview up --var K=V` may set on a slot: how its chat reaches a model (`packages/agent/src/model/routes.ts`), nothing else. */
+export const SLOT_VAR_KEYS = ['AI_GATEWAY_ID', 'CHAT_PROVIDER', 'CHAT_HEDGE'];
 /** The memory index's shape: MEMORY_INDEX_CONFIG in packages/host-cloudflare/src/provision/resources.ts. */
 export const MEMORY_INDEX = { dimensions: 768, metric: 'cosine' };
 /** The slot Worker's entry, from packages/agent/ where its generated config is written. */
@@ -100,13 +102,16 @@ function rebind(list, byBinding, what, point) {
  * The placeholder runs the slot's ops alone: the agent's classes are `deleted` tombstones, which delete every object
  * and its storage (idempotent, and harmless for a class never made: verified 2026-10-22), so a release wipes the
  * agent's state. `deploy` is a random id the slot echoes, so a deploy is known live; `paid` adds the paid-plan bindings
- * as `create-fletch --paid` does.
+ * as `create-fletch --paid` does; `vars` are the model vars of `SLOT_VAR_KEYS` (`pnpm preview up --var K=V`), so a
+ * slot can run its chat on another model than the self-host default.
  */
-export function slotConfig(raw, plan, { accountId, placeholder = false, deploy, paid = false }) {
+export function slotConfig(raw, plan, { accountId, placeholder = false, deploy, paid = false, vars = {} }) {
   const unknown = Object.keys(raw).filter((k) => !KNOWN_CONFIG_KEYS.has(k));
   if (unknown.length > 0) {
     throw new Error(`preview: packages/agent/wrangler.jsonc has ${unknown.join(', ')}, which a preview slot does not know: decide what a slot gets in scripts/preview-plan.mjs`);
   }
+  const strangeVars = Object.keys(vars).filter((k) => !SLOT_VAR_KEYS.includes(k));
+  if (strangeVars.length > 0) throw new Error(`preview: --var takes only ${SLOT_VAR_KEYS.join(', ')}; not ${strangeVars.join(', ')}`);
   const agentClasses = Object.entries(raw.exports ?? {}).filter(([, e]) => e.type === 'durable-object').map(([c]) => c);
   if (agentClasses.includes(LEASE_OBJECT.className)) throw new Error(`preview: the agent exports ${LEASE_OBJECT.className}, the slot lease's class`);
   const lease = { name: LEASE_OBJECT.binding, class_name: LEASE_OBJECT.className };
@@ -124,7 +129,7 @@ export function slotConfig(raw, plan, { accountId, placeholder = false, deploy, 
       ...Object.fromEntries(Object.entries(raw.exports ?? {}).map(([c, e]) => [c, placeholder && e.type === 'durable-object' ? { type: 'durable-object', state: 'deleted' } : e])),
       [LEASE_OBJECT.className]: { type: 'durable-object', storage: 'sqlite' },
     },
-    vars: { ...raw.vars, TENANT_ID: plan.name, OWNER_EMAIL: SLOT_OWNER, PREVIEW_SERVING: placeholder ? 'placeholder' : 'app', PREVIEW_DEPLOY: deploy },
+    vars: { ...raw.vars, ...vars, TENANT_ID: plan.name, OWNER_EMAIL: SLOT_OWNER, PREVIEW_SERVING: placeholder ? 'placeholder' : 'app', PREVIEW_DEPLOY: deploy },
   };
   if (placeholder) delete out.ai;
   else if (paid) {

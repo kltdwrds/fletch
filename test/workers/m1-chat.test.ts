@@ -135,7 +135,7 @@ describe("[M1.1] model adapter", () => {
     expect(fake.requests).toHaveLength(1);
     // A deploy that configures no gateway and no chat provider (self-host, spec section 2): Workers AI over the binding.
     expect(fake.requests[0]?.model).toBe("@cf/zai-org/glm-5.3-flash");
-    expect(fake.requests[0]?.universal).toBeUndefined();
+    expect(fake.requests[0]?.passthrough).toBeUndefined();
     expect(fake.requests[0]?.options.gateway).toBeUndefined();
     expect(fake.requests[0]?.inputs.stream).toBe(true);
   });
