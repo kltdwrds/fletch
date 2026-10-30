@@ -17,7 +17,7 @@ pnpm accept F1
 ```
 
 `pnpm check` is the fast gate (lint, the harness checks and scans, typecheck) that the pre-push hook runs;
-`pnpm verify` adds the tests and is what CI runs, except on a docs-only diff, where CI runs `pnpm check` alone. Working on fletch, with an agent or without: start at `AGENTS.md`.
+`pnpm verify` adds the tests and is what CI runs on a pull request that touches code (a docs-only one runs `pnpm check`). Working on fletch, with an agent or without: start at `AGENTS.md`.
 
 `pnpm accept <F<n>|F<n>.<p>>` runs lint, the hermetic tests, the agent's dry-run bundle, the secret and privacy
 scans, the harness checks and typecheck, in that order, and ends with one `ACCEPT <id>: PASS` or

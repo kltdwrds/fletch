@@ -16,10 +16,11 @@
 // empty `choices` chunk, and a closing chunk with no `choices` whose `usage` holds the totals and no
 // reasoning detail. A step's `usage.reasoning` is spread over its reasoning chunks.
 //
-// From M22.1 the binding also answers `gateway(id).run(universal request)`, the path the adapter takes
-// to OpenRouter, from the same script: the request is recorded with the model from its body and the
-// universal request's provider, endpoint and headers under `universal`, and its chunks carry the
-// model asked for and the host under `provider`, as OpenRouter's do.
+// From M22.1 the binding also answers its fetch passthrough to a gateway's provider-native path,
+// `https://workers-binding.ai/ai-gateway/gateways/<gateway>/<provider>/<endpoint>`, the path the adapter
+// takes to OpenRouter and to Meta, from the same script: the request is recorded with the model from its
+// body and the path's gateway, provider, endpoint and the request headers under `passthrough`, and its
+// chunks carry the model asked for and the host under `provider`, as OpenRouter's do.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fakeEmbedding } from "./fake-embeddings.ts";
@@ -78,8 +79,8 @@ export interface FakeRequest {
   model: string;
   inputs: { messages: Array<{ role: string; content?: unknown; tool_calls?: unknown; tool_call_id?: string }>; tools?: unknown[]; stream?: boolean; [k: string]: unknown };
   options: { gateway?: { id: string; collectLog?: boolean; metadata?: unknown }; returnRawResponse?: boolean; [k: string]: unknown };
-  /** Set when the request came as a universal request through `gateway(id).run` (OpenRouter, M22.1). */
-  universal?: { gatewayId: string; provider: string; endpoint: string; headers: Record<string, string> };
+  /** Set when the request came through the binding's fetch passthrough to a gateway provider (M22.1). */
+  passthrough?: { gatewayId: string; provider: string; endpoint: string; headers: Record<string, string> };
 }
 
 export type FakeMode = { kind: "scripted" } | { kind: "compromised"; hostile: FakeToolCall } | { kind: "echo" };
@@ -117,19 +118,23 @@ export class FakeModel {
   }
 
   /** The object to put in `env.AI` (cast to `Ai` by the Worker test). Only the method the adapter uses exists. */
-  get binding(): { run: (model: string, inputs: unknown, options: unknown) => Promise<Response>; gateway: (id: string) => { run: (request: unknown, options?: unknown) => Promise<Response> } } {
+  get binding(): { run: (model: string, inputs: unknown, options: unknown) => Promise<Response>; fetch: (input: string, init: RequestInit) => Promise<Response> } {
     return {
       run: (model, inputs, options) => this.run(model, inputs, options),
-      gateway: (id) => ({ run: (request, options) => this.universal(id, request, options) }),
+      fetch: (input, init) => this.passthrough(input, init),
     };
   }
 
-  /** A universal request through the binding's gateway, answered from the same script as `run`. */
-  private universal(gatewayId: string, request: unknown, options: unknown): Promise<Response> {
-    const r = request as { provider: string; endpoint: string; headers?: Record<string, string>; query: { model?: string } };
-    if (Array.isArray(request)) throw new Error("FAKE_CONTRACT: the adapter sends one universal request, not a fallback list");
-    const universal = { gatewayId, provider: r.provider, endpoint: r.endpoint, headers: { ...(r.headers ?? {}) } };
-    return this.run(String(r.query.model), r.query, { ...(options as object), returnRawResponse: true }, universal);
+  /** A request through the binding's fetch passthrough to a gateway provider, answered from the same script as `run`. */
+  private passthrough(input: string, init: RequestInit): Promise<Response> {
+    const m = /^https:\/\/workers-binding\.ai\/ai-gateway\/gateways\/([^/]+)\/([^/]+)\/(.+)$/.exec(input);
+    if (!m || init.method !== "POST" || typeof init.body !== "string") throw new Error(`FAKE_CONTRACT: the adapter posts JSON to a gateway provider's path, not ${init.method ?? "GET"} ${input}`);
+    const [, gatewayId, provider, endpoint] = m as unknown as [string, string, string, string];
+    const headers = { ...((init.headers ?? {}) as Record<string, string>) };
+    const body = JSON.parse(init.body) as { model?: string };
+    const passthrough = { gatewayId, provider, endpoint, headers };
+    const options = { gateway: { id: gatewayId, collectLog: headers["cf-aig-collect-log"] === "true" }, returnRawResponse: true, signal: init.signal };
+    return this.run(String(body.model), body, options, passthrough);
   }
 
   /** Appends steps to the script, so a test plans each call where it happens (M12.1). */
@@ -167,9 +172,9 @@ export class FakeModel {
     return ws;
   }
 
-  private async run(model: string, inputs: unknown, options: unknown, universal?: FakeRequest["universal"]): Promise<Response> {
+  private async run(model: string, inputs: unknown, options: unknown, passthrough?: FakeRequest["passthrough"]): Promise<Response> {
     if (model === FAKE_EMBEDDING_MODEL) return this.embed(inputs, options) as unknown as Response;
-    const request = { model, inputs, options, ...(universal ? { universal } : {}) } as FakeRequest;
+    const request = { model, inputs, options, ...(passthrough ? { passthrough } : {}) } as FakeRequest;
     this.requests.push(request);
     if (!request.options?.returnRawResponse || !request.inputs?.stream) {
       throw new Error("FAKE_CONTRACT: the adapter must ask for a raw streaming response");
@@ -298,7 +303,7 @@ type Head = { model: string; provider?: string };
 
 /** What each chunk names: the model asked for, and for OpenRouter the host that served it. */
 function headOf(request: FakeRequest): Head {
-  return request.universal ? { model: request.model, provider: FAKE_OPENROUTER_HOST } : { model: request.model };
+  return request.passthrough ? { model: request.model, provider: FAKE_OPENROUTER_HOST } : { model: request.model };
 }
 
 /** The reasoning field of the recorded stream, read from the recording itself. */

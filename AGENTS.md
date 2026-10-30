@@ -77,7 +77,7 @@ carries a part tag, `[F<n>]` for fletch's own or `[M<n>]` for one inherited from
 | `pnpm check` | The fast gate, about 20 s: Biome lint, `pnpm harness`, then the typecheck. The pre-push hook runs it. |
 | `pnpm harness` | The harness checks (boundaries, the file-size ratchet, test hygiene, agent docs, decision records, the plan's ledgers, shellcheck) and both scans. |
 | `pnpm test` | The gate scripts' own tests (`node --test`), then the hermetic vitest suite, about 90 s. |
-| `pnpm verify` | `check` then `test`, run by the release before it publishes. CI runs `check` on every PR commit and push to main, and `test` when the diff touches anything but docs (`.github/workflows/ci.yml`). |
+| `pnpm verify` | `check` then `test`. The release runs it on every push to main before it publishes. CI runs its steps on a PR whose diff touches code, the tests in three shards; a docs diff runs `check` alone, a contracts diff `check` and the tests related to it (`.github/workflows/ci.yml`). |
 | `pnpm accept F<n>` | A part's acceptance: lint, the tests tagged up to the part, the dry-run bundle, the scans, the harness checks, typecheck and, for F1 with an account, the live lane. Ends with one `ACCEPT` line. |
 | `pnpm dev` | The agent Worker under `wrangler dev` on http://localhost:8787, with local Durable Objects and R2; prints the first-passkey link. Workers AI only with `--remote-ai` (`scripts/dev.ts`). |
 | `pnpm preview` | Leases a preview slot and deploys the working tree to it, from a laptop or a cloud session (`docs/runbooks/preview.md`). |

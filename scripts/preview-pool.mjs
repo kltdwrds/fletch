@@ -121,11 +121,11 @@ export function knownSubdomain(ctx) {
  * (the id a token policy names it by, from wrangler's output file; none on the deploy that makes the Worker), the
  * deploy's id, which the slot echoes once it serves this deploy, and the workers.dev subdomain wrangler printed.
  */
-export function deploySlot(ctx, inv, n, { placeholder = false, paid = false } = {}) {
+export function deploySlot(ctx, inv, n, { placeholder = false, paid = false, vars = {} } = {}) {
   const plan = slotPlan(n);
   const deploy = randomBytes(8).toString('hex');
   const dir = agentDir(ctx.root);
-  ctx.write(path.join(dir, CONFIG), configText(slotConfig(ctx.readRaw(path.join(dir, 'wrangler.jsonc')), plan, { accountId: inv.accountId, placeholder, deploy, paid })));
+  ctx.write(path.join(dir, CONFIG), configText(slotConfig(ctx.readRaw(path.join(dir, 'wrangler.jsonc')), plan, { accountId: inv.accountId, placeholder, deploy, paid, vars })));
   ctx.log(`preview: deploying ${plan.worker} (${placeholder ? 'placeholder' : 'this worktree'})`);
   const tmp = mkdtempSync(path.join(tmpdir(), 'fletch-preview-deploy-'));
   const out = path.join(tmp, 'out.ndjson');

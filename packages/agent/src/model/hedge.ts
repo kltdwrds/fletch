@@ -11,7 +11,7 @@
 import type { AssistantMessage, AssistantMessageEventStream, Model } from "@earendil-works/pi-ai";
 import type { CallStatus, ModelCallRow } from "../ledger/types.ts";
 import type { AdapterDeps, CallAttribution } from "./adapter.ts";
-import { CALL_BOUNDS, type Hedge, isOpenRouter } from "./routes.ts";
+import { CALL_BOUNDS, type Hedge, piProvider } from "./routes.ts";
 import { abortable, guarded, readInto, type Served, tapped, zeroUsage } from "./read.ts";
 import { providerName, requestBody, type RequestParts, send } from "./transport.ts";
 import { StreamFault } from "./wire.ts";
@@ -66,7 +66,7 @@ export async function callHedged(
     role: "assistant",
     content: [],
     api: primary.api,
-    provider: isOpenRouter(model) ? "openrouter" : "cloudflare-workers-ai",
+    provider: piProvider(model),
     model,
     usage: zeroUsage(),
     stopReason: "stop",

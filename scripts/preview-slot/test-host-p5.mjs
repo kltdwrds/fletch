@@ -22,9 +22,9 @@ export const PAGES = {
 /** The page served at `url` (a trailing slash aside), or undefined. */
 export const pageAt = (url, pages = PAGES) => pages[String(url).replace(/\/$/, '')];
 
-/** The system prompt of a model request body (Workers AI's, or the gateway's universal `query`), or null. */
+/** The system prompt of a model request body (Workers AI's, or a gateway provider's over the binding's fetch), or null. */
 export function systemOf(body) {
-  const messages = body?.messages ?? body?.query?.messages;
+  const messages = body?.messages;
   const first = Array.isArray(messages) ? messages.find((m) => m?.role === 'system') : undefined;
   if (!first) return null;
   return typeof first.content === 'string' ? first.content : Array.isArray(first.content) ? first.content.map((c) => c?.text ?? '').join('') : null;
@@ -42,12 +42,8 @@ export function recordingAi(ai, record, skip = () => false) {
   return new Proxy(ai, {
     get(target, prop) {
       if (prop === 'run') return async (model, body, opts) => (await keep(body), target.run(model, body, opts));
-      if (prop === 'gateway') {
-        return (id) => {
-          const g = target.gateway(id);
-          return new Proxy(g, { get: (t, p) => (p === 'run' ? async (req, opts) => (await keep(req), t.run(req, opts)) : Reflect.get(t, p)) });
-        };
-      }
+      // A gateway provider's request is a JSON body posted through the binding's fetch passthrough.
+      if (prop === 'fetch') return async (input, init) => (await keep(typeof init?.body === 'string' ? JSON.parse(init.body) : undefined), target.fetch(input, init));
       const v = Reflect.get(target, prop);
       return typeof v === 'function' ? v.bind(target) : v;
     },

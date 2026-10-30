@@ -1,119 +1,146 @@
 name: ci
-# A pull request's commits run once, through pull_request; push runs only for main, the merged result.
+# A pull request's commits run here; main is verified by release.yml's check job, which runs before it publishes.
 on:
-  push:
-    branches: [main]
   pull_request:
+
+# A new commit cancels the pull request's run still going for the one before it.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  check:
+  # Judges the diff once, for the jobs after it.
+  scope:
     runs-on: ubuntu-latest
+    outputs:
+      class: ${{ steps.scope.outputs.class }}
+      named: ${{ steps.scope.outputs.named }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      # Docs-only diffs run `pnpm check` (lint, the harness checks over Markdown, the scans, typecheck) and skip the
-      # tests. Docs means under docs/ (except docs/plan-v2/contracts/, which the tests read) or a Markdown or LICENSE
-      # file at the root; anything else, an empty diff or a base not in the clone runs the tests too.
+      # The pull request's whole diff from the merge base decides what runs. Docs (under docs/, or a Markdown or
+      # LICENSE file at the root) run `pnpm check` alone. Docs the tests read (a cluster contract, a committed eval
+      # result) add the tests related to the files under test/ that name the file, or its folder when nothing names
+      # the file (`vitest related`, so a world.ts that names it brings its tasks).
+      # Anything else, an empty diff or a base not in the clone runs `pnpm verify`. --no-renames lists a moved file's
+      # old path too, so code moved under docs/ still counts as code (scripts/ci-classify.test.mjs).
       - name: Classify the diff
         id: scope
         env:
-          EVENT: ${{ github.event_name }}
           PR_BASE: ${{ github.event.pull_request.base.sha }}
           PR_HEAD: ${{ github.event.pull_request.head.sha }}
-          PUSH_BEFORE: ${{ github.event.before }}
-          PUSH_HEAD: ${{ github.sha }}
         run: |
           set -euo pipefail
-          is_docs() {
+          kind() {
             case "$1" in
-              docs/plan-v2/contracts/*) return 1 ;;
-              docs/*) return 0 ;;
-              */*) return 1 ;;
-              *.md | LICENSE | LICENSE.*) return 0 ;;
-              *) return 1 ;;
+              docs/plan-v2/contracts/* | docs/plan-v2/evidence/results/*) echo contract ;;
+              docs/*) echo docs ;;
+              */*) echo code ;;
+              *.md | LICENSE | LICENSE.*) echo docs ;;
+              *) echo code ;;
             esac
           }
-          files=""
-          if [ "$EVENT" = "pull_request" ]; then
-            files=$(git diff --name-only "$PR_BASE...$PR_HEAD") || files=""
-          elif [ "$PUSH_BEFORE" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null; then
-            files=$(git diff --name-only "$PUSH_BEFORE" "$PUSH_HEAD") || files=""
-          fi
-          code=""
+          files=$(git diff --name-only --no-renames "$PR_BASE...$PR_HEAD") || files=""
+          code="" contracts=""
           while IFS= read -r f; do
-            [ -n "$f" ] && ! is_docs "$f" && code+="$f"$'\n'
+            [ -n "$f" ] || continue
+            case "$(kind "$f")" in
+              code) code+="$f"$'\n' ;;
+              contract) contracts+="$f"$'\n' ;;
+            esac
           done <<< "$files"
           if [ -z "$files" ]; then
-            echo "Judged: code (no diff to judge by: a new branch, a force-push or an empty diff). Running check and test."
-            echo "tests=true" >> "$GITHUB_OUTPUT"
+            echo "Judged: code (no diff to judge by). Running check and test."
+            echo "class=code" >> "$GITHUB_OUTPUT"
           elif [ -n "$code" ]; then
             echo "Judged: code. Running check and test. The files that decided it:"
             printf '%s' "$code" | sed 's/^/  /'
-            echo "tests=true" >> "$GITHUB_OUTPUT"
+            echo "class=code" >> "$GITHUB_OUTPUT"
+          elif [ -n "$contracts" ]; then
+            # git grep exits 1 for no match; anything above that is an error, never "nothing names it".
+            naming() {
+              local rc=0
+              git grep -l -F "$1" -- test || rc=$?
+              [ "$rc" -le 1 ] || exit "$rc"
+            }
+            named=""
+            while IFS= read -r c; do
+              if [ -n "$c" ]; then
+                hits=$(naming "$c")
+                [ -n "$hits" ] || hits=$(naming "$(dirname "$c")")
+                named+="$hits"$'\n'
+              fi
+            done <<< "$contracts"
+            named=$(printf '%s' "$named" | sed '/^$/d' | sort -u | tr '\n' ' ')
+            echo "Judged: contracts. Running check and the tests related to the files that name them. The files read:"
+            printf '%s' "$contracts" | sed 's/^/  /'
+            echo "The files that name them: ${named:-none}"
+            echo "class=contracts" >> "$GITHUB_OUTPUT"
+            echo "named=$named" >> "$GITHUB_OUTPUT"
           else
             echo "Judged: docs only. Running check, skipping test. The files:"
             printf '%s\n' "$files" | sed 's/^/  /'
-            echo "tests=false" >> "$GITHUB_OUTPUT"
+            echo "class=docs" >> "$GITHUB_OUTPUT"
           fi
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+
+  # `pnpm verify` split across jobs: this one is `pnpm check` and the gate scripts' own tests; `test` is the vitest
+  # suite in three shards. A docs diff runs check alone, a contracts diff check and the related tests.
+  check:
+    needs: scope
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # The contracts path can bring a browser test (P14's world.ts is imported by one), so it installs Chromium.
       - name: Playwright version
-        if: steps.scope.outputs.tests == 'true'
+        if: needs.scope.outputs.class == 'contracts'
         id: pw
         run: echo "version=$(pnpm exec playwright-core --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
-        if: steps.scope.outputs.tests == 'true'
-        id: pw-cache
+      - uses: actions/cache@v6
+        if: needs.scope.outputs.class == 'contracts'
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
       - name: Install Chromium for the UI tests
-        if: steps.scope.outputs.tests == 'true'
+        if: needs.scope.outputs.class == 'contracts'
         run: pnpm exec playwright-core install --with-deps chromium
-      # The file-size ratchet compares with the merge base of origin/main, which fetch-depth 0 brings; a push to main
-      # compares with the commit before it.
-      - name: Verify, check and test (pnpm verify)
-        if: steps.scope.outputs.tests == 'true'
-        env:
-          CHECK_FILE_SIZES_BASE: ${{ github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000' && github.event.before || '' }}
-        run: pnpm verify
-      - name: Verify, check only (pnpm check, docs-only diff)
-        if: steps.scope.outputs.tests != 'true'
-        env:
-          CHECK_FILE_SIZES_BASE: ${{ github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000' && github.event.before || '' }}
+      # The file-size ratchet compares with the merge base of origin/main, which fetch-depth 0 brings.
+      - name: Check (pnpm check)
         run: pnpm check
-      - name: DCO sign-off
+      - name: The gate scripts' tests (node --test)
+        if: needs.scope.outputs.class == 'code'
+        run: node --test scripts/*.test.mjs
+      - name: Contract tests (vitest related to the files that name a changed contract or result)
+        if: needs.scope.outputs.class == 'contracts'
         env:
-          EVENT: ${{ github.event_name }}
-          PR_BASE: ${{ github.event.pull_request.base.sha }}
-          PR_HEAD: ${{ github.event.pull_request.head.sha }}
-          PUSH_BEFORE: ${{ github.event.before }}
-          PUSH_HEAD: ${{ github.sha }}
+          NAMED: ${{ needs.scope.outputs.named }}
+          QYVR_HERMETIC: "1"
         run: |
           set -euo pipefail
-          if [ "$EVENT" = "pull_request" ]; then
-            range="$PR_BASE..$PR_HEAD"
-          elif [ "$PUSH_BEFORE" = "0000000000000000000000000000000000000000" ]; then
-            range="$PUSH_HEAD"
-          elif ! git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null; then
-            # A force-push to main leaves the old head out of the clone; origin/main is then the pushed head, so the
-            # range is empty and the commits count as checked by their pull_request run.
-            range="origin/main..$PUSH_HEAD"
-          else
-            range="$PUSH_BEFORE..$PUSH_HEAD"
-          fi
+          read -r -a named <<< "$NAMED"
+          if [ "${#named[@]}" -eq 0 ]; then echo "No test names a changed file or its folder; nothing to run."; exit 0; fi
+          pnpm exec vitest related --run "${named[@]}"
+      - name: DCO sign-off
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
           # --min-parents=1 leaves out the root commit (GitHub's "Initial commit", unsigned);
           # merge commits carry no sign-off of their own.
           failed=0
-          shas=$(git rev-list --min-parents=1 --max-parents=1 "$range")
+          shas=$(git rev-list --min-parents=1 --max-parents=1 "$PR_BASE..$PR_HEAD")
           for sha in $shas; do
             if ! git show -s --format=%B "$sha" | grep -qE '^Signed-off-by: .+ <.+>$'; then
               echo "::error::commit $sha has no Signed-off-by trailer (use git commit -s)"
@@ -121,3 +148,58 @@ jobs:
             fi
           done
           exit "$failed"
+
+  test:
+    needs: scope
+    if: needs.scope.outputs.class == 'code'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    name: test (shard ${{ matrix.shard }}/3)
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Playwright version
+        id: pw
+        run: echo "version=$(pnpm exec playwright-core --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+      - name: Install Chromium for the UI tests
+        run: pnpm exec playwright-core install --with-deps chromium
+      - name: Test (vitest, shard ${{ matrix.shard }} of 3)
+        env:
+          QYVR_HERMETIC: "1"
+        run: pnpm exec vitest run --shard=${{ matrix.shard }}/3
+
+  # One status for the pull request: check passed, and test passed or was skipped for a docs or contracts diff.
+  ci:
+    needs: [scope, check, test]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every job passed or was skipped by the classification
+        env:
+          RESULTS: ${{ needs.scope.result }} ${{ needs.check.result }} ${{ needs.test.result }}
+          CLASS: ${{ needs.scope.outputs.class }}
+        run: |
+          set -euo pipefail
+          read -r scope check test <<< "$RESULTS"
+          echo "class=$CLASS scope=$scope check=$check test=$test"
+          [ "$scope" = success ] || exit 1
+          [ "$check" = success ] || exit 1
+          case "$CLASS" in
+            code) [ "$test" = success ] ;;
+            docs | contracts) [ "$test" = skipped ] ;;
+            *) echo "::error::scope gave no class"; exit 1 ;;
+          esac

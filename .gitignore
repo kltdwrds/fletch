@@ -8,7 +8,7 @@ packages/agent/wrangler.dev.jsonc
 .platform/
 .wrangler/
 dist/
-node_modules/
+node_modules
 worker-configuration.d.ts
 .eval-results/
 # a deploy config create-fletch writes when run at the checkout root (it holds the account id and owner)
