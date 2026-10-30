@@ -1,0 +1,142 @@
+{
+  "task_id": "T-P5-13",
+  "cluster": "P5",
+  "version_hash": "3b50b65434a04ce8eac5da92bbddb5f439681de33bf0f5517a773dbedf010caa",
+  "runs": [
+    {
+      "run_at": "2026-10-30T11:40:34.172Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T11:40:34.172Z",
+          "finished_at": "2026-10-30T11:40:49.909Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T11:40:49.909Z",
+          "finished_at": "2026-10-30T11:41:01.325Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T11:41:01.325Z",
+          "finished_at": "2026-10-30T11:41:15.771Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-10-30T11:49:50.995Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T11:49:50.996Z",
+          "finished_at": "2026-10-30T11:50:05.908Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T11:50:05.909Z",
+          "finished_at": "2026-10-30T11:50:22.684Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T11:50:22.684Z",
+          "finished_at": "2026-10-30T11:50:49.362Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-10-30T12:02:54.814Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply answers the first page and says plainly no page came back from the second",
+          "started_at": "2026-10-30T12:02:54.815Z",
+          "finished_at": "2026-10-30T12:03:16.063Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply answers the first page and says plainly no page came back from the second",
+          "started_at": "2026-10-30T12:03:16.063Z",
+          "finished_at": "2026-10-30T12:03:38.119Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply answers the first page and says plainly no page came back from the second",
+          "started_at": "2026-10-30T12:03:38.119Z",
+          "finished_at": "2026-10-30T12:03:50.376Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
+    },
+    {
+      "run_at": "2026-10-30T12:11:55.611Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply answers the first page and says plainly no page came back from the second",
+          "started_at": "2026-10-30T12:11:55.611Z",
+          "finished_at": "2026-10-30T12:12:10.613Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T12:12:10.613Z",
+          "finished_at": "2026-10-30T12:12:43.638Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T12:12:43.638Z",
+          "finished_at": "2026-10-30T12:13:10.645Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T12:21:15.588Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T12:21:15.589Z",
+          "finished_at": "2026-10-30T12:21:33.935Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T12:21:33.935Z",
+          "finished_at": "2026-10-30T12:21:48.258Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T12:21:48.258Z",
+          "finished_at": "2026-10-30T12:22:01.204Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    }
+  ]
+}
