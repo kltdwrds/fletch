@@ -370,6 +370,11 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   halts that delegation the same way. A done tool load is not
   counted in the summary; a job set or changed is a write titled by its subject. The P5 child reads the probe page
   through the real `browse_open`, offered eager, as F14's children read a fixture. Agent.
+- 2026-10-30 F32: the slot's test-host browser serves P5's probe page by its whole address (`PAGES`,
+  `scripts/preview-slot/test-host-p5.mjs`), the task's stand-in for a fixture route; a slot's sub-agent reads it too
+  (`SubAgent.reads`, overridden only there); the slot's thread drops the never-drawn reasoning. T-P5-15's count
+  parser reads "Link count: 1"; T-P5-13's grader stays F31's and the failing must-haves got `WORK_WORDS` lines.
+  Agent.
 - 2026-10-30 P3 translated (`contracts/P3-delegation.md`): eight two-way deltas, a child starts from its brief (shipped,
   now held by a task), a steer of a running child is a close and a new delegation said so (no send, no resume), a
   Stop settles the children it stopped (F31, Q25), a child's row carries its failed-step count in P5's words table,

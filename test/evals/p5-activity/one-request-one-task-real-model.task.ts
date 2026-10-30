@@ -2,13 +2,21 @@
 // writes its title and link count: one row titled by Sam's words, the drawer's read step the page's own text and the
 // write step the file's lines, the reply's count equal to the file's and the page's, the summary code's quoting the
 // reply, and no per-call narration in the thread.
+import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
 import { ASK, fromRequest } from "./request-shows-as-task.task.ts";
 import type { P5World } from "./world.ts";
 import { newest, PROBE_TITLE, summaryOf, work } from "./world.ts";
 
+const sam = people.people.find((p) => p.id === "sam-solo")!;
+
 const detail = async (w: P5World) => w.task("c1", (await newest(w))!.id);
-const count = (s: string) => /\b(\d+|one|two|three)\s+links?\b/i.exec(s)?.[1]?.toLowerCase().replace("one", "1").replace("two", "2").replace("three", "3") ?? null;
+const WORDS: Record<string, string> = { one: "1", two: "2", three: "3" };
+/** The link count `s` states, as "1 link", "link count 1" or "Link count: 1" (a file's field, F32), or null when it states none. */
+export const count = (s: string) => {
+  const n = (/\b(\d+|one|two|three)\s+links?\b/i.exec(s) ?? /\b(?:link count\s*[:=]?|links?\s*[:=])\s*(\d+|one|two|three)\b/i.exec(s))?.[1]?.toLowerCase();
+  return n === undefined ? null : (WORDS[n] ?? n);
+};
 const file = async (w: P5World) => work(await detail(w)).find((s) => s.tool === "file_write")?.detail.files[0]?.preview ?? "";
 const page = async (w: P5World) => /\((?:via \w+, )?(\d+) links?\)/.exec(work(await detail(w)).find((s) => s.tool === "browse_open")?.detail.result?.text ?? "")?.[1] ?? null;
 
@@ -31,7 +39,7 @@ export const task = defineTask<P5World>({
   priority: "must-have",
   tier: 2,
   setup: { seed: 515, records: ["chat:c1 on the slot", "the slot's probe page with one link"], files: [], jobs: [] },
-  turns: [{ kind: "event", name: "prompt", payload: { text: ASK } }],
+  turns: [{ kind: "prompt", by: sam.email, text: ASK }],
   end_state: graders.filter((g) => g.kind === "end_state").map((g) => g.name),
   required_facts: graders.filter((g) => g.kind === "required_fact").map((g) => g.name),
   minefields: graders.filter((g) => g.kind === "minefield").map((g) => g.name),

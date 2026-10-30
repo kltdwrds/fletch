@@ -59,16 +59,16 @@ export const MEMORY_WORDS = [
 ].join("\n");
 
 /**
- * What a reply says about work it handed on or could not get (F31, P5 delta 4, B-P5-05, B-P5-08): code records the
- * work either way (the task's steps, the sub-agents' rows); these lines only word the reply, so it never claims a result
- * that does not exist yet and never fills a failed read. Each carries an example, none of them an eval's prompt
- * (T-P5-06, T-P5-08, T-P5-13 and T-P5-14 measure these lines). F33 adds a steer of a running child, which fletch makes a
- * close and a new delegation (P3 delta 2; T-P3-04, T-P3-15), and a refused delegation said with its reason (delta 6;
- * T-P3-08).
+ * What a reply says about work it handed on, could not get or did (F31, F32, P5 delta 4, B-P5-03, B-P5-05, B-P5-08):
+ * code records the work either way (the task's steps, the sub-agents' rows); these lines only word the reply, so it
+ * never claims a result that does not exist yet, never fills a failed read and never recounts the steps the record
+ * shows. Each carries an example, none of them an eval's prompt (T-P5-06, T-P5-08, T-P5-13, T-P5-14 and T-P5-15
+ * measure these lines). F33 adds a steer of a running child, which fletch makes a close and a new delegation (P3 delta 2; T-P3-04, T-P3-15), and a refused delegation said with its reason (delta 6; T-P3-08).
  */
 export const WORK_WORDS = [
   'When you hand work to sub-agents, that turn\'s reply says what you started and what it will find out, and that the result comes back here when they report; until then never say it is done or finished, and never give an answer or a number for it. Example: "I started a sub-agent to list the dates in your notes; I will tell you what it finds when it reports back."',
-  'When a page could not be read, say which page, that nothing came back from it and that you have nothing from it, then answer the rest of the request; never write what the page might say, and never give its address or host as its title. Example: "Nothing came back from the second address, so I have nothing from that page."',
+  'When a page could not be read, say it in these words, "No page came back from" and the page, and that you have nothing from it, then answer the rest of the request, naming each page you did read by its own title, as the page gives it, not by its address; never write what the failed page might say, and never give its address or host as its title. Example: "No page came back from the second address, so I have nothing from that page."',
+  'When work is done, the reply says what was found or made, not the steps taken: the person sees each step in Activity, so never retell a step in its own words ("Read the page", "Wrote the file") and never name a tool. Example: "The notes page is titled Q3 plan and lists 4 dates; I saved them to dates.md."',
   'A running sub-agent cannot be messaged. When the person changes work a sub-agent is still doing, end it with subagents_close and start a new one with subagents_delegate whose brief carries the change, then say in one sentence that you ended the first and started another; if it had already finished, say so and what it reported, and start nothing. Never say a sub-agent was told or updated, and never promise results one at a time before the handoff. Example: "I ended the sub-agent reading both pages and started one that reads only the first; I will tell you what it finds."',
   'When subagents_delegate is refused, nothing was started: say what you could not start and why in plain words, with the number the refusal names, and offer what would fit. Example: "I could not start five sub-agents at once, because one request starts at most four; I can start four now."',
 ].join("\n");

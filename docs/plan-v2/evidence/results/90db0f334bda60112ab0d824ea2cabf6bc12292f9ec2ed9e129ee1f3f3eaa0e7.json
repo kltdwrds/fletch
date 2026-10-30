@@ -1,0 +1,253 @@
+{
+  "task_id": "T-P5-15",
+  "cluster": "P5",
+  "version_hash": "90db0f334bda60112ab0d824ea2cabf6bc12292f9ec2ed9e129ee1f3f3eaa0e7",
+  "runs": [
+    {
+      "run_at": "2026-10-30T11:19:21.441Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply's link count equals the file's and the page's",
+          "started_at": "2026-10-30T11:19:21.442Z",
+          "finished_at": "2026-10-30T11:20:16.606Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply's link count equals the file's and the page's",
+          "started_at": "2026-10-30T11:20:16.606Z",
+          "finished_at": "2026-10-30T11:21:06.285Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply's link count equals the file's and the page's",
+          "started_at": "2026-10-30T11:21:06.285Z",
+          "finished_at": "2026-10-30T11:21:42.896Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T11:25:29.029Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "narrated_calls",
+          "started_at": "2026-10-30T11:25:29.029Z",
+          "finished_at": "2026-10-30T11:25:46.211Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T11:25:46.212Z",
+          "finished_at": "2026-10-30T11:26:02.345Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "narrated_calls",
+          "started_at": "2026-10-30T11:26:02.345Z",
+          "finished_at": "2026-10-30T11:26:22.782Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T11:30:56.457Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T11:30:56.457Z",
+          "finished_at": "2026-10-30T11:31:23.445Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T11:31:23.446Z",
+          "finished_at": "2026-10-30T11:32:06.703Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T11:32:06.704Z",
+          "finished_at": "2026-10-30T11:32:31.169Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    },
+    {
+      "run_at": "2026-10-30T11:41:15.774Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the read step shows the page's own text and the write step the file's lines",
+          "started_at": "2026-10-30T11:41:15.774Z",
+          "finished_at": "2026-10-30T11:41:35.622Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the read step shows the page's own text and the write step the file's lines",
+          "started_at": "2026-10-30T11:41:35.622Z",
+          "finished_at": "2026-10-30T11:41:56.718Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T11:41:56.719Z",
+          "finished_at": "2026-10-30T11:42:19.013Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
+    },
+    {
+      "run_at": "2026-10-30T11:50:49.365Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T11:50:49.365Z",
+          "finished_at": "2026-10-30T11:51:06.800Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply's link count equals the file's and the page's",
+          "started_at": "2026-10-30T11:51:06.801Z",
+          "finished_at": "2026-10-30T11:51:18.245Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T11:51:18.245Z",
+          "finished_at": "2026-10-30T11:51:33.128Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T11:59:11.834Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T11:59:11.834Z",
+          "finished_at": "2026-10-30T11:59:30.123Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "narrated_calls",
+          "started_at": "2026-10-30T11:59:30.123Z",
+          "finished_at": "2026-10-30T11:59:52.995Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T11:59:52.995Z",
+          "finished_at": "2026-10-30T12:00:06.924Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T12:03:50.378Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T12:03:50.378Z",
+          "finished_at": "2026-10-30T12:04:06.693Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T12:04:06.693Z",
+          "finished_at": "2026-10-30T12:04:24.651Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T12:04:24.651Z",
+          "finished_at": "2026-10-30T12:04:45.312Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    },
+    {
+      "run_at": "2026-10-30T12:13:10.647Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T12:13:10.647Z",
+          "finished_at": "2026-10-30T12:13:36.740Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T12:13:36.740Z",
+          "finished_at": "2026-10-30T12:14:20.966Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T12:14:20.966Z",
+          "finished_at": "2026-10-30T12:14:50.442Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-10-30T12:22:01.207Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T12:22:01.207Z",
+          "finished_at": "2026-10-30T12:23:18.344Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T12:23:18.344Z",
+          "finished_at": "2026-10-30T12:23:48.703Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-10-30T12:23:48.704Z",
+          "finished_at": "2026-10-30T12:24:19.556Z"
+        }
+      ],
+      "status": "pass"
+    }
+  ]
+}

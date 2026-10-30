@@ -5,8 +5,9 @@
 // address in its url table), the real Ledger, the app's real routes and panel script (the page harness), and the
 // scripted fake model, which answers every chat turn, child, verifier and job step from one script in the order they
 // run. Turns:
-//   - `prompt` (payload `text`, `chat`, `wait`): Sam's message, run to its end with every sub-agent it launched and the
-//     handoff turn they wake; with `wait`, the sub-agents are left launched and `during` keeps the task as it stood;
+//   - `prompt` (payload `text`, `chat`, `wait`), or a `prompt` turn by Sam (a tier-2 task's, F32): Sam's message, run
+//     to its end with every sub-agent it launched and the handoff turn they wake; with `wait`, the sub-agents are left
+//     launched and `during` keeps the task as it stood;
 //   - `children` (payload `chat`): the launched sub-agents run, and the handoff turn they wake;
 //   - `hold` (payload `text`, `chat`, `stop`): Sam's message whose script holds at the fake's `hold: "mid"` step; the
 //     world keeps `during` (the thread, the Stop control and the task as they stood), presses the composer's Stop when
@@ -143,7 +144,9 @@ export class P5Tier1World implements P5World {
     await this.engine(chat).settled();
   }
 
-  async play(turn: Turn): Promise<void> {
+  async play(t: Turn): Promise<void> {
+    // A tier-2 task's prompt (F32) is Sam's, as the slot's runner sends it: played as the `prompt` event.
+    const turn: Turn = t.kind === "prompt" ? { kind: "event", name: "prompt", payload: { text: t.text, ...(t.chat ? { chat: t.chat } : {}) } } : t;
     if (turn.kind !== "event") throw new Error(`P5_TURN_UNSUPPORTED: ${turn.kind}`);
     const p = (turn.payload ?? {}) as { text?: string; chat?: ChatLabel; stop?: "yes"; job?: string; wait?: "yes" };
     const chat = p.chat ?? "c1";

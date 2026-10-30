@@ -1,10 +1,13 @@
 // T-P5-12 (B-P5-13, B-P5-02, B-P5-07): tier 2, on a slot with the real model and the browser lane (`pnpm evals P5`,
 // F32): the rows, the drawer and the cards read the same before and after a reload and at desktop and phone width.
 // Under the tier-1 harness a reload is a fresh read of the routes and a fresh page.
+import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
 import { ASK } from "./request-shows-as-task.task.ts";
 import type { P5World } from "./world.ts";
 import { newest } from "./world.ts";
+
+const sam = people.people.find((p) => p.id === "sam-solo")!;
 
 const route = async (w: P5World) => JSON.stringify(await w.task("c1", (await newest(w))!.id));
 const views = async (w: P5World) => {
@@ -46,7 +49,7 @@ export const task = defineTask<P5World>({
   tier: 2,
   setup: { seed: 512, records: ["chat:c1 on the slot", "the slot's probe page with one link"], files: [], jobs: [] },
   turns: [
-    { kind: "event", name: "prompt", payload: { text: ASK } },
+    { kind: "prompt", by: sam.email, text: ASK },
     { kind: "event", name: "open" },
     { kind: "event", name: "open" },
   ],

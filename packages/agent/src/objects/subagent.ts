@@ -9,6 +9,7 @@ import { egressFor, type VaultEgress } from "../connectors/egress.ts";
 import { migrateObject, probeObject } from "../migrations/catalog.ts";
 import { modelConfig } from "../model/routes.ts";
 import { subAgentReads } from "../subagents/namespaces.ts";
+import type { Namespace } from "../tools/registry.ts";
 import { readTranscript, runSubAgent, type SubAgentInput, type SubAgentResult } from "../subagents/run.ts";
 
 export class SubAgent extends DurableObject<Env> {
@@ -22,15 +23,23 @@ export class SubAgent extends DurableObject<Env> {
     return readTranscript(this.ctx.storage);
   }
 
+  /**
+   * The tools this run reads with: the allowlist (`subAgentReads`). A preview slot's test host
+   * (`scripts/preview-slot/test-host.mjs`, F32) adds the fixture page's read; nothing else overrides it.
+   */
+  protected reads(person: string, _input: SubAgentInput): Namespace[] {
+    const vault = this.env.VAULT.get(this.env.VAULT.idFromName(this.env.TENANT_ID)) as unknown as VaultEgress;
+    return subAgentReads({ egress: egressFor(vault, person) });
+  }
+
   async run(input: SubAgentInput): Promise<SubAgentResult> {
     const env = this.env;
-    const vault = env.VAULT.get(env.VAULT.idFromName(env.TENANT_ID)) as unknown as VaultEgress;
     return runSubAgent(this.ctx.storage, {
       ai: env.AI,
       models: modelConfig(env),
       ledger: env.LEDGER.get(env.LEDGER.idFromName(env.TENANT_ID)),
       tenant: env.TENANT_ID,
-      namespaces: (person) => subAgentReads({ egress: egressFor(vault, person) }),
+      namespaces: (person) => this.reads(person, input),
       now: () => Date.now(),
       wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
     }, input);

@@ -215,7 +215,7 @@ describe("[F19] the tier-2 runner", () => {
     await expect(runTask(byPat, deps(slot, resultsDir()))).rejects.toThrow(/^EVALS_TASK_UNDRIVABLE: turn 1 of T-P0-11 is by pat@/);
     expect(slot.opened).toBe(0);
     const event = defineTask({ ...pong(), turns: [{ kind: "prompt", by: sam.email, text: "hello" }, { kind: "event", name: "mail" }] });
-    expect(driveable(event, sam.email)).toBe("EVALS_TASK_UNDRIVABLE: turn 2 of T-P0-11 is the event mail; the runner drives prompts and decide, tick, reload events only");
+    expect(driveable(event, sam.email)).toBe("EVALS_TASK_UNDRIVABLE: turn 2 of T-P0-11 is the event mail; the runner drives prompts and decide, tick, reload, open events only");
     expect(driveable(defineTask(pong()), sam.email)).toBeNull();
   });
 

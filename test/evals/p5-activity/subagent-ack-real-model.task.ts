@@ -1,9 +1,12 @@
 // T-P5-14 (B-P5-08): tier 2, the real model on a slot (`pnpm evals P5`, F32) delegates a count: the acknowledgement says
 // what was launched and not done, the reply's count equals the child's handoff, and the drawer has the section.
+import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
 import { COUNT_ASK } from "./subagent-section.task.ts";
 import type { P5World, StepView } from "./world.ts";
 import { DONE_WORDS, newest } from "./world.ts";
+
+const sam = people.people.find((p) => p.id === "sam-solo")!;
 
 const detail = async (w: P5World) => w.task("c1", (await newest(w))!.id);
 const handed = async (w: P5World) => ((await detail(w)).subagents[0]?.rows[0]?.steps as StepView[] | undefined)?.find?.((s) => s.kind === "handoff")?.detail.prose ?? "";
@@ -27,7 +30,7 @@ export const task = defineTask<P5World>({
   priority: "nice-to-have",
   tier: 2,
   setup: { seed: 514, records: ["chat:c1 on the slot", "the slot's probe page with one link"], files: [], jobs: [] },
-  turns: [{ kind: "event", name: "prompt", payload: { text: COUNT_ASK } }],
+  turns: [{ kind: "prompt", by: sam.email, text: COUNT_ASK }],
   end_state: graders.filter((g) => g.kind === "end_state").map((g) => g.name),
   required_facts: graders.filter((g) => g.kind === "required_fact").map((g) => g.name),
   minefields: graders.filter((g) => g.kind === "minefield").map((g) => g.name),
