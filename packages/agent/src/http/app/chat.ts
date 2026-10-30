@@ -14,6 +14,7 @@ import { ANSWER_TIMEOUT_MS, OPEN_TIMEOUT_MS, RECONNECT_DELAYS_MS } from "../reco
 import { CHATS_CSS, CHATS_SCRIPT, CHATS_TEXT } from "./chats-list.ts";
 import { ic } from "./icons.ts";
 import { MESSAGE_CSS, MESSAGE_MARKUP, MESSAGE_SCRIPT, REPLY_CHIP_MARKUP } from "./message-actions.ts";
+import { THREAD_WORK_SCRIPT } from "./thread-work.ts";
 
 /** How long a socket may stay quiet while a turn is shown working before the page asks the chat (M19.1). */
 export const TURN_CHECK_MS = 8_000;
@@ -151,11 +152,12 @@ export const CHAT_MARKUP = `<main id="chat">
 export const CHAT_SCRIPT = `const log = $("log"), form = $("f"), input = $("t");
 // Each entry is the canvas's .msg under its own class name; a message holds its MessageBubble, every other entry its words.
 // A message that arrives while the page is open (\`live\`) fades in (MessageBubble, .qf-msg-new); one drawn from history does not.
+// A message keeps its words as written (\`raw\`), so the agent's links are drawn from them (F24, thread-work.ts).
 function add(cls, text, live) {
   const d = el("div"); d.className = "m " + cls; d.fresh = !!live;
-  if (/^(you|agent)\\b/.test(cls)) { d.bubble = el("div", text); d.bubble.className = "qf-bubble"; d.append(d.bubble); }
+  if (/^(you|agent)\\b/.test(cls)) { d.bubble = el("div", text); d.bubble.className = "qf-bubble"; d.raw = text; d.append(d.bubble); }
   else d.textContent = text;
-  log.append(d); regroup(); d.scrollIntoView(); return d;
+  log.append(d); regroup(); if (/^agent\\b/.test(cls)) linked(d); d.scrollIntoView(); return d;
 }
 // The words of a message, or of any entry: a bubble's text when it has one.
 const words = (d) => d.bubble || d;
@@ -172,9 +174,11 @@ function regroup() {
 }
 // Streamed text fades in a word group at a time: each delta is its own span in the bubble (MessageBubble, .qf-stream-chunk).
 function flow(d, text) {
-  const b = words(d); b.dataset.flow = "1";
+  const b = words(d); b.dataset.flow = "1"; d.raw = (d.raw || "") + text;
   const w = el("span", text); w.className = "w qf-stream-chunk"; b.append(w);
 }
+${THREAD_WORK_SCRIPT}// A streamed reply is drawn with its links once it stops streaming: its turn ended, or a queued message starts the next.
+function settleReply() { if (reply) linked(reply); reply = null; }
 let reply = null, thinking = null, conn = null, chatId = null, mainId = null, fresh = false;
 // The placeholder (F8): \`drafting\` while the view is a chat not yet made, \`draft\` its unsent text while the person is
 // elsewhere in this page session (never sent, never stored), and \`held\` the first send, waiting for the made chat's
@@ -388,11 +392,13 @@ function frame(e) {
     reply = null; endThinking(); current = f.turn; drawn = 0; working(true);
   }
   // A send while a turn runs is queued (M24.2): drawn as sent, and the reply that takes it up starts below it.
-  else if (f.type === "queued") { nameSent(taken(f.id) || (f.text ? add("you", f.text, true) : null), f.mid); reply = null; }
+  else if (f.type === "queued") { nameSent(taken(f.id) || (f.text ? add("you", f.text, true) : null), f.mid); settleReply(); }
   else if (f.type === "duplicate") taken(f.id);
   else if (f.type === "turn_stopping") { if (f.turn === current) { stopping = current; $("stop").disabled = true; $("busy").textContent = STOP.stopping; } }
-  else if (f.type === "turn_stopped") { endThinking(); reply = null; stoppedNote(f); }
-  else if (f.type === "reasoning") { reply = null; startThinking(); }
+  else if (f.type === "turn_stopped") { endThinking(); settleReply(); stoppedNote(f); }
+  else if (f.type === "reasoning") { settleReply(); startThinking(); }
+  // The running tool, worded by the page's table (F24); never the model's words.
+  else if (f.type === "status") statusLine(f.tool);
   else if (f.type === "delta") { endThinking(); reply ??= add("agent", "", true); flow(reply, f.text); if (f.turn === current) drawn += f.text.length; }
   else if (f.type === "message") { endThinking(); add("agent", f.text, true); if (JOB_LINE.test(f.text)) jobButton(); if (f.turn === current) drawn += f.text.length; }
   else if (f.type === "card") { card(f.card, log, chatId); refreshCount(); }
@@ -402,8 +408,8 @@ function frame(e) {
   else if (f.type === "reaction") { const d = byMid(f.mid); if (d) setReaction(d, f.by, f.emoji); }
   // A turn that ended names the messages it drew live, so their actions show without drawing the thread again.
   else if (f.type === "named") nameLive(f.messages);
-  else if (f.type === "turn_done") { endThinking(); reply = null; }
-  else if (f.type === "turn_failed") { endThinking(); reply = null; add("note", f.text); }
+  else if (f.type === "turn_done") { endThinking(); settleReply(); }
+  else if (f.type === "turn_failed") { endThinking(); settleReply(); add("note", f.text); }
   else if (f.type === "refused" && f.id && pending.has(f.id)) unsent(f.id, f.code);
   else if (f.type === "refused" || f.type === "error") {
     // A refused stop (no send id) lets Stop be asked again while the turn is still shown working.

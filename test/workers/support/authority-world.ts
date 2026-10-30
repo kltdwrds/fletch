@@ -101,6 +101,8 @@ export interface WorldOptions {
   mint?: (person: string) => CredentialMint;
   /** The chats offer the `jobs` namespace over real `Job` engines on this clock, as `objects/chat.ts` wires it (M15.7). */
   jobs?: boolean;
+  /** Fixture run steps (`fixture:<name>`) the `Job` engines offer beside the built-in ones (F24). */
+  jobSteps?: JobDeps["steps"];
   /** The Vault's listing for the connectors page (M23.5): each person's own credentials and the company's, never a value. */
   credentials?: (person: string) => Promise<import("../../../packages/agent/src/vault/core.ts").CredentialInfo[]>;
   /** The Renderer the chats' `documents` namespace reaches (M24.3); with it, each `Person` serves documents and signed links. */
@@ -175,6 +177,7 @@ export function authorityWorld(o: WorldOptions = {}) {
     forget: async (owner, id) => host(owner).jobs.forget(id),
     // As `objects/job.ts` builds them: the owner's memory, read as the owner alone (M25.2).
     tools: (owner, jobId) => jobToolSpecs({ owner, jobId, get: jobDeps.get(owner, `job:${jobId}`), memory: host(owner).memory }),
+    ...(o.jobSteps ? { steps: o.jobSteps } : {}),
   };
   const jobObjects = new Map<string, ObjectHarness<JobEngine>>();
   const jobOf = (owner: string, id: string) => {

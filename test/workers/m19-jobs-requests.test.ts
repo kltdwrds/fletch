@@ -56,8 +56,10 @@ describe("[M19.2] two identical relative requests give one job (QYVR-162)", () =
     w.fake.enqueue(load, create({ kind: "runonce", in_minutes: 3 }), enable(first), { text: "It is on." });
     await w.say(ada.email, "In 3 minutes, remind me to stretch.", chat);
     await w.chats.harness(chat).instance.decide([w.cardsOf(ada.email)[0]!.id], { person: ada.email, agent: false }, "once");
-    w.fake.enqueue(report("Stretch now."));
+    // The job's result wakes her agent (F24), which has nothing to add.
+    w.fake.enqueue(report("Stretch now."), { text: "" });
     await w.fireJob(ada.email, first);
+    await w.chats.harness(chat).instance.settled();
     expect(w.jobOf(ada.email, first).instance.status()).toMatchObject({ status: "finished" });
 
     w.fake.enqueue(create({ kind: "runonce", in_minutes: 3 }, {}, "c2"), { text: "Made another." });

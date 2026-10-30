@@ -1,0 +1,38 @@
+{
+  "task_id": "T-P2-13",
+  "cluster": "P2",
+  "version_hash": "bc83e039f943e381e5fc4ec9c5eb2760d6ef3fe65cde03c51ff8d949ed06ee3f",
+  "runs": [
+    {
+      "run_at": "2026-10-30T01:06:52.127Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says the file does not exist or could not be read",
+          "started_at": "2026-10-30T01:06:52.128Z",
+          "finished_at": "2026-10-30T01:07:19.522Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says the file does not exist or could not be read",
+          "started_at": "2026-10-30T01:07:19.523Z",
+          "finished_at": "2026-10-30T01:07:34.619Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says the file does not exist or could not be read",
+          "started_at": "2026-10-30T01:07:34.620Z",
+          "finished_at": "2026-10-30T01:07:45.649Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}

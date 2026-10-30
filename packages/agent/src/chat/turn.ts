@@ -25,8 +25,11 @@ export interface Step {
   steer: boolean;
 }
 
-/** Frames streamed to the chat's sockets while a turn runs. */
-export type StreamFrame = { type: "delta"; turn: string; text: string } | { type: "reasoning"; turn: string; text: string };
+/**
+ * Frames streamed to the chat's sockets while a turn runs. `status` names the tool now running (F24, B-P2-04), and
+ * `tool: null` once it returned: the page words it from its own table, never from the model's text.
+ */
+export type StreamFrame = { type: "delta"; turn: string; text: string } | { type: "reasoning"; turn: string; text: string } | { type: "status"; turn: string; tool: string | null };
 
 export interface TurnLoopOptions {
   turnId: string;
@@ -75,6 +78,8 @@ async function turnLoop(o: TurnLoopOptions): Promise<TurnOutcome> {
   let barrierError: unknown;
 
   const emit = async (event: AgentEvent) => {
+    if (event.type === "tool_execution_start") o.onFrame({ type: "status", turn: o.turnId, tool: event.toolName });
+    if (event.type === "tool_execution_end") o.onFrame({ type: "status", turn: o.turnId, tool: null });
     if (event.type !== "message_update") return;
     const e = event.assistantMessageEvent;
     if (e.type === "text_delta") o.onFrame({ type: "delta", turn: o.turnId, text: e.delta });

@@ -1,6 +1,7 @@
 // T-P2-03 (B-P2-03): no words reach Sam before the last tool's result; the reply streams after it as one agent
 // entry (Translation, delta 2: one streamed bubble, two paragraphs where Muse splits two). The fixture `steps_lookup`
-// notes how many frames Sam's socket had when it ran; its result follows at once, before the next request.
+// notes how many frames Sam's socket had when it ran; its result follows at once, before the next request. Before the
+// words the only signals are the 👍 and the running tool's `status` frames (B-P2-04's two, the status line F24's).
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask } from "../../support/task.ts";
 import type { Frame, P2World } from "./world.ts";
@@ -20,7 +21,7 @@ export const task = defineTask<P2World>({
   tier: 1,
   setup: { seed: 3, records: ["chat:c1"], files: [], jobs: [] },
   turns: [{ kind: "prompt", by: sam.email, text: "Look up both steps and tell me what you find." }],
-  end_state: ["no agent entry and no words frame before the second tool's result", "the reply streams as one agent entry after it", "the 👍 frame is the only frame before the words"],
+  end_state: ["no agent entry and no words frame before the second tool's result", "the reply streams as one agent entry after it", "the 👍 and the tools' status are the only frames before the words"],
   required_facts: ["the entry's text holds both paragraphs"],
   minefields: ["early_bubble"],
   collateral: { journal: ["mail:c1:1:user", "message:c1:1:you", "message:c1:2:agent", "turn:c1:1"] },
@@ -28,11 +29,11 @@ export const task = defineTask<P2World>({
     { name: "no agent entry and no words frame before the second tool's result", kind: "end_state", check: (w) => w.marks().length === 2 && !w.frames().slice(0, lastTool(w)).some(words) },
     { name: "the reply streams as one agent entry after it", kind: "end_state", check: (w) => w.entries().filter((e) => e.kind === "agent").length === 1 && firstWords(w) >= lastTool(w) },
     {
-      name: "the 👍 frame is the only frame before the words",
+      name: "the 👍 and the tools' status are the only frames before the words",
       kind: "end_state",
       check: (w) => {
         const before = w.frames().slice(0, firstWords(w));
-        return before.filter((f) => f.type !== "turn_started").every((f) => f.type === "reaction" && f.by === "agent" && f.emoji === "👍");
+        return before.filter((f) => f.type !== "turn_started" && f.type !== "status").every((f) => f.type === "reaction" && f.by === "agent" && f.emoji === "👍");
       },
     },
     { name: "the entry's text holds both paragraphs", kind: "required_fact", check: (w) => w.entries().some((e) => e.kind === "agent" && e.text === PARAS.join("\n\n")) },

@@ -5,7 +5,39 @@ One item per entry: `- [ ] <date> <kind>: <what>`, kinds `uat`, `record`, `quest
 orchestrator wants his eyes on, not blocking). An entry carries enough context to make the high-level decision from
 its paragraph alone (what it is, what was decided or found, what his answer changes, the recommended answer) and
 deep links (a path with its heading or line, a record id, a PR) to the artifact or section for a deep-dive review.
-Kyle's own lines go under `## Steering`.
+Kyle's own lines go under `- [ ] 2026-10-29 question: **Q16, two grader edits in F24 the verifier calls softening.** F24 shipped the status
+  line, the file card and the job wake with `ACCEPT F24: PASS` and T-P2-13 (the P2 tier-2 must-have) 3 of 3 on
+  fletch-pv-2, but the verifier blocked on two grader changes to tasks F24's scope did not name, and KICKOFF makes
+  that Kyle's call. (1) T-P2-03's "only the 👍 before the words" now also admits the new `status` frames: they carry a
+  tool name and no model text, and B-P2-04 names the runtime status as the second signal, so without the edit the task
+  fails on every run of the shipped status line. (2) T-P2-13's "not there" pattern had never met a real model: it
+  failed 0 of 3 on "There's no file called p2-missing-file.md" (Muse's own reference wording), and its `empty_success`
+  minefield caught "the workspace is empty right now", which is true. The new patterns are pinned on the replies the
+  model gave and on planted failures; the failed runs' results files stay committed. The orchestrator's view: both are
+  corrections to oracles, not a lowered bar, and it merged PR #36 with F24 left BLOCKED so the surfaces reach main
+  (your steer: ship, then review). Recommended answer: keep both; one line under Steering (or a comment on the PR)
+  lets a session rerun the verifier, mark F24 DONE and raise P2 to level 2. If you want one reverted, say which: the
+  part then fails on that task and T-P2-13's must-have becomes a P2 Interrogate item for a prompt change. Deep dive:
+  [Q16](QUESTIONS.md#q16-f24-2026-10-29-may-f24-keep-two-grader-changes-the-verifier-calls-softening),
+  [PR #36](https://github.com/kltdwrds/fletch/pull/36), `test/evals/p2-loop/reply-after-last-tool.task.ts`,
+  `test/evals/p2-loop/real-model-failure-honest.task.ts` and its `.test.ts`, the three T-P2-13 results files under
+  `evidence/results/` (`bc83…` 0 of 3, `55e8…` 1 of 3, `5c68…` 3 of 3).
+
+- [ ] 2026-10-29 uat: **F24, the thread shows the work: the status line, the file card, a job's result wakes the
+  agent.** On main since [PR #36](https://github.com/kltdwrds/fletch/pull/36), deployed on
+  https://fletch-pv-2.edwards-ky1.workers.dev (leased to 2026-10-31T01:06Z; `pnpm preview up` in any worktree
+  redeploys it). What changed: while a tool runs the thread shows the dots with the activity in words ("Reading a
+  file", "Searching the web") from a table in the page, never from the model; a file the agent links as
+  `files/<path>` is drawn as a card in its bubble (name, kind, four preview lines, a click opens the Library viewer),
+  an http link stays a link; a scheduled job's result still arrives as its notice, and now also wakes the agent, which
+  may add a line (a next step) or say nothing. What to try: ask it to read or search your files and watch the line
+  under your message; ask it to write a one-line note to a file and link it; let a job finish and see whether the
+  agent adds anything. Phone width too (the specimen is `ds/specimens/loop-status.html`, your look item). Report
+  anything that reads wrong under Steering; nothing is blocked on this. Deep dive:
+  [F24 in parts.md](parts.md#f24-the-thread-shows-the-work-the-status-line-the-file-card-and-a-jobs-completion-wakes-the-agent),
+  [PROGRESS.md F24](PROGRESS.md), `packages/agent/src/http/app/thread-work.ts`, `packages/agent/src/chat/job-wake.ts`.
+
+## Steering`.
 
 ## Open
 
