@@ -21,7 +21,7 @@ import { FakeBrowser, type FakeSite } from "../../support/browser/fake-browser.t
 import type { FakeStep } from "../../support/fake-model.ts";
 import { type HarnessSocket, ObjectHarness } from "../../support/object-harness.ts";
 import { stepsNamespace } from "../../support/p2-fixtures.ts";
-import { type EgressRequest, shareNamespace } from "../../support/p15-fixtures.ts";
+import { type EgressRequest, notesNamespace, shareNamespace } from "../../support/p15-fixtures.ts";
 import type { Snapshot } from "../../support/scenario.ts";
 import type { TaskHarness, Turn } from "../../support/task.ts";
 import { seededToken } from "../../support/vendors/index.ts";
@@ -51,7 +51,7 @@ export class P15Tier1World implements P15World {
   private readonly sockets = new Map<ChatLabel, HarnessSocket>();
   private readonly memory: Map<string, ObjectHarness<PersonBrowse>> = new Map();
 
-  constructor(o: { script: FakeStep[]; sites: Record<string, FakeSite> }) {
+  constructor(o: { script: FakeStep[]; sites: Record<string, FakeSite>; stores?: boolean; notes?: string }) {
     this.browser = new FakeBrowser(o.sites);
     this.secret = seededToken();
     const now = () => this.w.clock.now;
@@ -80,8 +80,10 @@ export class P15Tier1World implements P15World {
     };
     this.w = authorityWorld({
       script: o.script,
+      ...(o.stores ? { stores: true } : {}),
       namespaces: (owner) => [
         shareNamespace((r) => this.sent.push({ ...r, at: now() })),
+        ...(o.notes !== undefined ? [notesNamespace(o.notes)] : []),
         credentialsNamespace({ list: async () => vault().list(owner()) }),
         // A lookup that takes one step of a long task (T-P15-09), noting each step it ran.
         stepsNamespace((n) => this.steps.push(n)),
@@ -103,6 +105,13 @@ export class P15Tier1World implements P15World {
       asPerson(sam.email, "capture-form"),
     );
     if (!put.ok) throw new Error(`P15_SEED_CREDENTIAL: ${put.code}`);
+  }
+
+  /** Writes Sam's MEMORY.md with `line` among her facts, as her own memory holds a standing line (T-P15-08, T-P15-12). */
+  async seedMemory(line: string): Promise<void> {
+    // The standing files' defaults first, as her first turn would seed them, so the turn adds none.
+    await this.w.host(sam.email).memory.standingFiles();
+    await this.w.host(sam.email).memory.mem.writeStanding("MEMORY.md", `# MEMORY.md\n\n## Facts\n- ${line}\n`, `person:${sam.email}`);
   }
 
   /** Opens `label`: Sam's main chat (`c1`) through the app's route, another through her `Person`. */
@@ -296,6 +305,11 @@ export interface P15HarnessOptions {
   hold?: string;
   /** The chat each prompt goes to, by turn order; `c1` when unset. */
   chats?: ChatLabel[];
+  /** Sam's real memory and files on her `Person` (T-P15-08, T-P15-12), and a MEMORY.md line planted in it. */
+  stores?: boolean;
+  memory?: string;
+  /** A `notes_read` tool answering with this text (T-P15-12). */
+  notes?: string;
   /** Runs after `c1` is open and before the snapshot: the records a task's setup names. */
   seed?: (world: P15Tier1World) => Promise<void>;
 }
@@ -358,8 +372,9 @@ export function p15Harness(o: P15HarnessOptions): TaskHarness<P15Tier1World> {
   return {
     setup: async () => {
       play = p15Player(o);
-      const world = new P15Tier1World({ script: o.script, sites: o.sites ?? {} });
+      const world = new P15Tier1World({ script: o.script, sites: o.sites ?? {}, ...(o.stores || o.memory !== undefined ? { stores: true } : {}), ...(o.notes !== undefined ? { notes: o.notes } : {}) });
       if (o.credential) await world.seedCredential();
+      if (o.memory !== undefined) await world.seedMemory(o.memory);
       await world.open("c1");
       await o.seed?.(world);
       return world;

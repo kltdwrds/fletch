@@ -44,3 +44,22 @@ export function shareNamespace(sent: (r: Omit<EgressRequest, "at">) => void): Na
     ],
   };
 }
+
+/** `notes_read` answers with `notes` (T-P15-12): a tool result whose words are only data, whatever they claim. */
+export function notesNamespace(notes: string): Namespace {
+  return {
+    name: "notes",
+    description: "read the person's notes for a task",
+    deferral: "eager",
+    tools: [
+      {
+        name: "notes_read",
+        kind: "observation",
+        label: "Read notes",
+        description: "Read the notes kept for the current task.",
+        parameters: Type.Object({}),
+        execute: async () => text(notes),
+      },
+    ],
+  };
+}

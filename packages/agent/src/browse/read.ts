@@ -50,5 +50,7 @@ export async function readPage(deps: ReadDeps, url: string): Promise<Read> {
 
 export async function blocked(deps: Pick<ReadDeps, "memory">, domain: string, engine: Engine, code: string, why: string, retryAfter?: number): Promise<Stopped> {
   await deps.memory.record({ domain, engine, state: "blocked", code });
-  return { ok: false, stopped: true, code, reason: `${why} ${STOP_NOTE}`, domain, remembered: false, ...(retryAfter ? { retryAfter } : {}) };
+  // The wait is the site's own words, said so the person knows when it may be tried; it is never waited out here (B-P15-13).
+  const wait = retryAfter ? ` It asked for ${retryAfter} seconds before another request.` : "";
+  return { ok: false, stopped: true, code, reason: `${why}${wait} ${STOP_NOTE}`, domain, remembered: false, ...(retryAfter ? { retryAfter } : {}) };
 }

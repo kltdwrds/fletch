@@ -283,3 +283,14 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   the tests read it), and `push` runs only for `main`, so a PR commit runs once. The release still runs `pnpm verify`
   on every push to `main`. `scripts/gates.test.mjs` holds the gating. Rejected: `paths:` filters on the trigger,
   which skip the run and its status; `dorny/paths-filter`, a third-party action for one list and one rule.
+- 2026-10-30 F26, tier 1 of nothing goes around a card: fletch's browse lane types nothing but a stored credential, so
+  T-P15-05's "same share through the browse tool" is `browse_fill` aimed at host A's page, an action the engine decides
+  (a new proposal, so a card; the declined fingerprint is the share's), proposed in one step with the share to host B
+  because a card ends the turn after its step. A rate-limit stop's reason now says the site's own wait ("It asked for
+  120 seconds before another request", `browse/read.ts`), never waited out. The reply's words at a bot check, a rate
+  limit and a decline are the `STOPS` lines of the chat's task block (`chat/instructions.ts`), which grant nothing. Three
+  F25-written task files corrected before their first run, hashes refreshed in `contracts/P15-approvals.md`: T-P15-05's
+  and T-P15-12's collateral lists the cards and journal rows their own graders require (and T-P15-05's message numbers
+  follow its seeded decline); T-P15-08's prompt gives `https://walled.example.test/`, since a bare host is not an
+  address the person wrote (`BROWSE_URL_NOT_VERBATIM`). Rejected: a bare hostname read as an address, which loosens
+  the verbatim rule for one task.

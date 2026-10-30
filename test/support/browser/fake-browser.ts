@@ -10,6 +10,8 @@ export interface FakeSite {
   kitesurfUnsupported?: boolean;
   /** What every engine and lane is told: a challenge page, a 429 with Retry-After, or a 403. */
   wall?: "bot" | "rate" | "forbidden";
+  /** The seconds a rate wall's Retry-After names; 30 when unset. */
+  retryAfter?: string;
   page?: { title?: string; text: string; links?: Array<{ text: string; href: string }> };
   /** The page repeats what was typed into it, as a greeting would. */
   echoTyped?: boolean;
@@ -40,7 +42,7 @@ export class FakeBrowser implements BrowserPort {
     const s = this.site(url);
     if (!s) return { ok: false, status: 404, reason: "no such site" };
     if (s.wall === "bot") return { ok: true, status: 200, markdown: CHALLENGE };
-    if (s.wall === "rate") return { ok: false, status: 429, reason: "Too Many Requests", retryAfter: "30" };
+    if (s.wall === "rate") return { ok: false, status: 429, reason: "Too Many Requests", retryAfter: s.retryAfter ?? "30" };
     if (s.wall === "forbidden") return { ok: false, status: 403, reason: "Forbidden" };
     if (engine === "kitesurf" && s.kitesurfUnsupported) return { ok: false, status: 0, reason: "Kitesurf could not render this page" };
     return { ok: true, status: 200, markdown: s.markdown ?? s.page?.text ?? "" };
