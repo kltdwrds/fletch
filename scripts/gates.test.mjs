@@ -53,6 +53,7 @@ describe('the gates are wired', () => {
     assert.equal(pkg.scripts.test, 'node --test scripts/*.test.mjs && QYVR_HERMETIC=1 vitest run');
     const jobs = Object.fromEntries(ci.split(/\n {2}(?=[\w-]+:\n)/).slice(1).map((j) => [j.slice(0, j.indexOf(':')), j]));
     assert.match(jobs.scope ?? '', /^ {6}- name: Classify the diff\n\s+id: scope$/m, 'ci.yml has no scope job classifying the diff');
+    for (const out of ['class', 'named']) assert.match(jobs.scope, new RegExp(`^ {6}${out}: \\$\\{\\{ steps\\.scope\\.outputs\\.${out} \\}\\}$`, 'm'), `scope does not pass on ${out}`);
     const steps = (job) => (jobs[job] ?? '').split(/\n {6}- /);
     const gate = (cls) => new RegExp(`^\\s+if: needs\\.scope\\.outputs\\.class ${cls}$`, 'm');
     const step = (job, run) => steps(job).filter((x) => run.test(x));
@@ -64,13 +65,18 @@ describe('the gates are wired', () => {
     assert.match(gateTests, gate("== 'code'"));
     assert.match(related, gate("== 'contracts'"));
     assert.match(related, /QYVR_HERMETIC: "1"/);
+    // The contracts path can bring a browser test, so the check job installs Chromium for it.
+    const [chromium] = step('check', /run: pnpm exec playwright-core install/);
+    assert.match(chromium ?? '', gate("== 'contracts'"));
     const test = jobs.test ?? '';
     assert.match(test, /^ {4}needs: scope\n/m);
     assert.match(test, /^ {4}if: needs\.scope\.outputs\.class == 'code'$/m);
     assert.match(test, /^ {8}shard: \[1, 2, 3\]$/m);
     assert.match(test, /QYVR_HERMETIC: "1"\n\s+run: pnpm exec vitest run --shard=\$\{\{ matrix\.shard \}\}\/3$/m);
+    // The status job runs whatever its needs did (a failed test must not skip it); scripts/ci-classify.test.mjs runs
+    // its script.
     assert.match(jobs.ci ?? '', /^ {4}needs: \[scope, check, test\]$/m, 'no single status over the jobs');
-    assert.match(jobs.ci ?? '', /if \[ "\$CLASS" = code \]; then \[ "\$test" = success \]/);
+    assert.match(jobs.ci ?? '', /^ {4}if: \$\{\{ !cancelled\(\) \}\}$/m, 'the status job is skipped when a job it needs fails');
   });
 
   it('Claude Code runs the hook guard, the handoff hook and the session start', () => {
