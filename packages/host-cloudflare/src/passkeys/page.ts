@@ -150,7 +150,7 @@ export const PAGE_CSP = [
 ].join("; ");
 
 const SETUP_BODY = `<h1>Set up fletch</h1>
-<p>This deploy has no passkey yet. The first one is created from the setup link printed when the deploy was set up (by <kbd>pnpm --dir &lt;checkout&gt; create-fletch</kbd>). Open that setup link to continue.</p>`;
+<p>This deploy has no passkey yet. The first one is created from the setup link printed when the deploy was set up (by <kbd>pnpm self-host</kbd>). Open that setup link to continue.</p>`;
 
 export function loginPage(state: PageState): string {
   if (state === "setup") return shell("Set up fletch", state, `<section id="start">\n${SETUP_BODY}\n</section>`);

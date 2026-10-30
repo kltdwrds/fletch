@@ -1,10 +1,9 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
-// The hermetic lane by default: no credential, deny-all network, no live test. `envDir: false` loads no env
-// file of any kind; nothing here reads .dev.vars, and test/support/env-guard.test.ts holds both. The same
-// setup runs before the agent's tests under test/ and the primitives' tests under packages/host*/test/.
-const live = process.env.QYVR_LIVE === "1";
+// The hermetic lane: no credential, deny-all network. `envDir: false` loads no env file of any kind; nothing
+// here reads .dev.vars, and test/support/env-guard.test.ts holds both. The same setup runs before the agent's
+// tests under test/ and the primitives' tests under packages/host*/test/.
 
 export default defineConfig({
   envDir: false,
@@ -17,9 +16,9 @@ export default defineConfig({
     },
   },
   test: {
-    include: live ? ["test/**/*.live.test.ts"] : ["test/**/*.test.ts", "packages/host*/test/**/*.test.ts", "packages/create-fletch/test/**/*.test.ts"],
-    exclude: live ? ["**/node_modules/**"] : ["**/node_modules/**", "test/**/*.live.test.ts"],
-    setupFiles: live ? [] : ["test/support/hermetic.setup.ts", "test/support/host.setup.ts"],
+    include: ["test/**/*.test.ts", "packages/host*/test/**/*.test.ts"],
+    exclude: ["**/node_modules/**"],
+    setupFiles: ["test/support/hermetic.setup.ts", "test/support/host.setup.ts"],
     environment: "node",
     // The Agents SDK imports `cloudflare:*` modules; inlining it lets the aliases above apply.
     server: { deps: { inline: ["agents", "@cloudflare/computer"] } },

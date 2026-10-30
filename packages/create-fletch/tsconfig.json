@@ -1,9 +1,0 @@
-// create-fletch runs under Node, and imports @qyvr/host-cloudflare, whose sources are written over the Workers
-// types; both sets are loaded. It also holds the live exit test (test/live/), which calls init(), and the tier-2
-// runner's slot client (scripts/evals/slot.ts), which signs in with the same software passkey.
-{
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "types": ["node", "@cloudflare/workers-types"] },
-  "include": ["src/**/*.ts", "test/**/*.ts", "../../test/live/f1-deploy.live.test.ts", "../../test/live/lib.ts", "../../test/live/sweep.ts", "../../scripts/live-sweep.ts", "../../test/support/soft-authenticator.ts", "../../scripts/evals.ts", "../../scripts/evals/slot.ts"],
-  "exclude": ["node_modules"]
-}

@@ -97,7 +97,7 @@ describe('preview plan: the slot config', () => {
     assert.equal(ph.vars.PREVIEW_SERVING, 'placeholder');
   });
 
-  it('adds the paid-plan bindings only when asked, as create-fletch --paid does', () => {
+  it('adds the paid-plan bindings only when asked, as pnpm self-host --paid does', () => {
     assert.equal(app.worker_loaders, undefined);
     const paid = slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', paid: true });
     assert.deepEqual(paid.worker_loaders, [{ binding: 'LOADER' }]);

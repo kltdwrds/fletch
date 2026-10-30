@@ -41,7 +41,7 @@ describe('check-boundaries', () => {
   it('pins the production rules: their scope, their exemption and what they ban or allow', () => {
     const shape = (r) => [r.name, r.scope.source, r.exempt?.source, (r.banned ?? []).map((b) => b.source), (r.allow ?? []).map((a) => a.source), (r.names ?? []).map((n) => n.source)];
     assert.deepEqual(RULES.map(shape), [
-      ['no-fletch', '^packages\\/host(?:-cloudflare)?\\/', undefined, ['^fletch-agent(?:\\/|$)', '^create-fletch(?:\\/|$)', '(?:^|\\/)packages\\/(?:agent|create-fletch)(?:\\/|$)'], [], []],
+      ['no-fletch', '^packages\\/host(?:-cloudflare)?\\/', undefined, ['^fletch-agent(?:\\/|$)', '(?:^|\\/)packages\\/agent(?:\\/|$)'], [], []],
       ['no-deep-import', '^packages\\/', undefined, ['^@qyvr\\/[^/]+\\/.'], [], []],
       ['no-cloudflare-workers', '^packages\\/host\\/', undefined, ['^cloudflare:'], [], []],
       [
@@ -90,14 +90,13 @@ describe('check-boundaries', () => {
           'packages/host/src/b.ts': 'export * from "fletch-agent/src/host.ts";\n',
           'packages/host/src/c.ts': 'const m = await import("../../agent/src/index.ts");\nexport { m };\n',
           'packages/host-cloudflare/src/d.ts': 'import type { Env } from "../../agent/src/objects/names.ts";\nexport type { Env };\n',
-          'packages/host-cloudflare/src/e.ts': 'import { run } from "create-fletch";\nimport "../../create-fletch/bin.ts";\nexport { run };\n',
+          'packages/host-cloudflare/src/e.ts': 'import "../../agent/src/side-effect.ts";\n',
         },
         only('no-fletch'),
       ),
       [
         'no-fletch packages/host-cloudflare/src/d.ts:1 ../../agent/src/objects/names.ts',
-        'no-fletch packages/host-cloudflare/src/e.ts:1 create-fletch',
-        'no-fletch packages/host-cloudflare/src/e.ts:2 ../../create-fletch/bin.ts',
+        'no-fletch packages/host-cloudflare/src/e.ts:1 ../../agent/src/side-effect.ts',
         'no-fletch packages/host/src/a.ts:1 fletch-agent',
         'no-fletch packages/host/src/b.ts:1 fletch-agent/src/host.ts',
         'no-fletch packages/host/src/c.ts:1 ../../agent/src/index.ts',
@@ -150,9 +149,9 @@ describe('check-boundaries', () => {
   it('reads past comments: a `}` in one hides nothing, and a commented-out import is still reported (fail-safe)', () => {
     const tree = {
       'packages/host/src/a.ts': "import { /* } */ x } from 'fletch-agent';\n",
-      'packages/host/src/b.ts': "// import { x } from 'fletch-agent';\nconst glob = '**/*.md';\nimport { y } from 'create-fletch';\nconst end = '*/';\n",
+      'packages/host/src/b.ts': "// import { x } from 'fletch-agent';\nconst glob = '**/*.md';\nimport { y } from '../../agent/src/y.ts';\nconst end = '*/';\n",
     };
-    assert.deepEqual(found(tree, only('no-fletch')), ['no-fletch packages/host/src/a.ts:1 fletch-agent', 'no-fletch packages/host/src/b.ts:1 fletch-agent', 'no-fletch packages/host/src/b.ts:3 create-fletch']);
+    assert.deepEqual(found(tree, only('no-fletch')), ['no-fletch packages/host/src/a.ts:1 fletch-agent', 'no-fletch packages/host/src/b.ts:1 fletch-agent', 'no-fletch packages/host/src/b.ts:3 ../../agent/src/y.ts']);
   });
 
   it('file-vocabulary: a second file vocabulary fails, by tool name, by Workspace import and by an edit or grep in the home store', () => {

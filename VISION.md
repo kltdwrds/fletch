@@ -4,18 +4,19 @@ fletch is a personal agent you own outright: open source, running on your own Cl
 you and nobody else. It is the reference agent on the qyvr spine: the kernel every delegated agent needs (who it
 acts for, what it may touch, what it remembers, what it ran, what it refused), published on its own.
 
-> You run one command. Ten minutes later an agent answers at your own address and signs you in with your face or
-> fingerprint. You tell it about the trip you are planning; next week it still knows. You hand it a folder, a
-> routine to run every morning, a repository to keep an eye on, and it gets on with them, asking before it does
-> anything you have not allowed. Everything it knows lives in your account. If you stop, it stops, and what it
-> knew is yours to keep or delete.
+> You run one command from a copy of fletch. Ten minutes later an agent answers at your own address and signs you
+> in with your face or fingerprint. You tell it about the trip you are planning; next week it still knows. You hand
+> it a folder, a routine to run every morning, a repository to keep an eye on, and it gets on with them, asking
+> before it does anything you have not allowed. Everything it knows lives in your account. If you stop, it stops,
+> and what it knew is yours to keep or delete.
 
 ## Promises
 
 - **Yours to run, not ours to host.** fletch is free software you deploy to your own account. There is no fletch
   service in the middle: your conversations, memory, files and keys never pass through anyone else.
-- **Set up in minutes, on the free plan.** One command takes you from an account to a working agent, with no domain
-  and no paid plan; anything that needs more is a visible second step, never a surprise.
+- **Set up in minutes, on the free plan.** One command, run from a checkout of this repository, takes you from an
+  account to a working agent, with no domain and no paid plan; anything that needs more is a visible second step,
+  never a surprise. A packaged setup that needs no checkout is the platform's later work.
 - **It remembers, and you can see what.** What it learns about you is written down where you can read, correct and
   forget it.
 - **It asks before it acts.** It works only with what you gave it; anything new waits for your yes, and a yes can

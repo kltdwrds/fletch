@@ -51,7 +51,6 @@ describe("[F0] accept: part ids and tags", () => {
       write("test/b.test.ts", 'describe("[F1] b", () => {});\n');
       write("test/c.test.ts", 'describe("[M24.3] c", () => {});\n');
       write("test/d.test.ts", 'describe("no tag", () => {});\n');
-      write("test/e.live.test.ts", 'describe("[F0] live", () => {});\n');
       const rel = (f: string) => relative(root, join(dir, f));
       const plan = planHermetic(parsePartId("F0")!, [join(dir, "test")]);
       expect(plan.files).toEqual([rel("test/a.test.ts"), rel("test/c.test.ts")]);

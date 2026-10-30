@@ -31,9 +31,10 @@ stage. Work that is not a part is a plain PR (AGENTS.md, "Start here"); none of 
   a cluster's contract change only when the part's scope names them. A part may split itself in `parts.md` (below) and
   add its own rows to the ledgers; nothing else in `docs/plan-v2/`.
 - **No secrets in the repository.** Credentials come from the environment; the scans run in the pre-commit hook and
-  in accept. A live step needs its variables set by Kyle; a missing one is a question, not a reason to skip.
-- **Hermetic by default.** Tests see no credential and no network; the model is the scripted fake; live calls only
-  in `*.live.test.ts` and under `pnpm evals`. Own the store, not the clock: no sleeps, no retries. A test that passes
+  in accept. Accept deploys nothing and has no live step; a tier-2 run needs its variables set by Kyle, and a missing
+  one is a question, not a reason to skip.
+- **Hermetic by default.** Tests see no credential and no network; the model is the scripted fake; real-model calls
+  only under `pnpm evals`, on a preview slot. Own the store, not the clock: no sleeps, no retries. A test that passes
   on retry is a bug.
 - **Fixtures use only the identities in `test/fixtures/people.json`.** A claim involving two people is tested with
   two members.

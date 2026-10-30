@@ -12,13 +12,11 @@ import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { authMode, CLOUD_HOSTS, DEFAULT_TTL_HOURS, freeSlot, gcReason, origin, ownerTag, PREFIX, sha256Hex, slotPlan, tokenForm, wranglerEnv } from './preview-plan.mjs';
+import { authMode, CLOUD_HOSTS, DEFAULT_TTL_HOURS, freeSlot, gcReason, mintSecrets, origin, ownerTag, PREFIX, SECRETS, sha256Hex, slotPlan, tokenForm, wranglerEnv } from './preview-plan.mjs';
 import { agentDir, CONFIG, account, deploySlot, deprovision, drainBucket, INVENTORY, knownSubdomain, needInventory, provision, readJson, tailOf, wranglerRunner, writeWhole } from './preview-pool.mjs';
 
 /** The account a new pool is made on unless `provision --account` names another (D-0008); an inventory names its own. */
 export const ACCOUNT_ID = '62b4c5143baaabf42b828a0d7a6b272e';
-/** The secrets a slot's Worker is given fresh with each new lease, and again when it is released. */
-export const SECRETS = ['MASTER_KEY', 'SETUP_TOKEN'];
 
 const USAGE = `usage: pnpm preview <command>
   up [--slot n] [--ttl hours] [--paid] [--var K=V]...   lease a slot (or renew this worktree's) and deploy the working tree to it; --var sets a model var (AI_GATEWAY_ID, CHAT_PROVIDER)
@@ -99,7 +97,7 @@ async function resetAll(ctx, plan, auth, body) {
  * made seconds before, so a key set in its own write can vanish (qyvr, 2026-10-14). Returns the new setup token.
  */
 async function rotate(ctx, plan, auth) {
-  const values = Object.fromEntries(SECRETS.map((n) => [n, randomBytes(32).toString('base64url')]));
+  const values = mintSecrets(SECRETS);
   account(ctx.run).secrets(plan.worker, { ...values, [`PREVIEW_KEY_${auth.tag}`]: auth.key });
   if (!(await keyAccepted(ctx, plan, auth))) throw new Error(`preview: slot ${plan.n} stopped taking this session's key after its secrets rotated`);
   return values.SETUP_TOKEN;

@@ -5,9 +5,8 @@
 // what the deploy cannot reach fail every model call by name. Every claim runs the production engine, adapter
 // and Ledger over the scripted fake, with the vars the agent's own `packages/agent/wrangler.jsonc` ships.
 import { normalizeContext } from "@earendil-works/pi-ai";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { experimental_readRawConfig } from "wrangler";
 import { ChatEngine, type EngineCtx } from "../../packages/agent/src/chat/engine.ts";
 import { admitPolicy, costMicros, isPriced } from "../../packages/agent/src/ledger/budget.ts";
 import type { ModelCallRow } from "../../packages/agent/src/ledger/types.ts";
@@ -21,10 +20,9 @@ import people from "../fixtures/people.json" with { type: "json" };
 
 const sam = people.people.find((p) => p.id === "sam-solo")!;
 const T0 = Date.UTC(2026, 9, 20, 9, 0, 0);
-const ROOT = join(import.meta.dirname, "../..");
 
-/** The vars the agent's base config ships, read from the file itself (its full-line comments dropped). */
-const BASE_VARS = (JSON.parse(readFileSync(join(ROOT, "packages/agent/wrangler.jsonc"), "utf8").replace(/^\s*\/\/.*$/gm, "")) as { vars: Record<string, string> }).vars;
+/** The vars the agent's base config ships, read with wrangler's own reader, as scripts/preview-plan.mjs does. */
+const BASE_VARS = experimental_readRawConfig({ config: "packages/agent/wrangler.jsonc" }).rawConfig.vars as Record<string, string>;
 const SELF_HOST_VARS: Record<string, string> = { ...BASE_VARS, TENANT_ID: "base", OWNER_EMAIL: sam.email };
 const META_VARS = { ...SELF_HOST_VARS, AI_GATEWAY_ID: "my-gateway", CHAT_PROVIDER: "meta" };
 

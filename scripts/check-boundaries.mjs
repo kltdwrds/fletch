@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // The boundary check, merged from qyvr-co's scripts/check-boundaries.mjs and the primitives' own; it holds decision D-0003
 // (docs/decisions/0003-primitives-never-depend-on-the-app.md). Rules over packages/:
-//   no-fletch              nothing under packages/host/ or packages/host-cloudflare/ imports the app: packages/agent/,
-//                          packages/create-fletch/ (by path) or the agent's package name. Primitives never depend on the app.
+//   no-fletch              nothing under packages/host/ or packages/host-cloudflare/ imports the app: packages/agent/
+//                          (by path) or the agent's package name. Primitives never depend on the app.
 //   no-deep-import         no import of a @qyvr/* package's internals: a `@qyvr/` specifier with a third path segment.
 //   no-cloudflare-workers  nothing under packages/host/ imports a `cloudflare:` specifier (it stays platform-free).
 //   file-vocabulary*       the agent has one file vocabulary (M24.3).
@@ -26,9 +26,9 @@ import { repoFiles, repoRoot } from './lib/repo-files.mjs';
 export const RULES = [
   {
     name: 'no-fletch',
-    why: 'the primitives (@qyvr/host, @qyvr/host-cloudflare) never import the app: not packages/agent, packages/create-fletch, nor the agent package (fletch-agent)',
+    why: 'the primitives (@qyvr/host, @qyvr/host-cloudflare) never import the app: not packages/agent, nor the agent package (fletch-agent)',
     scope: /^packages\/host(?:-cloudflare)?\//,
-    banned: [/^fletch-agent(?:\/|$)/, /^create-fletch(?:\/|$)/, /(?:^|\/)packages\/(?:agent|create-fletch)(?:\/|$)/],
+    banned: [/^fletch-agent(?:\/|$)/, /(?:^|\/)packages\/agent(?:\/|$)/],
   },
   {
     name: 'no-deep-import',

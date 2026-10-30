@@ -1,11 +1,11 @@
 // Test doubles for `pnpm preview`'s tests (scripts/preview-slot.test.mjs, scripts/preview.test.mjs): R2 and Vectorize
 // in memory, a slot answering /__preview/ with the real scripts/preview-slot/ops.mjs and /health as the agent would, and
-// an account answering the wrangler calls scripts/preview.mjs and scripts/preview-pool.mjs make. Not a test itself.
+// an account answering the wrangler calls scripts/preview.mjs, scripts/preview-pool.mjs and scripts/self-host.mjs make
+// (scripts/self-host.test.mjs uses it too). Not a test itself.
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { memoryLease } from './preview-slot/lease-rules.mjs';
 import { ops } from './preview-slot/ops.mjs';
-import { CONFIG } from './preview-pool.mjs';
 import { sha256Hex } from './preview-plan.mjs';
 
 export function fakeR2() {
@@ -72,11 +72,12 @@ export const tagOf = (name) => sha256Hex(name).slice(0, 32);
 
 /**
  * An account as wrangler shows it, wired to `slots` (by Worker name): a deploy sets what the slot serves, and the
- * placeholder's deploy (its config tombstones the agent's classes) deletes the agent's objects. `fail` makes every call
+ * placeholder's deploy (its config tombstones the agent's classes) deletes the agent's objects. An index's shape is
+ * what made it (`indexShapes`), else 768 and cosine. `fail` makes every call
  * starting with one of its strings fail; `stale` makes a secrets write build on the version before the last write.
  */
 export function fakeAccount({ subdomain, slotsByWorker }) {
-  const s = { r2: new Map(), vectorize: new Set(), workers: new Set(), secrets: new Map(), before: new Map(), stale: false, deployed: [], calls: [], fail: [], configs: new Map() };
+  const s = { r2: new Map(), vectorize: new Set(), indexShapes: new Map(), workers: new Set(), secrets: new Map(), before: new Map(), stale: false, deployed: [], calls: [], fail: [], configs: new Map() };
   const okOut = (out = 'ok') => ({ status: 0, out });
   s.run = (args, opts = {}) => {
     const line = args.join(' ');
@@ -89,11 +90,15 @@ export function fakeAccount({ subdomain, slotsByWorker }) {
     if (a === 'delete') return s.workers.delete(args[2]) ? okOut() : { status: 1, out: '[code: 10007]' };
     if (a === 'r2' && c === 'create') return s.r2.set(args[3], 0) && okOut();
     if (a === 'r2' && c === 'delete') return s.r2.get(args[3]) > 0 ? { status: 1, out: '[code: 10008]' } : s.r2.delete(args[3]) && okOut();
-    if (a === 'vectorize' && b === 'create') return s.vectorize.add(c) && okOut();
+    if (a === 'vectorize' && b === 'create') return s.vectorize.add(c) && s.indexShapes.set(c, { dimensions: Number(args[4]), metric: args[6] }) && okOut();
+    if (a === 'vectorize' && b === 'get') {
+      if (!s.vectorize.has(c)) return { status: 1, out: 'not found [code: 3000]' };
+      return okOut(JSON.stringify({ name: c, config: s.indexShapes.get(c) ?? { dimensions: 768, metric: 'cosine' } }, null, 2));
+    }
     if (a === 'vectorize' && b === 'delete') return s.vectorize.delete(c) ? okOut() : { status: 1, out: 'no such' };
     if (a === 'whoami') return okOut('logged in');
     if (a === 'deploy') {
-      const config = JSON.parse(s.configs.get(path.join(opts.cwd, CONFIG)).replace(/^\/\/.*\n/, ''));
+      const config = JSON.parse(s.configs.get(path.join(opts.cwd, args[2])).replace(/^\/\/.*\n/, ''));
       // Like wrangler, the tag is the one looked up before the upload: none for the deploy that makes the Worker.
       const tag = s.workers.has(config.name) ? tagOf(config.name) : null;
       s.workers.add(config.name);
@@ -104,8 +109,9 @@ export function fakeAccount({ subdomain, slotsByWorker }) {
         Object.assign(slot.vars, { PREVIEW_SERVING: config.vars.PREVIEW_SERVING, PREVIEW_DEPLOY: config.vars.PREVIEW_DEPLOY, TENANT_ID: config.vars.TENANT_ID });
       }
       const out = opts.extraEnv?.WRANGLER_OUTPUT_FILE_PATH;
-      if (out) writeFileSync(out, `${JSON.stringify({ type: 'wrangler-session', version: 1 })}\n${JSON.stringify({ type: 'deploy', worker_name: config.name, worker_tag: tag })}\n`);
-      return okOut(`Uploaded ${config.name}\nDeployed ${config.name} triggers\n  https://${config.name}.${subdomain}.workers.dev\n`);
+      const url = `https://${config.name}.${subdomain}.workers.dev`;
+      if (out) writeFileSync(out, `${JSON.stringify({ type: 'wrangler-session', version: 1 })}\n${JSON.stringify({ type: 'deploy', worker_name: config.name, worker_tag: tag, targets: [url] })}\n`);
+      return okOut(`Uploaded ${config.name}\nDeployed ${config.name} triggers\n  ${url}\n`);
     }
     if (a === 'secret' && b === 'bulk') {
       const w = args[3];

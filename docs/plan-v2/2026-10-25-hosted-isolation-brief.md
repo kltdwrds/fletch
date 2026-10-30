@@ -143,14 +143,14 @@ set a cookie another reads.
   artifact, in addition to carrying a credential (B3). Both are checked.
 - **B6** stands and now covers fletch: the config generator and binding audit are the tenant boundary.
 - **B10** stands. The same agent code runs under `singleAccountHost` on the person's own account through
-  `create-fletch`; hosted and self-host differ only in which `Host` is installed (D-0003 already requires this).
+  `pnpm self-host`; hosted and self-host differ only in which `Host` is installed (D-0003 already requires this).
 - M1's "one DO per account" line becomes "one script per account", and M0 gains the provisioner port.
 
 ### Honest residue
 
 - **Not sovereign.** qyvr holds the account. An operator can deploy code to any script and read its secrets.
   The claim is isolation from other users and from app bugs, not from the operator. The exit is
-  `create-fletch` on the person's own account plus an export (bucket, DO dumps, vault re-sealed to a key the
+  `pnpm self-host` on the person's own account plus an export (bucket, DO dumps, vault re-sealed to a key the
   person supplies). State this on the sign-up page.
 - **The network plane is code-isolated by nature.** identity, feed and index are multi-tenant services. A bug
   there leaks network data (claims, feed events, handles), which is public-ish by design, never the instance's
@@ -227,7 +227,7 @@ Rules to adopt now, each held by a check:
   handle and OAuth convenience. A self-hoster may hold their own key and their own NIP-05 domain and still be
   a first-class actor on the network.
 - **Hosted convenience, never hosted capability.** Bindings, one-click artifact deploy and the namespace are
-  faster paths to things the wire path and `create-fletch` also reach. Each hosted-only shortcut names its
+  faster paths to things the wire path and `pnpm self-host` also reach. Each hosted-only shortcut names its
   self-host equivalent in the docs.
 - **One instance bundle.** Define the export format now (R2 tree, DO SQLite dumps, vault re-sealed to a key the
   person supplies, the delegate credential revoked) even if the tool ships later. It is the same bundle in both

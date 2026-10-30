@@ -2,7 +2,8 @@
 
 `@qyvr/host-cloudflare`, published: `@qyvr/host` on Cloudflare for one owner on one account. Secret-backed keys,
 passkey login with sessions and recovery in the Company Durable Object's SQLite, and the provisioning library
-(token scopes, the R2 bucket, the Vectorize index, Worker secrets) that `packages/create-fletch/` is built on.
+(token scopes, the R2 bucket, the Vectorize index, Worker secrets) for a setup that holds an API token. fletch's own
+`pnpm self-host` deploys on the owner's wrangler login instead and does not use it (D-0022).
 
 ## The one rule
 
