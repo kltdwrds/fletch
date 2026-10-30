@@ -8,6 +8,7 @@ import { report } from "../../support/fake-model.ts";
 import { call, delegate, load, routed } from "../p3-delegation/runs.ts";
 import type { P14HarnessOptions, P14Tier1World } from "./harness.ts";
 import { sam } from "./harness.ts";
+import { securityPane, slot } from "./harness-slot.ts";
 
 export { call, load };
 
@@ -104,6 +105,8 @@ export const runs: Record<string, () => P14HarnessOptions> = {
   "T-P14-10": () => ({ script: [{ text: RENAME_SIGN_REPLY }, { text: NAME_REPLY }] }),
   "T-P14-11": () => ({ script: [{ text: SIGNIN_REPLY }] }),
   "T-P14-12": () => ({ script: [memoryInsert(PAT_LINE, "m3"), { text: PAT_REPLY }, { text: MOVE_REPLY }] }),
+  "T-P14-04": () => ({ make: securityPane, script: [] }),
+  "T-P14-13": () => ({ make: slot, script: [{ text: CHANGE_REPLY }, { text: DELETE_REPLY }] }),
   "T-P14-14": () => ({ script: [{ fromRequest: (r) => ({ text: modelReply(/^model: (\S+)$/m.exec(JSON.stringify(r.inputs).replace(/\\n/g, "\n"))?.[1] ?? "unknown") }) }] }),
 };
 

@@ -5,7 +5,7 @@
 import { LEVEL_WORDS, levelOf, MATRIX_ROWS, type MatrixRow } from "../grants/matrix.ts";
 import { docsIndex } from "../skills/platform-docs.ts";
 
-/** Raised from 5 KiB when the identity section joined (F40, P14 delta 1); `test/m0/f40-contract.test.ts` holds it. */
+/** Raised from 5 KiB when the identity section joined (D-0019, F40); `test/m0/f40-contract.test.ts` holds it. */
 export const OPERATING_BLOCK_MAX_BYTES = 6 * 1024;
 export const OPERATING_BLOCK_MIN_BYTES = 3 * 1024;
 

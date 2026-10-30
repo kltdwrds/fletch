@@ -169,7 +169,7 @@ export interface P14SecurityWorld extends ScenarioWorld {
   readonly pane: Array<{ as: "sam" | "sam-recovery" | "pat"; width: "desktop" | "phone"; rows: string[]; words: string; dom: string }>;
   readonly removed: Array<{ id: string; status: number; code: string | null; rowsAfter: number }>;
   readonly added: string | null;
-  readonly reloaded: { route: string; drawn: boolean } | null;
+  readonly routeReload: { route: string; drawn: boolean } | null;
 }
 
 /** What a tier-2 slot task reads beyond the chat (F41): the pages at two widths after reloads. */

@@ -3,7 +3,7 @@
 // `test/evals/p14-identity/`; every clause cites evidence, every file exists, loads and matches its block; and every
 // tier-1 task F40 runs (T-P14-01 to 03 and 05 to 09) has its `version_hash` filled with its file's hash as the tier-2
 // runner computes it (Q14). T-P14-04 (the Security pane) and the tier-2 tasks (T-P14-10 to 14) are hashed by F41. The
-// operating block, with delta 1's identity section, stays under its cap.
+// operating block, with delta 1's identity section, stays under its cap (D-0019).
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -56,7 +56,7 @@ describe("[F40] the P14 contract", () => {
     expect(tier1Stale(contract.replace(`version_hash: ${t1}`, "version_hash: unfilled"))).toEqual([`T-P14-01 unfilled ${t1}`]);
   });
 
-  it("the operating block carries delta 1's identity section and stays under its cap; without the section the lines are gone", () => {
+  it("the operating block carries delta 1's identity section and stays under its 6 KiB cap (D-0019); without the section the lines are gone", () => {
     const block = renderOperatingBlock();
     expect(byteLength(block)).toBeLessThanOrEqual(OPERATING_BLOCK_MAX_BYTES);
     expect(block).toContain("Identity and sign-in");

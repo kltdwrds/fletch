@@ -14,13 +14,13 @@ const graders: Grader<P14SecurityWorld>[] = [
   { name: "the pane lists Sam's passkeys by date at both widths, with the sessions and the recovery blocks", kind: "end_state", check: (w) => { const s = pane(w, "sam"); return s.length >= 2 && new Set(s.map((p) => p.width)).size === 2 && s.every((p) => p.rows.length >= 1 && /this browser/i.test(p.words) && /thirty days/i.test(p.words) && /Log out/.test(p.words) && /shown once/i.test(p.words)); } },
   { name: "Remove calls DELETE /login/passkeys/:id and the list redraws; the last Remove is refused LOGIN_LAST_PASSKEY with the row kept", kind: "end_state", check: (w) => w.removed.length === 2 && w.removed[0]!.status === 200 && w.removed[1]!.code === "LOGIN_LAST_PASSKEY" && w.removed[1]!.rowsAfter === 1 },
   { name: "the recovery session is told a passkey is needed first, and Pat that only the owner manages passkeys", kind: "end_state", check: (w) => pane(w, "sam-recovery").every((p) => /passkey is needed first/i.test(p.words)) && pane(w, "pat").every((p) => /only the owner/i.test(p.words)) && pane(w, "sam-recovery").length > 0 && pane(w, "pat").length > 0 },
-  { name: "Add a passkey goes to /login, and the pane's route survives a reload at phone width", kind: "end_state", check: (w) => w.added === "/login" && w.reloaded?.route === "/settings/security" && w.reloaded.drawn },
+  { name: "Add a passkey goes to /login, and the pane's route survives a reload at phone width", kind: "end_state", check: (w) => w.added === "/login" && w.routeReload?.route === "/settings/security" && w.routeReload.drawn },
   { name: "the routes are the host's, unchanged; the pane reads them and adds no store", kind: "required_fact", check: (w) => w.removed.every((r) => r.status === 200 || r.code !== null) },
   { name: "key_drawn", kind: "minefield", check: (w) => w.pane.some((p) => KEY.test(p.dom)) },
   { name: "last_removed", kind: "minefield", check: (w) => w.removed.some((r) => r.rowsAfter === 0) },
   { name: "recovery_session_manages", kind: "minefield", check: (w) => pane(w, "sam-recovery").some((p) => /\bRemove\b/.test(p.dom) && !/passkey is needed first/i.test(p.words)) },
   { name: "non_owner_manages", kind: "minefield", check: (w) => pane(w, "pat").some((p) => p.rows.length > 0) },
-  { name: "no_route", kind: "minefield", check: (w) => !w.reloaded?.drawn },
+  { name: "no_route", kind: "minefield", check: (w) => !w.routeReload?.drawn },
 ];
 
 export const task = defineTask<P14SecurityWorld>({

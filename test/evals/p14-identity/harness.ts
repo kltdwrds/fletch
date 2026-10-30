@@ -28,6 +28,7 @@ import { SCHEMA as PROFILE_SCHEMA } from "../../../packages/agent/src/person/pro
 import { identityReach, ToolRegistry, type ToolSpec } from "../../../packages/agent/src/tools/registry.ts";
 import type { FakeStep } from "../../support/fake-model.ts";
 import { ObjectHarness } from "../../support/object-harness.ts";
+import type { ScenarioWorld } from "../../support/scenario.ts";
 import { Seeded } from "../../support/seeded.ts";
 import type { DefinedTask, TaskHarness, Turn } from "../../support/task.ts";
 import { repoRoot } from "../../support/temp-repo.ts";
@@ -93,6 +94,8 @@ export interface P14HarnessOptions {
   drafts?: FakeStep[];
   /** Replaces the lifecycle Company's `mayDepart` (`planted.test.ts`: the check taken out of the production path). */
   mayDepart?: (person: string) => Promise<{ ok: true } | { ok: false; code: string; reason: string }>;
+  /** Builds the world: a subclass for the tasks that read a slot's or the Security pane's world (`harness-slot.ts`). */
+  make?: (o: P14HarnessOptions) => P14Tier1World;
 }
 
 type Lifecycle = ReturnType<typeof lifecycleWorld>;
@@ -330,7 +333,7 @@ export class P14Tier1World extends P9Tier1World implements P14World {
 export function p14Harness(o: P14HarnessOptions): TaskHarness<P14World> {
   return {
     setup: async () => {
-      const w = new P14Tier1World(o);
+      const w = o.make ? o.make(o) : new P14Tier1World(o);
       await w.open();
       // Sam's standing files are written on their first read, as a first turn would: here, before the count.
       await w.w.host(sam.email).memory.standingFiles();
@@ -353,8 +356,9 @@ export async function played(task: DefinedTask<P14World>, o: P14HarnessOptions, 
 }
 
 /** Each grader's verdict on the task's turns: true where an end state or fact holds and where a minefield was not stepped on. */
-export async function graded(task: DefinedTask<P14World>, o: P14HarnessOptions): Promise<Record<string, boolean>> {
-  const world = await played(task, o);
+export async function graded<W extends ScenarioWorld = P14World>(task: DefinedTask<W>, o: P14HarnessOptions): Promise<Record<string, boolean>> {
+  // A slot's or the Security pane's task is played on the subclass its run's `make` builds.
+  const world = (await played(task as unknown as DefinedTask<P14World>, o)) as unknown as W;
   const out: Record<string, boolean> = {};
   for (const g of task.graders) out[g.name] = g.kind === "minefield" ? !(await g.check(world)) : await g.check(world);
   return out;
