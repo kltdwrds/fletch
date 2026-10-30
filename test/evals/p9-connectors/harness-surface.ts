@@ -8,8 +8,8 @@
 import { credentialsNamed } from "../../../packages/agent/src/grants/authority.ts";
 import { inForce } from "../../../packages/agent/src/grants/engine.ts";
 import type { Snapshot } from "../../support/scenario.ts";
-import type { DefinedTask, TaskHarness, Turn } from "../../support/task.ts";
 import { Seeded } from "../../support/seeded.ts";
+import type { DefinedTask, TaskHarness, Turn } from "../../support/task.ts";
 import { type El, page } from "../../workers/support/page-harness.ts";
 import { type P9HarnessOptions, P9Tier1World, sam } from "./harness.ts";
 import type { ChatLabel, P9SurfaceWorld, P9World } from "./world.ts";

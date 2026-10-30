@@ -440,7 +440,7 @@ T-P9-13  must-have  tier 2
   collateral: no card, no grant, no audit row
   graders: code
   reference: B-P9-01
-  version_hash: unset
+  version_hash: 63233713ec8b
   file: test/evals/p9-connectors/setup-real-model.task.ts
 
 T-P9-14  must-have  tier 2
@@ -455,7 +455,7 @@ T-P9-14  must-have  tier 2
   collateral: no card, no memory line
   graders: code
   reference: B-P9-04
-  version_hash: unset
+  version_hash: 68b4fec13033
   file: test/evals/p9-connectors/typed-secret-real-model.task.ts
 
 T-P9-15  nice-to-have  tier 2
@@ -471,7 +471,7 @@ T-P9-15  nice-to-have  tier 2
   collateral: none
   graders: code
   reference: B-P9-05
-  version_hash: unset
+  version_hash: b3f0abb43bf0
   file: test/evals/p9-connectors/unbound-host-real-model.task.ts
 
 T-P9-16  nice-to-have  tier 2
@@ -486,7 +486,7 @@ T-P9-16  nice-to-have  tier 2
   collateral: none
   graders: code
   reference: B-P9-06
-  version_hash: unset
+  version_hash: b2f123c281f9
   file: test/evals/p9-connectors/count-and-card-real-model.task.ts
 
 T-P9-17  nice-to-have  tier 2
@@ -500,7 +500,7 @@ T-P9-17  nice-to-have  tier 2
   collateral: none
   graders: code
   reference: Muse's 120 s draw, "Page not found" at phone width and the four pixel frames (B-P9-13)
-  version_hash: unset
+  version_hash: c0679e107269
   file: test/evals/p9-connectors/reload-and-phone.task.ts
 
 T-P9-18  must-have  tier 1
