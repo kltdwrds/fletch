@@ -10,6 +10,7 @@ import { Agent, type Connection, type ConnectionContext, type WSMessage } from "
 import { getAgentByName } from "agents";
 import type { Choice } from "../chat/cards.ts";
 import { type ChatFrame, ChatEngine, type ClaimResult, type RequestInput } from "../chat/engine.ts";
+import type { StopResult } from "../chat/frames.ts";
 import { displayNames } from "../company/members.ts";
 import { connectFrame, ownerOnly, type ProtocolFrame } from "../chat/protocol.ts";
 import { answerFrame } from "../chat/socket.ts";
@@ -232,6 +233,11 @@ export class Chat extends Agent<Env> {
   async taskFor(person: string, id: string): Promise<TaskResult> {
     const store = new SubAgentStore(this.ctx.storage);
     return chatTask(this.engine, person, id, { group: (g) => store.group(g), handedOffAt: (g) => store.handedOffAt(g), transcript: (sub) => this.facet(sub).transcript() });
+  }
+
+  /** Stops one running task of this chat (F31), for its owner; refused by code otherwise. */
+  async stopTask(person: string, id: string): Promise<StopResult> {
+    return this.engine.stopTask(person, id);
   }
 
   /** When this chat last had something to show (M29.3, the list row's time), for its owner. */

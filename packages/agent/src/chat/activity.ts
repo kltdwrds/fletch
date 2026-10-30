@@ -16,6 +16,7 @@ import type { Mailbox } from "./mailbox.ts";
 import { groupIdOf } from "./outbox.ts";
 import { promptTitle } from "./prompt-title.ts";
 import type { ChatStore, TurnRow } from "./store.ts";
+import { stopKey } from "./stop.ts";
 import type { Effect } from "./tools.ts";
 
 export type TaskStatus = "running" | "waiting" | "done" | "failed" | "stopped";
@@ -95,7 +96,8 @@ function record(store: ChatStore, mailbox: Mailbox, chatId: string, g: Group, ro
   // has not handed off is running, so it never reads done before the result; a delegation the host refused never starts.
   const refused = new Set(store.rowsOfTurns(delegations.map((d) => `subagents:${d.callId}`)).map((r) => r.turnId.slice("subagents:".length)));
   const out = delegations.some((d) => !received.includes(d.grp) && !refused.has(d.callId));
-  const status = statusOf(last) === "done" && out ? "running" : statusOf(last);
+  // Stopped by the person once its turn ended (F31): the delegation still out was closed and the task says Stopped.
+  const status = statusOf(last) === "done" && out ? (store.meta(stopKey(last.id)) ? "stopped" : "running") : statusOf(last);
   const steps = stepsOf(own, [], { chatId });
   const failed = steps.filter((s) => s.state === "failed" || s.state === "refused").length;
   const code = status === "done" || status === "running" ? null : last.code;
@@ -185,4 +187,16 @@ export async function chatTask(chat: Owned, person: string, id: string, subagent
   if (!task) return { ok: false, code: "TASK_NOT_FOUND" };
   const steps = await chat.stepsFor(person, task);
   return steps ? { ok: true, task, ...(await subagentSections(subagents, person, task, steps)), usage: await chat.usageFor(person, task) } : { ok: false, code: "CHAT_NOT_OWNER" };
+}
+
+/**
+ * What stopping a task means (F31): a task that is not the owner's is `CHAT_NOT_OWNER`, one that does not begin there
+ * `TASK_NOT_FOUND`, one no longer running `TASK_NOT_RUNNING`; a task whose last turn is the one running stops that turn
+ * as the composer's Stop does; a task whose turn ended with a delegation still out halts that turn's delegations.
+ */
+export function taskStop(task: TaskRecord | null, owned: boolean, running: string | undefined): { halt: string } | { turn: string } | { ok: false; code: "CHAT_NOT_OWNER" | "TASK_NOT_FOUND" | "TASK_NOT_RUNNING" } {
+  if (!task) return { ok: false, code: owned ? "TASK_NOT_FOUND" : "CHAT_NOT_OWNER" };
+  const last = task.turnIds.at(-1) as string;
+  if (task.status !== "running") return { ok: false, code: "TASK_NOT_RUNNING" };
+  return running === last ? { turn: last } : { halt: last };
 }

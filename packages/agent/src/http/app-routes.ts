@@ -53,6 +53,8 @@ export interface AppDirectory extends ConnectorReads {
   chatTasks(person: string, chatId: string): Promise<TasksResult>;
   /** One task of a chat by its anchor turn (F12) with its steps, the summary last (F13), answered by that `Chat` for its owner alone. */
   chatTask(person: string, chatId: string, turnId: string): Promise<TaskResult>;
+  /** Stops a running task (F31): its turn, or the delegation still out once its turn ended. */
+  chatTaskStop(person: string, chatId: string, turnId: string): Promise<{ ok: boolean; code?: string }>;
   /** One home file read for its owner: its lines and when it last changed. */
   homeFile(person: string, path: "IDENTITY.md" | "SOUL.md" | "MEMORY.md"): Promise<unknown>;
   now(): number;
@@ -226,6 +228,13 @@ export async function appRoutes(request: Request, url: URL, person: string, dir:
     if (!CHAT_ID.test(chatId)) return json({ ok: false, code: "CHAT_NOT_FOUND" }, 404);
     if (!CHAT_ID.test(turnId)) return json({ ok: false, code: "TASK_NOT_FOUND" }, 404);
     return answer(await part(() => dir.chatTask(person, chatId, turnId)));
+  }
+  const stopping = /^\/app\/activity\/([^/]+)\/([^/]+)\/stop$/.exec(url.pathname);
+  if (stopping && request.method === "POST") {
+    const [, chatId, turnId] = stopping as unknown as [string, string, string];
+    if (!CHAT_ID.test(chatId)) return json({ ok: false, code: "CHAT_NOT_FOUND" }, 404);
+    if (!CHAT_ID.test(turnId)) return json({ ok: false, code: "TASK_NOT_FOUND" }, 404);
+    return answer(await part(() => dir.chatTaskStop(person, chatId, turnId)));
   }
 
   if (url.pathname === "/app/profile" && request.method === "GET") {

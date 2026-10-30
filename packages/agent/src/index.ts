@@ -117,6 +117,7 @@ function directory(env: Env): Directory {
       // A chat's tasks (F12), each answered by that `Chat` for its owner alone, as `chatLast` is.
       chatTasks: async (person, chatId) => (await getAgentByName(env.CHAT, chatId)).tasksFor(person),
       chatTask: async (person, chatId, turnId) => (await getAgentByName(env.CHAT, chatId)).taskFor(person, turnId),
+      chatTaskStop: async (person, chatId, turnId) => (await getAgentByName(env.CHAT, chatId)).stopTask(person, turnId),
       chatSearch: async (person, chatId, query) => (await getAgentByName(env.CHAT, chatId)).search(person, query),
       cards: async (person, chatId) => ((await (await getAgentByName(env.PERSON, person)).ownsChat(chatId)) ? (await getAgentByName(env.CHAT, chatId)).cardsFor(person) : null),
       jobIds: async (person) => (await getAgentByName(env.PERSON, person)).jobIds(person),

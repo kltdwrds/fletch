@@ -317,7 +317,8 @@ Kyle's own lines go under `## Steering`.
   pill ("Complete, 1 step failed") with a caption under it naming the task's model calls and tokens, and the summary
   step says code's counts ("Read 2, 1 failed; wrote 2 (…)") above the reply quoted as the agent's own words. Open
   `packages/agent/src/design/fletch/ds/specimens/task-drawer.html` in light and dark and at phone width; say if the
-  caption or the counts line reads wrong. UAT after the build: it blocks nothing.
+  caption or the counts line reads wrong. A running task's head also offers Stop beside Refresh (not drawn in the
+  specimen, whose tasks are finished). UAT after the build: it blocks nothing.
 
 ## Steering
 

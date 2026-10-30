@@ -21,6 +21,9 @@ export const ACTIVITY_TEXT = {
   /** The task's model calls and tokens under the head (F31), F31's table cited. */
   usage: USAGE_WORDS,
   refresh: "Refresh",
+  /** A running task's stop (F31, B-P5-08): its turn, or the delegation still out once its turn ended. */
+  stop: "Stop",
+  notStopped: "This task could not be stopped",
   back: "Back",
   close: "Close",
   steps: "Steps",
@@ -99,7 +102,7 @@ export const ACTIVITY_CSS = `
 
 /** `#task-dialog`: the head (pill, title, Refresh, the X), a note for a read that failed, then the two panes. */
 export const ACTIVITY_MARKUP = `<div id="task-dialog" class="qf-dlg qf-dlg--960" role="dialog" aria-labelledby="task-title" hidden>
-  <div class="qf-task-head"><span id="task-state" class="qf-status" hidden></span><h2 id="task-title"></h2><button id="task-refresh" class="qf-btn qf-btn--secondary">${ACTIVITY_TEXT.refresh}</button><button id="task-close" class="qf-ibtn qf-dlg-x" aria-label="${ACTIVITY_TEXT.close}">${ic("x", "xs")}</button></div>
+  <div class="qf-task-head"><span id="task-state" class="qf-status" hidden></span><h2 id="task-title"></h2><button id="task-stop" class="qf-btn qf-btn--secondary" hidden>${ACTIVITY_TEXT.stop}</button><button id="task-refresh" class="qf-btn qf-btn--secondary">${ACTIVITY_TEXT.refresh}</button><button id="task-close" class="qf-ibtn qf-dlg-x" aria-label="${ACTIVITY_TEXT.close}">${ic("x", "xs")}</button></div>
   <p id="task-usage" class="task-caption"></p>
   <p id="task-note" class="panel-note" role="status"></p>
   <div id="task-body" class="qf-task">
@@ -142,6 +145,7 @@ function drawTask(t) {
   $("task-title").textContent = t ? titleOf(t.task) : "";
   $("task-detail-task").textContent = t ? titleOf(t.task) : "";
   if (t) { pill.className = "qf-status qf-status--" + TASK_TONE[t.task.status]; pill.append(el("i"), t.task.words); }
+  $("task-stop").hidden = !t || t.task.status !== "running";
   drawUsage(t);
   drawSteps(t);
   const keep = t && taskSel && stepAt(taskSel) ? taskSel : null;
@@ -241,6 +245,16 @@ function drawDetail(s) {
   for (const line of d.lines) pane.append(el("p", line));
 }
 async function taskRefresh() { if (taskRef) await loadTask(taskRef); }
+// Asks the chat to stop the task, then reads it again: the drawer says what the route answers, a refusal by its code.
+async function taskStop() {
+  const ref = taskRef;
+  if (!ref) return;
+  let b = { ok: false, code: "" };
+  try { b = await (await api("/app/activity/" + encodeURIComponent(ref.chatId) + "/" + encodeURIComponent(ref.turnId) + "/stop", { method: "POST" })).json(); } catch (e) {}
+  await loadTask(ref);
+  if (!b.ok && taskRef === ref) coded($("task-note"), TASK.notStopped, b.code || "");
+}
+$("task-stop").onclick = taskStop;
 $("task-refresh").onclick = taskRefresh;
 $("task-close").onclick = () => closeDialog($("task-dialog"));
 $("task-back").onclick = () => cls($("task-body"), "is-detail", false);`;

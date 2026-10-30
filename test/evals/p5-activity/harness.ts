@@ -178,7 +178,9 @@ export class P5Tier1World implements P5World {
     if (this.during) return;
     const t = await this.newestRecord(chat);
     const steps = t ? (await this.task(chat, t.id)).steps : [];
-    this.during = { thread: this.thread(chat), stop: this.engine(chat).history().running !== null, status: t?.status ?? "", summary: t?.summary ?? null, summaryStep: steps.some((x) => x.kind === "summary") };
+    // Stop is offered by the composer while a turn runs and by the task's drawer while the task runs (F31).
+    const offered = this.engine(chat).history().running !== null || (t ? !!(await this.drawer(chat, t.id))?.stop : false);
+    this.during = { thread: this.thread(chat), stop: offered, status: t?.status ?? "", summary: t?.summary ?? null, summaryStep: steps.some((x) => x.kind === "summary") };
   }
 
   private jobId(title: string): string {
@@ -264,7 +266,7 @@ export class P5Tier1World implements P5World {
         await settleUi();
       }
     }
-    return { pill: p.byId("task-state").text(), title: p.byId("task-title").text(), usage: p.byId("task-usage").text(), steps: lis().map((li) => byClass(li, "nm")[0]?.textContent ?? ""), details, stacked };
+    return { pill: p.byId("task-state").text(), stop: !p.byId("task-stop").hidden, title: p.byId("task-title").text(), usage: p.byId("task-usage").text(), steps: lis().map((li) => byClass(li, "nm")[0]?.textContent ?? ""), details, stacked };
   }
 
   thread(chat: ChatLabel = "c1"): ThreadEntry[] {

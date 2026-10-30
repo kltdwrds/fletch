@@ -73,6 +73,8 @@ export interface RowView {
 /** The task drawer as Sam's page draws it, after selecting each step in turn. */
 export interface DrawerView {
   pill: string;
+  /** Whether the drawer's head offers Stop (F31: while the task runs). */
+  stop: boolean;
   title: string;
   usage: string;
   /** Each drawn step's title, in drawing order. */
@@ -119,7 +121,8 @@ export interface P5World extends ScenarioWorld {
   /** The chat's visible history now. */
   thread(chat?: ChatLabel): ThreadEntry[];
   /**
-   * The first held or launched turn as it stood while it ran: the visible history, whether the composer offered Stop,
+   * The first held or launched turn as it stood while it ran: the visible history, whether Stop was offered (the
+   * composer's or the task drawer's),
    * the task's status and one-line summary, and whether its drawer drew a summary step.
    */
   readonly during: { thread: ThreadEntry[]; stop: boolean; status: string; summary: string | null; summaryStep: boolean } | null;

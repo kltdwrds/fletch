@@ -101,7 +101,8 @@ the free-plan spike (Q2).
 T-P5-08's stop variant says the parent reads `stopped` and the child says what became of it, never `running`. F31
 ends them: a Stop closes the stopped turn's sub-agents not yet settled (`failed`, SUBAGENT_CLOSED) and marks their
 delegations handed off without waking a turn (`SubAgentHost.stopTurn`), so the row stays Stopped and nothing more is
-spent. The other way, the child runs to its outcome and its handoff wakes a turn that carries the task on, so the row
+spent. While the turn has ended and the delegation is still out, the task drawer's head offers the same Stop
+(`POST /app/activity/<chat>/<turn>/stop`), so the row is running with a stop control until the handoff. The other way, the child runs to its outcome and its handoff wakes a turn that carries the task on, so the row
 reads Complete after the stop and the contract's stop variant would need amending. Two-way either way; F31's choice
 stands until Kyle says. Evidence: `test/evals/p5-activity/subagent-section.task.ts`, `docs/decisions/log.md`
 (2026-10-30 F31).

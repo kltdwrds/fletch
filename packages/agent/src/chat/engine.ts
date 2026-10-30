@@ -8,7 +8,7 @@
 // set persisted here, and actions performed from the outbox only after the barrier.
 import type { JournalRow } from "../grants/journal.ts";
 import { treeSpill } from "../tree/spill.ts";
-import type { LedgerSink, ModelCallRow } from "../ledger/types.ts";
+import type { LedgerSink, ModelCallRow, TurnEndRow } from "../ledger/types.ts";
 import type { Message } from "@earendil-works/pi-ai";
 import { createStreamFn } from "../model/adapter.ts";
 import { modelConfig, modelFor, type Route } from "../model/routes.ts";
@@ -18,7 +18,7 @@ import { coreNamespace } from "../tools/search.ts";
 import { reactTool } from "./agent-reaction.ts";
 import { compact, type Compacted } from "./compact-turn.ts";
 import { type CompactionRecord, ChatStore } from "./store.ts";
-import { type TaskRecord, taskOf, tasksOf, taskSteps, taskUsage } from "./activity.ts";
+import { type TaskRecord, taskOf, tasksOf, taskSteps, taskStop, taskUsage } from "./activity.ts";
 import { Approvals, type DecideResult, requestReply } from "./approvals.ts";
 import { addTally, replyToColleague, tallyOf } from "./approval-ports.ts";
 import { CardStore, type CardView, type Choice, pauseWords } from "./cards.ts";
@@ -44,7 +44,6 @@ import { stopKey } from "./stop.ts";
 import { openTurn } from "./intake.ts";
 import { pendingQuestion, reactionRow } from "./reaction-input.ts";
 import { noteOpenTodos } from "./todo.ts";
-import type { TurnEndRow } from "../ledger/types.ts";
 import type { ViewResult } from "../views/select.ts";
 import { chatNamespaces } from "./session.ts";
 import { endStopped, placedEntries, queryOwnedView, recordTurnEnd, stoppedEntry } from "./steering.ts";
@@ -363,16 +362,20 @@ export class ChatEngine {
     return r;
   }
 
-  /** The chat's newest tasks (F12), read from its turns and transcript, for its owner alone; null for anyone else. */
+  /**
+   * The chat's tasks for its owner alone, null for anyone else: the newest (F12), one by its anchor turn (F12), a task's
+   * steps with the journal's outcomes for its own turns (F13), its model calls and tokens from the Ledger's rows of its
+   * turns (F31), and its stop (F31): its running turn as Stop does, or, once that turn ended, the delegation still out.
+   */
   tasksFor(person: string): TaskRecord[] | null { return this.owner() === person ? tasksOf(this.store, this.mailbox, this.chatId()) : null; }
-
-  /** One task by its anchor turn (F12), for the owner alone; null for anyone else and for a task that does not begin there. */
   taskFor(person: string, id: string): TaskRecord | null { return this.owner() === person ? (taskOf(this.store, this.mailbox, this.chatId(), id) ?? null) : null; }
-
-  /** A task's steps (F13): its transcript with the journal's outcomes for its own turns, for the owner alone. */
   async stepsFor(person: string, task: TaskRecord) { return this.owner() === person ? taskSteps(this.store, task, await (this.ledger() as LedgerSink & { journalRows(f: { principal: string }): Promise<JournalRow[]> }).journalRows({ principal: person })) : null; }
-  /** A task's model calls and tokens (F31): the Ledger's rows of its turns, for the owner alone. */
   usageFor(person: string, task: TaskRecord) { return taskUsage(async () => (this.owner() === person ? (this.ledger() as LedgerSink & { modelCalls(f: { person: string }): Promise<ModelCallRow[]> }).modelCalls({ person }) : []), task); }
+  async stopTask(person: string, id: string): Promise<StopResult> {
+    const s = taskStop(this.taskFor(person, id), this.owner() === person, this.store.runningTurn()?.id);
+    if ("halt" in s) this.store.transaction(() => this.store.setMeta(stopKey(s.halt), String(this.now()))), this.hooks.subagents?.stopped?.(s.halt);
+    return "halt" in s ? { ok: true, turn: s.halt } : "turn" in s ? this.stop(person) : s;
+  }
 
   /** When the chat last had something to show (M29.3), for its owner alone; anyone else is refused. */
   lastAt(person: string): { ok: true; at: number | null } | { ok: false; code: "CHAT_NOT_OWNER" } {
@@ -434,9 +437,7 @@ export class ChatEngine {
   }
 
   private ledger(): LedgerSink { return this.env.LEDGER.get(this.env.LEDGER.idFromName(this.env.TENANT_ID)); }
-
   private streamFn(route: Route, person: string, runId: string) { return createStreamFn({ ai: this.env.AI, ledger: this.ledger(), wait: this.wait, now: this.now, schedule: this.schedule, models: modelConfig(this.env) }, { tenant: this.env.TENANT_ID, person, runId, route }); }
-
   private nameOf(email: string): string { return this.hooks.nameOf?.(email) ?? email; }
 
   private contextOf(turnId: string, person: string): TurnContext {
