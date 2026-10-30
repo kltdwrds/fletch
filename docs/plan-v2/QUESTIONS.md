@@ -174,6 +174,9 @@ F27 is DONE and nothing is blocked. The F22 and F26 builders opened their PRs th
 `CF_LIVE_TOKEN`, and run the live-deploy workflow once (`docs/runbooks/live-deploy.md`). The same account can close
 the free-plan spike (Q2).
 
+Orchestrator, 2026-10-30: PR #91 (D-0022) deleted `test/live/f1-deploy.live.test.ts`, the live-deploy workflow and its
+runbook, so this question can no longer be answered as written; F1's new shape is a decide item in `WAITING-ON-KYLE.md`.
+
 ## Open, not blocking
 
 ### Q37 (F41), 2026-10-30: F41's two-way choices, recorded here because the decision log is at its cap

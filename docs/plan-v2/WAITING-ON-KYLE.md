@@ -626,6 +626,18 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
   [F40 in parts.md](parts.md#f40-identity-as-it-is-the-p14-contract-check-fourteen-task-files-the-identity-and-sign-in-lines-honest-words-the-last-owner-refused-first-and-tier-1); [F41 in parts.md](parts.md#f41-identity-the-person-can-see-and-prove-the-security-pane-and-p14s-tier-2-on-a-slot);
   [P14 contract](contracts/P14-identity.md); [Q37 and Q38](QUESTIONS.md); [PR #79](https://github.com/kltdwrds/fletch/pull/79), [PR #90](https://github.com/kltdwrds/fletch/pull/90).
 
+- [ ] 2026-10-30 decide: **F1's row: the live exit test it waits on no longer exists.** F1 has been BLOCKED since
+  2026-10-21 on Q1, one passing run of `test/live/f1-deploy.live.test.ts` on a throwaway account. PR #91 deleted that test,
+  the live-deploy workflow, `create-fletch` and the live-deploy runbook (D-0022, accepted two-way: `pnpm self-host` from
+  a checkout replaces the setup package). Nothing can now run what Q1 asks for, so F1's claim needs a new shape, and that
+  is yours: either F1 closes on one `pnpm self-host` run by you on a throwaway account, recorded in PROGRESS as its
+  acceptance (`docs/runbooks/self-host.md`, the orchestrator's recommendation, since the first owner's own deploy is the
+  claim F1 made), or F1 folds into the self-host decision the way F7, F16 and F17 folded into clusters, and Q1 closes with
+  it. Until you say, F1 stays BLOCKED and the orchestrator builds nothing for it. Q1 keeps its place under BLOCKED (open)
+  with an Orchestrator line that says the same.
+  [F1 in PROGRESS](PROGRESS.md); [Q1](QUESTIONS.md); [D-0022](../decisions/0022-self-host-deploys-from-a-checkout.md);
+  [self-host runbook](../runbooks/self-host.md); [PR #91](https://github.com/kltdwrds/fletch/pull/91).
+
 ## Steering
 
 ## Done
