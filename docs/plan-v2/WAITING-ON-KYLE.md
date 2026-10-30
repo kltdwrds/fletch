@@ -427,6 +427,17 @@ Kyle's own lines go under `## Steering`.
   to `step-12.md`; `step-2-card.png` the card with no Cancel; `step-4-reload.png` the marker drawn back;
   `step-6.png` the write with no card; `step-8-permissions.png` Connectors 12; `step-10.png` two of four devices;
   `step-11-settings-reload-phone.png` "Page not found"; `answers/step-12.md` "Left behind in Muse").
+- [ ] 2026-10-30 look: **the connections specimen for F36** (rendered: https://claude.ai/artifact/YVffjTDwaXgpZ7nrH9M92W;
+  source `packages/agent/src/design/fletch/ds/specimens/connections.html`, held by
+  `test/workers/f36-connections-specimen.test.ts`). From the muse.ai capture (`step-2-card.png`, `step-1-connected.png`,
+  `step-8.png`, `step-8-permissions.png`): the capture item in the agent's bubble with the host, how the key is sent and
+  its state (Open the form, Dismiss; entered; dismissed), where Muse's card has no Cancel and no host; the Connected
+  rows with a status word and the last use, where Muse's have neither; one connection's page with its hosts, grants,
+  what it sent (the audit rows, the refused call among them) and Disconnect saying what stays; the Permissions pane
+  with every grant once (one use or standing, when it ends, Revoke) and counts from the same rows, where Muse's say 12
+  against 6; the one-time code's card. Light and dark, desktop and phone. Nothing new in `bundle.css`: every surface
+  is the settings pane, the grouped rows, the status pill and the prompt card as they are. Say "fine" or what to
+  change under Steering before F36 starts; F35 runs meanwhile and draws none of it.
 
 ## Steering
 
