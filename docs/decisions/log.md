@@ -275,3 +275,8 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   30 days, always, decline; a purchase once or decline) and the history's table words stay its own. Stop stays as
   M24.2 built it (Muse offered none during a tool call). Parts F25 (the contract check and tier 1 on shipped
   behaviour) and F26 (nothing goes around a card; tier 2).
+- 2026-10-29 CI runs `pnpm verify` when the diff touches code and `pnpm check` alone when it touches only docs
+  (`.github/workflows/ci.yml` judges the diff from the merge base; `docs/plan-v2/contracts/` counts as code because
+  the tests read it), and `push` runs only for `main`, so a PR commit runs once. The release still runs `pnpm verify`
+  on every push to `main`. `scripts/gates.test.mjs` holds the gating. Rejected: `paths:` filters on the trigger,
+  which skip the run and its status; `dorny/paths-filter`, a third-party action for one list and one rule.
