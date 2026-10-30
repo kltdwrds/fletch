@@ -12,8 +12,12 @@ permissions:
   contents: read
 
 jobs:
-  check:
+  # Judges the diff once, for the jobs after it.
+  scope:
     runs-on: ubuntu-latest
+    outputs:
+      class: ${{ steps.scope.outputs.class }}
+      named: ${{ steps.scope.outputs.named }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -82,37 +86,45 @@ jobs:
             printf '%s\n' "$files" | sed 's/^/  /'
             echo "class=docs" >> "$GITHUB_OUTPUT"
           fi
+
+  # `pnpm verify` split across jobs: this one is `pnpm check` and the gate scripts' own tests; `test` is the vitest
+  # suite in three shards. A docs diff runs check alone, a contracts diff check and the related tests.
+  check:
+    needs: scope
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # The contracts path can bring a browser test (P14's world.ts is imported by one), so it installs Chromium too.
+      # The contracts path can bring a browser test (P14's world.ts is imported by one), so it installs Chromium.
       - name: Playwright version
-        if: steps.scope.outputs.class != 'docs'
+        if: needs.scope.outputs.class == 'contracts'
         id: pw
         run: echo "version=$(pnpm exec playwright-core --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v6
-        if: steps.scope.outputs.class != 'docs'
-        id: pw-cache
+        if: needs.scope.outputs.class == 'contracts'
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
       - name: Install Chromium for the UI tests
-        if: steps.scope.outputs.class != 'docs'
+        if: needs.scope.outputs.class == 'contracts'
         run: pnpm exec playwright-core install --with-deps chromium
       # The file-size ratchet compares with the merge base of origin/main, which fetch-depth 0 brings.
-      - name: Verify, check and test (pnpm verify)
-        if: steps.scope.outputs.class == 'code'
-        run: pnpm verify
-      - name: Verify, check only (pnpm check, docs or contracts diff)
-        if: steps.scope.outputs.class != 'code'
+      - name: Check (pnpm check)
         run: pnpm check
+      - name: The gate scripts' tests (node --test)
+        if: needs.scope.outputs.class == 'code'
+        run: node --test scripts/*.test.mjs
       - name: Contract tests (vitest related to the files that name a changed contract or result)
-        if: steps.scope.outputs.class == 'contracts'
+        if: needs.scope.outputs.class == 'contracts'
         env:
-          NAMED: ${{ steps.scope.outputs.named }}
+          NAMED: ${{ needs.scope.outputs.named }}
           QYVR_HERMETIC: "1"
         run: |
           set -euo pipefail
@@ -136,3 +148,58 @@ jobs:
             fi
           done
           exit "$failed"
+
+  test:
+    needs: scope
+    if: needs.scope.outputs.class == 'code'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    name: test (shard ${{ matrix.shard }}/3)
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Playwright version
+        id: pw
+        run: echo "version=$(pnpm exec playwright-core --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+      - name: Install Chromium for the UI tests
+        run: pnpm exec playwright-core install --with-deps chromium
+      - name: Test (vitest, shard ${{ matrix.shard }} of 3)
+        env:
+          QYVR_HERMETIC: "1"
+        run: pnpm exec vitest run --shard=${{ matrix.shard }}/3
+
+  # One status for the pull request: check passed, and test passed or was skipped for a docs or contracts diff.
+  ci:
+    needs: [scope, check, test]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every job passed or was skipped by the classification
+        env:
+          RESULTS: ${{ needs.scope.result }} ${{ needs.check.result }} ${{ needs.test.result }}
+          CLASS: ${{ needs.scope.outputs.class }}
+        run: |
+          set -euo pipefail
+          read -r scope check test <<< "$RESULTS"
+          echo "class=$CLASS scope=$scope check=$check test=$test"
+          [ "$scope" = success ] || exit 1
+          [ "$check" = success ] || exit 1
+          case "$CLASS" in
+            code) [ "$test" = success ] ;;
+            docs | contracts) [ "$test" = skipped ] ;;
+            *) echo "::error::scope gave no class"; exit 1 ;;
+          esac

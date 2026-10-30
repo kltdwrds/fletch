@@ -42,26 +42,41 @@ describe('the gates are wired', () => {
     assert.match(pkg['simple-git-hooks']['pre-push'], /node scripts\/pre-push\.mjs/);
   });
 
-  it('the release verifies main; CI runs pnpm verify on a code diff, check alone on docs, check and the related tests on contracts', () => {
+  it('the release verifies main; CI runs pnpm verify split into jobs on a code diff, check alone on docs, check and the related tests on contracts', () => {
     const release = read('.github/workflows/release.yml');
     assert.match(release, /^on:\n {2}push:\n {4}branches: \[main\]$/m, 'release.yml no longer runs on every push to main');
     assert.match(release, /^\s+run: pnpm verify$/m);
     assert.doesNotMatch(release, /run: pnpm check$/m);
     const ci = read('.github/workflows/ci.yml');
     assert.match(ci, /^on:\n {2}pull_request:\n\n/m, 'ci.yml runs on pull_request alone (main is the release check job)');
-    const ciSteps = ci.split(/\n {6}- /);
-    const gate = (cls) => new RegExp(`^\\s+if: steps\\.scope\\.outputs\\.class ${cls}$`, 'm');
-    assert.ok(ciSteps.some((s) => /^name: Classify the diff\n\s+id: scope$/m.test(s)), 'ci.yml has no Classify the diff step');
-    const verify = ciSteps.filter((x) => /run: pnpm verify$/m.test(x));
-    const check = ciSteps.filter((x) => /run: pnpm check$/m.test(x));
-    const related = ciSteps.filter((x) => /pnpm exec vitest related --run /.test(x));
-    assert.ok(verify.length && check.length && related.length, 'ci.yml lost a verify, check or contract tests step');
-    for (const s of verify) assert.match(s, gate("== 'code'"), s);
-    for (const s of check) assert.match(s, gate("!= 'code'"), s);
-    for (const s of related) assert.match(s, gate("== 'contracts'"), s);
-    // The contracts path can bring a browser test, so Chromium installs for everything but docs.
-    const [chromium] = ciSteps.filter((x) => /run: pnpm exec playwright-core install/.test(x));
-    assert.match(chromium ?? '', gate("!= 'docs'"));
+    // CI's code path is pnpm verify's steps run apart: change the test script and ci.yml must change with it.
+    assert.equal(pkg.scripts.test, 'node --test scripts/*.test.mjs && QYVR_HERMETIC=1 vitest run');
+    const jobs = Object.fromEntries(ci.split(/\n {2}(?=[\w-]+:\n)/).slice(1).map((j) => [j.slice(0, j.indexOf(':')), j]));
+    assert.match(jobs.scope ?? '', /^ {6}- name: Classify the diff\n\s+id: scope$/m, 'ci.yml has no scope job classifying the diff');
+    for (const out of ['class', 'named']) assert.match(jobs.scope, new RegExp(`^ {6}${out}: \\$\\{\\{ steps\\.scope\\.outputs\\.${out} \\}\\}$`, 'm'), `scope does not pass on ${out}`);
+    const steps = (job) => (jobs[job] ?? '').split(/\n {6}- /);
+    const gate = (cls) => new RegExp(`^\\s+if: needs\\.scope\\.outputs\\.class ${cls}$`, 'm');
+    const step = (job, run) => steps(job).filter((x) => run.test(x));
+    const [check] = step('check', /^\s+run: pnpm check$/m);
+    const [gateTests] = step('check', /^\s+run: node --test scripts\/\*\.test\.mjs$/m);
+    const [related] = step('check', /pnpm exec vitest related --run /);
+    assert.ok(check && gateTests && related, 'the check job lost pnpm check, the gate tests or the contract tests');
+    assert.doesNotMatch(check, /if:/, 'pnpm check runs on every diff');
+    assert.match(gateTests, gate("== 'code'"));
+    assert.match(related, gate("== 'contracts'"));
+    assert.match(related, /QYVR_HERMETIC: "1"/);
+    // The contracts path can bring a browser test, so the check job installs Chromium for it.
+    const [chromium] = step('check', /run: pnpm exec playwright-core install/);
+    assert.match(chromium ?? '', gate("== 'contracts'"));
+    const test = jobs.test ?? '';
+    assert.match(test, /^ {4}needs: scope\n/m);
+    assert.match(test, /^ {4}if: needs\.scope\.outputs\.class == 'code'$/m);
+    assert.match(test, /^ {8}shard: \[1, 2, 3\]$/m);
+    assert.match(test, /QYVR_HERMETIC: "1"\n\s+run: pnpm exec vitest run --shard=\$\{\{ matrix\.shard \}\}\/3$/m);
+    // The status job runs whatever its needs did (a failed test must not skip it); scripts/ci-classify.test.mjs runs
+    // its script.
+    assert.match(jobs.ci ?? '', /^ {4}needs: \[scope, check, test\]$/m, 'no single status over the jobs');
+    assert.match(jobs.ci ?? '', /^ {4}if: \$\{\{ !cancelled\(\) \}\}$/m, 'the status job is skipped when a job it needs fails');
   });
 
   it('Claude Code runs the hook guard, the handoff hook and the session start', () => {

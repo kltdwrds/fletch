@@ -12,9 +12,10 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ci = readFileSync(path.join(root, '.github/workflows/ci.yml'), 'utf8').split('\n');
 
-const script = (() => {
-  const at = ci.findIndex((l) => /^\s+- name: Classify the diff$/.test(l));
-  assert.ok(at >= 0, 'ci.yml has no Classify the diff step');
+// A step's `run: |` block, dedented.
+const stepScript = (name) => {
+  const at = ci.findIndex((l) => l.trimStart() === `- name: ${name}`);
+  assert.ok(at >= 0, `ci.yml has no ${name} step`);
   const run = ci.findIndex((l, i) => i > at && /^\s+run: \|$/.test(l));
   const indent = ci[run + 1].match(/^ */)[0].length;
   const body = [];
@@ -23,7 +24,8 @@ const script = (() => {
     body.push(l.slice(indent));
   }
   return body.join('\n');
-})();
+};
+const script = stepScript('Classify the diff');
 
 const scratch = mkdtempSync(path.join(tmpdir(), 'ci-classify-'));
 after(() => rmSync(scratch, { recursive: true, force: true }));
@@ -122,5 +124,37 @@ describe('ci.yml classifies a pull request diff', () => {
 
   it('says which files decided a code diff', () => {
     assert.match(pr({ 'docs/a.md': 'b\n', 'src/x.ts': 'y\n' }).log, /Judged: code\..*\n {2}src\/x\.ts\n/);
+  });
+});
+
+describe('ci.yml gives one status over the jobs', () => {
+  const status = stepScript('Every job passed or was skipped by the classification');
+  const ok = (CLASS, scope, check, test) => {
+    try {
+      execFileSync('bash', ['-c', status], { encoding: 'utf8', env: { PATH: process.env.PATH, CLASS, RESULTS: `${scope} ${check} ${test}` } });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  it('passes code with every job passed, and docs or contracts with test skipped', () => {
+    assert.ok(ok('code', 'success', 'success', 'success'));
+    assert.ok(ok('docs', 'success', 'success', 'skipped'));
+    assert.ok(ok('contracts', 'success', 'success', 'skipped'));
+  });
+
+  it('fails code whose tests failed, were cancelled or skipped', () => {
+    for (const t of ['failure', 'cancelled', 'skipped']) assert.equal(ok('code', 'success', 'success', t), false, t);
+  });
+
+  it('fails a failed scope or check, whatever the class', () => {
+    assert.equal(ok('docs', 'success', 'failure', 'skipped'), false);
+    assert.equal(ok('code', 'failure', 'success', 'success'), false);
+  });
+
+  it('fails a missing or unknown class rather than reading it as docs', () => {
+    assert.equal(ok('', 'success', 'success', 'skipped'), false);
+    assert.equal(ok('other', 'success', 'success', 'skipped'), false);
   });
 });
