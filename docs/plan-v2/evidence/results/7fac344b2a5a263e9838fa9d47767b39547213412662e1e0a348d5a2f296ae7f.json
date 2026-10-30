@@ -64,6 +64,33 @@
         }
       ],
       "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T21:45:46.189Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-10-30T21:45:46.190Z",
+          "finished_at": "2026-10-30T21:46:55.044Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-10-30T21:46:55.044Z",
+          "finished_at": "2026-10-30T21:47:54.255Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply says the name is not chosen and nothing changed but the conversation",
+          "started_at": "2026-10-30T21:47:54.256Z",
+          "finished_at": "2026-10-30T21:48:55.073Z"
+        }
+      ],
+      "status": "fail"
     }
   ]
 }

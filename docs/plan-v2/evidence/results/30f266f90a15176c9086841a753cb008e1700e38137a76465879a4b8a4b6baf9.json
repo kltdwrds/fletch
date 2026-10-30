@@ -33,6 +33,37 @@
         }
       ],
       "status": "fail"
+    },
+    {
+      "run_at": "2026-10-30T21:49:43.976Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the agent writes as Sam's agent, never as Sam, and names Pat or says they",
+          "started_at": "2026-10-30T21:49:43.976Z",
+          "finished_at": "2026-10-30T21:50:29.461Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "pronoun_guessed",
+          "started_at": "2026-10-30T21:50:29.461Z",
+          "finished_at": "2026-10-30T21:50:49.246Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the name goes to memory only Sam's own turns read, and how to undo it",
+          "started_at": "2026-10-30T21:50:49.247Z",
+          "finished_at": "2026-10-30T21:51:12.426Z"
+        }
+      ],
+      "status": "fail"
     }
   ]
 }
