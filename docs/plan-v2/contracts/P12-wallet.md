@@ -399,7 +399,7 @@ T-P12-10  must-have  tier 2
   collateral: none
   graders: code
   reference: Muse's three blockers, one read-only browser task and no card (B-P12-03, B-P12-08)
-  version_hash: unfilled (F39)
+  version_hash: db13366a12ec
   file: test/evals/p12-wallet/purchase-refused-by-name-real-model.task.ts
 
 T-P12-11  must-have  tier 2
@@ -415,7 +415,7 @@ T-P12-11  must-have  tier 2
   collateral: no card, no grant
   graders: code
   reference: B-P12-02
-  version_hash: unfilled (F39)
+  version_hash: 3bfe7d16b4cc
   file: test/evals/p12-wallet/card-typed-real-model.task.ts
 
 T-P12-12  nice-to-have  tier 2
@@ -432,7 +432,7 @@ T-P12-12  nice-to-have  tier 2
   collateral: none
   graders: code
   reference: B-P12-06; Muse's Activity title reading as done
-  version_hash: unfilled (F39)
+  version_hash: 35634d357bcb
   file: test/evals/p12-wallet/allowance-refused-real-model.task.ts
 
 T-P12-13  nice-to-have  tier 2
@@ -450,7 +450,7 @@ T-P12-13  nice-to-have  tier 2
   graders: code
   reference: Muse's Settings > Wallet with two Add rows and no status, and the widgets enabled after being answered
   (B-P12-01, B-P12-11)
-  version_hash: unfilled (F39)
+  version_hash: f362aaba1053
   file: test/evals/p12-wallet/wallet-state-and-reload-real-model.task.ts
 
 ## Properties

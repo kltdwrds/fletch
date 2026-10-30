@@ -27,6 +27,8 @@ import { type P6Call, p6Slot } from "./p6-slot.ts";
 import { p7Page } from "./p7-page.ts";
 import { type P7Slot, p7Slot, ZONE } from "./p7-slot.ts";
 import { p9Page } from "./p9-page.ts";
+import { p12Page } from "./p12-page.ts";
+import { type P12State, p12Slot } from "./p12-slot.ts";
 import { type P9State, p9Slot } from "./p9-slot.ts";
 import type { Slot } from "./runner.ts";
 import { type TestHostState, testHostReaders } from "./test-host.ts";
@@ -460,7 +462,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
       // An activity task (F32), or a delegation task beside it (F34): chat c1's tasks over the app's routes, read once
       // each turn's task settled; the page in Chromium.
       const p5 =
-        task?.cluster === "P5" || task?.cluster === "P3" || task?.cluster === "P9"
+        task?.cluster === "P5" || task?.cluster === "P3" || task?.cluster === "P9" || task?.cluster === "P12"
           ? p5Slot(
               () => chatId,
               () => entriesOf(),
@@ -498,7 +500,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
       // A credentials task (F37): Sam's credential rows reset and the task's set up, chat c1's cards, messages and
       // requests and her Vault's rows through the `p9` op, read again after each turn; the tabs and reloads in Chromium.
       const p9 =
-        task?.cluster === "P9" && p5
+        (task?.cluster === "P9" || task?.cluster === "P12") && p5
           ? p9Slot(
               () => chatId,
               async (call) => {
@@ -513,6 +515,23 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
               () => randomUUID(),
             )
           : null;
+      // A payments task (F39), over P9's: Sam's grant rows reset, chat c1's cards with their words, her grants, journal
+      // rows and jobs through the `p12` op, read again after each turn; the reloads and `/settings` in Chromium.
+      const p12 =
+        task?.cluster === "P12" && p5
+          ? p12Slot(
+              () => chatId,
+              async (call) => {
+                const r = await testHostOp(base, lease, { op: "p12", person: OWNER, chat: chatId, call });
+                if (!r) throw new InfraError("SLOT_MISSING", "this slot serves no test host; `pnpm preview up` deploys one");
+                return call === "read" ? (r as unknown as P12State) : null;
+              },
+              () => (state as TestHostState | null)?.log.egress ?? [],
+              p5.readers,
+              new URL(base).origin,
+              p12Page(base, cookie),
+            )
+          : null;
       const settled = (deadline: number) => async () => {
         await p3?.settle(deadline);
         await p5?.settle(deadline);
@@ -523,6 +542,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
         await refresh();
         await p3?.refresh();
         await p9?.refresh();
+        await p12?.refresh();
         await p6?.refresh(`prompt:${label}`);
         await p7?.refresh(turn.startsWith("prompt") ? "prompt" : turn);
       };
@@ -558,6 +578,11 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
           return reply;
         },
         async event(name, payload) {
+          // A P12 event (F39, scripts/evals/p12-slot.ts): the chat reloaded at a width, `/settings` opened and reloaded.
+          if (p12 && (await p12.event(name, payload))) {
+            await after("c1", `event:${name}`);
+            return;
+          }
           // A P9 event (F37, scripts/evals/p9-slot.ts): two tabs on one send, a reload at a width, a settings page opened.
           if (p9) {
             const deadline = Date.now() + TURN_TIMEOUT_MS;
@@ -623,6 +648,10 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
         Object.defineProperties(world, Object.getOwnPropertyDescriptors(p9.readers));
         Object.defineProperties(world, { tabs: { get: () => p9.tabs }, marks: { get: () => p9.marks }, submitted: { get: () => p9.submitted } });
         if (task) await p9.begin(task.id, (text) => world.send(text));
+      }
+      if (p12) {
+        Object.defineProperties(world, Object.getOwnPropertyDescriptors(p12.readers));
+        if (task) await p12.begin(task.id, (text) => world.send(text));
       }
       return world;
     },
