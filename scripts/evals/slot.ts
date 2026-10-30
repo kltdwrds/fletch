@@ -586,7 +586,11 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
           // A P9 event (F37, scripts/evals/p9-slot.ts): two tabs on one send, a reload at a width, a settings page opened.
           if (p9) {
             const deadline = Date.now() + TURN_TIMEOUT_MS;
-            if (await p9.event(name, payload, settled(deadline))) {
+            // A turn that never settles is the trial's failure, as a prompt's is, not a crash of the run (F39).
+            const played = await p9.event(name, payload, settled(deadline)).catch((e: Error) => {
+              throw e instanceof InfraError || e instanceof TurnError ? e : new TurnError("TURN_TIMEOUT", e.message);
+            });
+            if (played) {
               await after("c1", `event:${name}`);
               return;
             }

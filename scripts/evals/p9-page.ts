@@ -75,7 +75,10 @@ export function p9Page(base: string, cookie: string): P9Page {
         // A fresh chat draws no entry before the send.
         await ready(a, false);
         await ready(b, false);
-        await a.evaluate(`(() => { document.getElementById("t").value = ${JSON.stringify(text)}; document.getElementById("f").requestSubmit(); })()`);
+        // The page drops a submit made before its socket is open (the composer keeps the words), so it is submitted
+        // again each second until the composer empties: the send took off (F39: one trial's send never left the tab).
+        await a.evaluate(`document.getElementById("t").value = ${JSON.stringify(text)}`);
+        await a.waitForFunction('(() => { const t = document.getElementById("t"); if (t.value === "") return true; document.getElementById("f").requestSubmit(); return false; })()', null, { timeout: WAIT_MS, polling: 1_000 });
         await settled();
         // Both tabs draw the turn's frames: Sam's bubble and the agent's reply, with nothing still running.
         for (const p of [a, b]) {
