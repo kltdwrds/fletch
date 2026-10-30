@@ -565,6 +565,10 @@ the file grades the fletch form and says so.
 
 ## Scorecard
 
-level 1 | tier 1 and tier 2 not yet run: 14 tasks (11 must-have) written, hashes unset | `contracts/P7-scheduling.md`;
-interrogation 2026-10-30Z by an Opus agent under the orchestrator's scenario, `evidence/p7-scheduling/trace.json`
-validates (13 steps), 110 captures through `pnpm redact`; F29 and F30 in `parts.md` | 2026-10-30
+level 2 | tier 1: 10 of 10 under vitest since F29; tier 2 on fletch-pv-2 (F30): T-P7-09 3 of 3 and T-P7-11 3 of 3
+(the two must-haves), T-P7-10 3 of 3, T-P7-14 0 of 3 (the run history is drawn open, recorded) | PR #50 (F29),
+`ACCEPT F29: PASS` (TREE 214bbbfd8521e6a211b2aa7a8282dc6066c2b116), `VERIFIER: no blocking findings`; PR #53 (F30),
+`ACCEPT F30: PASS` (TREE 938f10e91ec01e175fef768b7ffd4a8ac4e15613), `VERIFIER: no blocking findings`; results
+`evidence/results/4dc5b93916a84f48a7c1a3f226fe9392a095922a2565c0fe5186b9ec917d1f63.json` (T-P7-09) and
+`evidence/results/ff86a57cc158970e784e70e0293f99d3ae66b83876f67b642d0331f99e011a07.json` (T-P7-11); the full row in
+`../SCORECARD.md` | 2026-10-30
