@@ -15,6 +15,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { EMPTY_SNAPSHOT, InfraError, reactionsOf, type SlotEntry, type SlotWorld, TurnError } from "../../test/support/evals.ts";
+import { type TestHostState, testHostReaders } from "./test-host.ts";
 import { type SavedPasskey, softAuthenticator } from "../../test/support/soft-authenticator.ts";
 import { origin as originOf, ownerTag, SLOT_OWNER, slotPlan } from "../preview-plan.mjs";
 import { knownSubdomain, readJson } from "../preview-pool.mjs";
@@ -226,6 +227,77 @@ export function turn(base: string, chatId: string, cookie: string, text: string,
   });
 }
 
+/** How long a decision may take to start the turn it continues before the runner reads on without one. */
+const CONTINUE_START_MS = 20_000;
+
+/**
+ * A decision on a card, as the page posts it (`/chats/<id>/cards/decide`), with a socket open first so the turn the
+ * decision continues is seen to its end: resolves when that turn is done, or when none started within
+ * CONTINUE_START_MS; rejects with a TurnError when the decision is refused or the continued turn fails.
+ */
+export function decide(base: string, chatId: string, cookie: string, card: string, choice: string, timeoutMs = TURN_TIMEOUT_MS): Promise<void> {
+  const wsUrl = `${base.replace(/^http/, "ws")}/chats/${chatId}/ws`;
+  const Socket = WebSocket as unknown as new (url: string, init: { headers: Record<string, string> }) => WebSocket;
+  const ws = new Socket(wsUrl, { headers: { cookie } });
+  return new Promise<void>((resolve, reject) => {
+    let settled = false;
+    let started = false;
+    let quiet: ReturnType<typeof setTimeout> | undefined;
+    const timer = setTimeout(() => finish(new TurnError("TURN_TIMEOUT", `the decided turn did not end in ${Math.round(timeoutMs / 1000)} s`)), timeoutMs);
+    const finish = (error?: Error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (quiet) clearTimeout(quiet);
+      ws.close();
+      if (error) reject(error);
+      else resolve();
+    };
+    ws.addEventListener("error", () => finish(new InfraError("SLOT_UNREACHABLE", `the chat socket failed: ${wsUrl}`)));
+    ws.addEventListener("close", () => finish(started ? new TurnError("SOCKET_CLOSED", "the chat socket closed before the decided turn ended") : undefined));
+    ws.addEventListener("message", async (event) => {
+      let frame: { type: string; code?: string };
+      try {
+        frame = JSON.parse(String(event.data));
+      } catch {
+        return;
+      }
+      if (frame.type === "history") {
+        const r = await http(base, "POST", `/chats/${chatId}/cards/decide`, { cookie, body: { ids: [card], choice } }).catch((e: Error) => e);
+        if (r instanceof Error) return finish(r);
+        const answer = (r.body.results as Array<{ ok: boolean; code?: string }> | undefined)?.[0];
+        if (r.res.status !== 200 || !answer?.ok) return finish(new TurnError(`DECIDE_REFUSED:${answer?.code ?? String(r.body.code ?? r.res.status)}`));
+        quiet = setTimeout(() => finish(), CONTINUE_START_MS);
+      } else if (frame.type === "turn_started") {
+        started = true;
+        if (quiet) clearTimeout(quiet);
+      } else if (frame.type === "turn_done") finish();
+      else if (frame.type === "turn_failed") finish(new TurnError(`TURN_FAILED:${frame.code ?? "UNKNOWN"}`));
+      else if (frame.type === "turn_stopped") finish(new TurnError("TURN_STOPPED"));
+    });
+  });
+}
+
+/** The test-host op as the lease's holder; null when the slot serves no test host. */
+async function testHostOp(base: string, lease: Lease, body: Record<string, unknown>): Promise<Json | null> {
+  const r = await http(base, "POST", "/__preview/test-host", { body, headers: { "x-preview-tag": lease.tag, "x-preview-key": lease.key } });
+  if (r.res.status === 404) return null;
+  if (r.res.status !== 200) throw new InfraError("LEASE_LAPSED", `the test host answered ${r.res.status} to this worktree's key`);
+  return r.body;
+}
+
+/** The fixture login T-P15-15 reads: saved once on the slot through the capture form as its owner, for login.example.test. */
+export const FIXTURE_LOGIN = { ref: "cred://site-login", host: "login.example.test" } as const;
+
+async function ensureFixtureLogin(base: string, cookie: string): Promise<void> {
+  const listed = await http(base, "GET", "/vault", { cookie });
+  if (((listed.body.credentials as Array<{ ref: string }> | undefined) ?? []).some((c) => c.ref === FIXTURE_LOGIN.ref)) return;
+  // A value made here and never kept: the fixture login is not a secret anyone holds.
+  const form = new URLSearchParams({ ref: FIXTURE_LOGIN.ref, host: FIXTURE_LOGIN.host, methods: "GET", header: "authorization", prefix: "", fills: "on", kind: "login", permission: "grant", value: randomUUID() });
+  const res = await fetch(`${base}/vault/capture`, { method: "POST", headers: { cookie, origin: new URL(base).origin, "content-type": "application/x-www-form-urlencoded" }, body: form, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }).catch((e: Error) => e);
+  if (res instanceof Error || res.status !== 201) throw new InfraError("SLOT_5XX", `the fixture login was not saved: ${res instanceof Error ? res.message : res.status}`);
+}
+
 /** The worktree's slot as a `Slot`, resolved lazily: a slot that cannot be resolved is named `none` and every `open` rejects with the reason. */
 export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: string) => void): Slot & { resolve(): Promise<void> } {
   let resolved: { dir: string; lease: Lease; name: string; base: string } | null = null;
@@ -254,17 +326,41 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
       const chatId = opened.body.chatId as string;
       const replies: string[] = [];
       let entries: SlotEntry[] = [];
+      // The test host, when the slot serves one (F26): its fixture sites reopened in the owner's browse memory, the
+      // fixture login saved, and what the Vault held before this trial, so the readers count only the trial's own.
+      const hosted = (await testHostOp(base, lease, { op: "reset", person: OWNER })) !== null;
+      let state: TestHostState | null = null;
+      const refresh = async () => {
+        if (hosted) state = (await testHostOp(base, lease, { op: "state", person: OWNER, chatId })) as unknown as TestHostState;
+      };
+      if (hosted) await ensureFixtureLogin(base, cookie);
+      await refresh();
+      const before = state as TestHostState | null;
+      const baseline = { audit: (before?.audit ?? []).map((a) => JSON.stringify(a)), grants: (before?.grants ?? []).map((g) => g.nonce) };
+      const after = async () => {
+        entries = await history(base, chatId, cookie);
+        await refresh();
+      };
       return {
         chatId,
         replies,
         snapshot: () => EMPTY_SNAPSHOT,
         entries: () => entries,
         reactions: () => reactionsOf(entries, OWNER),
+        ...testHostReaders(() => entries, () => state, baseline),
         async send(text) {
           const reply = await turn(base, chatId, cookie, text);
           replies.push(reply);
-          entries = await history(base, chatId, cookie);
+          await after();
           return reply;
+        },
+        async event(name, payload) {
+          if (name !== "decide") throw new TurnError("EVENT_UNSUPPORTED", name);
+          const cards = entries.filter((e) => e.kind === "card" && e.card);
+          const card = payload.card === "first" ? cards[0]?.card : cards.find((e) => e.card?.id === payload.card)?.card;
+          if (!card) throw new TurnError("DECIDE_NO_CARD", `the chat has no card ${payload.card ?? ""} to decide`);
+          await decide(base, chatId, cookie, card.id, payload.choice ?? "");
+          await after();
         },
         async read(path) {
           const r = await http(base, "GET", path, { cookie });

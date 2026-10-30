@@ -10,7 +10,7 @@
 // surface finds it taken and is answered with the first decision's outcome, never a second run. A
 // decided card says its outcome in words (`status`), on the chat page and the Approvals page alike.
 import { needsFreshCard } from "../grants/engine.ts";
-import type { CardEffect } from "./tools.ts";
+import type { CardEffect, Effect } from "./tools.ts";
 import type { Decision, Descriptor, Grant } from "../grants/types.ts";
 
 export const SCHEMA = `
@@ -229,4 +229,14 @@ export function grantFor(c: CardRow, choice: Exclude<Choice, "deny">, tenant: st
     ...(choice === "period" ? { expires_at: now + PERIOD_MS } : {}),
     created_from: "approval-card",
   };
+}
+
+/**
+ * The words a step that paused on cards owes the person (F26, B-P15-06, after M19.2's rule for a tool's own words): when
+ * neither the model nor a tool wrote any beside its calls, code says that each card's action waits for their decision and
+ * has not run, delivered once beside the call. A step with words adds nothing; a projected card never paused.
+ */
+export function pauseWords(said: boolean, effects: readonly Effect[], label: (tool: string) => string): Effect[] {
+  if (said || effects.some((e) => e.kind === "deliver")) return [];
+  return effects.flatMap((e) => (e.kind === "card" && !e.simulated ? [{ kind: "deliver" as const, id: `${e.id}:announce`, text: `Waiting for your decision: ${label(e.tool)}. It has not run yet.` }] : []));
 }

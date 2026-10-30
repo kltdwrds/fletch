@@ -58,7 +58,7 @@ export type FakeStep =
   | { toolCall: FakeToolCall; text?: string; reasoning?: string; usage?: FakeUsage }
   | { rawToolCall: { id?: string; name: string; arguments: string }; usage?: FakeUsage }
   /** Several tool calls in one answer, in order (M25.2: a job answer with two terminal tools). */
-  | { toolCalls: FakeToolCall[]; usage?: FakeUsage }
+  | { toolCalls: FakeToolCall[]; text?: string; usage?: FakeUsage }
   | { status: number; retryAfter?: number; message?: string }
   | { drop: { text: string; afterBytes: number } }
   /** A 200 whose body never sends a token and stays open until the request's signal aborts (M19.1). */

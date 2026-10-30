@@ -91,8 +91,9 @@ describe("[M19.2] the job's time is said in code (QYVR-165; every job since M21.
     const said = await w.say(ada.email, "Remind me sometime tomorrow to book the dentist.", chat);
     expect(said.result).toMatchObject({ status: "done", awaiting: true });
     const sentence = LINE;
-    expect(sentIn(w, chat)).toEqual([sentence]);
-    expect(socket.frames.filter((f) => f.type === "message").map((f) => f.text)).toEqual([sentence]);
+    // The paused step itself has no words, so code says what waits after the time (F26, `pauseWords`).
+    expect(sentIn(w, chat)).toEqual([sentence, "Waiting for your decision: jobs enable. It has not run yet."]);
+    expect(socket.frames.filter((f) => f.type === "message").map((f) => f.text)).toEqual([sentence, "Waiting for your decision: jobs enable. It has not run yet."]);
     // The card carries the same time.
     expect(w.cardsOf(ada.email)[0]?.lines).toEqual(expect.arrayContaining([`When: ${WHEN}`]));
   });

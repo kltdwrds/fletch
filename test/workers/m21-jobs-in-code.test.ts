@@ -100,6 +100,8 @@ describe("[M21.1] one job per request, whatever title the model gives it (QYVR-1
 
 describe("[M21.1] the job's time is said in code for a named and a picked time, with the turn paused on the card", () => {
   const LINE = "Set for Wednesday 2026-10-14 at 09:00 Europe/London. Say so to change it.";
+  // The enable step pauses with no words, so code says what waits after the time (F26, `pauseWords`).
+  const WAITS = "Waiting for your decision: jobs enable. It has not run yet.";
 
   it("a named time: delivered once, live and in history, with no model text", async () => {
     const w = authorityWorld({ jobs: true, script: [] });
@@ -109,8 +111,8 @@ describe("[M21.1] the job's time is said in code for a named and a picked time, 
     w.fake.enqueue(load, create({ kind: "runonce", at: "2026-10-14T09:00" }, "Dentist", { zone: "Europe/London" }), enable(id));
     const said = await w.say(ada.email, "Remind me tomorrow at 9 to stretch.", chat);
     expect(said.result).toMatchObject({ status: "done", awaiting: true });
-    expect(sentIn(w, chat)).toEqual([LINE]);
-    expect(socket.frames.filter((f) => f.type === "message").map((f) => f.text)).toEqual([LINE]);
+    expect(sentIn(w, chat)).toEqual([LINE, WAITS]);
+    expect(socket.frames.filter((f) => f.type === "message").map((f) => f.text)).toEqual([LINE, WAITS]);
     const drawn = w.chats.harness(chat).instance.history().entries.filter((e) => "text" in e && e.text === LINE);
     expect(drawn).toHaveLength(1);
   });
@@ -124,7 +126,7 @@ describe("[M21.1] the job's time is said in code for a named and a picked time, 
     w.fake.enqueue(load, create({ kind: "runonce", in_minutes: 1440 }, "Dentist", { zone: "Europe/London" }), enable(id));
     const said = await w.say(ada.email, "Remind me sometime tomorrow to stretch.", chat);
     expect(said.result).toMatchObject({ status: "done", awaiting: true });
-    expect(sentIn(w, chat)).toEqual(["Set for Wednesday 2026-10-14 at 11:00 Europe/London. Say so to change it."]);
+    expect(sentIn(w, chat)).toEqual(["Set for Wednesday 2026-10-14 at 11:00 Europe/London. Say so to change it.", WAITS]);
   });
 
   it("time_picked is gone from the tool", () => {

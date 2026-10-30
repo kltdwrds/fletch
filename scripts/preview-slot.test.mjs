@@ -4,6 +4,7 @@ import { sha256Hex } from './preview-plan.mjs';
 import { fakeSlot } from './preview-fakes.mjs';
 import { decideClaim, MAX_TTL_SECONDS, mayEnd } from './preview-slot/lease-rules.mjs';
 import { MAX_BODY, ops, RESET_BUDGET } from './preview-slot/ops.mjs';
+import { CHALLENGE, NO_LIVE_BROWSER, SITES, testHostBinding } from './preview-slot/test-host-sites.mjs';
 
 // A slot Worker's /__preview/ ops (scripts/preview-slot/ops.mjs) over fakes: the lease rules, the key, and the reset of
 // the slot's bucket and index through its own bindings.
@@ -13,10 +14,10 @@ const KEY_B = 'b'.repeat(64);
 let slot;
 let now;
 
-const call = async (method, name, { tag, key, body, raw, secrets = { PREVIEW_KEY_aaaaaa: KEY_A, PREVIEW_KEY_bbbbbb: KEY_B } } = {}) => {
+const call = async (method, name, { tag, key, body, raw, testHost, secrets = { PREVIEW_KEY_aaaaaa: KEY_A, PREVIEW_KEY_bbbbbb: KEY_B } } = {}) => {
   const headers = { 'content-type': 'application/json' };
   if (tag) Object.assign(headers, { 'x-preview-tag': tag, 'x-preview-key': key });
-  const r = await ops(new Request(`https://${HOST}/__preview/${name}`, { method, headers, body: raw ?? (body === undefined ? undefined : JSON.stringify(body)) }), slot.env(secrets), { lease: slot.lease, now });
+  const r = await ops(new Request(`https://${HOST}/__preview/${name}`, { method, headers, body: raw ?? (body === undefined ? undefined : JSON.stringify(body)) }), slot.env(secrets), { lease: slot.lease, now, ...(testHost ? { testHost } : {}) });
   return { status: r.status, body: await r.json() };
 };
 const A = { tag: 'aaaaaa', key: KEY_A };
@@ -139,5 +140,44 @@ describe('preview slot ops: the reset', () => {
     assert.equal(slot.AGENT_BUCKET.map.size, 1);
     assert.deepEqual((await call('POST', 'reset', { ...B, body: { force: true, expectTag: 'aaaaaa' } })).body, { done: true });
     assert.equal((await call('GET', 'lease')).body.expiresAt, null);
+  });
+});
+
+// F26: the test host's op answers the lease's holder alone, and its sites answer from fixtures, recording every request.
+describe('preview slot ops: the test host', () => {
+  const seen = [];
+  const testHost = async (body) => {
+    seen.push(body);
+    return { status: 200, body: { answered: body.op } };
+  };
+
+  it('refuses the op without a key, to a key that is not the holder, and on a slot that serves no test host', async () => {
+    await claim(A);
+    assert.equal((await call('POST', 'test-host', { body: { op: 'state' }, testHost })).status, 401);
+    assert.equal((await call('POST', 'test-host', { ...B, body: { op: 'state' }, testHost })).status, 409);
+    assert.equal((await call('POST', 'test-host', { ...A, body: { op: 'state' } })).body.error.code, 'not_found');
+    now += 3600 + 1;
+    assert.equal((await call('POST', 'test-host', { ...A, body: { op: 'state' }, testHost })).status, 409);
+    assert.deepEqual(seen, []);
+  });
+
+  it("hands the holder's op to the test host and answers with its answer", async () => {
+    await claim(A);
+    assert.deepEqual(await call('POST', 'test-host', { ...A, body: { op: 'reset', person: 'sam@solo-sam.example' }, testHost }), { status: 200, body: { answered: 'reset' } });
+    assert.deepEqual(seen.at(-1), { op: 'reset', person: 'sam@solo-sam.example' });
+  });
+
+  it('serves the wall, the 429 with its wait and the pages from fixtures, records every read, and has no live browser', async () => {
+    const reads = [];
+    const b = testHostBinding(async (e) => reads.push(e));
+    const md = async (host) => b.quickAction('markdown', { url: `https://${host}/` });
+    assert.equal((await (await md('walled.test')).json()).result, CHALLENGE);
+    const busy = await md('busy.test');
+    assert.deepEqual([busy.status, busy.headers.get('retry-after')], [429, SITES['busy.test'].retryAfter]);
+    assert.match((await (await md('fine.test')).json()).result, /fine test page/);
+    assert.equal((await md('elsewhere.example')).status, 404);
+    assert.deepEqual(reads.map((r) => r.host), ['walled.test', 'busy.test', 'fine.test', 'elsewhere.example']);
+    await assert.rejects(b.acquire({}), { message: NO_LIVE_BROWSER });
+    assert.equal(await b.getSession('s'), null);
   });
 });

@@ -21,7 +21,7 @@ import { type CompactionRecord, ChatStore } from "./store.ts";
 import { type TaskRecord, taskOf, tasksOf, taskSteps } from "./activity.ts";
 import { Approvals, type DecideResult, requestReply } from "./approvals.ts";
 import { addTally, replyToColleague, tallyOf } from "./approval-ports.ts";
-import { CardStore, type CardView, type Choice } from "./cards.ts";
+import { CardStore, type CardView, type Choice, pauseWords } from "./cards.ts";
 import type { LinkCard } from "../workspace/surfaces.ts";
 import type { ChatFrame, ClaimResult, SendResult, StopResult } from "./frames.ts";
 import { LinkShelf } from "./links.ts";
@@ -534,7 +534,9 @@ export class ChatEngine {
             for (const r of step.toolResults) this.store.appendMessage(turnId, r);
             const tokens = step.message.usage.input + step.message.usage.output;
             // Once the person asked to stop, what this step proposed is not committed; the transcript says so.
-            if (!step.stopped) for (const e of step.effects) this.store.queue(turnId, e.kind === "deliver" || e.kind === "link" || e.kind === "react" ? e : { ...e, tokens });
+            const said = step.message.content.some((c) => c.type === "text" && c.text.trim() !== "");
+            const owed = step.paused ? pauseWords(said, step.effects, (tool) => tool.replaceAll("_", " ")) : [];
+            if (!step.stopped) for (const e of [...step.effects, ...owed]) this.store.queue(turnId, e.kind === "deliver" || e.kind === "link" || e.kind === "react" ? e : { ...e, tokens });
             this.store.recordStep(turnId, step.message.usage.input);
             if (step.steer) steered.push(...[this.mailbox.steer(turnId, this.now(), (m) => this.store.appendMessage(`mailbox:${turnId}`, m))].flatMap((m) => m ?? []));
             if (step.final) this.store.endTurn(turnId, "done", null, this.now());

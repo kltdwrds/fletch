@@ -283,3 +283,27 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   the tests read it), and `push` runs only for `main`, so a PR commit runs once. The release still runs `pnpm verify`
   on every push to `main`. `scripts/gates.test.mjs` holds the gating. Rejected: `paths:` filters on the trigger,
   which skip the run and its status; `dorny/paths-filter`, a third-party action for one list and one rule.
+- 2026-10-30 F26, tier 1 of nothing goes around a card: fletch's browse lane types nothing but a stored credential, so
+  T-P15-05's "same share through the browse tool" is `browse_fill` aimed at host A's page, an action the engine decides
+  (a new proposal, so a card; the declined fingerprint is the share's), proposed in one step with the share to host B
+  because a card ends the turn after its step. A rate-limit stop's reason now says the site's own wait ("It asked for
+  120 seconds before another request", `browse/read.ts`), never waited out. The reply's words at a bot check, a rate
+  limit and a decline are the `STOPS` lines of the chat's task block (`chat/instructions.ts`), which grant nothing. Three
+  F25-written task files corrected before their first run, hashes refreshed in `contracts/P15-approvals.md`: T-P15-05's
+  and T-P15-12's collateral lists the cards and journal rows their own graders require (and T-P15-05's message numbers
+  follow its seeded decline); T-P15-08's prompt gives `https://walled.example.test/`, since a bare host is not an
+  address the person wrote (`BROWSE_URL_NOT_VERBATIM`). Rejected: a bare hostname read as an address, which loosens
+  the verbatim rule for one task.
+- 2026-10-30, F26 tier 2: the P15 tier-2 tasks run on a preview slot's test host (`scripts/preview-slot/test-host.mjs`),
+  which subclasses the agent's `Chat` through two inert protected seams (`browserBinding`, `moreNamespaces`) to browse
+  fixture sites and offer the share fixture, and answers `/__preview/test-host` only to the lease's holder; the runner
+  drives `decide` events beside prompts. Rejected: an env-var switch inside the agent, which ships a test path in
+  every owner's deploy.
+- 2026-10-30, F26 tier 2: a chat step that pauses on cards with no words beside its calls (the model's or a tool's)
+  gets one code-written line per card, "Waiting for your decision: <action>. It has not run yet." (`pauseWords`,
+  M19.2's rule for a tool's own words). On the slot the model proposed the share bare in most trials, even with the
+  sharpened instruction line, so the person saw a card and no reply (the results file keeps those runs). T-P15-13's `claimed_sent` also strikes "never sent"
+  and "nothing was sent" before it reads a claim (hash e729bad9eda2 → 51dd5dcb091a). Rejected: one more tool-less
+  model step after a bare pause, which changes the turn loop and every scripted card test; and grading the card's
+  status line as a reply, which weakens the task. Tension, called out: the part says reply words are instruction
+  lines; this one is code's, as a card's own status is.

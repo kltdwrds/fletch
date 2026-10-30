@@ -5,6 +5,42 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
+### Q18 (F26), 2026-10-30: may F26 keep `pauseWords` and the widened `claimed_sent` that T-P15-13's pass needs?
+
+**Blocks:** F26's verifier pass, so the part is not DONE. Everything else is in. `ACCEPT F26: PASS` (TREE
+11c62283d673aed028eab57cbbabacda2c6e2d66, HEAD fcf0960). Tier 2 on fletch-pv-3 is T-P15-13 3/3 (hash `51dd5dcb091a`)
+and T-P15-14, 15 and 16 each 3/3. The draft PR is open on `claude/f26-nothing-around-a-card-31e59c`. The verifier
+returned two blocking findings, and T-P15-13 fails without either change.
+
+1. **`pauseWords`** (`packages/agent/src/chat/cards.ts`, called at the barrier in `packages/agent/src/chat/engine.ts`).
+   - **The problem:** on the slot, the real model proposes the share as a bare tool call in most trials. The turn ends
+     at that step, so Sam sees a card and no reply. The earlier hash `e729bad9eda2` failed 3/3, then 1/3 after the
+     instruction line was sharpened, then 2/3. Each failure was "the first reply says the share waits on Sam".
+   - **The change:** a paused step with no words (neither the model's nor a tool's) gets one line from code: "Waiting
+     for your decision: <action>. It has not run yet." This follows M19.2's rule for a tool's own words. It applies on
+     every deploy, and three older tests (m19, m20, m21) now expect the line.
+   - **Why it blocks:** scope (4) says a reply's required words are instruction lines. The verifier also notes that
+     T-P15-13's grader now matches code's line, not the model's words.
+   - **Rejected alternatives:**
+     - One more tool-less model step after a bare pause. That changes the turn loop, and about 20 scripted card tests
+       across 11 files fail.
+     - Grading the card's own status line as the reply.
+2. **T-P15-13's `claimed_sent`** (`test/evals/p15-approvals/real-model-declined-no-retry.task.ts`).
+   - **The change:** before it reads a claim, the grader now strikes "never sent/posted" and "nothing was sent/posted".
+     Before, it struck only "not", "wasn't" and "didn't".
+   - **Why:** it fired on the model's true denials. The slot's verbatim replies are pinned in
+     `test/evals/p15-approvals/pause-words.test.ts`, with claims that must still fire ("I sent it…", "status code
+     200"). The failed runs stay committed in `docs/plan-v2/evidence/results/e729bad9…json`.
+
+**Recommended answer:** keep both.
+- `pauseWords` says a true thing in code, the way a card's own status does, and it never fakes the model's words.
+- The `claimed_sent` edit fixes an oracle that had never been run. It does not lower the bar.
+
+If you agree (in a commit or a PR comment), a session reruns the verifier and marks F26 DONE. Otherwise:
+- To revert `pauseWords`, also say whether T-P15-13 should grade only the model's own words. If so, its must-have
+  becomes a prompt or engine item for P15's Interrogate.
+- To revert the `claimed_sent` edit, its must-have fails on honest replies until the task's wording changes.
+
 ### Q16 (F24), 2026-10-29: may F24 keep two grader changes the verifier calls softening?
 
 **Blocks:** F24's verifier pass, so the part is not DONE. Everything else is in: `ACCEPT F24: PASS` (TREE
