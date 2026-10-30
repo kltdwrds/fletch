@@ -13,15 +13,18 @@
 // - `Job` reads the probe page from a fixture and keeps a clock the `p7` op's `tick` moves (./test-host-p7.mjs).
 // - `Chat` keeps the system prompt of each chat model request, which the `p5` op reads, and `SubAgent` reads the probe
 //   page as well as its allowlist (F32, ./test-host-p5.mjs).
+// - `Chat` keeps each chat model request's other messages too, and the `p3` op reads them with the chat's sub-agent and
+//   mailbox rows; the browser serves P3's two probe pages, the second slowly (F34, ./test-host-p3.mjs).
 import { getAgentByName } from 'agents';
 import { egressFor } from '../../packages/agent/src/connectors/egress.ts';
 import { Chat as AgentChat, Job as AgentJob, Ledger as AgentLedger, Person as AgentPerson, SubAgent as AgentSubAgent, Vault as AgentVault } from '../../packages/agent/src/index.ts';
 import { jobToolSpecs } from '../../packages/agent/src/jobs/job-tools.ts';
 import { personMemory } from '../../packages/agent/src/memory/rpc.ts';
-import { VERIFIER_INSTRUCTIONS } from '../../packages/agent/src/subagents/verifier.ts';
 import { jobName } from '../../packages/agent/src/objects/job.ts';
+import { VERIFIER_INSTRUCTIONS } from '../../packages/agent/src/subagents/verifier.ts';
 import { shareNamespace } from '../../test/support/p15-fixtures.ts';
 import { childBrowse } from './test-host-child.mjs';
+import { chunks, joinChunks, p3Rows, requestText } from './test-host-p3.mjs';
 import { recordingAi } from './test-host-p5.mjs';
 import { chatRows, p6Person } from './test-host-p6.mjs';
 import { clockedStorage, p7Op, probeGet, skewToNext } from './test-host-p7.mjs';
@@ -42,6 +45,7 @@ function tables(sql) {
 }
 
 const PROMPTS = 'test-host:prompt:';
+const REQUESTS = 'test-host:request:';
 
 export class Chat extends AgentChat {
   #chain = Promise.resolve();
@@ -50,15 +54,24 @@ export class Chat extends AgentChat {
     super(ctx, env);
     // F32: each chat model request's system prompt kept, one key each (a prompt is too long to share a value), the
     // verifier's left out; the request itself is sent unchanged.
-    this.env = { ...env, AI: recordingAi(env.AI, (p) => this.#keepPrompt(p), (p) => p.startsWith(VERIFIER_INSTRUCTIONS)) };
+    this.env = { ...env, AI: recordingAi(env.AI, (p, body) => this.#keepPrompt(p, body), (p) => p.startsWith(VERIFIER_INSTRUCTIONS)) };
   }
 
-  #keepPrompt(prompt) {
+  #keepPrompt(prompt, body) {
     this.#chain = this.#chain.then(async () => {
-      const n = (await this.ctx.storage.list({ prefix: PROMPTS })).size + 1;
-      await this.ctx.storage.put(`${PROMPTS}${String(n).padStart(6, '0')}`, prompt);
+      const n = String((await this.ctx.storage.list({ prefix: PROMPTS })).size + 1).padStart(6, '0');
+      await this.ctx.storage.put(`${PROMPTS}${n}`, prompt);
+      // F34: the request's other messages, in values of at most CHUNK characters.
+      const text = requestText(body) ?? '';
+      for (const [k, part] of chunks(text).entries()) await this.ctx.storage.put(`${REQUESTS}${n}:${String(k).padStart(3, '0')}`, part);
     });
     return this.#chain;
+  }
+
+  /** Each chat model request's messages other than its system prompt, as one text, in order; the sub-agent and mailbox rows (F34). */
+  async testHostP3() {
+    await this.#chain;
+    return { requests: joinChunks(await this.ctx.storage.list({ prefix: REQUESTS })), ...p3Rows(this.ctx.storage.sql) };
   }
 
   /** The system prompt of every chat model request, in order (F32). */
@@ -256,6 +269,11 @@ export async function testHost(body, env) {
     // F32: the P5 world (./test-host-p5.mjs): the system prompts a chat's model requests carried.
     if (typeof body.chat !== 'string' || !CHAT_ID.test(body.chat)) return { status: 400, body: { error: { code: 'invalid', message: 'name the chat' } } };
     return { status: 200, body: { prompts: await (await getAgentByName(env.CHAT, body.chat)).testHostPrompts() } };
+  }
+  if (body.op === 'p3') {
+    // F34: the P3 world (./test-host-p3.mjs): a chat's model requests, sub-agent rows and mailbox rows.
+    if (typeof body.chat !== 'string' || !CHAT_ID.test(body.chat)) return { status: 400, body: { error: { code: 'invalid', message: 'name the chat' } } };
+    return { status: 200, body: await (await getAgentByName(env.CHAT, body.chat)).testHostP3() };
   }
   if (body.op === 'p7') {
     // F30: the P7 world (./test-host-p7.mjs): Sam's jobs reset, defined, ticked and read, with the chat's notices.

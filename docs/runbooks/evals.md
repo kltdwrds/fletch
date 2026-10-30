@@ -38,8 +38,8 @@ the chat socket).
 4. Commit the results file(s) with the part. The exit code is 0 when every task passed, 1 otherwise.
 
 `--results <dir>` writes the results elsewhere for a dry run. A task the runner cannot drive (a prompt by anyone but
-the slot's owner, an event other than `decide`, `tick`, `reload` or `open`, or a schedule turn) stops the run by name before any
-trial; tier-1 matches are skipped and named, since they run under vitest.
+the slot's owner, an event other than `decide`, `tick`, `reload`, `open` or `prompt` (and for P3 `midchild` and
+`children`), or a schedule turn) stops the run by name before any trial; tier-1 matches are skipped and named, since they run under vitest.
 
 A P7 task (F30, `scripts/evals/p7-slot.ts`) starts each trial with Sam's jobs removed and her home zone Europe/London,
 then makes the task's jobs through the slot's test host (`scripts/preview-slot/test-host-p7.mjs`). A `tick` fires the
@@ -54,3 +54,13 @@ served by the slot's test-host browser from a fixture (`scripts/preview-slot/tes
 `example.invalid` is unreachable there; a sub-agent on the slot reads the probe page too. The system prompts are kept by
 the test host's `Chat` and read with the `p5` op; the Activity rows and the task drawer, at desktop and phone width, are
 read in headless Chromium (`scripts/evals/p5-page.ts`). An `open` event is a fresh read.
+
+A P3 task (F34, `scripts/evals/p3-slot.ts`) reads the P5 world above and the chat's sub-agent rows, mailbox rows and
+model requests (their messages, the system prompt aside) through the test host's `p3` op
+(`scripts/preview-slot/test-host-p3.mjs`). The probe pages `https://example.com/p3-probe` (a title and three links) and
+`https://example.com/p3-probe-2` are served by the test-host browser from fixtures, the second after 45 seconds, so a
+steer or a Stop reaches a child mid-read. A request is over when the chat's newest task is not running and no sub-agent
+row is out.
+`midchild` waits for a child seen mid-run (a running row with a step in its drawer), then sends the steer as a turn or
+presses the drawer's Stop; `children` waits everything out; `reload` keeps the entries and rows, then reads them again.
+The drawer's sections and the thread are read in headless Chromium (`scripts/evals/p3-page.ts`).

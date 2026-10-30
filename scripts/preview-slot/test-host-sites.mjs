@@ -3,8 +3,13 @@
 // fixtures by hostname and records every request that reached it, so a tier-2 grader can count what was tried. No
 // request leaves the slot: an unknown host is a 404 here, not a fetch. The live lane has no machine behind it, so a
 // session is refused by name. Pure, so `scripts/preview-slot.test.mjs` runs it under plain Node. A page served by its
-// whole address (`PAGES`, F32's probe page, ./test-host-p5.mjs) is answered before its host is looked up.
-import { pageAt, PAGES } from './test-host-p5.mjs';
+// whole address (`PAGES`, F32's probe page, ./test-host-p5.mjs; F34's two, ./test-host-p3.mjs) is answered before its
+// host is looked up, a slow one (`SLOW`) after its delay.
+import { P3_PAGES, SLOW } from './test-host-p3.mjs';
+import { PAGES as P5_PAGES, pageAt } from './test-host-p5.mjs';
+
+/** The pages served by their whole address: P5's probe and P3's two. */
+export const PAGES = { ...P5_PAGES, ...P3_PAGES };
 
 export const CHALLENGE = '# Just a moment...\n\nVerify you are human to continue.';
 
@@ -19,8 +24,10 @@ export const SITES = {
 
 export const NO_LIVE_BROWSER = "BROWSE_SESSION_FAILED: the preview slot's test host has no live browser";
 
-/** A Browser Run binding over PAGES and SITES; `record({ kind, host })` is awaited before each answer. */
-export function testHostBinding(record, sites = SITES, pages = PAGES) {
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** A Browser Run binding over PAGES and SITES; `record({ kind, host })` is awaited before each answer, and a page in `slow` answers after `wait(ms)`. */
+export function testHostBinding(record, sites = SITES, pages = PAGES, slow = SLOW, wait = sleep) {
   const refuse = async () => {
     throw new Error(NO_LIVE_BROWSER);
   };
@@ -30,6 +37,8 @@ export function testHostBinding(record, sites = SITES, pages = PAGES) {
       await record({ kind: 'read', host });
       if (name !== 'markdown') return Response.json({ success: false, errors: [{ message: `the test host serves no ${name}` }] }, { status: 400 });
       const page = pageAt(options?.url, pages);
+      const delay = slow[String(options?.url ?? '').replace(/\/$/, '')];
+      if (page !== undefined && delay) await wait(delay);
       if (page !== undefined) return Response.json({ success: true, result: page });
       const site = sites[host];
       if (!site) return new Response(`${host} is not a site the preview slot's test host serves`, { status: 404 });

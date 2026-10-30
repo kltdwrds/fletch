@@ -79,16 +79,21 @@ export interface RunDeps {
 }
 
 /**
- * The events a slot world plays (F26, F30, F32): a decision on a card, through the page's own route; a job's tick, its
- * next alarm fired by the test host; a reload, the world read again; an open (P5), Sam opening the tab or a row again.
+ * The events a slot world plays (F26, F30, F32, F34): a decision on a card, through the page's own route; a job's tick,
+ * its next alarm fired by the test host; a reload, the world read again; an open (P5), Sam opening the tab or a row
+ * again; a prompt (payload `wait`: its sub-agents left running).
  */
-export const SLOT_EVENTS: readonly string[] = ["decide", "tick", "reload", "open"];
+export const SLOT_EVENTS: readonly string[] = ["decide", "tick", "reload", "open", "prompt"];
+
+/** The events only one cluster's slot world plays (F34): for P3 a steer or Stop while a child runs, and the children waited out. */
+export const CLUSTER_EVENTS: Readonly<Record<string, readonly string[]>> = { P3: ["midchild", "children"] };
 
 /** Why the runner cannot drive `task` on a slot owned by `owner`, or null: a prompt by someone else, an event the slot cannot play, a schedule. */
 export function driveable(task: DefinedTask<SlotWorld>, owner: string): string | null {
+  const events = [...SLOT_EVENTS, ...(CLUSTER_EVENTS[task.cluster] ?? [])];
   for (const [i, turn] of task.turns.entries()) {
-    if (turn.kind === "event" && SLOT_EVENTS.includes(turn.name)) continue;
-    if (turn.kind !== "prompt") return `EVALS_TASK_UNDRIVABLE: turn ${i + 1} of ${task.id} is ${turn.kind === "event" ? `the event ${turn.name}` : "a schedule"}; the runner drives prompts and ${SLOT_EVENTS.join(", ")} events only`;
+    if (turn.kind === "event" && events.includes(turn.name)) continue;
+    if (turn.kind !== "prompt") return `EVALS_TASK_UNDRIVABLE: turn ${i + 1} of ${task.id} is ${turn.kind === "event" ? `the event ${turn.name}` : "a schedule"}; the runner drives prompts and ${events.join(", ")} events only`;
     if (turn.by !== owner) return `EVALS_TASK_UNDRIVABLE: turn ${i + 1} of ${task.id} is by ${turn.by}, not the slot's owner ${owner}`;
   }
   return null;
