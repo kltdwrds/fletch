@@ -724,6 +724,8 @@ the connector page), `step-8-permissions.png` (the Permissions counts), made by 
 
 ## Scorecard
 
-level 1 | tier 1: 13 of 13 under vitest since F35 (PR #62) and F36 (PR #66), hashes filled; tier 2 not yet run, F37 on a slot | `contracts/P9-connectors.md`;
+level 2 | tier 1: 13 of 13 under vitest since F35 (PR #62) and F36 (PR #66); tier 2 on fletch-pv-1 (F37, PR #68, at a46d617):
+T-P9-13 and T-P9-14 3 of 3 (`evidence/results/63233713ec8b….json`, `68b4fec13033….json`), T-P9-16 and 17 3 of 3, T-P9-15 0 of 3
+(Q31); `ACCEPT F37: PASS` (TREE de22273d7db4…, 1615 tests), verifier: no blocking findings | `contracts/P9-connectors.md`;
 interrogation 2026-10-30Z by an Opus agent under the orchestrator's scenario, `evidence/p9-connectors/trace.json`
 validates (13 steps), 95 files through `pnpm redact`; F35, F36 and F37 in `parts.md`; D-0016 proposed | 2026-10-30

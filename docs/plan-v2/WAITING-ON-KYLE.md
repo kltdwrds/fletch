@@ -476,9 +476,9 @@ Kyle's own lines go under `## Steering`.
   mid-run closes the child and starts another (Q28: the first task may read Running for ever, known). Say what reads
   wrong; nothing here blocks.
 
-- [ ] 2026-10-30 uat: **connections and credentials after F35 and F36** (F37's slot once its builder has deployed, see
-  `pnpm preview list`; the three slots were reclaimed on 2026-10-30 after their PRs merged, so every earlier uat address
-  now needs `pnpm preview up` on main, which carries F24 to F36). Ask the agent to connect a service or save a key:
+- [ ] 2026-10-30 uat: **connections and credentials after F35 and F36** (https://fletch-pv-1.edwards-ky1.workers.dev, F37's lease to
+  2026-10-31T16:52Z, serving a46d617; the three slots were reclaimed on 2026-10-30 after their PRs merged, so every earlier uat
+  address now needs `pnpm preview up` on main, which carries F24 to F37). Ask the agent to connect a service or save a key:
   the reply gives the capture link and ends (no form in the chat); the capture item in the bubble says the host and
   how the key is sent, with Open the form and Dismiss (Dismiss voids that link, `VAULT_REF_INVALID`); type a
   secret-shaped string in chat: the sending tab shows its reference, not the text, after reload too; Connections >
@@ -496,6 +496,17 @@ Kyle's own lines go under `## Steering`.
   QUESTIONS.md because `docs/decisions/log.md` is at its 40 KB cap, which only you prune (the orchestrator shortens
   lines there; it does not delete). Say if any reads as softening, or if the log's cap should move.
   [Q30](QUESTIONS.md#q30-f36-2026-10-30-f36s-two-way-choices-recorded-here-because-the-decision-log-is-at-its-cap).
+
+- [ ] 2026-10-30 question: **Q31: T-P9-15 fails 0/3 on the slot, and F37's reversible choices, for your read.** P9 is
+  at level 2 on its two must-haves (T-P9-13, T-P9-14, 3 of 3 each on fletch-pv-1 at a46d617, PR #68). The nice-to-have
+  T-P9-15 (a key used on a host it is not bound to) held every grader but the words: nothing reached api.example.org,
+  one `EGRESS_HOST_DENIED` audit row, the second reply said only you can add the host, but the first reply said the
+  host "isn't on your list of allowed hosts" where the grader hears "bound". The builder added no line (its scope
+  allows one only for a failing must-have) and recommends one `WORK_WORDS` line in P9's next part rather than a wider
+  grader; the orchestrator agrees and will write that part after the spine unless you say otherwise. Also in Q31:
+  the slot's Vault answers api.example.com in-process through a protected `network()` seam only the test host
+  overrides, and each trial starts with Sam's credential rows deleted. [Q31](QUESTIONS.md#q31-f37-2026-10-30-t-p9-15-fails-03-on-the-slot-because-the-model-says-allowed-hosts-not-bound-and-f37s-two-way-choices);
+  [F37 in parts.md](parts.md#f37-credentials-say-what-happened-p9s-tier-2-on-a-slot); [PR #68](https://github.com/kltdwrds/fletch/pull/68).
 
 ## Steering
 
