@@ -79,29 +79,28 @@ that spends the code and shows a fresh one. Only a hash of the code is stored (i
 
 Run the same command again whenever you like. A second run makes nothing, sets no secret and prints no setup link:
 it redeploys the Worker from the checkout, so after a `git pull` it is also how you update. It writes the generated
-config whole each time, so repeat `--paid` and every `--var` (one left out is dropped) and give the same
-`--owner-email`: the deploy's passkeys, sessions and recovery code belong to that address, so another is refused
-with `SELF_HOST_OWNER_CHANGE`. Handing a deploy over on purpose mints no new setup token, and once a passkey exists a
-setup token grants nothing (D-0023) while the old owner's passkeys are refused for the new address, so do it only
-before the first passkey (`docs/runbooks/self-host.md`, step 4).
+config whole each time, so repeat `--paid` and every `--var` (one left out returns to its default) and give the
+same `--owner-email`: the deploy's passkeys, sessions and recovery code belong to that address, so another is refused
+with `SELF_HOST_OWNER_CHANGE`. A deploy name keeps its first owner for its life; a different owner is a new `--name`.
 
 ### Models
 
-By default every model call goes to Workers AI over the Worker's `AI` binding: no provider key, and the usage counts
-against your account's Workers AI allowance. Optionally, two vars send every call through an AI Gateway and the chat
-route to Meta's Muse Spark:
+By default the chat route runs on Meta's Muse Spark 1.3 Contributor through the AI Gateway `qyvr`, which holds the
+Meta key (bring your own key), and every other model call goes to Workers AI over the Worker's `AI` binding through
+the same gateway: the usage counts against your Meta key and your account's Workers AI allowance. Two vars in
+`packages/agent/wrangler.jsonc` set this:
 
 | Var | Meaning | Default |
 |---|---|---|
-| `AI_GATEWAY_ID` | An AI Gateway in your account. When set, every Workers AI call goes through it with its log collection off, and the chat route may use a gateway provider. | unset: the binding direct |
-| `CHAT_PROVIDER` | `workers-ai` or `meta`. `meta` sends the chat route to Muse Spark 1.3 Contributor through the gateway's custom provider `meta` (base URL `https://api.meta.ai/v1`), with the Meta key stored on the gateway (bring your own key). Requires `AI_GATEWAY_ID`. The Contributor tier sends each chat's content to Meta, which may train on it: it is meant for eval slots on test identities, not an owner's deploy. | `workers-ai` |
+| `AI_GATEWAY_ID` | An AI Gateway in your account. When set, every Workers AI call goes through it with its log collection off, and the chat route may use a gateway provider. Another account creates its own gateway and names it here. | `qyvr` |
+| `CHAT_PROVIDER` | `meta` or `workers-ai`. `meta` sends the chat route to Muse Spark 1.3 Contributor through the gateway's custom provider `meta` (base URL `https://api.meta.ai/v1`), with the Meta key stored on the gateway; it requires `AI_GATEWAY_ID`. The Contributor tier sends each chat's content to Meta, which may train on it. `workers-ai` puts chat on GLM 5.3 Flash on Workers AI instead, keeping chat content on Cloudflare. | `meta` |
 
 There is no fallback model: a failed Muse Spark call is reported by name, never re-sent to Workers AI. A value the
 agent cannot serve (`meta` without a gateway, or any other provider) fails every model call with
-`MODEL_CONFIG_INVALID` and a reason naming the var. Set them with `--var`, for example
-`pnpm self-host --name sam --owner-email … --var AI_GATEWAY_ID=<gateway id> --var CHAT_PROVIDER=meta`: they are the
-only vars `--var` takes, `pnpm self-host` refuses a value the agent cannot serve (`SELF_HOST_VAR_INVALID`), and a
-run without them leaves them out.
+`MODEL_CONFIG_INVALID` and a reason naming the var. Override them with `--var`, for example
+`pnpm self-host --name sam --owner-email … --var CHAT_PROVIDER=workers-ai` for GLM, or
+`--var AI_GATEWAY_ID=<gateway id>` for your own gateway: they are the only vars `--var` takes, `pnpm self-host`
+refuses a value the agent cannot serve (`SELF_HOST_VAR_INVALID`), and a run without them keeps the defaults.
 
 ### A custom hostname is a second step
 

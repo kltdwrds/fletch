@@ -13,7 +13,8 @@ acts for, what it may touch, what it remembers, what it ran, what it refused), p
 ## Promises
 
 - **Yours to run, not ours to host.** fletch is free software you deploy to your own account. There is no fletch
-  service in the middle: your conversations, memory, files and keys never pass through anyone else.
+  service in the middle: your conversations, memory, files and keys never pass through anyone else but the model
+  provider your config names, which sees each chat.
 - **Set up in minutes, on the free plan.** One command, run from a checkout of this repository, takes you from an
   account to a working agent, with no domain and no paid plan; anything that needs more is a visible second step,
   never a surprise. A packaged setup that needs no checkout is the platform's later work.

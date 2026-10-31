@@ -238,6 +238,9 @@ describe('self-host: a run', () => {
     const r = await selfHost(ctx(), parseSelfHostArgs(['--name', 'sam', '--owner-email', OTHER]));
     assert.equal(r.code, 'SELF_HOST_OWNER_CHANGE');
     assert.ok(r.reason.includes(EMAIL) && r.reason.includes(OTHER), r.reason);
+    // One owner path: a different owner is a new --name, and the reason offers no handover.
+    assert.match(r.reason, /a different owner is a new --name/);
+    assert.doesNotMatch(r.reason, /hand/);
     assert.deepEqual(since(before), []);
     assert.equal(acct.configs.get(CONFIG_FILE), written);
     // The same owner, however it is spelled, is no change; another deploy's config guards nothing here.
