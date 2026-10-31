@@ -13,6 +13,7 @@
     "preview": "node scripts/preview.mjs",
     "self-host": "node scripts/self-host.mjs",
     "redact": "node scripts/redact-capture.mjs",
+    "evidence-mirror": "node scripts/evidence-mirror.mjs",
     "evals": "node --conditions=development scripts/evals.ts",
     "ds": "node scripts/ds-tokens.ts",
     "lint": "biome lint .",
