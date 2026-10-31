@@ -114,7 +114,9 @@ describe('preview plan: the slot config', () => {
     assert.throws(() => slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', vars: { MASTER_KEY: 'k' } }), /not MASTER_KEY/);
     // The chat route's hedge is gone (D-0020), so its var is refused by name like any other.
     assert.throws(() => slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', vars: { CHAT_HEDGE: 'off' } }), /--var takes only AI_GATEWAY_ID, CHAT_PROVIDER; not CHAT_HEDGE/);
-    assert.equal(app.vars.CHAT_PROVIDER, undefined);
+    // Without a --var the base config's model vars carry: chat on Muse Spark through the gateway qyvr.
+    assert.deepEqual([app.vars.AI_GATEWAY_ID, app.vars.CHAT_PROVIDER], ['qyvr', 'meta']);
+    assert.equal(slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', vars: { CHAT_PROVIDER: 'workers-ai' } }).vars.CHAT_PROVIDER, 'workers-ai');
   });
 
   it('refuses a base config with a key or binding a slot does not know, rather than copy it', () => {

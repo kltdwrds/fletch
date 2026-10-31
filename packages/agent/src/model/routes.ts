@@ -1,23 +1,26 @@
-// Model routes (open-decisions.md D1): every route defaults to GLM 5.3 Flash on Workers AI, reached
-// over the `AI` binding with no key; DeepSeek V4 Pro serves UAT and smoke. The sub-agent and verifier
-// routes (M7.2) are D1's cheap model too, the verifier under a tight ceiling.
+// Model routes (open-decisions.md D1): each route's own model is GLM 5.3 Flash on Workers AI, reached over
+// the `AI` binding with no key, and the base config's vars move chat to Muse Spark (below); DeepSeek V4 Pro
+// serves UAT and smoke. The sub-agent and verifier routes (M7.2) are D1's cheap model too, the verifier under
+// a tight ceiling.
 //
-// How a deploy reaches models is its own configuration (`modelConfig`, D-0020), never a hardcoded gateway: a
-// self-host deploy sends every route to Workers AI over the binding and no gateway option at all. Setting the
-// `AI_GATEWAY_ID` var routes every call through that AI Gateway, and `CHAT_PROVIDER = "meta"` with it moves the
+// How a deploy reaches models is its own configuration (`modelConfig`, D-0020), never a hardcoded gateway: the
+// agent's base config (packages/agent/wrangler.jsonc) sets both vars, so a deploy that keeps them runs chat on Muse
+// Spark. With neither var, every route goes to Workers AI over the binding with no gateway option at all. Setting
+// the `AI_GATEWAY_ID` var routes every call through that AI Gateway, and `CHAT_PROVIDER = "meta"` with it moves the
 // chat route to Muse Spark 1.3 Contributor on Meta's own Model API, reached as the gateway's custom provider `meta`
 // with the key stored on the gateway. There is no fallback model: a Spark failure is the turn's, by name. Vars that
 // name something this deploy cannot reach fail every model call with `MODEL_CONFIG_INVALID`, never a quiet call to
 // Workers AI instead.
 import type { Model } from "@earendil-works/pi-ai";
 
-/** GLM 5.3 Flash on Workers AI: every route's model by default. */
+/** GLM 5.3 Flash on Workers AI: every route's own model, and chat's when `CHAT_PROVIDER=workers-ai`. */
 export const GLM_WORKERS_AI = "@cf/zai-org/glm-5.3-flash";
 /**
  * Muse Spark 1.3 Contributor on Meta's Model API (dev.meta.ai, 2026-10-30): the model Muse runs, at
- * Contributor prices, in exchange for Meta training on what is sent. For the parity loop's evals, which
- * carry only `test/fixtures/people.json` identities, never a deploy whose owner has not agreed to that.
- * Meta redacts the reasoning text for API keys, so a turn on it shows no thinking.
+ * Contributor prices, in exchange for Meta training on what is sent. The chat route's default (the base
+ * config's vars, D-0020): Kyle chose it on 2026-10-31 knowing that; a deploy that must keep chat content on
+ * Cloudflare sets `CHAT_PROVIDER=workers-ai`. Meta redacts the reasoning text for API keys, so a turn on it
+ * shows no thinking.
  */
 export const MUSE_SPARK_CONTRIBUTOR = "muse-spark-1.3-contributor";
 
@@ -44,10 +47,10 @@ export interface ModelConfigFault {
   provider: string;
   model: string;
 }
-/** A self-host deploy's models (spec section 2): Workers AI over the binding, no gateway, no key. */
-export const SELF_HOST_MODELS: ModelConfig = Object.freeze({ gatewayId: null, chatProvider: "workers-ai" });
+/** The models when neither var is set: Workers AI over the binding, no gateway, no key. */
+export const NO_VARS_MODELS: ModelConfig = Object.freeze({ gatewayId: null, chatProvider: "workers-ai" });
 
-/** The vars `modelConfig` reads; both optional, so a deploy that sets neither is a self-host one. */
+/** The vars `modelConfig` reads; both optional, and a deploy that sets neither gets `NO_VARS_MODELS`. */
 export interface ModelVars {
   AI_GATEWAY_ID?: string;
   CHAT_PROVIDER?: string;
@@ -69,7 +72,7 @@ export function modelConfig(env: ModelVars): ModelConfig {
   return { gatewayId, chatProvider: "meta" };
 }
 
-/** Each route's model on a self-host deploy; `routeModel` applies a deploy's configuration. */
+/** Each route's own model, on Workers AI; `routeModel` applies a deploy's configuration. */
 export const ROUTES = {
   chat: GLM_WORKERS_AI,
   compaction: GLM_WORKERS_AI,
@@ -85,7 +88,7 @@ export type ChatRoute = keyof typeof ROUTES;
 export type Route = ChatRoute | "embedding";
 
 /** The model `route` calls under `config`: Muse Spark for chat on Meta, else the route's own. */
-export function routeModel(route: ChatRoute, config: ModelConfig = SELF_HOST_MODELS): string {
+export function routeModel(route: ChatRoute, config: ModelConfig = NO_VARS_MODELS): string {
   return route === "chat" && config.chatProvider === "meta" ? MUSE_SPARK_CONTRIBUTOR : ROUTES[route];
 }
 
@@ -161,9 +164,9 @@ const MODEL_INPUT: Record<string, ReadonlyArray<"text" | "image">> = {
 };
 const inputOf = (model: string): Array<"text" | "image"> => [...(MODEL_INPUT[model] ?? ["text"])];
 /** Whether a route's model takes image input under `config`: an image goes to the model only then. */
-export const acceptsImages = (route: ChatRoute, config: ModelConfig = SELF_HOST_MODELS): boolean => inputOf(routeModel(route, config)).includes("image");
+export const acceptsImages = (route: ChatRoute, config: ModelConfig = NO_VARS_MODELS): boolean => inputOf(routeModel(route, config)).includes("image");
 
-export function modelFor(route: ChatRoute, config: ModelConfig = SELF_HOST_MODELS): Model<typeof BINDING_API> {
+export function modelFor(route: ChatRoute, config: ModelConfig = NO_VARS_MODELS): Model<typeof BINDING_API> {
   const id = routeModel(route, config);
   return {
     id,

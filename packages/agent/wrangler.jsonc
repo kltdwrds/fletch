@@ -37,7 +37,10 @@
     "TENANT_ID": "base",
     "TENANT_SHAPE": "standalone",
     "QYVR_ENV": "self-host",
-    "OWNER_EMAIL": ""
+    "OWNER_EMAIL": "",
+    // Chat on Muse Spark through the gateway `qyvr`, which holds the Meta key (BYOK); another account names its own gateway, and CHAT_PROVIDER=workers-ai puts chat on GLM.
+    "AI_GATEWAY_ID": "qyvr",
+    "CHAT_PROVIDER": "meta"
   },
   "observability": { "enabled": true, "head_sampling_rate": 1, "redact_query_string": true, "logs": { "invocation_logs": true }, "traces": { "enabled": true, "head_sampling_rate": 1 } }
 }

@@ -121,13 +121,15 @@ describe('self-host: the deploy config', () => {
     assert.equal(selfHostConfig(BASE, { ...opts, accountId: ACCT }).account_id, ACCT);
     assert.deepEqual(c.r2_buckets, [{ binding: 'AGENT_BUCKET', bucket_name: 'sam-agent' }]);
     assert.deepEqual(c.vectorize, [{ binding: 'MEMORY_INDEX', index_name: 'sam-memory' }]);
-    assert.deepEqual(c.vars, { TENANT_ID: 'sam', TENANT_SHAPE: 'standalone', QYVR_ENV: 'self-host', OWNER_EMAIL: EMAIL });
+    // The base config's model vars carry without a --var: chat on Muse Spark through the gateway qyvr.
+    assert.deepEqual(c.vars, { TENANT_ID: 'sam', TENANT_SHAPE: 'standalone', QYVR_ENV: 'self-host', OWNER_EMAIL: EMAIL, AI_GATEWAY_ID: 'qyvr', CHAT_PROVIDER: 'meta' });
     assert.deepEqual([c.durable_objects, c.exports, c.ai, c.compatibility_date], [BASE.durable_objects, BASE.exports, BASE.ai, BASE.compatibility_date]);
   });
 
-  it('adds only the model vars given, over the base vars', () => {
+  it('lays only the model vars given over the base vars', () => {
     const v = selfHostConfig(BASE, { ...opts, vars: { AI_GATEWAY_ID: 'gw', CHAT_PROVIDER: 'meta' } }).vars;
     assert.deepEqual(v, { TENANT_ID: 'sam', TENANT_SHAPE: 'standalone', QYVR_ENV: 'self-host', OWNER_EMAIL: EMAIL, AI_GATEWAY_ID: 'gw', CHAT_PROVIDER: 'meta' });
+    assert.deepEqual(selfHostConfig(BASE, { ...opts, vars: { CHAT_PROVIDER: 'workers-ai' } }).vars, { ...c.vars, CHAT_PROVIDER: 'workers-ai' });
     assert.throws(() => selfHostConfig(BASE, { ...opts, vars: { CHAT_HEDGE: 'off' } }), /CHAT_HEDGE/);
   });
 
