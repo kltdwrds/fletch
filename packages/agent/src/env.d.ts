@@ -11,8 +11,4 @@ interface Env {
   LOADER?: WorkerLoader;
   /** Cloudflare Images (M24.4): HEIC to JPEG. */
   IMAGES?: ImagesBinding;
-  /** An AI Gateway id: every model call goes through it. Unset on a self-host deploy, so no gateway option is sent (`model/routes.ts`). */
-  AI_GATEWAY_ID?: string;
-  /** `workers-ai` (the default) or `meta`, which puts the chat route on Muse Spark through `AI_GATEWAY_ID`'s stored BYOK key; any other value, or `meta` without a gateway, fails every model call with `MODEL_CONFIG_INVALID` (`model/routes.ts`). */
-  CHAT_PROVIDER?: string;
 }
