@@ -1,7 +1,8 @@
 ---
 id: D-0002
 title: The first passkey on a deploy needs a one-time setup token minted by create-fletch
-status: accepted
+status: superseded
+superseded-by: D-0023
 door: one-way
 decided: 2026-10-20
 decider: inherited
