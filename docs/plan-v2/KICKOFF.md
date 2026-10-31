@@ -41,6 +41,15 @@ stage. Work that is not a part is a plain PR (AGENTS.md, "Start here"); none of 
 - **Plant the guard.** Every check, gate and refusal the part adds has a test that plants the violation and fails
   without the guard, on the production path.
 - **Fix what a hook reports; never bypass it.** `.claude/hooks/no-hook-bypass.mjs` enforces it.
+- **A grader changes after a run only as an oracle correction** (Kyle, 2026-10-30, Q16/Q18/Q29). The correction
+  keeps three things in the diff: the reply the old grader refused, pinned verbatim in the task's tier-1 test as a
+  pass; a planted negative that the new grader still fails; and the failed run's results file, committed beside the
+  passing one. A grader change without all three is softening, and the verifier blocks on it. Moving a reply's words
+  from the model to code (as `pauseWords` did for T-P15-13) is allowed when the task's must-have is the behaviour the
+  words report, and the task then records that the words are tier 1.
+- **A must-have's tier-2 score is one declared run.** Before the run starts, name the task ids and the tree hash in
+  the PR; the score is that run's three trials on that tree. A trial recorded `infra` is rerun; a trial the model
+  failed is not. Earlier runs stay committed as evidence and are not the score.
 - **Deploy only to a preview slot or a throwaway account.** Never to an owner's deploy.
 
 ## How to work a part
