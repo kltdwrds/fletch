@@ -31,9 +31,11 @@ prints the setup link once (D-0023). The code is `scripts/self-host.mjs` (the ru
 
    Optional: `--account-id <32 hex>` when the login reaches several accounts (`pnpm exec wrangler whoami` lists
    them; without it wrangler's own error names the choice); `--paid` adds the Worker Loader (`LOADER`) and Images
-   (`IMAGES`) bindings, which need the Workers Paid plan; `--var AI_GATEWAY_ID=<gateway id>` sends every model call
-   through that AI Gateway, and with it `--var CHAT_PROVIDER=meta` puts chat on the gateway's custom provider `meta`.
-   No other var is taken.
+   (`IMAGES`) bindings, which need the Workers Paid plan. By default chat runs on Muse Spark through the AI Gateway
+   `qyvr`, which holds the Meta key, and every model call goes through that gateway (`packages/agent/wrangler.jsonc`);
+   `--var AI_GATEWAY_ID=<gateway id>` names another gateway (another account makes its own, with a Meta key stored on
+   its custom provider `meta`), and `--var CHAT_PROVIDER=workers-ai` puts chat on GLM 5.3 Flash on Workers AI. No other
+   var is taken.
 
 3. Open the printed setup link, register a passkey, and keep the recovery code the page shows.
 
@@ -45,11 +47,9 @@ prints the setup link once (D-0023). The code is `scripts/self-host.mjs` (the ru
    ```
 
    Each run writes the deploy's config whole from what it is given, so repeat `--paid` and every `--var` each time:
-   one left out is dropped from the deploy. A different `--owner-email` is refused (`SELF_HOST_OWNER_CHANGE`); to hand
-   the deploy to another owner on purpose, delete the generated config first. A handover mints no new setup token,
-   and once any passkey exists a setup token grants nothing (D-0023), while the previous owner's passkeys belong to
-   their address and are refused for the new one (`LOGIN_NOT_OWNER`): hand a deploy over only before its first
-   passkey, when the new owner registers through the setup link (lost: see the end of "What you see").
+   one left out returns to its default. A deploy name keeps its first owner for its life: a different `--owner-email`
+   is refused (`SELF_HOST_OWNER_CHANGE`), and a different owner is a new `--name`. The guard reads this checkout's
+   generated config, so from another checkout it does not fire: deploy from the checkout that made the deploy.
 
 ## What you see
 
@@ -71,8 +71,8 @@ A refusal is one line on stderr, `self-host: <CODE>: <reason>`, with exit code 1
 | `SELF_HOST_VAR_INVALID` | `CHAT_PROVIDER` is not `workers-ai` or `meta`, `meta` comes without an `AI_GATEWAY_ID`, or `AI_GATEWAY_ID` is empty. | Fix the value. |
 | `SELF_HOST_ARG_UNKNOWN` | An option it does not know, or one without its value. | Check the command against step 2. |
 | `SELF_HOST_WRANGLER_MISSING` | wrangler is not installed in this checkout. | `pnpm install`, then run again. |
-| `SELF_HOST_CONFIG_INVALID` | packages/agent/wrangler.jsonc has a binding a self-host deploy does not know, or the generated config from an earlier run is not JSON. | Pull a fixed checkout, or delete the generated config. |
-| `SELF_HOST_OWNER_CHANGE` | The deploy was made for another owner; this run would lock that owner out. | Run with the first owner's address, or delete the generated config to hand it over. |
+| `SELF_HOST_CONFIG_INVALID` | packages/agent/wrangler.jsonc has a binding a self-host deploy does not know, or the generated config from an earlier run is not JSON. | Pull a fixed checkout, or delete the generated config and run again with the deploy's first owner. |
+| `SELF_HOST_OWNER_CHANGE` | The deploy was made for another owner; this run would lock that owner out. | Run with the first owner's address; a different owner is a new `--name`. |
 | `SELF_HOST_NOT_LOGGED_IN` | `wrangler whoami` finds no login. | `pnpm exec wrangler login`, then run again. |
 | `SELF_HOST_INDEX_SHAPE` | `<name>-memory` already exists with other dimensions or another metric than 768 and cosine. | Pick another name, or delete that index if nothing in it is needed. |
 | `SELF_HOST_DEPLOY_FAILED` | A wrangler step failed (listing, making, deploying, secrets), with wrangler's last lines, or the deploy named no `workers.dev` URL. No secret is set before the deploy succeeds. | Fix what wrangler said and run again. |

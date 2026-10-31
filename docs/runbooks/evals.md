@@ -20,13 +20,13 @@ the chat socket).
    pnpm preview up
    ```
 
-   That runs the slot's chat on the self-host default, GLM 5.3 Flash on Workers AI. To run it on the model Muse runs,
-   Muse Spark 1.3 Contributor on Meta's Model API through the account's AI Gateway (its custom provider `meta`, base URL
-   `https://api.meta.ai/v1`, with a Meta key stored on the gateway for it); there is no fallback model, so every trial
-   is that model's own answer (D-0020):
+   That runs the slot's chat on the default, the model Muse runs: Muse Spark 1.3 Contributor on Meta's Model API
+   through the account's AI Gateway `qyvr` (its custom provider `meta`, base URL `https://api.meta.ai/v1`, with a Meta
+   key stored on the gateway for it); there is no fallback model, so every trial is that model's own answer (D-0020).
+   To run the same tasks on the alternative, GLM 5.3 Flash on Workers AI:
 
    ```bash
-   pnpm preview up --var AI_GATEWAY_ID=<gateway> --var CHAT_PROVIDER=meta
+   pnpm preview up --var CHAT_PROVIDER=workers-ai
    ```
 
    A results file does not record the model; name it in the run's note. The Ledger does, per call, on the slot's

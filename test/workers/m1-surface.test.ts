@@ -1,7 +1,7 @@
 // M1.2: the chat surface through the agent script's routes, the `Person`'s chats and the `Chat`
 // engine, each over the object harness, with the two solo-sam members Sam Solo and Pat. The
-// Agents SDK hosts (`objects/chat.ts`, `objects/person.ts`) are thin over these and run live on
-// staging (test/m1/chat.live.test.ts); the decisions they make are the ones tested here.
+// Agents SDK hosts (`objects/chat.ts`, `objects/person.ts`) are thin over these, with no live test of their
+// own; the decisions they make are the ones tested here.
 import { describe, expect, it } from "vitest";
 import { ChatEngine, type EngineCtx } from "../../packages/agent/src/chat/engine.ts";
 import { admit, ownerOnly, parseClientFrame } from "../../packages/agent/src/chat/protocol.ts";

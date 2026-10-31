@@ -53,7 +53,7 @@ After adding or changing a record, run `node scripts/check-decisions.mjs --write
 | Id | Decision | Status | Door | Decided | Review by |
 |---|---|---|---|---|---|
 | [D-0001](0001-refusals-carry-host-codes.md) | A capability this deploy lacks is refused with a `HOST_<FEATURE>_UNAVAILABLE` code, never faked | accepted | one-way | 2026-10-20 | 2026-11-21 |
-| [D-0002](0002-first-passkey-needs-setup-token.md) | The first passkey on a deploy needs a one-time setup token minted by create-fletch | accepted | one-way | 2026-10-20 | 2026-11-21 |
+| [D-0002](0002-first-passkey-needs-setup-token.md) | The first passkey on a deploy needs a one-time setup token minted by create-fletch | superseded | one-way | 2026-10-20 | 2026-11-21 |
 | [D-0003](0003-primitives-never-depend-on-the-app.md) | The published primitives never import the agent, and @qyvr/host imports no platform | accepted | one-way | 2026-10-19 | 2026-11-21 |
 | [D-0004](0004-paid-bindings-are-opt-in.md) | Code Mode and Images are not in the base config; create-fletch --paid adds them | superseded | two-way | 2026-10-20 |  |
 | [D-0005](0005-create-fletch-deploys-from-a-checkout.md) | create-fletch deploys the agent from a fletch checkout, not from a published package | superseded | two-way | 2026-10-20 | 2027-01-20 |
@@ -74,5 +74,5 @@ After adding or changing a record, run `node scripts/check-decisions.mjs --write
 | [D-0020](0020-chat-model-two-providers-no-hedge.md) | The agent reaches models two ways, Workers AI and Meta through an AI Gateway, with no fallback model; invalid model vars fail every call by name | accepted | two-way | 2026-10-30 |  |
 | [D-0021](0021-paid-bindings-opt-in-self-host.md) | Code Mode and Images are not in the base config; pnpm self-host --paid adds them | accepted | two-way | 2026-10-30 |  |
 | [D-0022](0022-self-host-deploys-from-a-checkout.md) | pnpm self-host deploys the agent from a fletch checkout on the owner's wrangler login; there is no setup package | accepted | two-way | 2026-10-30 |  |
-| [D-0023](0023-setup-token-minted-by-self-host.md) | The first passkey on a deploy needs a one-time setup token minted by pnpm self-host | proposed | one-way | 2026-10-30 | 2026-12-31 |
+| [D-0023](0023-setup-token-minted-by-self-host.md) | The first passkey on a deploy needs a one-time setup token minted by pnpm self-host | accepted | one-way | 2026-10-31 | 2026-12-31 |
 <!-- index:end -->

@@ -20,8 +20,9 @@ and shown to the owner by name, never as empty or success (`test/workers/f1-refu
 - **One model path.** The model is called only from `packages/agent/src/model/`: Workers AI over the `AI` binding,
   through a gateway only when `AI_GATEWAY_ID` is set, and Meta's Muse Spark for chat only when `CHAT_PROVIDER=meta`
   is set with it; no fallback model, and invalid vars fail every call by name (D-0020, `test/workers/f1-models.test.ts`).
-  Muse Spark's Contributor tier sends the chat's content to Meta, which may train on it: it is for eval slots on test
-  identities (`test/fixtures/people.json`), never an owner's deploy.
+  The base config sets `AI_GATEWAY_ID=qyvr` and `CHAT_PROVIDER=meta`, so Muse Spark is the default chat model and
+  GLM (`CHAT_PROVIDER=workers-ai`) the alternative. Its Contributor tier sends the chat's content to Meta, which may
+  train on it; a deploy that must keep chat content on Cloudflare sets `CHAT_PROVIDER=workers-ai`.
 - **Migrations are append-only**, one list per object in `packages/agent/src/migrations/`, run in the constructor.
 - **Paid-plan bindings are optional.** `LOADER` and `IMAGES` are not in the base config, so `wrangler types` keeps
   them optional in `packages/agent/src/env.d.ts`; `pnpm self-host --paid` adds them (D-0021).

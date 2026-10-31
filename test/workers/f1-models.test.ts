@@ -1,9 +1,10 @@
-// F1, D-0020: how a deploy reaches models. A self-host deploy (spec section 2, "Assumed") sends every route to
-// Workers AI over the AI binding with no key and no AI Gateway option; a gateway is used only when the deploy
-// sets `AI_GATEWAY_ID`, and Meta's Muse Spark (BYOK through that gateway, as its custom provider `meta`) only
-// when it also sets `CHAT_PROVIDER=meta`. There is no other provider and no fallback model, and vars that name
-// what the deploy cannot reach fail every model call by name. Every claim runs the production engine, adapter
-// and Ledger over the scripted fake, with the vars the agent's own `packages/agent/wrangler.jsonc` ships.
+// F1, D-0020: how a deploy reaches models. The agent's own `packages/agent/wrangler.jsonc` ships
+// `AI_GATEWAY_ID=qyvr` and `CHAT_PROVIDER=meta`, so a deploy that keeps its vars runs chat on Meta's Muse Spark
+// (BYOK through that gateway, as its custom provider `meta`) and every other route on Workers AI through the same
+// gateway; `CHAT_PROVIDER=workers-ai` is the alternative, GLM 5.3 Flash. With neither var every route goes to
+// Workers AI over the AI binding with no key and no AI Gateway option. There is no other provider and no
+// fallback model, and vars that name what the deploy cannot reach fail every model call by name. Every claim
+// runs the production engine, adapter and Ledger over the scripted fake.
 import { normalizeContext } from "@earendil-works/pi-ai";
 import { describe, expect, it } from "vitest";
 import { experimental_readRawConfig } from "wrangler";
@@ -11,7 +12,7 @@ import { ChatEngine, type EngineCtx } from "../../packages/agent/src/chat/engine
 import { admitPolicy, costMicros, isPriced } from "../../packages/agent/src/ledger/budget.ts";
 import type { ModelCallRow } from "../../packages/agent/src/ledger/types.ts";
 import { createStreamFn, embed } from "../../packages/agent/src/model/adapter.ts";
-import { acceptsImages, CALL_BOUNDS, type ChatRoute, DEFAULT_TIER, GLM_WORKERS_AI, MODEL_TIERS, modelConfig, modelFor, MUSE_SPARK_CONTRIBUTOR, ROUTES, routeModel, SELF_HOST_MODELS } from "../../packages/agent/src/model/routes.ts";
+import { acceptsImages, CALL_BOUNDS, type ChatRoute, DEFAULT_TIER, GLM_WORKERS_AI, MODEL_TIERS, MUSE_SPARK_CONTRIBUTOR, modelConfig, modelFor, NO_VARS_MODELS, ROUTES, routeModel } from "../../packages/agent/src/model/routes.ts";
 import { providerName, requestBody } from "../../packages/agent/src/model/transport.ts";
 import { Ledger } from "../../packages/agent/src/objects/ledger.ts";
 import { FakeModel, type FakeStep } from "../support/fake-model.ts";
@@ -23,20 +24,23 @@ const T0 = Date.UTC(2026, 9, 20, 9, 0, 0);
 
 /** The vars the agent's base config ships, read with wrangler's own reader, as scripts/preview-plan.mjs does. */
 const BASE_VARS = experimental_readRawConfig({ config: "packages/agent/wrangler.jsonc" }).rawConfig.vars as Record<string, string>;
-const SELF_HOST_VARS: Record<string, string> = { ...BASE_VARS, TENANT_ID: "base", OWNER_EMAIL: sam.email };
-const META_VARS = { ...SELF_HOST_VARS, AI_GATEWAY_ID: "my-gateway", CHAT_PROVIDER: "meta" };
+/** A deploy of the base config as it ships: its own tenant and owner, the model vars untouched. */
+const DEPLOY_VARS: Record<string, string> = { ...BASE_VARS, TENANT_ID: "base", OWNER_EMAIL: sam.email };
+/** The same deploy with neither model var: Workers AI over the binding, no gateway. */
+const { AI_GATEWAY_ID: _gateway, CHAT_PROVIDER: _provider, ...NO_MODEL_VARS } = DEPLOY_VARS;
+const META_VARS = { ...DEPLOY_VARS, AI_GATEWAY_ID: "my-gateway", CHAT_PROVIDER: "meta" };
 
 /** One chat turn through the production engine and Ledger, on an env with `vars`. */
-async function turn(vars: Record<string, string>, script: FakeStep[] = [{ text: "Hello." }]) {
+async function turn(vars: Record<string, string>, script: FakeStep[] = [{ text: "Hello." }], fetch?: (input: string, init: RequestInit) => Promise<Response>) {
   const fake = new FakeModel(script);
   const ledgers = harnessNamespace((name) => new ObjectHarness(name, (ctx, env) => new Ledger(ctx as DurableObjectState, env as Env), { QYVR_ENV: vars.QYVR_ENV }));
-  const env = { ...vars, AI: fake.binding, LEDGER: ledgers.binding };
+  const env = { ...vars, AI: fetch ? { ...fake.binding, fetch } : fake.binding, LEDGER: ledgers.binding };
   const chat = new ObjectHarness("chat-sam", (ctx, e) => new ChatEngine(ctx as EngineCtx, e as Env), env, (c) => {
     c.now = () => T0;
     c.wait = async () => {};
   });
   const result = await chat.instance.send({ person: sam.email, text: "Hi" });
-  return { fake, result, calls: () => ledgers.harness("base").instance.modelCalls() };
+  return { fake, result, chat, calls: () => ledgers.harness("base").instance.modelCalls() };
 }
 
 const embedOn = async (vars: Record<string, string>) => {
@@ -46,24 +50,92 @@ const embedOn = async (vars: Record<string, string>) => {
   return { fake, out, rows };
 };
 
-describe("[F1] a self-host deploy's models", () => {
-  it("the agent's config sets no gateway and no chat provider, so its config is Workers AI with no gateway", () => {
-    expect(BASE_VARS).not.toHaveProperty("AI_GATEWAY_ID");
-    expect(BASE_VARS).not.toHaveProperty("CHAT_PROVIDER");
-    expect(modelConfig(SELF_HOST_VARS)).toEqual(SELF_HOST_MODELS);
-    expect(SELF_HOST_MODELS).toEqual({ gatewayId: null, chatProvider: "workers-ai" });
+describe("[F1] the base config's models: Muse Spark for chat through the gateway qyvr", () => {
+  it("the agent's config names the gateway qyvr and the chat provider meta, so chat is Muse Spark 1.3 Contributor and nothing falls back", () => {
+    expect(BASE_VARS).toMatchObject({ AI_GATEWAY_ID: "qyvr", CHAT_PROVIDER: "meta" });
+    const config = modelConfig(DEPLOY_VARS);
+    expect(config).toEqual({ gatewayId: "qyvr", chatProvider: "meta" });
+    expect(routeModel("chat", config)).toBe(MUSE_SPARK_CONTRIBUTOR);
+    for (const route of ["compaction", "job", "subagent", "verifier", "caption"] as const) expect(routeModel(route, config), route).toBe(GLM_WORKERS_AI);
+  });
+
+  it("a chat turn on the shipped vars calls Muse Spark through the gateway qyvr's custom provider, and the Ledger row names Meta", async () => {
+    const { fake, result, calls } = await turn(DEPLOY_VARS);
+    expect(result).toMatchObject({ status: "done" });
+    expect(fake.requests).toHaveLength(1);
+    expect(fake.requests[0]?.model).toBe(MUSE_SPARK_CONTRIBUTOR);
+    expect(fake.requests[0]?.passthrough).toMatchObject({ gatewayId: "qyvr", provider: "custom-meta", endpoint: "chat/completions" });
+    expect((await calls()).map((r) => [r.model, r.provider, r.status])).toEqual([[MUSE_SPARK_CONTRIBUTOR, "meta", "ok"]]);
+  });
+
+  it("CHAT_PROVIDER=workers-ai over the shipped vars is the alternative: chat on GLM over the binding, still through the gateway", async () => {
+    const vars = { ...DEPLOY_VARS, CHAT_PROVIDER: "workers-ai" };
+    expect(modelConfig(vars)).toEqual({ gatewayId: "qyvr", chatProvider: "workers-ai" });
+    const { fake, result, calls } = await turn(vars);
+    expect(result).toMatchObject({ status: "done" });
+    expect(fake.requests[0]?.model).toBe(GLM_WORKERS_AI);
+    expect(fake.requests[0]?.passthrough).toBeUndefined();
+    expect(fake.requests[0]?.options.gateway).toEqual({ id: "qyvr", collectLog: false });
+    expect((await calls()).map((r) => [r.model, r.provider])).toEqual([[GLM_WORKERS_AI, "workers-ai"]]);
+  });
+
+  it("every route's model under the shipped vars and with neither var is priced and in the default tier, so turn one is never refused MODEL_UNPRICED", () => {
+    for (const config of [modelConfig(DEPLOY_VARS), NO_VARS_MODELS]) {
+      for (const route of ["chat", "compaction", "job", "subagent", "verifier", "caption"] as const) {
+        const model = routeModel(route, config);
+        expect(isPriced(model), `${route}: ${model}`).toBe(true);
+        expect(admitPolicy({ modelTier: DEFAULT_TIER, disabled: [] }, { person: sam.email, runId: "r", model })).toEqual({ ok: true });
+      }
+    }
+  });
+
+  it("Meta's documented stream, usage null on every delta and the totals on a last chunk with no choices, writes those totals to the Ledger row", async () => {
+    // The shape of Meta's Chat Completions stream with `stream_options.include_usage` as its reference documents it
+    // (dev.meta.ai, read 2026-10-30): planted from the documentation, not a recording of a live call.
+    const head = { id: "chatcmpl-doc", object: "chat.completion.chunk", created: 1_761_800_000, model: MUSE_SPARK_CONTRIBUTOR };
+    const chunks = [
+      { ...head, choices: [{ index: 0, delta: { role: "assistant", content: "" }, finish_reason: null }], usage: null },
+      { ...head, choices: [{ index: 0, delta: { content: "Hello" }, finish_reason: null }], usage: null },
+      { ...head, choices: [{ index: 0, delta: { content: "." }, finish_reason: null }], usage: null },
+      { ...head, choices: [{ index: 0, delta: {}, finish_reason: "stop" }], usage: null },
+      { ...head, choices: [], usage: { prompt_tokens: 1_234, completion_tokens: 56, total_tokens: 1_290 } },
+    ];
+    const body = `${chunks.map((c) => `data: ${JSON.stringify(c)}\n\n`).join("")}data: [DONE]\n\n`;
+    const asked: string[] = [];
+    const bodies: Array<Record<string, unknown>> = [];
+    const planted = async (input: string, init: RequestInit) => {
+      asked.push(input);
+      bodies.push(JSON.parse(String(init.body)));
+      return new Response(body, { status: 200, headers: { "content-type": "text/event-stream" } });
+    };
+    const { result, chat, calls } = await turn(DEPLOY_VARS, [], planted);
+    expect(result).toMatchObject({ status: "done" });
+    const answer = chat.rows("SELECT body FROM messages").map((r) => JSON.parse(String(r.body))).find((m) => m.role === "assistant");
+    expect(answer?.content).toEqual([{ type: "text", text: "Hello." }]);
+    expect(asked).toEqual(["https://workers-binding.ai/ai-gateway/gateways/qyvr/custom-meta/chat/completions"]);
+    // The documented shape is the answer to a request that asked for usage in the stream.
+    expect(bodies[0]?.stream_options).toEqual({ include_usage: true });
+    const rows = await calls();
+    expect(rows.map((r) => [r.provider, r.model, r.status, r.inputTokens, r.outputTokens])).toEqual([["meta", MUSE_SPARK_CONTRIBUTOR, "ok", 1_234, 56]]);
+  });
+});
+
+describe("[F1] a deploy with neither model var", () => {
+  it("is Workers AI with no gateway", () => {
+    expect(modelConfig(NO_MODEL_VARS)).toEqual(NO_VARS_MODELS);
+    expect(NO_VARS_MODELS).toEqual({ gatewayId: null, chatProvider: "workers-ai" });
   });
 
   it("every route is Workers AI's, and every route's model is in the default tier", () => {
     for (const route of Object.keys(ROUTES) as ChatRoute[]) {
-      expect(providerName(routeModel(route, SELF_HOST_MODELS)), route).toBe("workers-ai");
-      expect(modelFor(route, SELF_HOST_MODELS).provider, route).toBe("cloudflare-workers-ai");
+      expect(providerName(routeModel(route, NO_VARS_MODELS)), route).toBe("workers-ai");
+      expect(modelFor(route, NO_VARS_MODELS).provider, route).toBe("cloudflare-workers-ai");
       expect(MODEL_TIERS.standard, route).toContain(ROUTES[route]);
     }
   });
 
   it("a chat turn calls Workers AI's GLM over the binding with no gateway option and no gateway passthrough", async () => {
-    const { fake, result } = await turn(SELF_HOST_VARS);
+    const { fake, result } = await turn(NO_MODEL_VARS);
     expect(result).toMatchObject({ status: "done" });
     expect(fake.requests).toHaveLength(1);
     expect(fake.requests[0]?.model).toBe(GLM_WORKERS_AI);
@@ -72,23 +144,15 @@ describe("[F1] a self-host deploy's models", () => {
   });
 
   it("an embedding call carries no gateway option", async () => {
-    const { fake, out } = await embedOn(SELF_HOST_VARS);
+    const { fake, out } = await embedOn(NO_MODEL_VARS);
     expect(out).toMatchObject({ ok: true });
     expect(fake.embeddingRequests[0]?.options).not.toHaveProperty("gateway");
-  });
-
-  it("every default route's model is priced and in the default tier, so turn one is never refused MODEL_UNPRICED", () => {
-    for (const route of ["chat", "compaction", "job", "subagent", "verifier", "caption"] as const) {
-      const model = routeModel(route, SELF_HOST_MODELS);
-      expect(isPriced(model), `${route}: ${model}`).toBe(true);
-      expect(admitPolicy({ modelTier: DEFAULT_TIER, disabled: [] }, { person: sam.email, runId: "r", model })).toEqual({ ok: true });
-    }
   });
 });
 
 describe("[F1] a deploy that configures a gateway", () => {
   it("with AI_GATEWAY_ID alone, chat and embeddings stay on Workers AI and carry that gateway with logs off", async () => {
-    const vars = { ...SELF_HOST_VARS, AI_GATEWAY_ID: "my-gateway" };
+    const vars = { ...NO_MODEL_VARS, AI_GATEWAY_ID: "my-gateway" };
     const { fake, result } = await turn(vars);
     expect(result).toMatchObject({ status: "done" });
     expect(fake.requests[0]?.model).toBe(GLM_WORKERS_AI);
@@ -137,7 +201,7 @@ describe("[F1] a deploy that configures a gateway", () => {
   it("CHAT_PROVIDER is read trimmed and in any case", () => {
     expect(modelConfig({ AI_GATEWAY_ID: " g ", CHAT_PROVIDER: " Meta " })).toEqual({ gatewayId: "g", chatProvider: "meta" });
     expect(modelConfig({ AI_GATEWAY_ID: "g", CHAT_PROVIDER: "Workers-AI" })).toEqual({ gatewayId: "g", chatProvider: "workers-ai" });
-    expect(modelConfig({ CHAT_PROVIDER: "  " })).toEqual(SELF_HOST_MODELS);
+    expect(modelConfig({ CHAT_PROVIDER: "  " })).toEqual(NO_VARS_MODELS);
   });
 
   it("a Muse answer whose model is named by a dated id is priced as the model asked for, not the unpriced fallback", async () => {
@@ -175,7 +239,7 @@ describe("[F1] a deploy that configures a gateway", () => {
 
 describe("[F1] model vars this deploy cannot serve are refused by name (D-0001)", () => {
   it("CHAT_PROVIDER=meta without AI_GATEWAY_ID fails the chat turn with MODEL_CONFIG_INVALID naming AI_GATEWAY_ID, and no model is called", async () => {
-    const { fake, result, calls } = await turn({ ...SELF_HOST_VARS, CHAT_PROVIDER: "meta" });
+    const { fake, result, calls } = await turn({ ...NO_MODEL_VARS, CHAT_PROVIDER: "meta" });
     expect(result).toMatchObject({ status: "failed", code: "MODEL_CONFIG_INVALID" });
     expect((result as { detail: string }).detail).toContain("AI_GATEWAY_ID");
     expect(fake.requests).toHaveLength(0);
@@ -184,7 +248,7 @@ describe("[F1] model vars this deploy cannot serve are refused by name (D-0001)"
   });
 
   it("a CHAT_PROVIDER this deploy does not know fails with MODEL_CONFIG_INVALID naming the var and the value, even with a gateway", async () => {
-    const { fake, result, calls } = await turn({ ...SELF_HOST_VARS, AI_GATEWAY_ID: "my-gateway", CHAT_PROVIDER: "openrouter" });
+    const { fake, result, calls } = await turn({ ...DEPLOY_VARS, CHAT_PROVIDER: "openrouter" });
     expect(result).toMatchObject({ status: "failed", code: "MODEL_CONFIG_INVALID" });
     expect((result as { detail: string }).detail).toMatch(/CHAT_PROVIDER.*openrouter/);
     expect(fake.requests).toHaveLength(0);
@@ -203,7 +267,7 @@ describe("[F1] model vars this deploy cannot serve are refused by name (D-0001)"
   });
 
   it("the fault holds every route, embeddings included: none falls back to Workers AI", async () => {
-    const bad = { ...SELF_HOST_VARS, CHAT_PROVIDER: "meta" };
+    const bad = { ...NO_MODEL_VARS, CHAT_PROVIDER: "meta" };
     expect(modelConfig(bad)).toMatchObject({ chatProvider: "workers-ai", fault: { code: "MODEL_CONFIG_INVALID" } });
     const embedded = await embedOn(bad);
     expect(embedded.out).toMatchObject({ ok: false, code: "MODEL_CONFIG_INVALID" });
@@ -258,7 +322,7 @@ describe("[F1] with no fallback model, the chat route's total bound holds the wh
   });
 
   it("on Workers AI, an attempt after a Retry-After wait gets only what is left of the bound", async () => {
-    const c = chatCall(SELF_HOST_VARS, [{ status: 429, retryAfter: 50 }, { silent: true }]);
+    const c = chatCall(NO_MODEL_VARS, [{ status: 429, retryAfter: 50 }, { silent: true }]);
     await c.fake.requested(2);
     expect(c.fake.requests).toHaveLength(2);
     expect(c.live().map((t) => t.ms)).toEqual([BOUNDS.firstTokenMs, BOUNDS.totalMs - 50_000]);
@@ -270,7 +334,7 @@ describe("[F1] with no fallback model, the chat route's total bound holds the wh
 
   it("a wait that overran the Retry-After past the bound ends the call MODEL_CALL_TIMEOUT before another attempt is sent", async () => {
     // The 50 s wait asked for takes 190 s (an evicted isolate, a slow alarm): no time is left, so no second request.
-    const c = chatCall(SELF_HOST_VARS, [{ status: 429, retryAfter: 50 }, { text: "too late" }], 140_000);
+    const c = chatCall(NO_MODEL_VARS, [{ status: 429, retryAfter: 50 }, { text: "too late" }], 140_000);
     const message = await c.result;
     expect(message.errorMessage).toMatch(/^MODEL_CALL_TIMEOUT: the call did not finish within 180000 ms/);
     expect(c.fake.requests).toHaveLength(1);

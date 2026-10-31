@@ -13,7 +13,10 @@ export interface ModelCallRow {
   route: Route;
   /** The model that answered as the provider named it, else the one asked for. */
   model: string;
-  /** Who served the call: `workers-ai` or `meta` (D-0020). */
+  /**
+   * Who served the call: `workers-ai` or `meta` (D-0020); on a chat row refused `MODEL_CONFIG_INVALID`, the
+   * `CHAT_PROVIDER` value the vars asked for, as read (trimmed, lower-cased, at most 40 characters).
+   */
   provider?: string | null;
   /** The model id the call asked for, when the provider named the answer another (a dated id): the price falls back to it. */
   asked?: string;

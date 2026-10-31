@@ -1,7 +1,7 @@
 // How a model is reached (D1, AD-11; D-0020). Every path is the tenant's `AI` binding, so no token or
 // provider key is in a tenant script:
 // - Workers AI: `ai.run(model, inputs, { returnRawResponse })`, plus `{ gateway }` with the gateway's
-//   log collection off only when the deploy configures `AI_GATEWAY_ID` (a self-host deploy does not).
+//   log collection off only when the deploy configures `AI_GATEWAY_ID` (the base config does).
 // - Meta: the configured gateway's provider-native path over the binding's fetch passthrough,
 //   `https://workers-binding.ai/ai-gateway/gateways/<id>/custom-meta/chat/completions`, with no provider
 //   authorization header, so the gateway serves it with the BYOK key stored for that provider (credential
@@ -9,11 +9,11 @@
 //   needs no gateway token. Meta's Model API is the gateway's custom provider `meta` (base URL
 //   https://api.meta.ai/v1, added in the dashboard), which the gateway names `custom-meta`. Only a deploy
 //   that configures both a gateway and `CHAT_PROVIDER=meta` takes this path.
-import { type ChatProvider, type ModelConfig, providerOf, REASONING_EFFORT, type Route, SELF_HOST_MODELS } from "./routes.ts";
+import { type ChatProvider, type ModelConfig, NO_VARS_MODELS, providerOf, REASONING_EFFORT, type Route } from "./routes.ts";
 import type { WireMessage, WireTool } from "./wire.ts";
 
 /** The gateway option a call carries under `config`: none unless the deploy configured a gateway. */
-export function gatewayOption(config: ModelConfig = SELF_HOST_MODELS): { id: string; collectLog: false } | undefined {
+export function gatewayOption(config: ModelConfig = NO_VARS_MODELS): { id: string; collectLog: false } | undefined {
   return config.gatewayId ? { id: config.gatewayId, collectLog: false } : undefined;
 }
 /**
@@ -58,7 +58,7 @@ export class ModelConfigInvalid extends Error {
 }
 
 /** Sends one request; resolves with the provider's raw response, whatever its status. */
-export function send(ai: Ai, model: string, body: Record<string, unknown>, signal: AbortSignal, config: ModelConfig = SELF_HOST_MODELS): Promise<Response> {
+export function send(ai: Ai, model: string, body: Record<string, unknown>, signal: AbortSignal, config: ModelConfig = NO_VARS_MODELS): Promise<Response> {
   const gateway = gatewayOption(config);
   if (providerOf(model) === "meta") {
     // `modelConfig` names Meta only with a gateway configured; this guards a caller that skipped it.

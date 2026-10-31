@@ -45,7 +45,7 @@ describe("[M22.1] no tenant config or bundle holds a token", () => {
   });
 });
 
-/** Ada's chat over the production engine and Ledger on a self-host deploy's vars. */
+/** Ada's chat over the production engine and Ledger on a deploy with neither model var. */
 function world(script: FakeStep[]) {
   const fake = new FakeModel(script);
   const ledgers = harnessNamespace((name) => new ObjectHarness(name, (ctx, env) => new Ledger(ctx as DurableObjectState, env as Env), {}, (l) => {

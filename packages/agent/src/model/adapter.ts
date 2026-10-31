@@ -49,7 +49,7 @@ export interface AdapterDeps {
   schedule?: (fn: () => void, ms: number) => () => void;
   /** Sees the raw stream text as it arrives; only the staging stream recording sets it. */
   tap?: (raw: string) => void;
-  /** How the deploy reaches models (`modelConfig(env)`); absent, a self-host deploy's: Workers AI, no gateway. */
+  /** How the deploy reaches models (`modelConfig(env)`); absent, `NO_VARS_MODELS`: Workers AI, no gateway. */
   models?: ModelConfig;
 }
 

@@ -38,11 +38,14 @@ eval to measure the configured model alone. OpenRouter had no remaining user.
 
 ## Consequences
 
-- **Muse Spark is for evals, not owners.** The Contributor tier is priced in exchange for Meta training on what is
-  sent, so `CHAT_PROVIDER=meta` sends each chat's content to Meta, who may train on it. That is at odds with
-  VISION.md's promise that an owner's conversations pass through no one else, so it is meant for the parity loop's
-  eval slots, whose chats carry only `test/fixtures/people.json` identities, never an owner's deploy (the README's
-  Models table, `packages/agent/AGENTS.md` and the comment on `MUSE_SPARK_CONTRIBUTOR` say the same).
+- **Muse Spark is the default (2026-10-31).** The Contributor tier is priced in exchange for Meta training on what
+  is sent, so `CHAT_PROVIDER=meta` sends each chat's content to Meta, who may train on it. Kyle chose Muse Spark as
+  the default on 2026-10-31 knowing that ("muse is default now"; GLM is the backup and the alternative model to test,
+  not the happy path), and the base config sets `AI_GATEWAY_ID=qyvr` and `CHAT_PROVIDER=meta`; this incubation's
+  deploys accept that. A deploy that must keep chat content on Cloudflare sets `CHAT_PROVIDER=workers-ai` (GLM).
+  Eval slots still carry only `test/fixtures/people.json` identities. VISION.md's promise names the model provider
+  the config names as the one party that sees each chat (the README's Models table, `packages/agent/AGENTS.md` and
+  the comment on `MUSE_SPARK_CONTRIBUTOR` say the same).
 - A refused chat row names the provider and model the vars asked for (`meta` and Muse Spark, or the unknown value),
   never the Workers AI model the faulted config falls back to.
 

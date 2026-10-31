@@ -133,7 +133,7 @@ export function deployConfig(raw, { name, r2, vectorize, vars = {}, paid = false
  * and its storage (idempotent, and harmless for a class never made: verified 2026-10-22), so a release wipes the
  * agent's state. `deploy` is a random id the slot echoes, so a deploy is known live; `paid` adds the paid-plan bindings
  * as `pnpm self-host --paid` does (D-0021); `vars` are the model vars of `SLOT_VAR_KEYS` (`pnpm preview up --var K=V`),
- * so a slot can run its chat on another model than the self-host default.
+ * laid over the base config's own, so a slot can run its chat on another model than the default.
  */
 export function slotConfig(raw, plan, { accountId, placeholder = false, deploy, paid = false, vars = {} }) {
   const strangeVars = Object.keys(vars).filter((k) => !SLOT_VAR_KEYS.includes(k));
