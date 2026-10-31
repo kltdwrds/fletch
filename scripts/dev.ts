@@ -3,6 +3,8 @@
 // the `AI` binding is left out and the model routes fail while the login page, passkeys, the recovery code, files and
 // memory work. `--remote-ai` keeps the binding, which wrangler then proxies to the account in CLOUDFLARE_API_TOKEN and
 // CLOUDFLARE_ACCOUNT_ID (a token with Workers Scripts Edit and Workers AI Read; usage counts against that account).
+// The base config's model vars come with it, so chat goes to Muse Spark through the gateway they name, which must
+// exist on that account with its Meta key stored.
 //
 //   pnpm dev [--port 8787] [--owner-email sam@solo-sam.example] [--remote-ai]
 //

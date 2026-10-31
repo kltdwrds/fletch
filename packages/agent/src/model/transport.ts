@@ -9,7 +9,7 @@
 //   needs no gateway token. Meta's Model API is the gateway's custom provider `meta` (base URL
 //   https://api.meta.ai/v1, added in the dashboard), which the gateway names `custom-meta`. Only a deploy
 //   that configures both a gateway and `CHAT_PROVIDER=meta` takes this path.
-import { type ChatProvider, type ModelConfig, providerOf, REASONING_EFFORT, type Route, NO_VARS_MODELS } from "./routes.ts";
+import { type ChatProvider, type ModelConfig, NO_VARS_MODELS, providerOf, REASONING_EFFORT, type Route } from "./routes.ts";
 import type { WireMessage, WireTool } from "./wire.ts";
 
 /** The gateway option a call carries under `config`: none unless the deploy configured a gateway. */

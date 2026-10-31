@@ -97,7 +97,9 @@ export async function readInto(body: ReadableStream<Uint8Array>, message: Assist
 
   // Usage as GLM 5.3 Flash streams it over the binding (the recording in test/fixtures): each chunk
   // with `choices` counts its own tokens, so they add up, and reasoning tokens are the completion
-  // tokens of chunks carrying reasoning text; a closing chunk without `choices` holds the totals.
+  // tokens of chunks carrying reasoning text; a closing chunk without `choices` holds the totals. An empty
+  // `choices` array counts as a chunk with choices: Meta's last chunk is one, carrying the totals after deltas
+  // whose `usage` is null, so adding gives the totals.
   // A reported `reasoning_tokens` detail, where a model gives one, wins over the count.
   let reasoningCounted = 0;
   let reasoningReported: number | undefined;

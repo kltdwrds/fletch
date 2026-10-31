@@ -71,7 +71,7 @@ A refusal is one line on stderr, `self-host: <CODE>: <reason>`, with exit code 1
 | `SELF_HOST_VAR_INVALID` | `CHAT_PROVIDER` is not `workers-ai` or `meta`, `meta` comes without an `AI_GATEWAY_ID`, or `AI_GATEWAY_ID` is empty. | Fix the value. |
 | `SELF_HOST_ARG_UNKNOWN` | An option it does not know, or one without its value. | Check the command against step 2. |
 | `SELF_HOST_WRANGLER_MISSING` | wrangler is not installed in this checkout. | `pnpm install`, then run again. |
-| `SELF_HOST_CONFIG_INVALID` | packages/agent/wrangler.jsonc has a binding a self-host deploy does not know, or the generated config from an earlier run is not JSON. | Pull a fixed checkout, or delete the generated config. |
+| `SELF_HOST_CONFIG_INVALID` | packages/agent/wrangler.jsonc has a binding a self-host deploy does not know, or the generated config from an earlier run is not JSON. | Pull a fixed checkout, or delete the generated config and run again with the deploy's first owner. |
 | `SELF_HOST_OWNER_CHANGE` | The deploy was made for another owner; this run would lock that owner out. | Run with the first owner's address; a different owner is a new `--name`. |
 | `SELF_HOST_NOT_LOGGED_IN` | `wrangler whoami` finds no login. | `pnpm exec wrangler login`, then run again. |
 | `SELF_HOST_INDEX_SHAPE` | `<name>-memory` already exists with other dimensions or another metric than 768 and cosine. | Pick another name, or delete that index if nothing in it is needed. |

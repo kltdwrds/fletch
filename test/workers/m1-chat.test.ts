@@ -123,13 +123,13 @@ describe("[M1.1] model adapter", () => {
     expect((await ledgerRows()).map((r) => [r.attempt, r.status, r.code])).toEqual([[1, "dropped", "MODEL_STREAM_DROPPED"]]);
   });
 
-  it("model traffic reaches only the fake binding, with no gateway option on a self-host deploy, and makes zero outbound requests", async () => {
+  it("model traffic reaches only the fake binding, with no gateway option on a deploy with neither model var, and makes zero outbound requests", async () => {
     const { fake, chat } = setup([{ text: "Hi." }]);
     const before = hermeticNetwork.getUnmockedCalls().length;
     expect(await chat.instance.send({ person: ada.id, text: "Hi" })).toMatchObject({ status: "done" });
     expect(hermeticNetwork.getUnmockedCalls()).toHaveLength(before);
     expect(fake.requests).toHaveLength(1);
-    // A deploy that configures no gateway and no chat provider (self-host, spec section 2): Workers AI over the binding.
+    // A deploy with neither model var (no gateway, no chat provider): Workers AI over the binding.
     expect(fake.requests[0]?.model).toBe("@cf/zai-org/glm-5.3-flash");
     expect(fake.requests[0]?.passthrough).toBeUndefined();
     expect(fake.requests[0]?.options.gateway).toBeUndefined();

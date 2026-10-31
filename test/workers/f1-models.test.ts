@@ -12,7 +12,7 @@ import { ChatEngine, type EngineCtx } from "../../packages/agent/src/chat/engine
 import { admitPolicy, costMicros, isPriced } from "../../packages/agent/src/ledger/budget.ts";
 import type { ModelCallRow } from "../../packages/agent/src/ledger/types.ts";
 import { createStreamFn, embed } from "../../packages/agent/src/model/adapter.ts";
-import { acceptsImages, CALL_BOUNDS, type ChatRoute, DEFAULT_TIER, GLM_WORKERS_AI, MODEL_TIERS, modelConfig, modelFor, MUSE_SPARK_CONTRIBUTOR, NO_VARS_MODELS, ROUTES, routeModel } from "../../packages/agent/src/model/routes.ts";
+import { acceptsImages, CALL_BOUNDS, type ChatRoute, DEFAULT_TIER, GLM_WORKERS_AI, MODEL_TIERS, MUSE_SPARK_CONTRIBUTOR, modelConfig, modelFor, NO_VARS_MODELS, ROUTES, routeModel } from "../../packages/agent/src/model/routes.ts";
 import { providerName, requestBody } from "../../packages/agent/src/model/transport.ts";
 import { Ledger } from "../../packages/agent/src/objects/ledger.ts";
 import { FakeModel, type FakeStep } from "../support/fake-model.ts";
@@ -40,7 +40,7 @@ async function turn(vars: Record<string, string>, script: FakeStep[] = [{ text: 
     c.wait = async () => {};
   });
   const result = await chat.instance.send({ person: sam.email, text: "Hi" });
-  return { fake, result, calls: () => ledgers.harness("base").instance.modelCalls() };
+  return { fake, result, chat, calls: () => ledgers.harness("base").instance.modelCalls() };
 }
 
 const embedOn = async (vars: Record<string, string>) => {
@@ -102,13 +102,19 @@ describe("[F1] the base config's models: Muse Spark for chat through the gateway
     ];
     const body = `${chunks.map((c) => `data: ${JSON.stringify(c)}\n\n`).join("")}data: [DONE]\n\n`;
     const asked: string[] = [];
-    const planted = async (input: string) => {
+    const bodies: Array<Record<string, unknown>> = [];
+    const planted = async (input: string, init: RequestInit) => {
       asked.push(input);
+      bodies.push(JSON.parse(String(init.body)));
       return new Response(body, { status: 200, headers: { "content-type": "text/event-stream" } });
     };
-    const { result, calls } = await turn(DEPLOY_VARS, [], planted);
+    const { result, chat, calls } = await turn(DEPLOY_VARS, [], planted);
     expect(result).toMatchObject({ status: "done" });
+    const answer = chat.rows("SELECT body FROM messages").map((r) => JSON.parse(String(r.body))).find((m) => m.role === "assistant");
+    expect(answer?.content).toEqual([{ type: "text", text: "Hello." }]);
     expect(asked).toEqual(["https://workers-binding.ai/ai-gateway/gateways/qyvr/custom-meta/chat/completions"]);
+    // The documented shape is the answer to a request that asked for usage in the stream.
+    expect(bodies[0]?.stream_options).toEqual({ include_usage: true });
     const rows = await calls();
     expect(rows.map((r) => [r.provider, r.model, r.status, r.inputTokens, r.outputTokens])).toEqual([["meta", MUSE_SPARK_CONTRIBUTOR, "ok", 1_234, 56]]);
   });
@@ -116,8 +122,6 @@ describe("[F1] the base config's models: Muse Spark for chat through the gateway
 
 describe("[F1] a deploy with neither model var", () => {
   it("is Workers AI with no gateway", () => {
-    expect(NO_MODEL_VARS).not.toHaveProperty("AI_GATEWAY_ID");
-    expect(NO_MODEL_VARS).not.toHaveProperty("CHAT_PROVIDER");
     expect(modelConfig(NO_MODEL_VARS)).toEqual(NO_VARS_MODELS);
     expect(NO_VARS_MODELS).toEqual({ gatewayId: null, chatProvider: "workers-ai" });
   });

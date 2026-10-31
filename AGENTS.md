@@ -78,7 +78,7 @@ carries a part tag, `[F<n>]` for fletch's own or `[M<n>]` for one inherited from
 | `pnpm test` | The gate scripts' own tests (`node --test`), then the hermetic vitest suite, about 90 s. |
 | `pnpm verify` | `check` then `test`. The release runs it on every push to main before it publishes. CI runs its steps on a PR whose diff touches code, the tests in three shards; a docs diff runs `check` alone, a contracts diff `check` and the tests related to it (`.github/workflows/ci.yml`). |
 | `pnpm accept F<n>` | A part's acceptance: lint, the tests tagged up to the part, the dry-run bundle, the scans, the harness checks and typecheck; it deploys nothing. Ends with one `ACCEPT` line. |
-| `pnpm dev` | The agent Worker under `wrangler dev` on http://localhost:8787, with local Durable Objects and R2; prints the first-passkey link. Workers AI only with `--remote-ai` (`scripts/dev.ts`). |
+| `pnpm dev` | The agent Worker under `wrangler dev` on http://localhost:8787, with local Durable Objects and R2; prints the first-passkey link. Models only with `--remote-ai`, and then chat goes to Muse Spark through the gateway the base config names (`scripts/dev.ts`). |
 | `pnpm preview` | Leases a preview slot and deploys the working tree to it, from a laptop or a cloud session (`docs/runbooks/preview.md`). |
 | `pnpm self-host` | Deploys fletch from this checkout to the owner's account on their wrangler login (`docs/runbooks/self-host.md`). |
 | `pnpm evals <P<n>\|T-P<n>-<nn>>` | The tier-2 runner: a cluster's tasks on this worktree's preview slot, three trials each, a results file per task hash and one Markdown table (`docs/runbooks/evals.md`). |
