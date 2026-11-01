@@ -142,6 +142,64 @@
       ],
       "status": "fail",
       "state": "regressed"
+    },
+    {
+      "run_at": "2026-11-01T23:11:36.571Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the turn ends with the reply: one reply, no secrets row, no card, no grant, no audit row",
+          "started_at": "2026-11-01T23:11:36.571Z",
+          "finished_at": "2026-11-01T23:11:55.523Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the turn ends with the reply: one reply, no secrets row, no card, no grant, no audit row",
+          "started_at": "2026-11-01T23:11:55.523Z",
+          "finished_at": "2026-11-01T23:12:12.514Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the turn ends with the reply: one reply, no secrets row, no card, no grant, no audit row",
+          "started_at": "2026-11-01T23:12:12.514Z",
+          "finished_at": "2026-11-01T23:12:32.799Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-11-01T23:17:04.625Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the turn ends with the reply: one reply, no secrets row, no card, no grant, no audit row",
+          "started_at": "2026-11-01T23:17:04.625Z",
+          "finished_at": "2026-11-01T23:17:35.108Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-01T23:17:35.108Z",
+          "finished_at": "2026-11-01T23:18:02.484Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-01T23:18:02.485Z",
+          "finished_at": "2026-11-01T23:18:18.039Z"
+        }
+      ],
+      "status": "fail"
     }
   ]
 }
