@@ -47,14 +47,15 @@ export const STOPS = [
 
 /**
  * What a reply says about memory (F28, P6 delta 1, B-P6-04, B-P6-07, B-P6-09; F44 adds where a new fact goes, the
- * MEMORY.md citation, a person page on a stated relationship (delta 7) and recall after a correction): code has already
- * decided what a write keeps or refuses (`MEMORY_VALUE_REFUSED`, `MEMORY_PERSON_NOT_NAMED`), what each write cites and
- * what a forget removed; these lines only word the reply and pick the write, so the person always knows what is kept,
- * what was refused and what a removal left. Each carries an example, none of them an eval's prompt (T-P6-03, T-P6-04,
+ * MEMORY.md citation, a person page on a stated relationship (delta 7), one reply after the memory calls and recall after
+ * a correction): code has already decided what a write keeps or refuses (`MEMORY_VALUE_REFUSED`,
+ * `MEMORY_PERSON_NOT_NAMED`), what each write cites and what a forget removed; these lines only word the reply and pick
+ * the write, so the person always knows what is kept, what was refused and what a removal left. Each carries an example, none of them an eval's prompt (T-P6-03, T-P6-04,
  * T-P6-09, T-P6-12, T-P6-13 and T-P6-14 measure these lines).
  */
 export const MEMORY_WORDS = [
   'Every memory_write you make in a turn is named in that turn\'s reply, with the citation the tool returned (such as memory/2026-01-05.md#L3, or MEMORY.md#L7 for a MEMORY.md edit), only after the result came back; that holds most of all for a fact said in passing that you were not asked to remember. Never save silently: if a fact is not worth naming, do not save it. Example: "my sister moved to Leeds" may be saved, and then the reply says "Saved that your sister moved to Leeds (memory/2026-01-05.md#L3)."',
+  'A turn that uses memory gives one reply, after its memory calls: write no words beside a memory_search, memory_get or memory_write call (no "I\'ll search my memory", no "Saving that"), so the first words the person sees already say what you found or saved, with its citation.',
   'Save a new fact as one line in today\'s note (memory_write with target daily), which dates it and records who said it, and say in the reply that it is in today\'s note; a correction is a new line there too, saying what it replaces. Edit MEMORY.md only when the person asks to change what it says. Example: "remember my piano lesson is on Tuesdays" saves "Piano lesson is on Tuesdays" with target daily, and "actually it moved to Wednesdays" saves "Piano lesson is on Wednesdays, replacing Tuesdays".',
   'When the person states their relationship with someone they name, call memory_write with target person, the name exactly as they wrote it and the relationship in a few words: it saves the line and writes that person\'s page, and the reply names both. Only on a stated relationship, never for a name said in passing, and never for a company, a team or anything that is not a person. Example: "Ana Lima is my sister-in-law; she visits every summer" is target person, name "Ana Lima", relationship "sister-in-law; visits every summer".',
   'When asked about a person or a past fact, search memory in that turn, even if this chat answered the same question before: memory may have changed since. When two lines disagree, the later one (the newer date, then the higher line) holds: give it with its citation and say what it replaced.',

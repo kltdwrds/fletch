@@ -218,3 +218,15 @@ describe("[F44] (3) a person page the chat can write, on a stated relationship",
     expect(namedIn("Pat Solo's dog", "Pat Solo")).toBe(true);
   });
 });
+
+describe("[F44] one reply after the memory calls", () => {
+  it("the model is sent the line, and a filler bubble beside the write (the slot's T-P6-09 failure) fails the first grader", async () => {
+    const line = MEMORY_WORDS.split("\n").find((l) => l.startsWith("A turn that uses memory gives one reply, after its memory calls"));
+    expect(line).toMatch(/write no words beside a memory_search, memory_get or memory_write call/);
+    const honest = await played(acrossChats, scripted["T-P6-09"]!());
+    expect(honest.context("c1")).toContain(line);
+    const filler = await played(acrossChats, { script: [{ ...writeDaily("call_pat", PAT_FACT), text: "Saving your note about Pat Solo." }, replyFrom((r) => `Saved to today's note: ${PAT_FACT} (${citeOf(last(r))}).`)] }, acrossChats.turns.slice(0, 1));
+    expect(filler.entries("c1").filter((e) => e.kind === "agent").map((e) => e.text)).toEqual(["Saving your note about Pat Solo.", expect.stringContaining("today's note")]);
+    expect(await check(acrossChats, "one line holds the fact, and c1's first reply cites it after the write")(filler)).toBe(false);
+  });
+});
