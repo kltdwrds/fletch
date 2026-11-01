@@ -91,11 +91,14 @@ function record(store: ChatStore, mailbox: Mailbox, chatId: string, g: Group, ro
   const stepCount = own.reduce((n, r) => n + stepCalls(r.message), 0);
   const delegations = g.turns.flatMap((t) => store.committed(t.id).flatMap((o) => ((e: Effect) => (e.kind === "delegate" ? [{ grp: groupIdOf(t.id, e.id), callId: e.id }] : []))(JSON.parse(o.payload) as Effect)));
   const launched = delegations.map((d) => d.grp);
-  const received = mailbox.taken().flatMap((r) => (r.kind === "internal_handoff" && r.turnId && ids.has(r.turnId) && r.scope.startsWith("delegation:") ? [r.scope.slice("delegation:".length)] : []));
+  const handed = mailbox.taken().flatMap((r) => (r.kind === "internal_handoff" && r.turnId && r.scope.startsWith("delegation:") ? [{ grp: r.scope.slice("delegation:".length), turnId: r.turnId }] : []));
+  const received = handed.filter((h) => ids.has(h.turnId)).map((h) => h.grp);
   // Work it handed to sub-agents is still its work (B-P5-08): a task whose turn finished while a delegation it launched
   // has not handed off is running, so it never reads done before the result; a delegation the host refused never starts.
+  // A handoff a later task's turn took settles it too (Q28): a steer that closed its child wakes a turn of the steer's.
   const refused = new Set(store.rowsOfTurns(delegations.map((d) => `subagents:${d.callId}`)).map((r) => r.turnId.slice("subagents:".length)));
-  const out = delegations.some((d) => !received.includes(d.grp) && !refused.has(d.callId));
+  const settled = new Set(handed.map((h) => h.grp));
+  const out = delegations.some((d) => !settled.has(d.grp) && !refused.has(d.callId));
   // Stopped by the person once its turn ended (F31): the delegation still out was closed and the task says Stopped.
   const status = statusOf(last) === "done" && out ? (store.meta(stopKey(last.id)) ? "stopped" : "running") : statusOf(last);
   const steps = stepsOf(own, [], { chatId });

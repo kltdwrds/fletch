@@ -662,3 +662,75 @@ verdict; `ACCEPT F41: PASS`; `VERIFIER: no blocking findings`.
 **Not in scope:** a change to a clause; a change to the host's routes or `@qyvr/host`; a session list, sign-out-everywhere,
 passkey labels or recovery reissue (Q33); new instruction lines beyond what a failing must-have needs, each named in
 the PR body with its task; anything D-0018 reserves.
+
+## F42 Credentials say why a host is refused: the bound-host words and T-P9-15's re-grade
+
+**Read:** `docs/plan-v2/contracts/P9-connectors.md` (the clause T-P9-15 grades and its neighbours on a credential's
+hosts, deltas on binding), the F35 to F37 world and tasks under `test/evals/p9-connectors/`,
+`packages/agent/src/chat/instructions.ts` (`WORK_WORDS`), `docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q31
+(the cause: with no rule for a host the plan's code is `EGRESS_HOST_DENIED` and the model says "allowed hosts", which
+the grader does not hear) and Q18, `docs/plan-v2/KICKOFF.md` "A grader changes after a run only as an oracle
+correction". No one-way door. A live step: `pnpm evals` on this worktree's slot (`pnpm preview up`); if no slot can be
+leased, wait for one, and if none frees in the session, that is a question, not a reason to skip.
+
+**Scope:** (1) One `WORK_WORDS` line for a credential refused on a host: say the host is not one the key is bound to,
+and that only the person can bind it (Q31's recommended answer), the words the grader already hears. (2) The tier-1
+scripted run of T-P9-15 grades the fake's path with the line, and a planted negative (the old "isn't on your list of
+allowed hosts" reply) still fails. (3) Tier 2 on the slot: T-P9-15 three trials, and T-P9-13 and T-P9-14 (the
+must-haves) three trials each to show no regression, the results files committed, the table in the PR body, the run
+declared (task ids and tree hash) before it starts. (4) Every P9 hash in the contract matches.
+
+**Acceptance:** `pnpm evals T-P9-15` `pass` (three of three); `pnpm evals T-P9-13` and `pnpm evals T-P9-14` `pass`;
+`ACCEPT F42: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a grader change (only an oracle correction with KICKOFF's three things, and none is expected here);
+a change to a clause; any other instruction line; the egress plan's codes.
+
+## F43 Payments say what this deploy holds: the wallet and daily-cap words and T-P12-12's and T-P12-13's re-grade
+
+**Read:** `docs/plan-v2/contracts/P12-wallet.md` (the clauses T-P12-12 and T-P12-13 grade, B-P12 on no wallet and no
+payment method, the daily cap as model spend), the F38 and F39 world and tasks under `test/evals/p12-wallet/`,
+`packages/agent/src/chat/instructions.ts` (`WORK_WORDS`), `docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q35
+(the two replies that failed and the two lines it recommends) and Q18, `docs/plan-v2/KICKOFF.md` "A grader changes after
+a run only as an oracle correction". No one-way door. A live step: `pnpm evals` on this worktree's slot
+(`pnpm preview up`); if no slot can be leased, wait for one, and if none frees in the session, that is a question,
+not a reason to skip.
+
+**Scope:** (1) Two `WORK_WORDS` lines, Q35's: for a wallet or payment-method question, say this deploy has no wallet
+and holds no payment method, and that a payment is made in the live page the agent can hand over; for the daily-cap
+question, say the daily cap under Settings is the agent's own model spend, never money the person may spend. (2) The
+tier-1 scripted runs of T-P12-12 and T-P12-13 grade the fake's path with the lines, and the two replies Q35 quotes as
+failing are planted negatives that still fail. (3) Tier 2 on the slot: T-P12-12 and T-P12-13 three trials each, and
+T-P12-10 and T-P12-11 (the must-haves) three trials each to show no regression, the results files committed, the table
+in the PR body, the run declared before it starts. (4) Every P12 hash in the contract matches.
+
+**Acceptance:** `pnpm evals T-P12-12` and `pnpm evals T-P12-13` `pass` (three of three); `pnpm evals T-P12-10` and
+`pnpm evals T-P12-11` `pass`; `ACCEPT F43: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a grader change (only an oracle correction with KICKOFF's three things); a change to a clause; a
+payment instrument, a wallet or a purchase tool (D-0017, proposed, is Kyle's); any other instruction line.
+
+## F44 Memory's reach: a citation per saved line, new facts to today's note, a person page the chat can write, and P6's nice-to-have tier 2
+
+**Read:** `docs/plan-v2/contracts/P6-memory.md` (B-P6-04, B-P6-07, B-P6-09, delta 7's seam for a person page, the
+tier-2 tasks T-P6-09, T-P6-12, T-P6-13, T-P6-14), the F27 and F28 world and tasks under `test/evals/p6-memory/`,
+`packages/agent/src/memory/` (`service.ts`, `entities.ts` and `upsertEntity`), `packages/agent/src/chat/instructions.ts`
+(`MEMORY_WORDS`), `docs/plan-v2/QUESTIONS.md` Q22 (the two F28 changes the verifier removed as out of scope, 1d3ff3e,
+and the missing tool path to a people page) and Q18, `docs/runbooks/evals.md`. No one-way door: a person page is a
+row in the entity store that exists; no table, column or schema changes.
+
+**Scope:** (1) A `MEMORY.md` edit returns each written line's citation, and the reply names it (the first F28 change).
+(2) A new fact learned in a turn goes to today's note through the existing write, and the reply says so (the second
+F28 change). (3) A `memory_write` target for a person page: the chat's tool surface reaches `upsertEntity` for a
+stated relationship, refused by code for anything that is not a person the owner named; the page is readable where
+pages are listed. (4) Tier 1: a hermetic test per item that plants the violation (a line without its citation, a
+fact that went nowhere, a page written for a non-person). (5) Tier 2 on the slot: T-P6-09, T-P6-12, T-P6-13 and
+T-P6-14 three trials each, and T-P6-03 and T-P6-04 (the must-haves) three trials each to show no regression, the results
+files committed, the table in the PR body, the run declared before it starts. (6) Every P6 hash in the contract matches.
+
+**Acceptance:** `pnpm evals T-P6-09`, `T-P6-12`, `T-P6-13` and `T-P6-14` `pass` (three of three); `pnpm evals T-P6-03`
+and `pnpm evals T-P6-04` `pass`; `ACCEPT F44: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** goals and tracked items (Q19); a background summariser or relationships loop (deltas 6 and 7 beyond
+the one tool path); a grader change (only an oracle correction with KICKOFF's three things); a change to a clause; a
+new table or column.

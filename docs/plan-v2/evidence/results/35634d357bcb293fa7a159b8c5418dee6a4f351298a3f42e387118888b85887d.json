@@ -143,6 +143,167 @@
         }
       ],
       "status": "fail"
+    },
+    {
+      "run_at": "2026-11-01T22:02:06.211Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-01T22:02:06.211Z",
+          "finished_at": "2026-11-01T22:02:41.920Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-01T22:02:41.920Z",
+          "finished_at": "2026-11-01T22:03:01.056Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a purchase grant is refused by code; the words are the model's",
+          "started_at": "2026-11-01T22:03:01.056Z",
+          "finished_at": "2026-11-01T22:03:28.744Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-11-01T22:08:43.987Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-01T22:08:43.987Z",
+          "finished_at": "2026-11-01T22:09:10.205Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a purchase grant is refused by code; the words are the model's",
+          "started_at": "2026-11-01T22:09:10.206Z",
+          "finished_at": "2026-11-01T22:09:39.867Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-01T22:09:39.867Z",
+          "finished_at": "2026-11-01T22:10:01.751Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-11-01T22:12:45.350Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a purchase grant is refused by code; the words are the model's",
+          "started_at": "2026-11-01T22:12:45.351Z",
+          "finished_at": "2026-11-01T22:13:24.231Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a purchase grant is refused by code; the words are the model's",
+          "started_at": "2026-11-01T22:13:24.231Z",
+          "finished_at": "2026-11-01T22:13:53.243Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a purchase grant is refused by code; the words are the model's",
+          "started_at": "2026-11-01T22:13:53.243Z",
+          "finished_at": "2026-11-01T22:14:21.585Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-11-01T22:18:11.307Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-01T22:18:11.307Z",
+          "finished_at": "2026-11-01T22:18:35.347Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-01T22:18:35.348Z",
+          "finished_at": "2026-11-01T22:18:55.496Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-01T22:18:55.496Z",
+          "finished_at": "2026-11-01T22:19:16.775Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    },
+    {
+      "run_at": "2026-11-01T22:27:00.055Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-01T22:27:00.055Z",
+          "finished_at": "2026-11-01T22:27:24.731Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-01T22:27:24.731Z",
+          "finished_at": "2026-11-01T22:27:46.736Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-01T22:27:46.736Z",
+          "finished_at": "2026-11-01T22:28:09.841Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-11-01T22:56:42.669Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-01T22:56:42.669Z",
+          "finished_at": "2026-11-01T22:57:13.788Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-01T22:57:13.789Z",
+          "finished_at": "2026-11-01T22:57:35.841Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-01T22:57:35.841Z",
+          "finished_at": "2026-11-01T22:57:58.721Z"
+        }
+      ],
+      "status": "pass"
     }
   ]
 }

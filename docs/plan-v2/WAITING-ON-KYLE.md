@@ -48,6 +48,13 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
 
 ## Open
 
+- [ ] 2026-11-01 look: **every slot the uat items below name expired on 2026-10-31; fletch-pv-1 now serves main for all of
+  them.** The orchestrator, run from a cloud session on 2026-11-01, took back the expired leases (`pnpm preview gc`) and
+  deployed main at a72e7a6 (every merged part through F41 and PR #94) to https://fletch-pv-1.edwards-ky1.workers.dev, lease to
+  2026-11-02T20:35Z and renewed while the session runs; the first-passkey setup link went to you in the session's chat,
+  never here. Use that address for each uat item below in place of the one it names; the behaviour each describes is on
+  main. What this changes: nothing in any item; only where you look. [preview runbook](../runbooks/preview.md).
+
 - [ ] 2026-10-29 record: **put your own commit on D-0011.** What D-0011 decides: when a task's steps are opened in the
   activity drawer, the parent agent may read a sub-agent's transcript to show the child's steps, after first checking
   that the person asking owns the parent chat. That read crosses the sub-agent's storage boundary, so it is a one-way

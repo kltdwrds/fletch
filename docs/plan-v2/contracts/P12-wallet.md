@@ -399,7 +399,7 @@ T-P12-10  must-have  tier 2
   collateral: none
   graders: code
   reference: Muse's three blockers, one read-only browser task and no card (B-P12-03, B-P12-08)
-  version_hash: db13366a12ec
+  version_hash: ef54a05e4a68
   file: test/evals/p12-wallet/purchase-refused-by-name-real-model.task.ts
 
 T-P12-11  must-have  tier 2
