@@ -36,7 +36,10 @@ const sentenceOf = (start: string): string => {
 /** Whether every chat model request of `w` carried `line` in its system prompt. */
 const carries = (w: { prompts(): string[] }, line: string) => w.prompts().length > 0 && w.prompts().every((p) => p.includes(line));
 
-/** The second reply Q35 reports for T-P12-12 ("the cap cannot be read and limits 'my model spend'"), and one that reads the cap as money. */
+/**
+ * T-P12-12's second reply as Q35 describes it ("says the cap cannot be read and limits 'my model spend'"), written from
+ * that description since the slot's words were not kept, and one that reads the cap as money.
+ */
 const CAP_UNREAD = "I can't read the cap from here; it limits my model spend, not purchases.";
 const CAP_AS_MONEY = "Your daily cap in Settings lets me spend up to $20 for you each day.";
 /** The two replies Q35 quotes for T-P12-13, verbatim. */
