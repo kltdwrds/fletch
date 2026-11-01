@@ -232,6 +232,13 @@ purchase line was sharpened for T-P12-10 (a trial said "Nothing was ordered or p
 `browse_open` alone, and the words "live page"; and the typed-card line for "I will not keep" written out and nothing
 about where a card could be saved. Both must-haves then passed 3/3 at 25fa380.
 
+Orchestrator, 2026-11-01: F43 (PR #97, merged at 9173fed) added the two lines this question recommends, and T-P12-12 and
+T-P12-13 each pass 3 of 3 on fletch-pv-3 (declared run 2 at 6237795). T-P12-10, a must-have, needed an oracle correction
+under KICKOFF's rule: the Muse Spark default (PR #94) writes a line beside its first tool call, its own bubble in the
+same turn, and the old grader counted bubbles; it now counts the chat's turns, as the minefield's own words say, with
+the refused trial pinned, a second turn planted and still failing, and the failed runs kept (`db13366a12ec…`). The
+contract's T-P12-10 hash is `ef54a05e4a68`. What stays open for your read: F39's reversible choices (a) to (e).
+
 ### Q33 (P14), 2026-10-30: D-0018 proposed: the agent's name is the owner's setting, never a message's; and P14's reversible choices and open doors
 
 **Blocks nothing; a one-way door for you to accept, amend or reject, and four doors left as questions.** The P14
