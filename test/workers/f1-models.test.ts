@@ -174,7 +174,8 @@ describe("[F1] a deploy that configures a gateway", () => {
     expect(sent?.passthrough).toMatchObject({ gatewayId: "my-gateway", provider: "custom-meta", endpoint: "chat/completions" });
     expect(sent?.passthrough?.headers).not.toHaveProperty("authorization");
     expect(sent?.passthrough?.headers["cf-aig-collect-log"]).toBe("false");
-    expect(sent?.inputs).toEqual({ model: MUSE_SPARK_CONTRIBUTOR, messages: expect.any(Array), tools: expect.any(Array), stream: true, stream_options: { include_usage: true }, reasoning_effort: "low" });
+    // The deploy's tenant keys Meta's prompt cache, so its chats reach the backend that holds their shared prefix.
+    expect(sent?.inputs).toEqual({ model: MUSE_SPARK_CONTRIBUTOR, messages: expect.any(Array), tools: expect.any(Array), stream: true, stream_options: { include_usage: true }, reasoning_effort: "low", prompt_cache_key: "fletch:base", prompt_cache_retention: "24h" });
     expect(modelFor("chat", config)).toMatchObject({ provider: "meta", baseUrl: "binding:AI/gateway/meta", input: ["text", "image"] });
     expect(providerName(MUSE_SPARK_CONTRIBUTOR)).toBe("meta");
     expect(acceptsImages("chat", config)).toBe(true);
@@ -190,12 +191,13 @@ describe("[F1] a deploy that configures a gateway", () => {
     expect(routeModel("job", config)).toBe(GLM_WORKERS_AI);
   });
 
-  it("Meta's request is Chat Completions with the flat reasoning_effort and usage in the stream, and nothing else", () => {
-    expect(requestBody("chat", MUSE_SPARK_CONTRIBUTOR, { messages: [], tools: [] })).toEqual({ model: MUSE_SPARK_CONTRIBUTOR, messages: [], stream: true, stream_options: { include_usage: true }, reasoning_effort: "low" });
+  it("Meta's request is Chat Completions with the flat reasoning_effort, usage in the stream and the tenant's prompt-cache key, and nothing else", () => {
+    const cache = { prompt_cache_key: "fletch:t1", prompt_cache_retention: "24h" };
+    expect(requestBody("chat", MUSE_SPARK_CONTRIBUTOR, { messages: [], tools: [], tenant: "t1" })).toEqual({ model: MUSE_SPARK_CONTRIBUTOR, messages: [], stream: true, stream_options: { include_usage: true }, reasoning_effort: "low", ...cache });
     const tools = [{ type: "function" as const, function: { name: "t", description: "d", parameters: {} } }];
-    expect(requestBody("chat", MUSE_SPARK_CONTRIBUTOR, { messages: [], tools })).toEqual({ model: MUSE_SPARK_CONTRIBUTOR, messages: [], tools, stream: true, stream_options: { include_usage: true }, reasoning_effort: "low" });
-    // Workers AI's body is the same without the model and the stream options.
-    expect(requestBody("chat", GLM_WORKERS_AI, { messages: [], tools: [] })).toEqual({ messages: [], stream: true, reasoning_effort: "low" });
+    expect(requestBody("chat", MUSE_SPARK_CONTRIBUTOR, { messages: [], tools, tenant: "t1" })).toEqual({ model: MUSE_SPARK_CONTRIBUTOR, messages: [], tools, stream: true, stream_options: { include_usage: true }, reasoning_effort: "low", ...cache });
+    // Workers AI's body is the same without the model, the stream options and the cache fields.
+    expect(requestBody("chat", GLM_WORKERS_AI, { messages: [], tools: [], tenant: "t1" })).toEqual({ messages: [], stream: true, reasoning_effort: "low" });
   });
 
   it("CHAT_PROVIDER is read trimmed and in any case", () => {

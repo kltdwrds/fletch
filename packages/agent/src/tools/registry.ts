@@ -130,11 +130,6 @@ export class ToolRegistry {
     return undefined;
   }
 
-  /** Namespaces whose tools the model may call now: eager ones and the loaded ones. */
-  active(loaded: ReadonlySet<string>): Namespace[] {
-    return this.namespaces.filter((n) => n.deferral === "eager" || loaded.has(n.name));
-  }
-
   /** Case-insensitive match over every namespace, hidden ones included: this is the discovery path. */
   search(query: string, loaded: ReadonlySet<string>): SearchHit[] {
     const terms = searchTerms(query);
@@ -217,7 +212,10 @@ export class ToolSession {
     this.gate = gate;
     this.spill = spill;
     this.loaded = new Set([...loaded].filter((n) => registry.namespace(n)?.deferral !== undefined && registry.namespace(n)?.deferral !== "eager"));
-    for (const ns of registry.active(this.loaded)) this.tools.push(...ns.tools.map((t) => toAgentTool(t, gate, spill)));
+    // The eager namespaces, then the loaded ones in the order they were loaded: the array `load` grew mid-turn, so the
+    // next turn's tools are the same bytes as the last request's and Meta's prompt cache keeps the whole prefix.
+    const order = [...registry.namespaces.filter((n) => n.deferral === "eager"), ...[...this.loaded].map((n) => registry.namespace(n) as Namespace)];
+    for (const ns of order) this.tools.push(...ns.tools.map((t) => toAgentTool(t, gate, spill)));
   }
 
   /** Loads deferred namespaces; unknown names are refused by code and nothing is half-loaded. */
