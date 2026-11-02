@@ -455,20 +455,30 @@ export class PersonMemory {
     if (!current) return refuse("MEMORY_NOT_FOUND", "MEMORY.md is missing");
     if (current.sha256 !== input.sha256) return { ...refuse("MEMORY_STALE", "MEMORY.md changed since it was read; read it again"), sha256: current.sha256 };
     const lines = current.text.replace(/\n$/, "").split("\n");
+    // Where each replaced or inserted line ends up (0-based), moved by every later edit above it, so the result cites
+    // each line the edit wrote as a daily write cites its line (F44, delta 1: the reply quotes the citation returned).
+    let written: number[] = [];
     // Highest line first, so every edit addresses the numbered copy the caller read.
     for (const e of [...input.edits].sort((a, b) => b.line - a.line)) {
       const text = oneLine(e.text ?? "");
       if (e.op === "insert" ? e.line < 0 || e.line > lines.length : e.line < 1 || e.line > lines.length) return refuse("MEMORY_EDIT_LINE", `line ${e.line} is outside 1..${lines.length}`);
       if (e.op !== "delete" && !text) return refuse("MEMORY_EDIT_EMPTY", `edit at line ${e.line} has no text`);
-      if (e.op === "replace") lines[e.line - 1] = text;
-      else if (e.op === "insert") lines.splice(e.line, 0, text);
-      else lines.splice(e.line - 1, 1);
+      if (e.op === "replace") {
+        lines[e.line - 1] = text;
+        written = [...written.filter((w) => w !== e.line - 1), e.line - 1];
+      } else if (e.op === "insert") {
+        lines.splice(e.line, 0, text);
+        written = [...written.map((w) => (w >= e.line ? w + 1 : w)), e.line];
+      } else {
+        lines.splice(e.line - 1, 1);
+        written = written.filter((w) => w !== e.line - 1).map((w) => (w > e.line - 1 ? w - 1 : w));
+      }
     }
     const text = `${lines.join("\n")}\n`;
     const put = await this.home.write("MEMORY.md", text, writer, this.now(), current.etag);
     if (!put.ok) return refuse("MEMORY_STALE", "MEMORY.md changed during the edit; read it again");
     this.reindexFile("MEMORY.md", text);
-    return { ok: true as const, sha256: put.sha256, lines: lines.length };
+    return { ok: true as const, sha256: put.sha256, lines: lines.length, citations: written.sort((a, b) => a - b).map((w) => citation("MEMORY.md", w + 1)) };
   }
 
   /** Pages through a home file; daily notes are rendered first, so the page is what R2 holds. */

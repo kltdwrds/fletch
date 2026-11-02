@@ -1,0 +1,82 @@
+{
+  "task_id": "T-P6-13",
+  "cluster": "P6",
+  "version_hash": "9a747d6f24324cf10042283189b4a14a6fd7a0cb6b63b248137c37344f74c928",
+  "runs": [
+    {
+      "run_at": "2026-11-01T23:54:31.386Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-01T23:54:31.386Z",
+          "finished_at": "2026-11-01T23:54:49.154Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-01T23:54:49.154Z",
+          "finished_at": "2026-11-01T23:55:07.285Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-01T23:55:07.285Z",
+          "finished_at": "2026-11-01T23:55:28.879Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-11-02T00:14:09.648Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-02T00:14:09.648Z",
+          "finished_at": "2026-11-02T00:14:33.405Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-02T00:14:33.405Z",
+          "finished_at": "2026-11-02T00:14:50.699Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-02T00:14:50.699Z",
+          "finished_at": "2026-11-02T00:15:16.738Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-11-02T00:39:56.312Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-02T00:39:56.313Z",
+          "finished_at": "2026-11-02T00:40:19.926Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-02T00:40:19.926Z",
+          "finished_at": "2026-11-02T00:40:37.542Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-02T00:40:37.542Z",
+          "finished_at": "2026-11-02T00:41:00.148Z"
+        }
+      ],
+      "status": "pass"
+    }
+  ]
+}

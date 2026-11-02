@@ -5,7 +5,7 @@
 import { credentialContent } from "../learning/referee.ts";
 import { type CompanyMemoryApi, isScopePath } from "./company.ts";
 import { readersOf } from "./disclosure.ts";
-import { type EntityInput, upsertEntity } from "./entities.ts";
+import { type EntityInput, notePerson, upsertEntity } from "./entities.ts";
 import { confirmForget, executeForget, type ForgetProducers, planForget } from "./forget.ts";
 import type { SemanticLeg } from "./semantic.ts";
 import type { SearchResult } from "./store.ts";
@@ -68,7 +68,7 @@ export class MemoryService implements MemoryApi {
    */
   async memoryWrite(input: MemoryWriteInput, ctx: WriteContext): Promise<WriteResult> {
     const writer = `agent:${this.mem.owner}`;
-    const texts = input.target === "memory" ? (input.edits ?? []).map((e) => e.text ?? "") : [input.text ?? ""];
+    const texts = input.target === "memory" ? (input.edits ?? []).map((e) => e.text ?? "") : input.target === "person" ? [`${input.name ?? ""}: ${input.relationship ?? ""}`] : [input.text ?? ""];
     // A daily or team line the store refuses for its shape (empty, too long) gets that code first; a MEMORY.md edit has
     // no length cap, so every edit is read for a value.
     for (const t of texts.filter((x) => x.trim() && (input.target === "memory" || x.length <= MAX_LINE_CHARS))) {
@@ -81,7 +81,9 @@ export class MemoryService implements MemoryApi {
       return this.company.append(this.mem.owner, { scope: `team:${input.team}`, text: input.text, writer, source: ctx.source, ...(ctx.timeZone ? { timeZone: ctx.timeZone } : {}) });
     }
     if (input.target === "memory") return this.mem.editMemory(input, writer, ctx.requester);
-    if (input.target !== "daily") return refuse("MEMORY_WRITE_TARGET", "target is daily or memory");
+    // A stated relationship: its line and the person's page, refused for a non-person or a name they did not write (F44).
+    if (input.target === "person") return notePerson(this.mem, input, { requester: ctx.requester, setting: ctx.setting, writer, source: ctx.source, dedupe: ctx.dedupe, ...(ctx.timeZone ? { timeZone: ctx.timeZone } : {}), ...(ctx.said === undefined ? {} : { said: ctx.said }) });
+    if (input.target !== "daily") return refuse("MEMORY_WRITE_TARGET", "target is daily, team, memory or person");
     // The hourly upkeep is the only minter (Muse spec §17.3): a claim asked for in the turn writes nothing.
     if ("claim" in input) return refuse("MEMORY_CLAIM_BY_UPKEEP", "write the line alone; the hourly upkeep turns daily lines into claims");
     return this.mem.appendDaily({ text: input.text, setting: ctx.setting, writer, source: ctx.source, dedupe: ctx.dedupe, timeZone: ctx.timeZone });

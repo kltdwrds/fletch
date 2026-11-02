@@ -51,7 +51,9 @@ export function chatNamespaces(d: SessionDeps, person: string, effects: EffectBu
   const namespaces: Namespace[] = [];
   const memory = hooks.memory?.(person);
   if (memory) {
-    const tools = memorySpecs({ api: memory, requester: person, also: otherReaders(context, person), setting: { scope: "personal" }, source: `chat:${d.chatId}`, timeZone });
+    // The person's own typed words, read by code for a person page's name (F44); a colleague's turn carries none.
+    const said = context.counterpart.kind === "own-agent" ? () => store.latestTypedText() : undefined;
+    const tools = memorySpecs({ api: memory, requester: person, also: otherReaders(context, person), setting: { scope: "personal" }, source: `chat:${d.chatId}`, timeZone, ...(said ? { said } : {}) });
     namespaces.push({ name: "memory", description: "memory: the person's notes, MEMORY.md, people and groups, and their teams' and the company's", deferral: "eager", tools });
   }
   if (hooks.skills) namespaces.push(skillsNamespace(hooks.skills, person, hooks.skillSeen?.(person)));

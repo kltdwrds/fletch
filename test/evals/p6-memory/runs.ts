@@ -22,6 +22,9 @@ const readCited = (id: string, needle: string): FakeStep =>
     return { id, name: "memory_get", arguments: { path: path ?? "", from: Number(line), limit: 1 } };
   });
 
+/** A scripted `memory_write` of a person page on a stated relationship (F44). */
+export const notePerson = (id: string, name: string, relationship: string): FakeStep => ({ toolCall: { id, name: "memory_write", arguments: { target: "person", name, relationship } } });
+
 /** T-P6-01's first turn: the write, then the reply quoting the citation the tool returned. */
 export const remember: FakeStep[] = [writeDaily("call_pat", PAT_FACT), replyFrom((r) => `Saved: ${PAT_FACT} (${citeOf(last(r))}).`)];
 /** Both facts said in c1 and written, as T-P6-08 and T-P6-10 find them. */
@@ -149,8 +152,10 @@ export const scripted: Record<string, () => P6HarnessOptions> = {
     ],
   }),
   "T-P6-13": () => runs["T-P6-06"]!(),
+  // F44: the stated relationship is one memory_write with target person (delta 7's seam), which saves the line and
+  // writes Pat's page citing it; the reply names both.
   "T-P6-14": () => ({
-    script: [{ text: "Noted." }, { text: "Noted." }, { text: "Noted." }, writeDaily("call_rel", "Pat Solo is Sam's co-founder; they talk every Monday"), replyFrom((r) => `Saved (${citeOf(last(r))}).`)],
+    script: [{ text: "Noted." }, { text: "Noted." }, { text: "Noted." }, notePerson("call_rel", "Pat Solo", "co-founder; we talk every Monday"), replyFrom((r) => `Saved that Pat Solo is your co-founder (${citeOf(last(r))}) and wrote Pat's page, memory/people/pat-solo.md.`)],
   }),
 };
 

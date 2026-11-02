@@ -5,6 +5,22 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
+### Q40 (F44), 2026-11-02: T-P6-09 passes 2 of 3 on F44's declared run on the final tree
+
+**Blocks:** F44's acceptance line "`pnpm evals T-P6-09` `pass` (three of three)", and so its DONE row. Everything else
+is in on `claude/f44-memory-reach` (PR #99): scope items 1 to 4 and 6, `ACCEPT F44: PASS`, and the declared run 4 on
+fletch-pv-3 at tree `513692a` (HEAD 6f177ef), where T-P6-12, T-P6-13, T-P6-14 and the must-haves T-P6-03 and T-P6-04
+pass 3/3 and T-P6-09 passes 2/3 (trial 3 failed "one line holds the fact, and c1's first reply cites it after the
+write"; results in adea703). Run 3, on the tree before 6f177ef narrowed the refusal line's government-ID wording (a
+line T-P6-09 does not exercise), passed T-P6-09 3/3, and two unscored samples on run 4's tree after it passed every
+grader. So the model gets it right in 8 of 9 scored trials since the oracle correction (Q39 (e)). The results file
+records no words, so the failed trial's cause is not known. It may have been a paraphrased line: the first grader
+wants the literal "plain text over PDFs" in exactly one daily line. A run is not repeated for a model's fail
+(KICKOFF), and changing code only to declare another run would be gaming the score.
+**Recommended answer:** accept T-P6-09 at 2/3 for this nice-to-have (P6's must-haves are 3/3 on the final tree) and
+mark F44 DONE with that recorded. Alternatively, have the next part that touches `MEMORY_WORDS` run T-P6-09 again on
+its own declared tree.
+
 ### Q38 (F41), 2026-10-30: No preview slot is free for P14's tier 2
 
 **Blocks:** F41's tier 2 (`pnpm evals P14`: T-P14-10, 11 and 12 must-have, 13 and 14 recorded) and so its DONE row.
@@ -166,6 +182,45 @@ Orchestrator, 2026-10-30: PR #91 (D-0022) deleted `test/live/f1-deploy.live.test
 runbook, so this question can no longer be answered as written; F1's new shape is a decide item in `WAITING-ON-KYLE.md`.
 
 ## Open, not blocking
+
+### Q39 (F44), 2026-11-01: F44's two-way choices, recorded here because the decision log is at its cap
+
+**Blocks nothing; for your read.** (a) The person page's tool path is a fifth `memory_write` target, `person` (a name
+and a relationship), not a new tool: it saves the relationship as one daily line through the same write as any fact
+(idempotent by the call id, armed for the render), then calls `upsertEntity` with that line cited under Facts and The
+relationship (`<relationship> — memory/<date>.md#L<n>`, a bare citation as B-P6-11 has it, since a citation in
+parentheses would not resolve), the summary the relationship, the rank kept or 1. No table or column changes: it is a
+row in `entities` and a page in the home tree (`packages/agent/src/memory/entities.ts`, `notePerson`). (b) "A person
+the owner named" is held by code twice: the name must read as a person's (one to five words of letters, the first and
+last capitalised, no digits, no organisation word such as Corp, Team, Group or Club, no group page of that slug,
+`MEMORY_PERSON_NOT_A_PERSON`), and it must be in the person's own latest typed message, which the chat's code passes
+as `WriteContext.said` (`store.latestTypedText()`, a quoted agent message left out) and the Person checks
+(`MEMORY_PERSON_NOT_NAMED`); a name only a tool result, a page or memory holds is refused, and a job or a colleague's
+turn carries no words. An empty relationship is `MEMORY_PERSON_NO_RELATIONSHIP`. The rejected alternatives: a
+separate `memory_note_person` tool (one more name on every turn's tool list for a write the existing one already
+gates as `mutates`), and trusting the model's own claim that the person named them (message content is data). The
+shape check is a heuristic: a person named in lower case, or with a digit, is refused and said so by code. (c)
+`upsertEntity` now refuses a page write that lost its etag race (`MEMORY_STALE`) instead of reporting it written; the
+relationships loop already drops a refused upsert with its code. (d) Three existing `MEMORY_WORDS` lines were
+sharpened and one added beyond the three items, each for a nice-to-have the acceptance needs at 3/3 and each failing
+on the slot on its reply words (Q18's pattern): the refusal line names the number by what it is and the place kept
+(T-P6-13), the forget line gives the remaining copies in fixed words, the chat and any job or skill (T-P6-12), and a
+recall line asks for a fresh search on every question about a person even when the chat answered it before, the
+later of two disagreeing lines holding (T-P6-09's second recall in c2). (e) Two oracle corrections under KICKOFF's rule, each with the slot's words pinned verbatim as a pass in the task's
+tier-1 test, planted negatives that still fail, and the failed runs' results files kept; three `version_hash` lines
+moved in the contract (T-P6-06, T-P6-09, T-P6-13). T-P6-09 failed 0/3 on two declared runs (trees 5890d87 and
+9728aaa) while the model's answers were what the task asks: its graders read the chat's first agent bubble, which is
+the line the model writes beside its tool call ("I'll save Pat Solo's plain-text preference."), though the first one
+had already found the reply after the write; they now read each prompt's answer (its last words with no tool call). A
+`MEMORY_WORDS` line asking for no words beside a memory call was tried on the second run, changed nothing, and was
+removed. T-P6-13 failed 0/3 on "the chat transcript keeps Sam's message as sent" alone, every other grader holding:
+since F38 the typed-secret hold (`packages/agent/src/vault/typed.ts`, P12 delta 1) keeps a Luhn-valid 13 to 19 digit
+run out of every transcript as a `[credential:cred://typed-<id>]` reference, and P6's planted all-zero sixteen digits
+pass Luhn; the grader (shared with T-P6-06) now takes the message whole with the number or that one reference. The
+rejected alternatives: exempting an all-zero run from the card hold (narrows a guard), and a new planted value that
+fails Luhn (rewrites the task's prompt and the contract's text). If you read delta 3 ("the person's own words are
+theirs") as requiring the digits themselves in the transcript, revert that grader, and the hold's reach is P12's
+question instead.
 
 ### Q37 (F41), 2026-10-30: F41's two-way choices, recorded here because the decision log is at its cap
 

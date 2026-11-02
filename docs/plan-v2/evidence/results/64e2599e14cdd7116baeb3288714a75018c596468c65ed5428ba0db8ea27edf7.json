@@ -55,6 +55,37 @@
       ],
       "status": "fail",
       "state": "regressed"
+    },
+    {
+      "run_at": "2026-11-01T23:35:29.787Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the chat transcript keeps Sam's message as sent",
+          "started_at": "2026-11-01T23:35:29.787Z",
+          "finished_at": "2026-11-01T23:35:51.709Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the chat transcript keeps Sam's message as sent",
+          "started_at": "2026-11-01T23:35:51.709Z",
+          "finished_at": "2026-11-01T23:36:06.917Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the chat transcript keeps Sam's message as sent",
+          "started_at": "2026-11-01T23:36:06.918Z",
+          "finished_at": "2026-11-01T23:36:41.025Z"
+        }
+      ],
+      "status": "fail"
     }
   ]
 }
