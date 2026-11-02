@@ -190,7 +190,21 @@ sharpened and one added beyond the three items, each for a nice-to-have the acce
 on the slot on its reply words (Q18's pattern): the refusal line names the number by what it is and the place kept
 (T-P6-13), the forget line gives the remaining copies in fixed words, the chat and any job or skill (T-P6-12), and a
 recall line asks for a fresh search on every question about a person even when the chat answered it before, the
-later of two disagreeing lines holding (T-P6-09's second recall in c2). No grader changed.
+later of two disagreeing lines holding (T-P6-09's second recall in c2). (e) Two oracle corrections under KICKOFF's rule, each with the slot's words pinned verbatim as a pass in the task's
+tier-1 test, planted negatives that still fail, and the failed runs' results files kept; three `version_hash` lines
+moved in the contract (T-P6-06, T-P6-09, T-P6-13). T-P6-09 failed 0/3 on two declared runs (trees 5890d87 and
+9728aaa) while the model's answers were what the task asks: its graders read the chat's first agent bubble, which is
+the line the model writes beside its tool call ("I'll save Pat Solo's plain-text preference."), though the first one
+had already found the reply after the write; they now read each prompt's answer (its last words with no tool call). A
+`MEMORY_WORDS` line asking for no words beside a memory call was tried on the second run, changed nothing, and was
+removed. T-P6-13 failed 0/3 on "the chat transcript keeps Sam's message as sent" alone, every other grader holding:
+since F38 the typed-secret hold (`packages/agent/src/vault/typed.ts`, P12 delta 1) keeps a Luhn-valid 13 to 19 digit
+run out of every transcript as a `[credential:cred://typed-<id>]` reference, and P6's planted all-zero sixteen digits
+pass Luhn; the grader (shared with T-P6-06) now takes the message whole with the number or that one reference. The
+rejected alternatives: exempting an all-zero run from the card hold (narrows a guard), and a new planted value that
+fails Luhn (rewrites the task's prompt and the contract's text). If you read delta 3 ("the person's own words are
+theirs") as requiring the digits themselves in the transcript, revert that grader, and the hold's reach is P12's
+question instead.
 
 ### Q37 (F41), 2026-10-30: F41's two-way choices, recorded here because the decision log is at its cap
 

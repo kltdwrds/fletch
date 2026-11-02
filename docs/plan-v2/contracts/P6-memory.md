@@ -323,7 +323,7 @@ T-P6-09  nice-to-have  tier 2
   required_facts / minefields / collateral: as T-P6-01, T-P6-02 and T-P6-05 (uncited_claim, transcript_read,
   old_value_recalled)
   graders: as T-P6-01, T-P6-02 and T-P6-05
-  reference: B-P6-02, B-P6-03, B-P6-06, B-P6-13   version_hash: 5ffbaf9b4bb9
+  reference: B-P6-02, B-P6-03, B-P6-06, B-P6-13   version_hash: df7d0787d742
   file: test/evals/p6-memory/remember-and-recall-across-chats.task.ts
 
 T-P6-10  nice-to-have  tier 1
