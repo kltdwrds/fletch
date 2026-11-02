@@ -48,6 +48,63 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
 
 ## Open
 
+- [ ] 2026-11-02 decide: **Q40, F44: accept T-P6-09 at 2 of 3 and set F44 DONE, or ask for a rerun.** F44 (memory's reach:
+  a citation per `MEMORY.md` line, a new fact to today's note, a person page the chat writes through `upsertEntity`)
+  is merged (PR #99) with its row BLOCKED on one line: T-P6-09, a nice-to-have, passed 2 of 3 on the declared final run
+  (trial 3 `GRADER_FAILED`; the run before, on the tree before the refusal-line fix, passed it 3 of 3, and two unscored
+  samples on the final tree passed). Everything else held: the must-haves 3 of 3, T-P6-12, 13 and 14 3 of 3, accept
+  1676 tests, the verifier clear but for that line. What your answer changes: the row (DONE or a rerun by the next P6
+  part). Recommended: accept 2 of 3 for a nice-to-have and set the row DONE in your own commit. [Q40](QUESTIONS.md);
+  [F44 in parts.md](parts.md#f44-memorys-reach-a-citation-per-saved-line-new-facts-to-todays-note-a-person-page-the-chat-can-write-and-p6s-nice-to-have-tier-2);
+  [PR #99](https://github.com/kltdwrds/fletch/pull/99).
+
+- [ ] 2026-11-02 decide: **Q39, F44's two-way choices, one of them an oracle correction you may want reverted.** The
+  T-P6-13 transcript grader now accepts the typed card as the `[credential:cred://typed-<id>]` reference the hold
+  stores since F38, not the digits; if P6 delta 3 means the digits themselves stay in the transcript, revert that one.
+  The rest (T-P6-09's graders reading each prompt's answer rather than the line beside a tool call; the refusal line
+  naming only a passport or licence number a government ID number) is for your read. Recommended: keep all.
+  [Q39](QUESTIONS.md); [PR #99](https://github.com/kltdwrds/fletch/pull/99).
+
+- [ ] 2026-11-02 decide: **F42 (PR #96, a draft, not merged): the bound-host words, a clause past its scope, and the
+  finding that P9's level 2 rests on the old model.** The builder's line makes T-P9-15 pass 3 of 3 on GLM but 2 of 3
+  on Muse Spark, and carries a clause the part did not ask for ("write no words until the keyed call's result has come
+  back") that the verifier called out of scope and that lifted the score when present. The larger finding: T-P9-13, a
+  P9 must-have, fails 0 of 3 on main itself under the Muse Spark default (PR #94); F37's 3 of 3 ran on GLM the day
+  before. The cause is cross-cutting: Muse Spark opens nearly every turn with a lead-in bubble beside its first tool
+  call, and graders that read the first bubble or count replies take it for the reply; F43 (T-P12-10) and F44
+  (T-P6-09, T-P6-13) met the same thing and corrected each grader under KICKOFF's rule. The builder's question in PR
+  #96 (numbered Q39 there; it becomes Q41 when the branch is rebased, since F44's Q39 merged first) proposes one
+  cross-cutting part for the lead-in bubble instead of a correction per task. What your answer changes: whether F42
+  merges as BLOCKED like F44, or waits; whether that part is written; whether P9's row is re-verified on the default
+  model. Recommended: write the cross-cutting part next, hold F42 until it lands, and re-run P9's must-haves on Muse
+  Spark then. [PR #96](https://github.com/kltdwrds/fletch/pull/96); [F42 in parts.md](parts.md#f42-credentials-say-why-a-host-is-refused-the-bound-host-words-and-t-p9-15s-re-grade);
+  [P9 row](SCORECARD.md).
+
+- [ ] 2026-11-02 look: **P10 and P11 are interrogated, from the cloud; the evidence is in the session's tarball, not on
+  your Mac yet.** Two Opus agents ran `evidence/p10-search/scenario.md` and `evidence/p11-files/scenario.md` in your Muse
+  account through a headless browser signed in with the code you pasted (the login persisted on disk for the session;
+  the browser and its cookies are gone with the container; each folder's `answers/driver-notes.md` says how the UI is
+  driven). Unpack the tarball from the session chat into `docs/plan-v2/evidence/` on the Mac, then run the deferred dump
+  diffs (`dump/diff-deferred.md` in each). Findings for your read, from the raw answers: a new weekday job ran at once
+  as a catch-up for its last missed slot, took "7am" as UTC and needed no card to create or delete (P10 step 10);
+  `browser.open` returns a crawled copy, not the live page (P10 step 2); a generated image has no media row, only a
+  workspace file and a widget row, and there is no video-search tool (P10 steps 7 and 8); edits overwrite a memo and a
+  sheet in place with no versions (P11 steps 3 and 5); a pending approval card freezes its own chat and leaves no row
+  (P11 step 8); deleting a deck hard-deletes its files, keeps its identity row and writes no audit row (P11 step 12).
+  Next for the orchestrator: Translate both (contracts, tasks, deltas). [P10 row and P11 row](SCORECARD.md).
+
+- [ ] 2026-11-02 do: **what the P10 and P11 interrogations left in your Muse account.** Listed in each folder's
+  `answers/step-12.md`: two side chats per cluster; the lighthouse image under `imagine_media/`; the p11 probe memo,
+  budget and text files in the Library; the deleted weekday job's history rows (Muse has no tool that removes them);
+  about 49 lines of P10 notes in Muse's daily memory. Nothing external was left: the one public link (P11 step 8,
+  approved by you) was revoked at 23:36Z.
+
+- [ ] 2026-11-02 uat: **memory's reach after F44** (https://fletch-pv-3.edwards-ky1.workers.dev, lease to
+  2026-11-03T00:33Z, serving F44's final code; merged, PR #99). In chat: "I prefer plain text, remember that" gets a
+  reply naming where it went (today's note, with its citation); "Pat Solo is my accountant" writes Pat's page with the
+  relationship cited, listed where pages are listed; "the Acme team is my client" is refused by code as not a person;
+  a name you did not type yourself is refused. Nothing blocks.
+
 - [ ] 2026-11-01 look: **every slot the uat items below name expired on 2026-10-31; fletch-pv-1 now serves main for all of
   them.** The orchestrator, run from a cloud session on 2026-11-01, took back the expired leases (`pnpm preview gc`) and
   deployed main at a72e7a6 (every merged part through F41 and PR #94) to https://fletch-pv-1.edwards-ky1.workers.dev, lease to
