@@ -31,12 +31,24 @@ export interface RequestParts {
   messages: WireMessage[];
   tools: WireTool[];
   maxTokens?: number;
+  /** The deploy's tenant, which keys Meta's prompt cache. */
+  tenant?: string;
 }
 
 /**
+ * Meta's prompt-cache key for a deploy: one per tenant, which shares one stable prefix across its chats. Meta's
+ * cache is per backend and its hits measured all or nothing without a key (12 of 18 calls missed on a preview slot,
+ * 2026-11-02), so a key routes a deploy's requests to the backend that holds its prefix. Meta advises one key per
+ * shared prefix, never per person or request (dev.meta.ai/docs/prompt-caching, read 2026-11-02).
+ */
+export const promptCacheKey = (tenant: string): string => `fletch:${tenant}`;
+
+/**
  * The request body for `model` on `route`: the same Chat Completions body for both providers, with the flat
- * `reasoning_effort`. Meta's (dev.meta.ai, 2026-10-30) also names the model and asks for usage in the stream;
- * it refuses `tool_choice` other than `auto` and documents no policy for unknown fields, so it is sent no more.
+ * `reasoning_effort`. Meta's (dev.meta.ai, 2026-10-30) also names the model, asks for usage in the stream and
+ * carries the tenant's prompt-cache key with the longest retention it takes, a hint, so a chat idle for minutes
+ * still finds its prefix (both documented Chat Completions fields, read 2026-11-02); it refuses `tool_choice`
+ * other than `auto` and documents no policy for unknown fields, so it is sent no more.
  */
 export function requestBody(route: Route, model: string, parts: RequestParts): Record<string, unknown> {
   const effort = REASONING_EFFORT[route];
@@ -49,6 +61,7 @@ export function requestBody(route: Route, model: string, parts: RequestParts): R
     ...(meta ? { stream_options: { include_usage: true } } : {}),
     ...(parts.maxTokens ? { max_tokens: parts.maxTokens } : {}),
     ...(effort ? { reasoning_effort: effort } : {}),
+    ...(meta && parts.tenant ? { prompt_cache_key: promptCacheKey(parts.tenant), prompt_cache_retention: "24h" } : {}),
   };
 }
 

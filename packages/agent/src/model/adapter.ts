@@ -92,7 +92,8 @@ async function callModel(
   maxTokens: number | undefined,
   stream: AssistantMessageEventStream,
 ): Promise<void> {
-  const wire = toWire(context.messages);
+  // Meta folds system messages into the leading one, so the envelope goes to it as a user message in place (`toWire`).
+  const wire = toWire(context.messages, { envelopeAs: providerName(model.id) === "meta" ? "user" : "system" });
   const message: AssistantMessage = {
     role: "assistant",
     content: [],
@@ -145,7 +146,7 @@ async function callModel(
   // Its chat row names what the vars asked for, not the Workers AI model the faulted config falls back to.
   const fault = deps.models?.fault;
   if (fault) return fail(1, "refused", fault.code, fault.reason, null, who.route === "chat" ? { model: fault.model, provider: fault.provider } : undefined);
-  const inputs = requestBody(who.route, model.id, { messages: wire.messages, tools: wire.tools, ...(maxTokens ? { maxTokens } : {}) });
+  const inputs = requestBody(who.route, model.id, { messages: wire.messages, tools: wire.tools, tenant: who.tenant, ...(maxTokens ? { maxTokens } : {}) });
   const bounds = CALL_BOUNDS[who.route];
   // The total bound is the call's, not each attempt's: every attempt and every wait between them ends by it.
   const deadline = bounds ? deps.now() + bounds.totalMs : Number.POSITIVE_INFINITY;

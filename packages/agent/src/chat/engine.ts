@@ -511,7 +511,7 @@ export class ChatEngine {
       // A resumed step replays the blocks its turn assembled (M24.2), so it is the step it replaces.
       let messages: Message[];
       if (this.projections.has(turnId)) {
-        const replayed = this.projections.replay(turnId, liveTranscript(this.store), session.tools);
+        const replayed = this.projections.replay(turnId, liveTranscript(this.store, turnId), session.tools);
         if (!replayed.ok) return this.failTurn(turnId, replayed.code, replayed.detail);
         messages = replayed.messages;
       } else {

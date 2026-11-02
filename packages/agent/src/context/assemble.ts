@@ -4,7 +4,9 @@
 //
 // The stable prefix is one leading system message built from the first six blocks only, so it is
 // byte-identical across turns while those inputs are unchanged. The envelope is the per-turn part:
-// a system message placed immediately before the latest user message, never persisted.
+// a system message placed immediately before the latest user message. A chat keeps each turn's envelope
+// and sends it again before the same message on later turns (`liveTranscript` in chat/assemble-turn.ts),
+// so the request only grows; it never enters the stored transcript.
 import type { Message, SystemMessage, Tool } from "@earendil-works/pi-ai";
 import { FENCE_RULE, fence } from "./fence.ts";
 
@@ -120,10 +122,20 @@ export function envelopeText(e: Envelope): string {
   return lines.join("\n");
 }
 
+/**
+ * The envelope's system message, marked so the wire can keep it where it stands for a provider that folds every system
+ * message into the leading one (Meta, `toWire`): folded, each turn's envelope would land right after the stable prefix
+ * and change everything a prompt cache could reuse after it.
+ */
+export type EnvelopeMessage = SystemMessage & { runtimeEnvelope: true };
+export const envelopeMessage = (text: string, timestamp: number): EnvelopeMessage => ({ role: "system", content: text, timestamp, runtimeEnvelope: true });
+/** Whether `m` is a runtime envelope, by its mark, never by its text. */
+export const isEnvelope = (m: Message): boolean => (m as { runtimeEnvelope?: unknown }).runtimeEnvelope === true;
+
 /** The messages for one model request: stable prefix, transcript, envelope before the latest user turn. */
 export function assemble(inputs: ContextInputs): Message[] {
   const prefix: SystemMessage = { role: "system", content: stablePrefix(inputs), toolsAdded: inputs.tools, timestamp: 0 };
-  const envelope: SystemMessage = { role: "system", content: envelopeText(inputs.envelope), timestamp: inputs.envelope.now };
+  const envelope = envelopeMessage(envelopeText(inputs.envelope), inputs.envelope.now);
   const transcript = [...inputs.transcript];
   let lastUser = -1;
   for (let i = transcript.length - 1; i >= 0; i--) {
