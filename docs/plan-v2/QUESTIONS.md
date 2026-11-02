@@ -5,6 +5,22 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
+### Q40 (F44), 2026-11-02: T-P6-09 passes 2 of 3 on F44's declared run on the final tree
+
+**Blocks:** F44's acceptance line "`pnpm evals T-P6-09` `pass` (three of three)", and so its DONE row. Everything else
+is in on `claude/f44-memory-reach` (PR #99): scope items 1 to 4 and 6, `ACCEPT F44: PASS`, and the declared run 4 on
+fletch-pv-3 at tree `513692a` (HEAD 6f177ef), where T-P6-12, T-P6-13, T-P6-14 and the must-haves T-P6-03 and T-P6-04
+pass 3/3 and T-P6-09 passes 2/3 (trial 3 failed "one line holds the fact, and c1's first reply cites it after the
+write"; results in adea703). Run 3, on the tree before 6f177ef narrowed the refusal line's government-ID wording (a
+line T-P6-09 does not exercise), passed T-P6-09 3/3, and two unscored samples on run 4's tree after it passed every
+grader. So the model gets it right in 8 of 9 scored trials since the oracle correction (Q39 (e)). The results file
+records no words, so the failed trial's cause is not known. It may have been a paraphrased line: the first grader
+wants the literal "plain text over PDFs" in exactly one daily line. A run is not repeated for a model's fail
+(KICKOFF), and changing code only to declare another run would be gaming the score.
+**Recommended answer:** accept T-P6-09 at 2/3 for this nice-to-have (P6's must-haves are 3/3 on the final tree) and
+mark F44 DONE with that recorded. Alternatively, have the next part that touches `MEMORY_WORDS` run T-P6-09 again on
+its own declared tree.
+
 ### Q38 (F41), 2026-10-30: No preview slot is free for P14's tier 2
 
 **Blocks:** F41's tier 2 (`pnpm evals P14`: T-P14-10, 11 and 12 must-have, 13 and 14 recorded) and so its DONE row.
