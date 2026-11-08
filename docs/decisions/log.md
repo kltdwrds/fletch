@@ -329,3 +329,8 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   socket and a reply lands at its step's end rather than token by token (`chat/turn.ts`, `chat/commentary.ts`).
   Rejected: streaming live and retracting with a frame when a call follows, which still puts a `delta` before the last
   tool result (T-P2-03's `early_bubble`) and draws a bubble the page then takes away.
+- 2026-11-08 `pnpm accept` can run on a GitHub runner: `.github/workflows/accept.yml`, dispatched by hand for one branch and
+  one part, prints the same ACCEPT and TREE lines and keeps the log as its artifact; it deploys and writes nothing. Added
+  when a laptop carrying four builder sessions timed the browser tests out in every full run while each failing file
+  passed alone. Rejected: a lower `maxWorkers` in `vitest.config.ts` (six workers still failed eight files on that
+  machine) and a longer `testTimeout` (it would hide a slow test in CI too).
