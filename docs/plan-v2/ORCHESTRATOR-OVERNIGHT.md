@@ -65,7 +65,7 @@ PR opens as a draft: review, `gh pr ready`, gate with `gh pr checks <n> --repo k
 
 ## Queue (the orchestrator marks each `done (PR #n)` or `blocked on Kyle (<item>)` in place)
 
-1. **Defaults, first cycle, one docs PR.** Take the defaults for Q16, Q18, Q29, Q40 (keep the grader corrections,
+1. **Defaults, first cycle, one docs PR.** *Done (this PR): 31 questions under `## Answered by default`, each mirrored in `WAITING-ON-KYLE.md`; Q10 stays.* Take the defaults for Q16, Q18, Q29, Q40 (keep the grader corrections,
    count one declared run), Q1 (fold F1 into D-0022 the way F7, F16 and F17 folded: row FOLDED, nothing to build),
    Q13, Q34, Q38 (closed by their orchestrator lines), Q39, Q37, Q35, Q31, Q30, Q22 to Q28 inclusive, Q19, Q21, Q17,
    Q15, Q14, Q12, Q11, Q6, Q2 (reads and reversible choices: taken as written), Q33 and Q32 (D-0018 and D-0017 built
@@ -76,7 +76,7 @@ PR opens as a draft: review, `gh pr ready`, gate with `gh pr checks <n> --repo k
    accept lines in PR #36 and PR #42, the verifier lines and the must-have results files.
 3. **F34 close-out (slot).** One cloud builder: one declared run each of T-P3-14 and T-P3-16 on current main, the
    results files committed, verifier, F34 DONE, P3 to level 2. Target part F34 with the default under Q29 in the brief.
-4. **F44 DONE** on the Q40 default (T-P6-09 at 2 of 3 accepted for a nice-to-have); P6's row notes it.
+4. **F44 DONE** *(done in the Queue 1 PR: the row DONE on Q40's default, P6's row notes it)* on the Q40 default (T-P6-09 at 2 of 3 accepted for a nice-to-have); P6's row notes it.
 5. **F45, the lead-in bubble (write the part, then a slot).** Muse Spark opens most turns with a lead-in bubble
    beside its first tool call; graders that read the first bubble or count replies take it for the reply (F42's
    finding, PR #96; F43 and F44 met it). Write F45 in `parts.md` from the P2 contract (the reply clause) as one
@@ -89,7 +89,7 @@ PR opens as a draft: review, `gh pr ready`, gate with `gh pr checks <n> --repo k
    oracle correction under KICKOFF's rule when the reply is right in other words, else a line part F46+ written from
    the cluster's contract (one instruction line, the task's re-grade), built by the same builder, merged. The sweep
    is done when every must-have is 3 of 3 on Muse Spark or has its line part merged.
-7. **Translate P10 and P11** (if their evidence is on the Mac, Queue note 2): the contract, tasks and deltas from
+7. **Translate P10 and P11** *(blocked on Kyle: the evidence tarball is not on this Mac, the `look` item of 2026-11-02 in `WAITING-ON-KYLE.md`)* (if their evidence is on the Mac, Queue note 2): the contract, tasks and deltas from
    the raw `answers/step-*.md`, drafted by an Opus sub-agent and reviewed by you; the one-way doors proposed; the
    parts written (tier 1, then tier 2 on a slot); a specimen for any owner-visible surface; builders dispatched.
 8. **Nice-to-have line parts** still open after the sweep: Q37 (T-P14-13 the lost-device reply, T-P14-14 the pronoun
