@@ -352,3 +352,11 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   key, since that token already deploys every slot Worker. Reversing: `pnpm preview down --slot 1 --force` on Kyle's
   login, then a PR that drops the mark and the workflow. Rejected: a lease key for the runner (it proves nothing the
   token does not), and a fresh lease per deploy (it would wipe the passkey and workspace).
+- 2026-11-08 F70 (P13, D-0026, accepted by Kyle's ruling of 2026-11-08, recorded on main by PR #141): the `attachments` row's `transcript` column is a two-way storage change under AGENTS.md's
+  no-users rule, since `attachments/store.ts` is the only reader of that table's rows; it lands by the named migration
+  `person.attachments-transcript`. The audio types are mp3, m4a, ogg, opus, wav and `weba` for `audio/webm` (`webm`
+  stays video, so a recorder's unnamed `audio/webm` blob is audio by its type). The call refusal is answered by an
+  observation, `speech_status`, beside `speak`, so no tool is named for starting a call (B-P13-01). Rejected: a
+  `voice_call` tool that only refuses (a name that reads as capture), and the refusal in the instruction line alone
+  (words with no code behind them). D-0026's "transcript kept, audio not" is the one-way door this column serves; the column
+  itself is reversible (a later migration drops it) while no other reader exists.
