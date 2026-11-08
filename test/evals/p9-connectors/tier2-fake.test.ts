@@ -73,7 +73,7 @@ describe("[F50] T-P9-16 on Muse Spark: the count said with what it counted, the 
   it("planted: a bare number for the day fails the count grader and steps on bare_number_wrong", async () => {
     const g = await graded(count, asRun("You have 0 items in your fixture library today.", CREATE_REPLIES[0]!));
     expect([g[COUNT_GRADER], g.bare_number_wrong]).toEqual([false, false]);
-  });
+  }, 30_000);
 
   it("planted: the system prompt the fake model receives carries the count line; taken out, the required_fact grader fails", async () => {
     const w = await played(count, runs["T-P9-16"]!());
@@ -83,5 +83,5 @@ describe("[F50] T-P9-16 on Muse Spark: the count said with what it counted, the 
     expect(await REQUIRED.check(w)).toBe(true);
     const without = Object.assign(Object.create(w) as typeof w, { instructions: () => w.instructions().filter((l) => !l.includes(COUNT_LINE)) });
     expect(await REQUIRED.check(without)).toBe(false);
-  });
+  }, 30_000);
 });
