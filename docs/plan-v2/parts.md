@@ -1216,3 +1216,65 @@ PR as F44's and F48's were.
 a `WORK_WORDS` line; a provider-specific connector or catalogue row; PKCE and device-code flows (a later record if Kyle
 accepts D-0016); the company's shared connectors (M28); a tier-2 task; the capture form's look beyond the added fields
 (no specimen: the form is the existing capture page); D-0017 and D-0018.
+
+## F80 Shopping as it is: the P16 contract check, twelve task files, the research, hand-over and remembering lines, the no-click and no-provider guards planted and tier 1
+
+**Read:** `docs/plan-v2/contracts/P16-shopping-bookings.md` (all thirteen clauses, the Tasks, the Translation's Survey,
+deltas 1 to 7, the fresh-session check and Build notes), `docs/decisions/0027-shopping-is-find-and-hand-over.md` (both
+doors, accepted by Kyle's ruling of 2026-11-08 as the orchestrator records it), `docs/plan-v2/QUESTIONS.md` Q43 (its
+rulings (c) and (d) taken at the recommended answers), `docs/plan-v2/contracts/P12-wallet.md` (B-P12-03 and the
+after-handoff line), the P12 world and `planted.test.ts` under `test/evals/p12-wallet/` and `test/m0/f38-contract.test.ts`
+as the pattern, `packages/agent/src/browse/tools.ts` (`browseNamespace`), `browse/urls.ts`, `browse/classify.ts`,
+`packages/agent/src/chat/instructions.ts` (`WORK_WORDS`), `packages/agent/src/egress/policy.ts` (`PUBLIC_HOSTS`,
+`plan`), `packages/agent/src/connectors/manifest.ts` (`CONNECTOR_MANIFESTS`), `packages/agent/src/subagents/run.ts`,
+`packages/agent/src/jobs/job-tools.ts` (`JOB_READ_TOOLS`, `readOnlyForJob`), `packages/agent/src/memory/tools.ts`,
+`test/workers/support/browse-world.ts`, `test/workers/support/fake-cdp-browser.ts`,
+`test/workers/support/authority-world.ts` (`shop_buy`). No new one-way door: this part adds no purchase tool, no
+provider host, no connector, no `HostFeature` member, no table and no widget (D-0027, D-0017 proposed).
+
+**Scope:** (1) `test/m0/f80-contract.test.ts` holds `contracts/P16-shopping-bookings.md` as F38's holds P12 (thirteen
+clauses, twelve tasks, each file under `test/evals/p16-shopping-bookings/`, every `version_hash` filled: the "filled by
+F80" lines replaced by each file's hash under Node's loader). (2) Twelve task files under
+`test/evals/p16-shopping-bookings/` with a `world.ts` composing the P12 world and the browse fakes (delta 5: the four
+`example.com` hosts, the sale window, the blocked read, the cookie banner, the terms checkbox, "Create account", the
+kept login) and a `harness.ts` counting the journal, memory, jobs and grants. (3) Deltas 1, 2 and 4: at most four
+`WORK_WORDS` lines (research is read-only and said so, offers cited from this turn's reads with at most two named,
+empty and failed told apart with nothing substituted, terms, banners, accounts and memberships the person's; the
+chosen offer restated before a handoff with only its fields asked, never the owner's identity for someone else, no
+handoff after a "no"; a purchase or booking remembered only when the person asks by name, as their report), inside
+the file-size ratchet. (4) Delta 3: a `[F80]` test under `test/workers/` that iterates `browseNamespace`'s tools and
+fails on a click, check, free-text type or submit tool, planted by adding one. (5) Delta 6: a `[F80]` test that fails
+when `PUBLIC_HOSTS` or `CONNECTOR_MANIFESTS` holds a provider host or id the contract's evidence names, planted by
+adding one, citing D-0027. (6) Tier 1 under vitest with an `[F80]` describe: T-P16-01, 02, 04, 06, 07 and 10
+(must-have) and T-P16-08, 09 and 11 (nice-to-have), every minefield fired in `planted.test.ts`; the tier-2 tasks
+(T-P16-03, 05, 12) play under the scripted fake in a `tier2-fake.test.ts`.
+
+**Acceptance:** `test/m0/f80-contract.test.ts` passes with every `version_hash` matching; the six must-have tier-1
+tasks pass and the three nice-to-have tier-1 tasks run, their results said in the PR body; every planted fault fails
+its grader (`test/evals/p16-shopping-bookings/planted.test.ts`); the no-click and no-provider tests fail with their
+planted additions; `ACCEPT F80: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a purchase, booking, hold, cart or checkout by the agent, a provider connector or egress entry, a
+`commerce` feature (D-0027); a results card, cart widget or orders pane (the contract's specimen note: no specimen,
+no draw); a change to a clause; tier 2 on a slot (F81); naming the no-provider test as D-0027's `confirmation` (the
+orchestrator's, in the record's acceptance).
+
+## F81 Shopping says what happened: P16's tier 2 on a slot
+
+**Read:** `docs/plan-v2/contracts/P16-shopping-bookings.md` (B-P16-03, B-P16-05, B-P16-13, the tier-2 tasks, delta 5
+and Build notes), the F80 world and tasks under `test/evals/p16-shopping-bookings/`,
+`packages/agent/src/chat/instructions.ts`, `docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q18. No one-way
+door. A live step: `pnpm evals` runs on this worktree's slot (`pnpm preview up`); if no slot can be leased, that is a
+question, not a reason to skip.
+
+**Scope:** (1) The slot's test host serves the four hosts as fixture paths (as P9's probe host is): fares and rooms
+inside the sale window, "Requested date is too far in the future" past it, a blocked read for the ticket host; each
+P16 trial starts with Sam's chat, memory and jobs from the trial before deleted by the test host. (2) Tier 2 on the
+slot: T-P16-03 and T-P16-05 (must-have) and T-P16-12, three trials each, the results files committed, the table in the
+PR body. (3) Every P16 hash in the contract matches.
+
+**Acceptance:** `pnpm evals T-P16-03` and `pnpm evals T-P16-05` `pass` (three of three); T-P16-12 runs and its result
+is recorded whatever the verdict; `ACCEPT F81: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a change to a clause; new instruction lines beyond what a failing must-have needs, each named in the
+PR body with its task; a results card (the specimen note); anything D-0027 or D-0017 reserves.
