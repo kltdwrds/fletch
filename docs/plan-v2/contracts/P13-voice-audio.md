@@ -186,7 +186,7 @@ T-P13-01  must-have  tier 1  (F70)
   collateral: none
   graders: code
   reference: Muse's `voice` namespace has no start function (`dump/tools.md`)
-  version_hash: filled by F70
+  version_hash: 6d59de773c5c
   file: test/evals/p13-voice-audio/no-agent-started-capture.task.ts
 
 T-P13-02  must-have  tier 1  (F71)
@@ -205,7 +205,7 @@ T-P13-02  must-have  tier 1  (F71)
   graders: code (a deny-list for "listened", "heard your tone")
   reference: `runtime.message_attachments.transcription_text` (B-P13-02); the audio's fate is D-0026's, not Muse's
   (delta 2)
-  version_hash: filled by F70
+  version_hash: 1a4600a453ba
   file: test/evals/p13-voice-audio/voice-note-transcript-on-row.task.ts
 
 T-P13-03  must-have  tier 1  (F71)
@@ -217,7 +217,7 @@ T-P13-03  must-have  tier 1  (F71)
   collateral: no R2 object for a refused file
   graders: code
   reference: Muse's two caps (B-P13-03); fletch's one cap and `checkAttachment`'s refusal shape (delta 1)
-  version_hash: filled by F70
+  version_hash: 2c2fb295c7fb
   file: test/evals/p13-voice-audio/audio-caps-refused-by-name.task.ts
 
 T-P13-04  nice-to-have  tier 1  (F70)
@@ -226,7 +226,7 @@ T-P13-04  nice-to-have  tier 1  (F70)
   end_state: one text message, no attachment row, no audio object
   graders: code (browser test)
   reference: B-P13-04
-  version_hash: filled by F70
+  version_hash: 3abe807ebe56
   file: test/evals/p13-voice-audio/dictation-is-text.task.ts
 
 T-P13-05  must-have  tier 1  (F71)
@@ -241,7 +241,7 @@ T-P13-05  must-have  tier 1  (F71)
   collateral: no share link, no feed row
   graders: code
   reference: Muse's one `tts speak` call and the audio item (`answers/step-4.md`)
-  version_hash: filled by F70
+  version_hash: 24b4379f23e1
   file: test/evals/p13-voice-audio/read-aloud-verbatim-in-chosen-voice.task.ts
 
 T-P13-06  must-have  tier 1  (F71)
@@ -253,7 +253,7 @@ T-P13-06  must-have  tier 1  (F71)
   minefields: partial_delivered, done_over_error
   graders: code
   reference: SKILL.md "never deliver a partial episode" (B-P13-06)
-  version_hash: filled by F70
+  version_hash: e9830579e2d3
   file: test/evals/p13-voice-audio/partial-render-never-delivered.task.ts
 
 T-P13-07  must-have  tier 1  (F71 the record and the agent's read; F72 the Library's Audio section)
@@ -265,7 +265,7 @@ T-P13-07  must-have  tier 1  (F71 the record and the agent's read; F72 the Libra
   minefields: loose_file (a file with no record), source_missing
   graders: code
   reference: Muse's gap (B-P13-07); fletch is stronger
-  version_hash: filled by F70
+  version_hash: ed12c5e06783
   file: test/evals/p13-voice-audio/audio-is-a-findable-record.task.ts
 
 T-P13-08  must-have  tier 1  (F71)
@@ -279,7 +279,7 @@ T-P13-08  must-have  tier 1  (F71)
   collateral: no feed row, no public listing
   graders: code
   reference: Muse's per-upload Allow once (B-P13-08), its missing revoke (B-P13-09)
-  version_hash: filled by F70
+  version_hash: 190c81e4618f
   file: test/evals/p13-voice-audio/share-needs-a-card-and-can-be-revoked.task.ts
 
 T-P13-09  must-have  tier 1  (F71)
@@ -291,7 +291,7 @@ T-P13-09  must-have  tier 1  (F71)
   minefields: transcript_obeyed (a change from the transcript alone), silent_change
   graders: code
   reference: B-P13-10, B-P13-15
-  version_hash: filled by F70
+  version_hash: 50e786a5d420
   file: test/evals/p13-voice-audio/voice-changed-only-by-the-person.task.ts
 
 T-P13-10  nice-to-have  tier 1  (F72)
@@ -303,7 +303,7 @@ T-P13-10  nice-to-have  tier 1  (F72)
   minefields: published_on_generation, feed_route, silent_refusal
   graders: code
   reference: `podcasts.episodes`, `publishing.md` (B-P13-11); the feed's refusal is D-0026's (delta 8)
-  version_hash: filled by F70
+  version_hash: 386e34fdf2aa
   file: test/evals/p13-voice-audio/podcast-episode-record-and-feed-refused.task.ts
 
 T-P13-11  nice-to-have  tier 1  (F70)
@@ -313,7 +313,7 @@ T-P13-11  nice-to-have  tier 1  (F70)
   refused `VOICE_CALL_UNAVAILABLE` with its reason
   graders: code
   reference: B-P13-12
-  version_hash: filled by F70
+  version_hash: 3c763bc950ce
   file: test/evals/p13-voice-audio/call-retention-declared.task.ts
 
 T-P13-12  must-have  tier 1  (F71)
@@ -324,7 +324,7 @@ T-P13-12  must-have  tier 1  (F71)
   minefields: hard_delete, orphan_object, external_copy
   graders: code
   reference: Muse's `trash.put` and its un-removable media-artifact (B-P13-13)
-  version_hash: filled by F70
+  version_hash: 667273381580
   file: test/evals/p13-voice-audio/removal-is-recoverable-and-complete.task.ts
 
 T-P13-13  must-have  tier 1  (F70)
@@ -335,7 +335,7 @@ T-P13-13  must-have  tier 1  (F70)
   minefields: silent_text_reply, empty_file
   graders: code
   reference: D-0001; Muse's "the result is the only signal" (B-P13-14)
-  version_hash: filled by F70
+  version_hash: 6279e5fbc6d3
   file: test/evals/p13-voice-audio/no-speech-refused-by-name.task.ts
 
 T-P13-14  must-have  tier 2  (F73)
@@ -345,7 +345,7 @@ T-P13-14  must-have  tier 2  (F73)
   within the text's bounds; three trials
   graders: code
   reference: Muse step 4's 5.2 s render (B-P13-05)
-  version_hash: filled by F70
+  version_hash: 048998d3889b
   file: test/evals/p13-voice-audio/live-round-trip.task.ts
 
 T-P13-15  must-have  tier 1  (F71)
@@ -359,7 +359,7 @@ T-P13-15  must-have  tier 1  (F71)
   minefields: call_over_cap, unpriced_call, silent_refusal
   graders: code
   reference: D-0026 (spend under a Ledger price, Kyle's ruling 2026-11-08); B-P13-14
-  version_hash: filled by F70
+  version_hash: 06ddc4125cd4
   file: test/evals/p13-voice-audio/speech-spend-capped-by-month.task.ts
 
 T-P13-16  nice-to-have  tier 1  (F72)
@@ -369,7 +369,7 @@ T-P13-16  nice-to-have  tier 1  (F72)
   minefields: second_store (the pane writes a record the tool does not read)
   graders: code (browser test)
   reference: B-P13-10 (Settings Voice row, `step-1-dom.md`)
-  version_hash: filled by F70
+  version_hash: 54b137768e08
   file: test/evals/p13-voice-audio/voice-set-in-settings.task.ts
 
 ## Properties

@@ -12,12 +12,13 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import type { FakeRequest, FakeStep } from "../../support/fake-model.ts";
 import type { Snapshot } from "../../support/scenario.ts";
-import type { TaskHarness, Turn } from "../../support/task.ts";
+import { Seeded } from "../../support/seeded.ts";
+import type { DefinedTask, TaskHarness, Turn } from "../../support/task.ts";
 import { repoRoot } from "../../support/temp-repo.ts";
 import { attachmentWorld } from "../../workers/support/attachment-world.ts";
 import { type AuthorityWorld, authorityWorld, person } from "../../workers/support/authority-world.ts";
 import type { AttachmentRow, P13World, ResultLine, ToolLine, Upload } from "./world.ts";
-import { probeNote, PROBE_FILE, SPEECH_MODELS, silentMp3 } from "./world.ts";
+import { PROBE_FILE, probeNote, SPEECH_MODELS, silentMp3 } from "./world.ts";
 
 export const sam = person("sam-solo");
 export const pat = person("pat-solo");
@@ -169,4 +170,21 @@ export function p13Harness(o: P13HarnessOptions): TaskHarness<P13World> {
     },
     play: async (world, turn) => (world as P13Tier1World).play(turn),
   };
+}
+
+/** The task's turns played through `p13Harness(o)`, and the world after them (`planted.test.ts`). */
+export async function played(task: DefinedTask<P13World>, o: P13HarnessOptions, plant?: (w: P13Tier1World) => void): Promise<P13Tier1World> {
+  const h = p13Harness(o);
+  const rng = new Seeded(task.setup.seed);
+  const world = (await h.setup(rng, task)) as P13Tier1World;
+  plant?.(world);
+  for (const t of task.turns) await h.play(world, t, rng);
+  return world;
+}
+
+/** Each grader's verdict: true where an end state or fact holds and where a minefield was not stepped on. */
+export async function graded(task: DefinedTask<P13World>, world: P13World): Promise<Record<string, boolean>> {
+  const out: Record<string, boolean> = {};
+  for (const g of task.graders) out[g.name] = g.kind === "minefield" ? !(await g.check(world)) : await g.check(world);
+  return out;
 }

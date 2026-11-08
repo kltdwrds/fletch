@@ -2,8 +2,8 @@
 import { describe } from "vitest";
 import { runTask } from "../../support/task.ts";
 import { p13Harness } from "./harness.ts";
-import { runs } from "./runs.ts";
 import task from "./no-agent-started-capture.task.ts";
+import { runs } from "./runs.ts";
 
 describe("[F70] P13 voice and audio: T-P13-01", () => {
   runTask(task, p13Harness({ script: runs["T-P13-01"]!() }));
