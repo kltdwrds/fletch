@@ -11,7 +11,7 @@ Defaults of `ORCHESTRATOR-OVERNIGHT.md` and moved to `## Answered by default`; K
 
 ## Open, not blocking
 
-### Q43 (F42), 2026-11-01 (Q39 on the F42 branch until 2026-11-08, renumbered beside main's Q39): may F42's must-haves count, when the lead-in bubble both models write fails T-P9-13 at origin/main too?
+### Q45 (F42), 2026-11-01 (Q39 on the F42 branch until 2026-11-08, renumbered beside main's Q39 and Q43): may F42's must-haves count, when the lead-in bubble both models write fails T-P9-13 at origin/main too?
 
 **Blocks:** nothing since F45 merged (2026-11-08, PR #111): F45 is option (a) below, and F42 is rebased onto it and runs its declared tier 2 again (Q31's default). Until then it blocked F42's acceptance; all else was in: the line, its tier-1 test, `ACCEPT F42: PASS`.
 The declared runs on the final tree (c16fa2e, fletch-pv-2): run 9 on Muse Spark, T-P9-15 2/3, T-P9-13 0/3, T-P9-14 3/3;
@@ -37,6 +37,35 @@ reply" and "the second turn" as what the agent said between Sam's ask and her ne
 refused turn pinned verbatim as a pass and four planted negatives in `test/evals/p9-connectors/bound-host-words.test.ts`,
 runs 1 to 4 in `evidence/results/b3f0abb43bf0….json`); the old second-turn reading had been passing on the first turn's
 "only you".
+
+### Q44 (P3), 2026-11-08: T-P3-15's steer lands after the child has finished
+
+**Blocks nothing; a nice-to-have.** The Muse Spark sweep (PR #113, tree 77effb9f8bd7, `docs/plan-v2/evidence/results/31987f8a759e007f2827f7fd736ceeac5361a6105a7e39075c37218cabb3f6c4.json`) ran T-P3-15 0 of 3: after "skip the second page and finish", all three replies said the sub-agent had already finished, and the task's graders called each a failure. The slot's test host serves the slow second page at about 45 s and the runner's steer went in at about 60 s, so the child may really have finished, which the end_state allows ("or that it had already finished") when the rows show one settled row. Recommended answer: read the three trials' grader names; if the failing grader is the judge or the rows while the reply matches the end_state's second branch and the row is settled, it is an oracle correction under KICKOFF's rule; if the child had not finished, the test host's slow page should be served slower than the runner's steer (a setup change in the task file, two-way, with the hash moving), so the steer lands mid-run as the task intends. Either way a line part is not needed: no reply was wrong under B-P3-04.
+
+Orchestrator, 2026-11-08: not taken by default (the results file alone does not say which grader failed; a builder reads it with the slot's chats in a later P3 part).
+
+### Q43 (P16), 2026-11-08: D-0027, shopping and bookings: purchase or flag-only per vertical, provider APIs, and three smaller rulings
+
+**Blocks:** nothing in progress; every P16 part beyond the read-only research and hand-over tasks, since design O5 holds
+purchase-or-flag-only per vertical for you. The P16 interrogation (`contracts/P16-shopping-bookings.md`,
+`evidence/p16-shopping-bookings/`) found Muse's shopping to be a research widget and a hand-over, its commitments through
+connectors and a wallet fletch lacks, your own memory line (2026-09-19) making tickets flag-only, and every seller
+refusing dates a year out (Duffel 0 offers, Google Flights "too far in the future", a 360-day hotel picker, 0
+Ticketmaster events against a near-term control of 113), so no flight, hotel or ticket offer card was drawn. D-0027
+(proposed) holds two doors: (a) every vertical is find, compare, cite and hand over, the agent purchasing or booking
+nothing; (b) no merchant or travel provider API on the egress allowlist. Three rulings beside them: (c) whether the agent
+remembers a booking or purchase the person reports (Muse says it would, against its own UCP doc's "Do not claim that
+Muse saved the order"; delta 4 and B-P16-11 wait on it); (d) whether the flag-only ticket rule stands and extends to
+other verticals (T-P16-08's seed); (e) whether Muse is re-interrogated with dates inside the sale window for its card
+shapes. D-0017 (no payment instrument) is still proposed and every purchase path depends on it.
+
+**Recommended answer:** accept (a) and (b) as written, which is what the contract's clauses assume and what D-0017 implies;
+(c) remember nothing the agent did not do, a reported booking being one line the person asks for by name; (d) the
+ticket rule stands and the default for every vertical is flag-only until you pick otherwise; (e) not now. The
+orchestrator then writes P16's tier-1 parts (the six must-have tier-1 tasks) from the contract.
+
+Orchestrator, 2026-11-08: not taken by default. O5 is yours (design §8) and both doors are one-way; D-0027 stays
+proposed with nothing built on it.
 
 ### Q42 (P13), 2026-11-08: D-0026, speech on fletch: is P13 picked, and which of its five doors open
 

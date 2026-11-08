@@ -152,6 +152,60 @@
         }
       ],
       "status": "pass"
+    },
+    {
+      "run_at": "2026-11-08T05:58:21.626Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-08T05:58:21.626Z",
+          "finished_at": "2026-11-08T05:58:36.109Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "saved_before_write",
+          "started_at": "2026-11-08T05:58:36.109Z",
+          "finished_at": "2026-11-08T05:58:53.447Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-08T05:58:53.447Z",
+          "finished_at": "2026-11-08T05:59:09.486Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
+    },
+    {
+      "run_at": "2026-11-08T06:22:41.786Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-08T06:22:41.787Z",
+          "finished_at": "2026-11-08T06:22:54.246Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-08T06:22:54.246Z",
+          "finished_at": "2026-11-08T06:23:06.528Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-08T06:23:06.528Z",
+          "finished_at": "2026-11-08T06:23:18.844Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
     }
   ]
 }
