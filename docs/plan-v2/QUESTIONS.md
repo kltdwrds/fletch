@@ -11,6 +11,29 @@ Defaults of `ORCHESTRATOR-OVERNIGHT.md` and moved to `## Answered by default`; K
 
 ## Open, not blocking
 
+### Q43 (P16), 2026-11-08: D-0027, shopping and bookings: purchase or flag-only per vertical, provider APIs, and three smaller rulings
+
+**Blocks:** nothing in progress; every P16 part beyond the read-only research and hand-over tasks, since design O5 holds
+purchase-or-flag-only per vertical for you. The P16 interrogation (`contracts/P16-shopping-bookings.md`,
+`evidence/p16-shopping-bookings/`) found Muse's shopping to be a research widget and a hand-over, its commitments through
+connectors and a wallet fletch lacks, your own memory line (2026-09-19) making tickets flag-only, and every seller
+refusing dates a year out (Duffel 0 offers, Google Flights "too far in the future", a 360-day hotel picker, 0
+Ticketmaster events against a near-term control of 113), so no flight, hotel or ticket offer card was drawn. D-0027
+(proposed) holds two doors: (a) every vertical is find, compare, cite and hand over, the agent purchasing or booking
+nothing; (b) no merchant or travel provider API on the egress allowlist. Three rulings beside them: (c) whether the agent
+remembers a booking or purchase the person reports (Muse says it would, against its own UCP doc's "Do not claim that
+Muse saved the order"; delta 4 and B-P16-11 wait on it); (d) whether the flag-only ticket rule stands and extends to
+other verticals (T-P16-08's seed); (e) whether Muse is re-interrogated with dates inside the sale window for its card
+shapes. D-0017 (no payment instrument) is still proposed and every purchase path depends on it.
+
+**Recommended answer:** accept (a) and (b) as written, which is what the contract's clauses assume and what D-0017 implies;
+(c) remember nothing the agent did not do, a reported booking being one line the person asks for by name; (d) the
+ticket rule stands and the default for every vertical is flag-only until you pick otherwise; (e) not now. The
+orchestrator then writes P16's tier-1 parts (the six must-have tier-1 tasks) from the contract.
+
+Orchestrator, 2026-11-08: not taken by default. O5 is yours (design §8) and both doors are one-way; D-0027 stays
+proposed with nothing built on it.
+
 ### Q42 (P13), 2026-11-08: D-0026, speech on fletch: is P13 picked, and which of its five doors open
 
 **Blocks:** nothing in progress; every P13 part, since P13 is "by pick" (design §7) and not picked. The P13
