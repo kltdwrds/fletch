@@ -39,20 +39,22 @@ jobs:
       - name: Install Chromium for the UI tests
         run: pnpm exec playwright-core install --with-deps chromium
       # The part id goes through the environment, never into the script: an input is text from whoever dispatched.
-      # The log is written whole and printed after, never piped, so the exit status is accept's own.
+      # The log is written whole and printed after, never piped, so the exit status is accept's own. It is written
+      # outside the checkout: accept hashes the working tree, and a log inside it would make the TREE line say
+      # "uncommitted changes included" for a clean commit.
       - name: Accept (pnpm accept)
         env:
           PART: ${{ inputs.part }}
         run: |
           set -uo pipefail
           [[ "$PART" =~ ^F[0-9]+(\.[0-9]+)?$ ]] || { echo "::error::part must be F<n>, got '$PART'"; exit 2; }
-          pnpm accept "$PART" > accept.log 2>&1
+          pnpm accept "$PART" > "$RUNNER_TEMP/accept.log" 2>&1
           rc=$?
-          cat accept.log
+          cat "$RUNNER_TEMP/accept.log"
           echo "accept exit $rc"
           exit "$rc"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: accept-${{ inputs.part }}-${{ github.sha }}
-          path: accept.log
+          path: ${{ runner.temp }}/accept.log
