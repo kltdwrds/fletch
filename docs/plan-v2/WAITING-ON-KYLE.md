@@ -18,6 +18,23 @@ Kyle's own lines go under `## Steering`.
   `pnpm preview up --slot 1 --ttl 48` from a main checkout first. What this changes: nothing in any item; only where
   you look. [preview runbook](../runbooks/preview.md); [the Queue](ORCHESTRATOR-OVERNIGHT.md).
 
+- [ ] 2026-11-08 decide: **Q50, F54: T-P9-15 at 2 of 3 on its declared run, the one miss a first turn that spoke beside the
+  card without the bound-host words.** F54 sharpened F42's `WORK_WORDS` line (now line 101, still one line) so the words
+  "is not bound to <host> … only you can bind it" are the text of the step that follows a host refusal, before or beside
+  the `credential_host_propose` call, and never beside a search or list call, which F45 hides. On the declared run (tree
+  d174647ece72, fletch-pv-2, Muse Spark) trials 1 and 3 said the words first; trial 2's first turn was "That read was
+  refused — I'll prepare the binding request now." beside the card, the words only in the second turn: wrong under the
+  task, so no grader changed, and the turn is pinned as failing. `ACCEPT F54: PASS` on a GitHub runner, `VERIFIER: no
+  blocking findings`; T-P9-15 is a nice-to-have. F54 is BLOCKED and merged on PR #136 as F44 was. What your answer
+  changes: whether F54's row goes DONE on 2 of 3 (a nice-to-have's score, the alternative), or stays BLOCKED until a part
+  has code say the refusal's sentence from the refusal's own facts, as F48 did for the card's wait, which moves the
+  contract's "the words are the model's" for T-P9-15 to tier 1 (the recommended answer, a contract line that is yours).
+  The orchestrator took no default: Q49 already leaves the bar to you, and a default raised and answered in one commit is
+  not your ruling (F48's fourth verifier pass). Recommended: the part; say which under Steering.
+  [Q50](QUESTIONS.md#q50-f54-2026-11-08-t-p9-15-2-of-3-on-f54s-declared-run-the-failed-first-turn-spoke-beside-the-card-but-not-the-bound-host-words);
+  [F54 in parts.md](parts.md#f54-the-refused-host-is-said-before-any-card-t-p9-15s-first-turn-says-the-bound-host-words-before-it-proposes);
+  [PR #136](https://github.com/kltdwrds/fletch/pull/136); [P9 row](SCORECARD.md).
+
 - [ ] 2026-11-08 decide: **Q48, F48's scope widened mid-part, after the first verifier pass, for the tier-1 re-pins its own
   sentence forces.** F48 makes the engine say, beside every real card, "Waiting for your decision: <label>. It has not
   run yet." whatever the model wrote; one more agent message per paused step. Six tier-1 P15 tasks pin the count of
@@ -132,7 +149,7 @@ Kyle's own lines go under `## Steering`.
   Default taken (for Kyle, 2026-11-07), Q31 and this item: the cross-cutting part is F45 (parts.md, the lead-in bubble), F42 waits for it and is rebased onto it, then P9's must-haves run again on Muse Spark (ORCHESTRATOR-OVERNIGHT.md, Queue 5 and 6).
   2026-11-08: F45 is merged (PR #111: `ACCEPT F45: PASS`, verifier clean, T-P9-13 and T-P12-10 3 of 3 on Muse Spark); F42's rebase onto it and its declared run of T-P9-15, T-P9-13 and T-P9-14 are under way on PR #96.
   2026-11-08, later: F42's declared run 12 (tree e98053c6, fletch-pv-1, Muse Spark) was 3 of 3 on T-P9-15, T-P9-13 and T-P9-14, `ACCEPT F42: PASS` on a GitHub runner, `VERIFIER: no blocking findings`; then the branch merged main's F50 and F51 lines and declared run 13 on that final tree gave T-P9-13 3 of 3, T-P9-14 2 of 3 and T-P9-15 2 of 3 (replies unread, the slot released first). F42 is BLOCKED on Q49 and merged on PR #96 as F44 was; P9's tier 2 runs again on main with the slot kept (Queue 6). Your call in Q49: whether a must-have's bar is one declared run of three trials, and whether F42's row goes DONE on a clean run of main. [Q49](QUESTIONS.md#q49-f42-2026-11-08-t-p9-14-2-of-3-and-t-p9-15-2-of-3-on-f42s-final-tree-after-mains-f50-and-f51-lines-9-of-9-one-merge-earlier).
-  2026-11-08, later still: the P9 re-sweep on main (PR #134, merged; tree f8d5ae4ad665, fletch-pv-1, Muse Spark, the slot kept until every failed reply was read) gave T-P9-13 3 of 3, T-P9-14 3 of 3 and T-P9-15 2 of 3; the failed trial raised the host card in its first turn with no words of its own and said "not bound to api.example.org" only in the second, wrong under the task (its words are under Q49), so no grader changed and the line part F54 is written in `parts.md` (TODO, not built tonight). Both must-haves are 3 of 3 on main; F42's row stays BLOCKED because whether one clean run of three trials is the bar is yours in Q49, and the orchestrator took no default on it. Recommended: say in `## Steering` that it is; F42 goes DONE on that line, and F54 waits for a slot. [F54 in parts.md](parts.md#f54-the-refused-host-is-said-before-any-card-t-p9-15s-first-turn-says-the-bound-host-words-before-it-proposes); [P9 row](SCORECARD.md).
+  2026-11-08, later still: the P9 re-sweep on main (PR #134, merged; tree f8d5ae4ad665, fletch-pv-1, Muse Spark, the slot kept until every failed reply was read) gave T-P9-13 3 of 3, T-P9-14 3 of 3 and T-P9-15 2 of 3; the failed trial raised the host card in its first turn with no words of its own and said "not bound to api.example.org" only in the second, wrong under the task (its words are under Q49), so no grader changed and the line part F54 is written in `parts.md` (TODO, not built tonight). Both must-haves are 3 of 3 on main; F42's row stays BLOCKED because whether one clean run of three trials is the bar is yours in Q49, and the orchestrator took no default on it. Recommended: say in `## Steering` that it is; F42 goes DONE on that line. F54 was then built (PR #136, `ACCEPT F54: PASS`, `VERIFIER: no blocking findings`): T-P9-15 2 of 3 on its declared run, the miss wrong under the task, so F54 is BLOCKED on Q50, the 2026-11-08 decide item above. [F54 in parts.md](parts.md#f54-the-refused-host-is-said-before-any-card-t-p9-15s-first-turn-says-the-bound-host-words-before-it-proposes); [P9 row](SCORECARD.md).
 
 - [ ] 2026-11-02 look: **P10 and P11 are interrogated, from the cloud; the evidence is in the session's tarball, not on
   your Mac yet.** Two Opus agents ran `evidence/p10-search/scenario.md` and `evidence/p11-files/scenario.md` in your Muse

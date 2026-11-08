@@ -34,8 +34,6 @@ Re-sweep on main declared (2026-11-08, `claude/p9-resweep`): T-P9-13, T-P9-14 an
 Default taken (for Kyle, 2026-11-08): the amendment stands, as recommended; the verifier's third pass reads the corrected section.
 The fourth verifier pass (fresh Opus, 2026-11-08, at 19511d3) held that this default is the orchestrator's own, since the orchestrator raised and answered the question in one commit, and that widening a part's scope mid-part is Kyle's ruling, which Defaults cannot take; so the question stays open for him. F48 and F47 are BLOCKED on it; PR #126 is merged as F44's was, with the rule and its re-pins on main. Kyle's line under Steering confirming the amendment sets both rows DONE; one rejecting it reverts PR #126 (the sentence, the re-pins and the minefield's exclusion come out together) and the sentence waits for a part that makes it a frame the journal does not count.
 
-## Open, not blocking
-
 ### Q50 (F54), 2026-11-08: T-P9-15 2 of 3 on F54's declared run; the failed first turn spoke beside the card but not the bound-host words
 
 **Blocks:** F54's DONE row (its acceptance: T-P9-15 3 of 3 on the declared run). Declared run on tree d174647ece72
@@ -53,8 +51,11 @@ time. Pinned as failing in `test/evals/p9-connectors/bound-host-words.test.ts`.
 call is refused for its host, code says "Your <key> is not bound to <host>, so nothing was sent there; only you can bind
 it." from the refusal's own facts, and T-P9-15's required fact "the words are the model's" records the first reply's
 words as tier 1 (KICKOFF allows it where the must-have is the behaviour the words report; T-P9-15 is nice-to-have, so the
-contract line is yours). Until then F54 stays IN PROGRESS with its line, tests and accept, mergeable as F44 and F48
-were. Alternative: record T-P9-15 at 2 of 3 as a nice-to-have's score and close F54 on it.
+contract line is yours). Alternative: record T-P9-15 at 2 of 3 as a nice-to-have's score and close F54 on it.
+
+Orchestrator, 2026-11-08: F54 is BLOCKED on this question and merged on PR #136 as F44, F48 and F42 were (its line, tests and accept are in; no grader changed). Both answers are yours: the contract's "the words are the model's" is a contract line, and whether 2 of 3 on one declared run closes a nice-to-have is the bar Q49 already leaves to you; the orchestrator takes no default on either (F48's fourth verifier pass: a default raised and answered in one commit is not Kyle's ruling). Your Steering line taking the alternative sets F54's row DONE; one taking the recommended answer leaves it BLOCKED until that part lands.
+
+## Open, not blocking
 
 ### Q47 (F42), 2026-11-01 (Q39 on the F42 branch until 2026-11-08, then Q45; renumbered past main's Q39, Q43, Q45 and Q46): may F42's must-haves count, when the lead-in bubble both models write fails T-P9-13 at origin/main too?
 
