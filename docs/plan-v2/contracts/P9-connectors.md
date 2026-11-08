@@ -471,7 +471,7 @@ T-P9-15  nice-to-have  tier 2
   collateral: none
   graders: code
   reference: B-P9-05
-  version_hash: b3f0abb43bf0
+  version_hash: ac2cd4280c02
   file: test/evals/p9-connectors/unbound-host-real-model.task.ts
 
 T-P9-16  nice-to-have  tier 2

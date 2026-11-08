@@ -9,6 +9,24 @@ Kyle's own lines go under `## Steering`.
 
 ## Open
 
+- [ ] 2026-11-08 decide: **Q48, F48's scope widened mid-part, after the first verifier pass, for the tier-1 re-pins its own
+  sentence forces.** F48 makes the engine say, beside every real card, "Waiting for your decision: <label>. It has not
+  run yet." whatever the model wrote; one more agent message per paused step. Six tier-1 P15 tasks pin the count of
+  agent messages (T-P15-01, -03, -04, -05, -07, -12) and T-P15-01's `card_words_from_model` minefield reads the reply
+  for the card's status words, so the rule cannot land without re-pinning those counts and excluding code's one
+  sentence from that minefield. F48's scope (4) as written said "no clause, task or hash changes" and its Not in scope
+  "any grader"; the first verifier pass blocked on that, the orchestrator amended the section (commit c774858 on
+  `claude/f48-local`), and the second pass held that widening a part's scope mid-part is your ruling. Both passes found
+  the substance sound: the re-pins tighten, the minefield skips code's sentence only, a planted model echo of the
+  card's words still fires it. What your answer changes: whether the amendment stands (F48 and F47 DONE on PR #126) or
+  the re-pins come out and the sentence waits for a part that makes it a frame the journal does not count.
+  Recommended: the amendment stands; a scope line that forbids what the part's own rule makes necessary is a drafting
+  error in the part. [Q48](QUESTIONS.md#q48-f48-2026-11-08-q46-on-the-f48-branch-until-2026-11-08-renumbered-past-mains-q46-and-f42s-q47-f48s-scope-widened-mid-part-after-the-first-verifier-pass-for-the-tier-1-re-pins-the-engines-sentence-forces);
+  [F48 in parts.md](parts.md#f48-the-cards-wait-is-codes-sentence-beside-every-real-card-the-engine-says-it-waits-and-has-not-run-whatever-the-model-wrote);
+  [PR #126](https://github.com/kltdwrds/fletch/pull/126).
+  Default taken (for Kyle, 2026-11-08), Q48: the amendment stands, as recommended; the verifier's later passes read the corrected section.
+  2026-11-08, later: the fourth verifier pass held that default the orchestrator's own (the question raised and answered in one commit) and the mid-part widening your ruling, which Defaults cannot take: `VERIFIER: blocking findings` (that one finding; scope, guards, T-P15-13 3 of 3 and `ACCEPT F48: PASS` all clear). F48 and F47 are BLOCKED on this item, PR #126 merged as F44's was. Your line under Steering confirming the amendment sets both rows DONE; one rejecting it reverts PR #126.
+
 - [ ] 2026-11-08 decide: **D-0027, shopping and bookings: purchase or flag-only per vertical (O5), and provider APIs on egress.**
   P16 was interrogated tonight (Queue 9): Muse's shopping is a research widget plus a hand-over to the live page, its
   commitments go through connectors and a wallet provider fletch does not have, your memory line of 2026-09-19 already
@@ -96,7 +114,7 @@ Kyle's own lines go under `## Steering`.
   before. The cause is cross-cutting: Muse Spark opens nearly every turn with a lead-in bubble beside its first tool
   call, and graders that read the first bubble or count replies take it for the reply; F43 (T-P12-10) and F44
   (T-P6-09, T-P6-13) met the same thing and corrected each grader under KICKOFF's rule. The builder's question in PR
-  #96 (numbered Q39 there; it becomes Q41 when the branch is rebased, since F44's Q39 merged first) proposes one
+  #96 (Q39 there; Q47 on main, renumbered past F44's, F50's and F51's questions) proposes one
   cross-cutting part for the lead-in bubble instead of a correction per task. What your answer changes: whether F42
   merges as BLOCKED like F44, or waits; whether that part is written; whether P9's row is re-verified on the default
   model. Recommended: write the cross-cutting part next, hold F42 until it lands, and re-run P9's must-haves on Muse
@@ -104,6 +122,7 @@ Kyle's own lines go under `## Steering`.
   [P9 row](SCORECARD.md).
   Default taken (for Kyle, 2026-11-07), Q31 and this item: the cross-cutting part is F45 (parts.md, the lead-in bubble), F42 waits for it and is rebased onto it, then P9's must-haves run again on Muse Spark (ORCHESTRATOR-OVERNIGHT.md, Queue 5 and 6).
   2026-11-08: F45 is merged (PR #111: `ACCEPT F45: PASS`, verifier clean, T-P9-13 and T-P12-10 3 of 3 on Muse Spark); F42's rebase onto it and its declared run of T-P9-15, T-P9-13 and T-P9-14 are under way on PR #96.
+  2026-11-08, later: F42's declared run 12 (tree e98053c6, fletch-pv-1, Muse Spark) was 3 of 3 on T-P9-15, T-P9-13 and T-P9-14, `ACCEPT F42: PASS` on a GitHub runner, `VERIFIER: no blocking findings`; then the branch merged main's F50 and F51 lines and declared run 13 on that final tree gave T-P9-13 3 of 3, T-P9-14 2 of 3 and T-P9-15 2 of 3 (replies unread, the slot released first). F42 is BLOCKED on Q49 and merged on PR #96 as F44 was; P9's tier 2 runs again on main with the slot kept (Queue 6). Your call in Q49: whether a must-have's bar is one declared run of three trials, and whether F42's row goes DONE on a clean run of main. [Q49](QUESTIONS.md#q49-f42-2026-11-08-t-p9-14-2-of-3-and-t-p9-15-2-of-3-on-f42s-final-tree-after-mains-f50-and-f51-lines-9-of-9-one-merge-earlier).
 
 - [ ] 2026-11-02 look: **P10 and P11 are interrogated, from the cloud; the evidence is in the session's tarball, not on
   your Mac yet.** Two Opus agents ran `evidence/p10-search/scenario.md` and `evidence/p11-files/scenario.md` in your Muse
