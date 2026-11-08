@@ -50,6 +50,7 @@ lease row says `staging` and never expires. The code is `scripts/preview-staging
 | `pnpm preview list` | `staging (main, deployed on merge; serving …)`, or `staging, not converted yet: …` before the conversion. |
 | `pnpm preview staging status` | Its lease, what it serves and its `/health`. |
 | `pnpm preview staging deploy` | Redeploys main: refused unless the checkout is the `main` branch or detached at `origin/main`, with no change to a tracked file and the lease says staging (`PREVIEW_STAGING_NOT_CONVERTED`). It is one `wrangler deploy` of the agent: every secret, Durable Object, the bucket and the index stay. |
+| `pnpm preview staging secrets` | Kyle's Mac, on his `op` and `gh` logins: mints or rolls `fletch-staging-deploy` (Editor on slot 1's Worker alone), stores it in 1Password, sets the workflow's three secrets and dispatches it (below). |
 
 The lease protects the slot from code that predates staging too: no claim takes a staging lease, its expiry (2100) is
 past any `gc`, and the slot's ops reset it only for `down --slot 1 --force`, which says `unstage`.
@@ -72,13 +73,40 @@ never writes `MASTER_KEY` or `SETUP_TOKEN`: the Durable Objects, R2, Vectorize, 
 Only a slot that was free (its secrets rotated by a release, so its setup token is unknown) gets a new `SETUP_TOKEN`,
 printed as a setup link. A second run says it is staging already and changes nothing.
 
+### The workflow's secrets (Kyle's Mac, once after the conversion, and to rotate)
+
+```bash
+pnpm preview staging secrets
+```
+
+It needs 1Password's CLI signed in (`op whoami`) and gh logged in (`gh auth status`); the code is
+`scripts/preview-staging-secrets.mjs`. Run it once after the conversion, and again to rotate the token. In order:
+
+1. Refuses unless `op` and `gh` are logged in (`PREVIEW_SECRETS_OP_LOGIN`, `PREVIEW_SECRETS_GH_LOGIN`) and slot 1's
+   lease says staging (`PREVIEW_STAGING_NOT_CONVERTED`): convert first.
+2. Reads the admin token from `op://qyvr-prod/Cloudflare admin/credential` (`PREVIEW_SECRETS_OP_READ`).
+3. Mints `fletch-staging-deploy`, an account-owned token with Workers Editor on `fletch-pv-1` alone, or, if it exists,
+   narrows its policy to that and rolls its value. It reads the policy back and tries the token: it must read
+   `fletch-pv-1` and neither slot 2 or 3, production's Workers, R2, Vectorize nor D1, or it is refused
+   (`PREVIEW_SECRETS_POLICY_WIDE`) and a token this run made is deleted.
+4. Stores the value as the `credential` of `Cloudflare fletch-staging-deploy` in the `qyvr-staging` vault
+   (`op://qyvr-staging/Cloudflare fletch-staging-deploy/credential`), creating or editing the item
+   (`PREVIEW_SECRETS_OP_WRITE`).
+5. Sets the repository's Actions secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and
+   `FLETCH_PREVIEW_SUBDOMAIN` with `gh secret set`, each value on stdin (`PREVIEW_SECRETS_GH_WRITE`).
+6. Dispatches `deploy-staging.yml` on main (`PREVIEW_SECRETS_GH_DISPATCH`) and prints its run.
+
+It prints names, ids and codes only: the token's id, the op reference, the secrets' names and the run. No value is
+printed, written to disk or passed as an argument. A failure after step 3 leaves a token whose value nobody holds:
+run it again, which rolls it.
+
 ### The workflow
 
 `.github/workflows/deploy-staging.yml` runs on every push to main, and by hand:
 `gh workflow run deploy-staging.yml --ref main`. It installs, runs `pnpm check`, then `pnpm preview staging deploy`
 on the scoped token (`FLETCH_PREVIEW_AUTH=token`). Two merges queue and the newest waiting one wins; a deploy running
 is never cancelled. A failure fails the job; it never deploys another slot. It reads three repository secrets:
-`CLOUDFLARE_API_TOKEN` (the `fletch-preview-slots` token), `CLOUDFLARE_ACCOUNT_ID` and `FLETCH_PREVIEW_SUBDOMAIN`.
+`CLOUDFLARE_API_TOKEN` (the `fletch-staging-deploy` token, set by `pnpm preview staging secrets`), `CLOUDFLARE_ACCOUNT_ID` and `FLETCH_PREVIEW_SUBDOMAIN`.
 No lease key: the token already deploys every slot Worker, so a key would prove nothing more, and the deploy does no
 keyed op. Until the conversion has run, each run fails with `PREVIEW_STAGING_NOT_CONVERTED`.
 
