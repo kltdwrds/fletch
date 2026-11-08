@@ -665,6 +665,7 @@ Kyle's own lines go under `## Steering`.
   overrides, and each trial starts with Sam's credential rows deleted. [Q31](QUESTIONS.md#q31-f37-2026-10-30-t-p9-15-fails-03-on-the-slot-because-the-model-says-allowed-hosts-not-bound-and-f37s-two-way-choices);
   [F37 in parts.md](parts.md#f37-credentials-say-what-happened-p9s-tier-2-on-a-slot); [PR #68](https://github.com/kltdwrds/fletch/pull/68).
   Default taken (for Kyle, 2026-11-07), Q31: one `WORK_WORDS` line, not a wider grader: F42 carries it (PR #96), after F45.
+  Default taken (for Kyle, 2026-11-08), Q45 (F50, PR #123): F50 stays IN PROGRESS on T-P9-16's 0 of 3 (the create reply a plan beside the pausing card); F52 (parts.md) reads the turn's bubbles before its card, with KICKOFF's three things, and declares the run after F48; F50 goes DONE on it. Reverse it by a line under Steering and F52 is dropped.
 
 - [ ] 2026-10-30 decide: **D-0017 (proposed): fletch holds no payment instrument and submits no payment; the person
   pays in a live page they take over.** P12 is translated (`contracts/P12-wallet.md`, 11 clauses, 13 tasks) and its two
@@ -745,6 +746,7 @@ Kyle's own lines go under `## Steering`.
   https://claude.ai/artifact/UEJER3JFZDwFxcFNxLxFtr.
   [F40 in parts.md](parts.md#f40-identity-as-it-is-the-p14-contract-check-fourteen-task-files-the-identity-and-sign-in-lines-honest-words-the-last-owner-refused-first-and-tier-1); [F41 in parts.md](parts.md#f41-identity-the-person-can-see-and-prove-the-security-pane-and-p14s-tier-2-on-a-slot);
   [P14 contract](contracts/P14-identity.md); [Q37 and Q38](QUESTIONS.md); [PR #79](https://github.com/kltdwrds/fletch/pull/79), [PR #90](https://github.com/kltdwrds/fletch/pull/90).
+  Default taken (for Kyle, 2026-11-08), Q46 (F51, PR #128): F51 is DONE on T-P14-14's recorded 0 of 3 with its question (the slot reader never sees the envelope Meta receives as a user message; the mail grader wants the literal "agent label"); F53 (parts.md) corrects both as oracles with KICKOFF's three things and declares one more run. Reverse it by a line under Steering and F53 is dropped.
 
 - [ ] 2026-10-30 decide: **F1's row: the live exit test it waits on no longer exists.** F1 has been BLOCKED since
   2026-10-21 on Q1, one passing run of `test/live/f1-deploy.live.test.ts` on a throwaway account. PR #91 deleted that test,

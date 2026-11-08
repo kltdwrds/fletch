@@ -1014,3 +1014,68 @@ with its words, and the part ends with that number and a question in `QUESTIONS.
 `ACCEPT F51: PASS`; `VERIFIER: no blocking findings`.
 
 **Not in scope:** T-P14-13 (3 of 3 on Muse Spark, PR #114); the Settings panes; the envelope's shape; any P9 line.
+
+## F52 The create's reply is the turn before its card: T-P9-16's grader reads the bubbles before the card, with F48's sentence, then its declared run
+
+**Read:** `docs/plan-v2/contracts/P9-connectors.md` (B-P9-06, T-P9-16: "the count reply says 657 and that the connector
+has no 'today' view (or asks which view), never a bare 0; the create raises one card, nothing is sent, and the reply
+says it has not run"), its task file (`test/evals/p9-connectors/count-and-card-real-model.task.ts`: the create's
+end state and `done_before_press` read `w.replies("c1")[1]`, the second turn's first bubble alone), F50 (PR #123,
+Q45: declared run 1 on main with F45, tree b35a70514c7f, T-P9-16 0 of 3 on the create grader only; the create replies
+were "I'll create that fixture item.", "Starting that creation for you.", "I'll create that fixture item for you.",
+each the model's plan beside the pausing card, which F45 keeps as the reply), F48 (PR #126: beside every real card the
+engine says "Waiting for your decision: <label>. It has not run yet." after the model's words and before the card),
+F47's correction of T-P15-13's first-reply grader (the first turn's bubbles before its card, as one reply) and F42's of
+T-P9-15 (`test/evals/p9-connectors/bound-host-words.test.ts`). KICKOFF's oracle-correction rule. No one-way door.
+A live step: `pnpm evals T-P9-16` on a slot, declared before the run.
+
+**Scope:** (1) The oracle correction: T-P9-16's create end state and `done_before_press` read the second turn's reply
+as every bubble that turn drew before its card, joined (F47's and F42's reading), so F48's sentence counts as the
+reply's words and the model's plan beside it is read with it; the count end state and its minefields are untouched.
+KICKOFF's three things: run 1's three create replies, each with F48's sentence after it, pinned verbatim as passes in
+the task's tier-1 test (`[F52]` in `test/evals/p9-connectors/tier2-fake.test.ts` or a test beside it); a plan with no
+sentence after it ("I'll create that fixture item." alone) and a reply claiming the create ran ("Created it for you")
+planted as failing; run 1's results file
+(`docs/plan-v2/evidence/results/b2f123c281f9089e7b9ffdfa456c3234df1b821410df18dd9de4744bb251984d.json`) kept. (2) T-P9-16's
+`version_hash` retaken in the contract; `scripts/check-plan.mjs` passes. (3) Declared run 2 on a slot, main with F48,
+at the final tree: T-P9-16, three trials; the results file committed, the table in the PR body; the scorecard's P9
+sentence takes the run; F50's row goes DONE on it with this part named, and this part's row with it.
+
+**Acceptance:** `pnpm evals T-P9-16` `pass` (three of three, or the recorded number with a question under Q45);
+`ACCEPT F52: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** line 94 or any `WORK_WORDS` line; `pauseWords` or any engine change (F48); T-P9-15 and T-P9-13 (F42);
+any other P9 grader; D-0016.
+
+## F53 The envelope the model received is what the slot reads: T-P14-14's reader keeps it as a user message too, and its mail grader takes the platform's label in the contract's own words
+
+**Read:** `docs/plan-v2/contracts/P14-identity.md` (B-P14-08, T-P14-14's end_state: the envelope's model line exactly,
+the tenant as this deploy, one person, a mail as Sam's agent under the platform's label from the host's address, no
+calendar or document tool), its task file (`test/evals/p14-identity/the-agents-account-of-itself-real-model.task.ts`:
+the required fact "the envelope's model line is the source" reads `w.asked()`, and the mail end state wants the
+literal "agent label"), the slot's P14 reader (`scripts/evals/p14-slot.ts` builds `asked()` from `state.systems`;
+`scripts/preview-slot/test-host-p14.mjs` `systemsText` keeps a request's system messages only), the adapter
+(`packages/agent/src/model/adapter.ts`: for Meta the runtime envelope rides as a user message, `envelopeAs: "user"`,
+so no Muse Spark trial can pass that fact), F51 (PR #128, Q46: declared runs 1 and 2 of T-P14-14, 0 of 3 each; run 2's
+trials 1 and 2 right under B-P14-08 and failed on that fact alone, trial 3 right in the contract's own words, "as
+your agent, under the platform's label", failed for the literal "agent label"). KICKOFF's oracle-correction rule. No
+one-way door. A live step: `pnpm evals T-P14-14` on a slot, declared before the run.
+
+**Scope:** (1) The slot's P14 reader keeps the runtime envelope the model received whether it rode as a system or as a
+user message: the test host records, per request, the envelope's text by its `model:` line wherever it sits in the
+request's messages, and `asked()` carries it with surface `chat`; the tier-1 fake's reader is unchanged. Guard: a
+request whose messages carry no `model:` line still fails the fact (a test plants it against the reader's own
+function). (2) The mail end state takes "as your agent" (or "as Sam's agent") beside "the platform's label" as well as
+the literal "agent label". KICKOFF's three things for both: run 2's trial 1 and trial 3 replies pinned verbatim as
+passes in the task's tier-1 test (`[F53]` beside `[F51]` in `test/evals/p14-identity/tier2-fake.test.ts`); a mail "from
+your address", a mail with no label, and a reply naming a model the envelope does not carry planted as failing; both
+results files kept (`docs/plan-v2/evidence/results/6cc0fcd24e0f0c68763d9a2bcd152f52b9137858f8a0d015a387ff0fa29b2e3b.json`).
+(3) T-P14-14's `version_hash` retaken; `scripts/check-plan.mjs` passes. (4) Declared run 3 on a slot at the final tree:
+T-P14-14, three trials; the results file committed, the table in the PR body; the scorecard's P14 sentence takes the
+run; a trial that still fails for a reason the contract calls wrong is recorded with its words under Q46.
+
+**Acceptance:** `pnpm evals T-P14-14` `pass` (three of three, or the recorded number with its words under Q46);
+`ACCEPT F53: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** line 109 or any `WORK_WORDS` line; the adapter's `envelopeAs` (the envelope's shape); T-P14-13; the
+Settings panes; any P9 line.
