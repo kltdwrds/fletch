@@ -1278,3 +1278,58 @@ is recorded whatever the verdict; `ACCEPT F81: PASS`; `VERIFIER: no blocking fin
 
 **Not in scope:** a change to a clause; new instruction lines beyond what a failing must-have needs, each named in the
 PR body with its task; a results card (the specimen note); anything D-0027 or D-0017 reserves.
+
+## F60 Rooms refused by name as they are: the P8 contract check, fifteen task files, the room refusal in the registry and the route, one room line and tier 1
+
+**Read:** `docs/plan-v2/contracts/P8-group-chats.md` (the "Under D-0025" section, every clause, the Tasks, the
+Translation's survey, deltas 5, 6, 7 and 8 and the Build notes), `docs/decisions/0025-rooms-with-outsiders.md`, the P3
+world and tasks under `test/evals/p3-delegation/` and F35's under `test/evals/p9-connectors/` as the pattern,
+`packages/agent/src/tools/registry.ts` (`ToolRegistry`, `identityReach`, `IDENTITY_TOOL_WORDS`),
+`packages/agent/src/http/app-routes.ts` (`POST /app/chats`), `packages/agent/src/person/chats.ts`,
+`packages/agent/src/person/mail.ts`, `packages/agent/src/context/fence.ts`, `packages/agent/src/chat/inputs.ts`
+(`requestText`), `packages/agent/src/chat/operating-block.ts`, `packages/agent/src/chat/instructions.ts`
+(`WORK_WORDS`), `packages/agent/src/egress/policy.ts` (`plan`), `packages/agent/src/http/app/chats-list.ts`,
+`test/m0/f35-contract.test.ts`, `docs/plan-v2/QUESTIONS.md` Q18 and Q41. One-way door: D-0025 only, taken by Kyle's
+ruling of 2026-11-08; nothing here creates, joins, registers or stores a room, and no table, `ChatKind` value, host or
+`@qyvr/host` feature is added.
+
+**Scope:** (1) `test/m0/f60-contract.test.ts` holds the P8 contract as `f35-contract.test.ts` holds P9: eleven
+clauses, fifteen tasks, every tier-1 `version_hash` filled. (2) The fifteen `.task.ts` files under
+`test/evals/p8-group-chats/` with a `world.ts` over P3's authority world (Sam Solo's main, side, request and mail
+chats; the mail intake with Pat Solo as an outside sender; the registry built with every namespace) and a `harness.ts`;
+T-P8-10, 11, 12, 14 and 15 run under vitest with an `[F60]` describe, every minefield planted in a `planted.test.ts`;
+T-P8-01 to T-P8-09 are written with every field and their `.test.ts` skipped by name ("held: D-0025 door 1, no room
+exists"), their files saying so. (3) The code the deltas need: `roomReach()` beside `identityReach()`, so the
+registry refuses at build a tool whose name holds `room`, `group`, `invite` or `participant`, or whose description
+offers to create or join a chat with other people, add a person to one, or send from the person's own account or
+under their name, with `TOOL_ROOM_REFUSED` naming D-0025 (delta 5; T-P8-11, T-P8-15); `POST /app/chats` answers 400
+`CHAT_ROOM_REFUSED` with a reason naming D-0025 and writes no row for a body carrying `kind` other than `side`, or
+`people`, `members` or `invite` (delta 6; T-P8-11); one room line in `WORK_WORDS`: asked to make a group chat, join
+one, add someone to a chat or speak for the person in one, the reply says this deploy does not make, join or add
+people to a chat with other people yet, opens and sends nothing, and offers a message the person sends themself
+(delta 7; graded live by F61). If an existing tool's name or description trips `roomReach()`, the word list narrows
+and the PR body names the tool; no existing tool is renamed.
+
+**Acceptance:** the five tier-1 tasks pass under vitest and each planted minefield fails without its guard; the nine
+held tasks are skipped by name with D-0025 door 1 named; `test/m0/f60-contract.test.ts` passes; `pnpm check` and the
+hermetic suite green; `ACCEPT F60: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a room in any form (its `ChatKind`, transport, Ingress source, egress host, rule store, memory
+audience or Activity kind: D-0025's doors); a held task's world; mail's fence label (delta 8); a `HostFeature` in
+`@qyvr/host`; an owner-visible surface; tier 2 (F61); a change to a clause.
+
+## F61 Rooms said as not made: P8's tier 2 on a slot
+
+**Read:** `docs/plan-v2/contracts/P8-group-chats.md` (B-P8-01, B-P8-10, T-P8-13, delta 7), the F60 world and tasks
+under `test/evals/p8-group-chats/`, `packages/agent/src/chat/instructions.ts` (`WORK_WORDS`, the room line),
+`docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q18. One-way door: D-0025 only, as F60. A live step: `pnpm
+evals` runs on this worktree's slot (`pnpm preview`); if no slot can be leased, that is a question, not a reason to skip.
+
+**Scope:** (1) Tier 2 on the slot: T-P8-13 (must-have), three trials, its results file committed, the table in the PR
+body. (2) T-P8-13's hash in the contract matches. (3) If T-P8-13 fails on the reply's words, the room line is
+sharpened (never a code-written reply, Q18) and the change named in the PR body with the task.
+
+**Acceptance:** `pnpm evals T-P8-13` `pass` (three of three); `ACCEPT F61: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** T-P8-09 (held, D-0025 door 1); a room in any form; a change to a clause; a line beyond what T-P8-13
+needs.

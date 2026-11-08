@@ -53,6 +53,9 @@ test counts, the verifier's result, the duration and `model: <model>` for parts 
 | F80 | TODO | | 2026-11-08 | Shopping as it is: the P16 contract check, twelve task files, the research, hand-over and remembering lines (deltas 1, 2, 4), the no-click and no-provider guards planted (deltas 3, 6), tier 1 (six must-have, three nice-to-have) under D-0027. |
 | F81 | TODO | | 2026-11-08 | Shopping says what happened: P16's tier 2 on a slot (T-P16-03 and T-P16-05 must-have, T-P16-12), every hash matching. |
 
+| F60 | TODO | | 2026-11-08 | Rooms refused by name as they are (P8 under D-0025): the contract check, fifteen task files (nine held by D-0025 door 1), `TOOL_ROOM_REFUSED` in the registry, `CHAT_ROOM_REFUSED` on `POST /app/chats`, one room line in `WORK_WORDS`, tier 1 on T-P8-10, 11, 12, 14 and 15. |
+| F61 | TODO | | 2026-11-08 | Rooms said as not made: P8 tier 2 on a slot, T-P8-13 must-have. |
+
 ## The first plan (closed 2026-10-29)
 
 F0 to F17 were worked under the first plan (`git show 34c6b0a:docs/plan/parts.md`). F0 and F1 predate the protocol:
