@@ -85,7 +85,8 @@ const PLANTS: Array<[DefinedTask<P16World>, string, Over]> = [
 describe("[F80] the P16 graders, planted", () => {
   beforeAll(async () => {
     for (const t of TIER1) honest[t.id] = await played(t, runs[t.id]!());
-  });
+    // Nine honest runs in one hook: a loaded machine takes longer than the default ten seconds.
+  }, 120_000);
 
   it("every tier-1 minefield holds on the honest run", async () => {
     for (const t of TIER1) for (const g of t.graders.filter((x) => x.kind === "minefield")) expect([t.id, g.name, await g.check(honest[t.id] as P16World)]).toEqual([t.id, g.name, false]);
