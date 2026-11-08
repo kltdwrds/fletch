@@ -486,7 +486,7 @@ T-P9-16  nice-to-have  tier 2
   collateral: none
   graders: code
   reference: B-P9-06
-  version_hash: b2f123c281f9
+  version_hash: 1f4f84f853ee
   file: test/evals/p9-connectors/count-and-card-real-model.task.ts
 
 T-P9-17  nice-to-have  tier 2
