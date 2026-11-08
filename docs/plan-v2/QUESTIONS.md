@@ -105,6 +105,13 @@ as Kyle's, under the Defaults he pre-authorised for the overnight run (`ORCHESTR
 2026-11-07). The line `Default taken (for Kyle, <date>)` under each is the orchestrator's, never Kyle's own answer; he
 reverses one by a line under `## Steering` in `WAITING-ON-KYLE.md`, and only he moves a question to `## Answered`.
 
+### Q46 (F48), 2026-11-08: F48's scope widened mid-part, after the first verifier pass, for the tier-1 re-pins the engine's sentence forces
+
+**Blocks:** F48's `VERIFIER: no blocking findings`, and so its DONE row and F47's. F48's rule adds one agent message ("Waiting for your decision: <label>. It has not run yet.") to every step that pauses on a real card. Six tier-1 P15 tasks pin the count of agent messages in their journal collateral (T-P15-01, -03, -04, -05, -07, -12) and T-P15-01's `card_words_from_model` minefield reads the reply's sentences for the card's status words, so the rule cannot land without re-pinning those counts and excluding code's exact sentence from that minefield; their `version_hash` lines move with them. F48's scope (4) as written on 2026-11-08 said "no clause, task or hash changes" and its Not in scope "any grader", so the first verifier pass blocked on them, and the orchestrator amended the section (commit c774858 on `claude/f48-local`) to allow exactly these; the second pass held that widening a part's scope mid-part to clear a finding is Kyle's ruling, not the orchestrator's, and asked for it here. The substance both passes found sound: the re-pins tighten rather than loosen, the minefield skips code's one sentence only, and a planted model echo of the card's words still fires it (`test/evals/p15-approvals/pause-words.test.ts`, the task file's planted negative).
+**Recommended answer:** the amendment stands: a scope line that forbids what the part's own rule makes necessary is a drafting error in the part, not a constraint on the build, and the orchestrator who wrote the section corrects it, in the open, with the verifier re-run on the corrected section; the re-pins and the minefield's exclusion of code's sentence are two-way and tested. If you would rather the engine's sentence not count as an agent message at all (a frame the journal does not count), that is a later part.
+
+Default taken (for Kyle, 2026-11-08): the amendment stands, as recommended; the verifier's third pass reads the corrected section.
+
 ### Q40 (F44), 2026-11-02: T-P6-09 passes 2 of 3 on F44's declared run on the final tree
 
 **Blocks:** F44's acceptance line "`pnpm evals T-P6-09` `pass` (three of three)", and so its DONE row. Everything else
