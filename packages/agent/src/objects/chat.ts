@@ -88,6 +88,7 @@ export class Chat extends Agent<Env> {
       memory: (person) => personMemory(this.env, person),
       files: (person) => personFiles(this.env, person),
       tree: (person) => personTree(this.env, person),
+      speech: { AI: this.env.AI, SPEECH: (this.env as unknown as { SPEECH?: string }).SPEECH },
       documents: (person) => documentsApi(async (call, requester) => (await getAgentByName(this.env.PERSON, person)).documentCall(requester, call), async (input) => (available(host.render) ? ((await host.render.render(input)) as RenderResult) : host.render)),
       skills: new SkillCatalog(this.env.AGENT_BUCKET, host.tenant.shape, (p) => this.company().teamsOf(p), BUILTIN_SKILLS),
       skillSeen: (person) => async (name, hash) => ((await getAgentByName(this.env.PERSON, person)).platformCall({ op: "skill-seen", name, hash }) as unknown as Promise<"first" | "same" | "changed">),
