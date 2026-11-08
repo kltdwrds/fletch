@@ -9,3 +9,4 @@ typed into a command line that is kept; it comes from the environment or a repos
 - [preview.md](preview.md): leasing a preview slot of fletch on Cloudflare, and making the pool and its token.
 - [free-plan-spike.md](free-plan-spike.md): whether the free plan accepts the Worker Loader and Images bindings.
 - [evals.md](evals.md): the tier-2 runner, tasks on a preview slot with the real model, and its results files.
+- [orchestrator-overnight.md](orchestrator-overnight.md): starting the parity loop for an unattended night, every open question answered by its default.
