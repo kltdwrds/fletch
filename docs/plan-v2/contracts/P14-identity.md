@@ -499,7 +499,7 @@ T-P14-14  nice-to-have  tier 2
   collateral: none
   graders: code
   reference: Muse's "1.3" from the prompt and the internal model string in `agent.agents` (B-P14-08)
-  version_hash: 6cc0fcd24e0f
+  version_hash: 341bca76b049
   file: test/evals/p14-identity/the-agents-account-of-itself-real-model.task.ts
 
 ## Properties

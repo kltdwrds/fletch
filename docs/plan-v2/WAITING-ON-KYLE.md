@@ -10,8 +10,8 @@ Kyle's own lines go under `## Steering`.
 ## Open
 
 - [ ] 2026-11-08 look: **one live slot on main for every uat item below: https://fletch-pv-1.edwards-ky1.workers.dev,
-  leased to 2026-11-10T12:15Z.** The overnight orchestrator deployed main at 3f57aee (every merged part through F52,
-  F53's PR #132 following; F42 and F48 merged BLOCKED, so their code is on it) from a docs-only worktree, so the slot's
+  leased to 2026-11-10T12:15Z.** The overnight orchestrator deployed main at 3f57aee (every merged part through F52; F53, merged after it at 3ac3b02,
+  changes only the eval reader and a grader, nothing deployed; F42 and F48 merged BLOCKED, so their code is on it) from a docs-only worktree, so the slot's
   code is main's; the first-passkey setup link went to you in the session's chat, never here. Use this address for each
   uat item below in place of the one it names. Two cautions: the lease is held by the branch `claude/ledgers-night-end-2`,
   so `pnpm preview gc` would release it once that PR merges; run `gc` after you have looked, or renew with

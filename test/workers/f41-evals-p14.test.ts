@@ -12,7 +12,7 @@ import { MODE_KEY } from "../../packages/agent/src/http/app/settings-panes.ts";
 import { PAGE_MODE_KEY } from "../../scripts/evals/p14-page.ts";
 import { type P14Page, type P14State, p14Slot } from "../../scripts/evals/p14-slot.ts";
 import { CLUSTER_EVENTS, driveable, type Slot, trial } from "../../scripts/evals/runner.ts";
-import { counts, P14_PASSKEY, p14Memory, p14Read, p14ResetStanding, p14SeedPasskey, p14Tools, SEED_WRITER, systemsText } from "../../scripts/preview-slot/test-host-p14.mjs";
+import { counts, envelopeText, P14_PASSKEY, p14Memory, p14Read, p14ResetStanding, p14SeedPasskey, p14Tools, SEED_WRITER, systemsText } from "../../scripts/preview-slot/test-host-p14.mjs";
 import { P14Tier1World, sam } from "../evals/p14-identity/harness.ts";
 import rename from "../evals/p14-identity/rename-by-chat-changes-nothing-real-model.task.ts";
 import { runs } from "../evals/p14-identity/runs.ts";
@@ -43,11 +43,13 @@ async function p14State(w: P14Tier1World): Promise<P14State> {
   }
   const calls = (await w.w.ledger().modelCalls({ person: sam.email })).map((r, i) => ({ id: i + 1, route: r.route, model: r.model })).filter((r) => r.route === "chat");
   const asked = w.asked();
-  const systems = w.w.fake.requests.filter((_, i) => asked[i]?.surface === "chat").map((r) => systemsText(r.inputs) ?? "");
+  const chatRequests = w.w.fake.requests.filter((_, i) => asked[i]?.surface === "chat");
+  const systems = chatRequests.map((r) => systemsText(r.inputs) ?? "");
+  const envelopes = chatRequests.map((r) => envelopeText(r.inputs) ?? "");
   // Assembled by the op's own `p14Read`, so a field the op leaves out is missing here too.
   return p14Read({
     mem: { ...m, counts: byObject.person ?? {} },
-    chat: { systems, counts: byObject.c1 ?? {} },
+    chat: { systems, envelopes, counts: byObject.c1 ?? {} },
     ledger: { calls: calls.map(({ id, model }) => ({ id, model })), counts: byObject.ledger ?? {} },
     vault: byObject.vault ?? {},
     journal: await w.w.ledger().journalRows({ principal: sam.email }),
@@ -156,6 +158,8 @@ describe("[F41] P14 on a slot: the resets, the passkey seed, the readers and the
     expect(st.tools.every((t) => t.guard === w.guard(t))).toBe(true);
     const ids = await w.modelIds();
     expect(st.systems.some((s) => s.includes(`model: ${ids[0]}`))).toBe(true);
+    // F53: the envelope is kept on its own too, as the model received it (a system message here; for Meta a user message).
+    expect(st.envelopes.some((s) => s.includes(`model: ${ids[0]}`))).toBe(true);
     // Planted: the first system message alone (what the `p5` op keeps) carries no envelope, so T-P14-14's fact fails.
     const firstOnly = w.w.fake.requests.map((r) => ((r.inputs as { messages: Array<{ role: string; content: unknown }> }).messages.find((m) => m.role === "system")?.content as string) ?? "");
     expect(firstOnly.some((s) => s.includes(`model: ${ids[0]}`))).toBe(false);
@@ -195,7 +199,7 @@ describe("[F41] P14 on a slot: the resets, the passkey seed, the readers and the
   });
 
   it("the memory lines, model calls, mail rows and table counts graded are the trial's own; an unread reader is said by name", async () => {
-    const base: P14State = { standing: [], seeded: {}, daily: ["2026-10-30#1 an earlier line"], memory: "# MEMORY.md\n\n- an earlier fact\n", memoryWriter: "agent:sam", counts: { c1: { messages: 2 } }, calls: [{ id: 7, model: "@cf/old" }], mail: [{ id: "m0", outcome: "DONE", counterpart: "pat@solo-sam.example" }], systems: [], tools: [] };
+    const base: P14State = { standing: [], seeded: {}, daily: ["2026-10-30#1 an earlier line"], memory: "# MEMORY.md\n\n- an earlier fact\n", memoryWriter: "agent:sam", counts: { c1: { messages: 2 } }, calls: [{ id: 7, model: "@cf/old" }], mail: [{ id: "m0", outcome: "DONE", counterpart: "pat@solo-sam.example" }], systems: [], envelopes: [], tools: [] };
     let st = base;
     const page: P14Page = { look: async () => ({ drawn: { header: "", panelName: "", cardName: "", cardNote: "", controls: [], handle: "" }, origins: [] }), reload: async () => ({ origins: [] }), settings: async () => ({ drawn: true, heading: "General", mode: { before: "dark", after: "dark" }, origins: ["https://elsewhere.example"] }) };
     const s = p14Slot(() => "c", () => [], async () => [], async (call) => (call === "read" ? st : null), page, ORIGIN, sam.email);

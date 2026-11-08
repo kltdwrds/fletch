@@ -39,9 +39,9 @@ import { chunks, joinChunks, p3Rows, requestText } from './test-host-p3.mjs';
 import { recordingAi } from './test-host-p5.mjs';
 import { chatRows, p6Person } from './test-host-p6.mjs';
 import { clockedStorage, p7Op, probeGet, skewToNext } from './test-host-p7.mjs';
-import { P12_DEAD, p12Cards, p12Grants, p12Journal, p12Reset } from './test-host-p12.mjs';
-import { counts, p14Memory, p14Read, p14ResetStanding, p14SeedPasskey, systemsText } from './test-host-p14.mjs';
 import { p9ChatRows, p9Network, p9Reset, p9VaultRows } from './test-host-p9.mjs';
+import { P12_DEAD, p12Cards, p12Grants, p12Journal, p12Reset } from './test-host-p12.mjs';
+import { counts, envelopeText, p14Memory, p14Read, p14ResetStanding, p14SeedPasskey, systemsText } from './test-host-p14.mjs';
 import { SITES, testHostBinding } from './test-host-sites.mjs';
 
 const LOG = 'test-host:log';
@@ -61,6 +61,7 @@ function tables(sql) {
 const PROMPTS = 'test-host:prompt:';
 const REQUESTS = 'test-host:request:';
 const SYSTEMS = 'test-host:system:';
+const ENVELOPES = 'test-host:envelope:';
 
 export class Chat extends AgentChat {
   #chain = Promise.resolve();
@@ -81,6 +82,8 @@ export class Chat extends AgentChat {
       for (const [k, part] of chunks(text).entries()) await this.ctx.storage.put(`${REQUESTS}${n}:${String(k).padStart(3, '0')}`, part);
       // F41: every system message, the envelope's among them.
       for (const [k, part] of chunks(systemsText(body) ?? '').entries()) await this.ctx.storage.put(`${SYSTEMS}${n}:${String(k).padStart(3, '0')}`, part);
+      // F53: the runtime envelope the model received, a system message or (for Meta) a user message.
+      for (const [k, part] of chunks(envelopeText(body) ?? '').entries()) await this.ctx.storage.put(`${ENVELOPES}${n}:${String(k).padStart(3, '0')}`, part);
     });
     return this.#chain;
   }
@@ -123,10 +126,10 @@ export class Chat extends AgentChat {
     return { ...p9ChatRows(this.ctx.storage.sql), requests: joinChunks(await this.ctx.storage.list({ prefix: REQUESTS })) };
   }
 
-  /** Each chat model request's system messages, in order, and every table's row count (F41, ./test-host-p14.mjs). */
+  /** Each chat model request's system messages and envelope, in order, and every table's row count (F41, F53, ./test-host-p14.mjs). */
   async testHostP14() {
     await this.#chain;
-    return { systems: joinChunks(await this.ctx.storage.list({ prefix: SYSTEMS })), counts: counts(this.ctx.storage.sql) };
+    return { systems: joinChunks(await this.ctx.storage.list({ prefix: SYSTEMS })), envelopes: joinChunks(await this.ctx.storage.list({ prefix: ENVELOPES })), counts: counts(this.ctx.storage.sql) };
   }
 
   /** The chat's cards with the words `renderCard` gives them (F39, ./test-host-p12.mjs). */
