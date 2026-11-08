@@ -11,6 +11,26 @@ Defaults of `ORCHESTRATOR-OVERNIGHT.md` and moved to `## Answered by default`; K
 
 ## Open, not blocking
 
+### Q44 (F50), 2026-11-08: T-P9-16 is 0 of 3 on Muse Spark with F45; the count is right, the create's reply is F48's
+
+**Blocks:** F50's acceptance line "`pnpm evals T-P9-16` `pass` (three of three)", and so its DONE row; nothing else.
+Declared run 1 (PR #123, tree b35a70514c7f, main with F45, fletch-pv-1, Muse Spark,
+`evidence/results/b2f123c281f9….json`) failed every trial on the create grader, not the count. The count replies, all
+right under B-P9-06 and line 94: "The library tool counted 657 items in all; it cannot count by day, so no today-only
+number.", "… so no count for today alone.", "… it cannot count by today." The create replies, the whole second reply
+beside the pausing card: "I'll create that fixture item.", "Starting that creation for you.", "I'll create that fixture
+item for you." The contract calls these wrong: the end state wants the reply to say that nothing ran, and "Starting"
+reads as running. F45 rightly keeps a pausing step's words as its reply, so `pauseWords` stays silent. That is the same
+failure F47's run showed for T-P15-13, and F48's engine rule (code's sentence beside every real card, "It has not run
+yet.") is its fix. Sharpening line 94 would not reach it, and a second run on an unchanged prompt would only rerun
+model-failed trials. One catch: T-P9-16's create grader reads only the second turn's first bubble (`replies("c1")[1]`),
+and F48 puts its sentence after the model's words, so F48 alone will not turn this grader.
+**Recommended answer:** keep F50 IN PROGRESS at 0 of 3 with the count half shown held. After F48 merges, a small part (or
+F48's follow-up) gives T-P9-16's create grader and `done_before_press` the turn's bubbles before its card, as F47 did for
+T-P15-13: an oracle correction with KICKOFF's three things (these three create replies plus F48's sentence pinned as a
+pass, a planted plan with no sentence still failing, this results file kept). Then it declares a T-P9-16 run, and F50
+goes DONE on that run. Alternative: accept F50 now on its count half, with the create half moved to that part.
+
 ### Q43 (P16), 2026-11-08: D-0027, shopping and bookings: purchase or flag-only per vertical, provider APIs, and three smaller rulings
 
 **Blocks:** nothing in progress; every P16 part beyond the read-only research and hand-over tasks, since design O5 holds
