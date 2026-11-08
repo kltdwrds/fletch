@@ -11,6 +11,26 @@ Defaults of `ORCHESTRATOR-OVERNIGHT.md` and moved to `## Answered by default`; K
 
 ## Open, not blocking
 
+### Q45 (F50), 2026-11-08: T-P9-16 is 0 of 3 on Muse Spark with F45; the count is right, the create's reply is F48's
+
+**Blocks:** F50's acceptance line "`pnpm evals T-P9-16` `pass` (three of three)", and so its DONE row; nothing else.
+Declared run 1 (PR #123, tree b35a70514c7f, main with F45, fletch-pv-1, Muse Spark,
+`evidence/results/b2f123c281f9….json`) failed every trial on the create grader, not the count. The count replies, all
+right under B-P9-06 and line 94: "The library tool counted 657 items in all; it cannot count by day, so no today-only
+number.", "… so no count for today alone.", "… it cannot count by today." The create replies, the whole second reply
+beside the pausing card: "I'll create that fixture item.", "Starting that creation for you.", "I'll create that fixture
+item for you." The contract calls these wrong: the end state wants the reply to say that nothing ran, and "Starting"
+reads as running. F45 rightly keeps a pausing step's words as its reply, so `pauseWords` stays silent. That is the same
+failure F47's run showed for T-P15-13, and F48's engine rule (code's sentence beside every real card, "It has not run
+yet.") is its fix. Sharpening line 94 would not reach it, and a second run on an unchanged prompt would only rerun
+model-failed trials. One catch: T-P9-16's create grader reads only the second turn's first bubble (`replies("c1")[1]`),
+and F48 puts its sentence after the model's words, so F48 alone will not turn this grader.
+**Recommended answer:** keep F50 IN PROGRESS at 0 of 3 with the count half shown held. After F48 merges, a small part (or
+F48's follow-up) gives T-P9-16's create grader and `done_before_press` the turn's bubbles before its card, as F47 did for
+T-P15-13: an oracle correction with KICKOFF's three things (these three create replies plus F48's sentence pinned as a
+pass, a planted plan with no sentence still failing, this results file kept). Then it declares a T-P9-16 run, and F50
+goes DONE on that run. Alternative: accept F50 now on its count half, with the create half moved to that part.
+
 ### Q44 (P3), 2026-11-08: T-P3-15's steer lands after the child has finished
 
 **Blocks nothing; a nice-to-have.** The Muse Spark sweep (PR #113, tree 77effb9f8bd7, `docs/plan-v2/evidence/results/31987f8a759e007f2827f7fd736ceeac5361a6105a7e39075c37218cabb3f6c4.json`) ran T-P3-15 0 of 3: after "skip the second page and finish", all three replies said the sub-agent had already finished, and the task's graders called each a failure. The slot's test host serves the slow second page at about 45 s and the runner's steer went in at about 60 s, so the child may really have finished, which the end_state allows ("or that it had already finished") when the rows show one settled row. Recommended answer: read the three trials' grader names; if the failing grader is the judge or the rows while the reply matches the end_state's second branch and the row is settled, it is an oracle correction under KICKOFF's rule; if the child had not finished, the test host's slow page should be served slower than the runner's steer (a setup change in the task file, two-way, with the hash moving), so the steer lands mid-run as the task intends. Either way a line part is not needed: no reply was wrong under B-P3-04.

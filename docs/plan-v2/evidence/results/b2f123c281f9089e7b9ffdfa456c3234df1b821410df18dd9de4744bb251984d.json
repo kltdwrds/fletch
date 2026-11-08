@@ -109,6 +109,37 @@
       ],
       "status": "fail",
       "state": "regressed"
+    },
+    {
+      "run_at": "2026-11-08T07:02:59.447Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the create raises one card, nothing is sent, and the reply says it has not run",
+          "started_at": "2026-11-08T07:02:59.451Z",
+          "finished_at": "2026-11-08T07:03:22.123Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the create raises one card, nothing is sent, and the reply says it has not run",
+          "started_at": "2026-11-08T07:03:22.124Z",
+          "finished_at": "2026-11-08T07:03:39.852Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the create raises one card, nothing is sent, and the reply says it has not run",
+          "started_at": "2026-11-08T07:03:39.853Z",
+          "finished_at": "2026-11-08T07:03:55.848Z"
+        }
+      ],
+      "status": "fail"
     }
   ]
 }
