@@ -10,6 +10,7 @@ import { unfence } from "../context/fence.ts";
 import { isPurchaseKind } from "../grants/engine.ts";
 import type { JournalRow } from "../grants/journal.ts";
 import { DECISION_WORDS, OUTCOME_WORDS, SUMMARY_WORDS, titleOf, UNKNOWN_OUTCOME } from "../obs/activity-words.ts";
+import { isCommentary } from "./commentary.ts";
 import type { TranscriptRow } from "./history.ts";
 
 export type StepKind = "read" | "edit" | "write" | "delete" | "search" | "code" | "todo" | "memory" | "load" | "launch" | "close" | "action" | "observe" | "other";
@@ -314,7 +315,8 @@ export function argsOf(rows: readonly TranscriptRow[]): Map<string, Args> {
 export function summaryOf(rows: readonly TranscriptRow[], steps: readonly StepRecord[], doneTurnIds: readonly string[], args: ReadonlyMap<string, Args>, finished = true): StepRecord | null {
   const lastDone = doneTurnIds.at(-1);
   if (lastDone === undefined || !finished) return null;
-  const said = [...rows].reverse().find((r) => r.turnId === lastDone && textOfAssistant(r.message));
+  // Commentary (F45) is never the summary's quote: only a reply's words are.
+  const said = [...rows].reverse().find((r) => r.turnId === lastDone && !isCommentary(r.message) && textOfAssistant(r.message));
   const text = said ? textOfAssistant(said.message) : "";
   const files: FileCard[] = [];
   for (const s of [...steps].reverse()) {
