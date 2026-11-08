@@ -16,6 +16,9 @@ Plain TypeScript over WebCrypto and `fetch`: no `cloudflare:workers` import and 
   then by the AEAD (`test/keys.test.ts`).
 - `src/single-account.ts`: `singleAccountHost`; what one account cannot serve is refused with its
   `HOST_<FEATURE>_UNAVAILABLE` code (`test/single-account.test.ts`).
+- `src/render.ts`: `containerRenderer`, render from the deploy's `RENDERER` binding (F56, D-0028 proposed), refused
+  with `HOST_RENDER_UNAVAILABLE` naming that binding where the deploy has none; what the object answers is checked, so
+  a render that claims success without a document is `RENDER_OUTPUT_INVALID` (`test/render.test.ts`).
 - `src/passkeys/`: the login routes, stores, page and WebAuthn verifier.
 - `src/provision/`: `CloudflareApi` (the token is a constructor argument; `fetch` is injected) and the resources.
 
