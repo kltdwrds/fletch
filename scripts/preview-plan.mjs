@@ -93,6 +93,10 @@ export const KNOWN_CONFIG_KEYS = new Set([
   'r2_buckets', 'vars', 'vectorize',
 ]);
 
+/** The Renderer's binding and container a paid deploy adds (F56); the image is `RENDER_IMAGE` in packages/agent/src/render/render.ts. */
+export const RENDERER_BINDING = { name: 'RENDERER', class_name: 'Renderer' };
+export const RENDERER_CONTAINER = { class_name: 'Renderer', image: 'docker.io/pandoc/minimal:3.11.0', max_instances: 2 };
+
 /**
  * The agent's raw base config as one deploy of it, the part a preview slot and a self-host deploy share: its Worker
  * `name` on workers.dev, each R2 and Vectorize binding pointed at the deploy's own resource (`r2`, `vectorize`: a name
@@ -122,6 +126,10 @@ export function deployConfig(raw, { name, r2, vectorize, vars = {}, paid = false
   if (paid) {
     out.worker_loaders = [{ binding: 'LOADER' }];
     out.images = { binding: 'IMAGES' };
+    // The document renderer (F56, proposed D-0030): the Renderer class is in the base exports, its binding and its
+    // pandoc container only here, so a free-plan deploy has neither and the host refuses render by the binding's name.
+    out.durable_objects = { ...raw.durable_objects, bindings: [...(raw.durable_objects?.bindings ?? []), RENDERER_BINDING] };
+    out.containers = [RENDERER_CONTAINER];
   }
   return out;
 }
@@ -141,20 +149,21 @@ export function slotConfig(raw, plan, { accountId, placeholder = false, deploy, 
   const agentClasses = Object.entries(raw.exports ?? {}).filter(([, e]) => e.type === 'durable-object').map(([c]) => c);
   if (agentClasses.includes(LEASE_OBJECT.className)) throw new Error(`preview: the agent exports ${LEASE_OBJECT.className}, the slot lease's class`);
   const lease = { name: LEASE_OBJECT.binding, class_name: LEASE_OBJECT.className };
+  const base = deployConfig(raw, {
+    name: plan.worker,
+    r2: plan.r2,
+    vectorize: plan.vectorize,
+    vars: { ...vars, TENANT_ID: plan.name, OWNER_EMAIL: SLOT_OWNER, PREVIEW_SERVING: placeholder ? 'placeholder' : 'app', PREVIEW_DEPLOY: deploy },
+    paid: paid && !placeholder,
+    label: 'preview',
+    what: 'a preview slot',
+  });
   const out = {
-    ...deployConfig(raw, {
-      name: plan.worker,
-      r2: plan.r2,
-      vectorize: plan.vectorize,
-      vars: { ...vars, TENANT_ID: plan.name, OWNER_EMAIL: SLOT_OWNER, PREVIEW_SERVING: placeholder ? 'placeholder' : 'app', PREVIEW_DEPLOY: deploy },
-      paid: paid && !placeholder,
-      label: 'preview',
-      what: 'a preview slot',
-    }),
+    ...base,
     main: placeholder ? SLOT_MAIN.placeholder : SLOT_MAIN.app,
     account_id: accountId,
     preview_urls: false,
-    durable_objects: { bindings: [...(placeholder ? [] : (raw.durable_objects?.bindings ?? [])), lease] },
+    durable_objects: { bindings: [...(placeholder ? [] : (base.durable_objects?.bindings ?? [])), lease] },
     exports: {
       ...Object.fromEntries(Object.entries(raw.exports ?? {}).map(([c, e]) => [c, placeholder && e.type === 'durable-object' ? { type: 'durable-object', state: 'deleted' } : e])),
       [LEASE_OBJECT.className]: { type: 'durable-object', storage: 'sqlite' },

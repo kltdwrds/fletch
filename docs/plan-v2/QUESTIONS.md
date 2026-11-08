@@ -7,6 +7,13 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## Open, not blocking
 
+### Q51 (F56), 2026-11-08: may a paid deploy carry the renderer's container (D-0030)?
+
+**Blocks:** nothing (Kyle's one-hour ruling, 2026-11-08); F56 built it behind `--paid` and D-0030 is `proposed`.
+**Recommended answer:** yes: accept D-0030. A `--paid` deploy binds `RENDERER` and runs one pandoc container (at most two
+instances); a deploy without it refuses render with `HOST_RENDER_UNAVAILABLE` naming the binding. If the bill is
+unwelcome, move the container behind its own flag; the host's refusal already covers a deploy without it.
+
 ### Q47 (F42), 2026-11-01 (Q39 on the F42 branch until 2026-11-08, then Q45; renumbered past main's Q39, Q43, Q45 and Q46): may F42's must-haves count, when the lead-in bubble both models write fails T-P9-13 at origin/main too?
 
 **Blocks:** nothing since F45 merged (2026-11-08, PR #111): F45 is option (a) below, and F42 is rebased onto it and runs its declared tier 2 again (Q31's default). Until then it blocked F42's acceptance; all else was in: the line, its tier-1 test, `ACCEPT F42: PASS`.

@@ -1,7 +1,7 @@
 // Base config of the self-host agent script; `wrangler types` reads it for Env. `pnpm self-host` writes a
 // deploy's own copy (name, account, bucket, index, OWNER_EMAIL, TENANT_ID) and sets the MASTER_KEY
 // secret, which never appears here. No service bindings: every platform service comes from the host
-// (`src/host.ts`). The Worker Loader (Code Mode) and Images (HEIC) are paid-plan bindings a deploy adds;
+// (`src/host.ts`). The Worker Loader (Code Mode), Images (HEIC) and the Renderer's container are paid-plan bindings a deploy adds;
 // without them Env types them optional (src/env.d.ts) and the agent refuses those features in words.
 {
   "name": "agent",
@@ -26,7 +26,10 @@
     "Job": { "type": "durable-object", "storage": "sqlite" },
     "Ingress": { "type": "durable-object", "storage": "sqlite" },
     "Ledger": { "type": "durable-object", "storage": "sqlite" },
-    "Vault": { "type": "durable-object", "storage": "sqlite" }
+    "Vault": { "type": "durable-object", "storage": "sqlite" },
+    // The document renderer (F56): the class is on every deploy; its RENDERER binding and pandoc container are paid
+    // and added only with --paid (scripts/preview-plan.mjs), so without them render is refused by name.
+    "Renderer": { "type": "durable-object", "storage": "sqlite" }
   },
   "ai": { "binding": "AI" },
   "r2_buckets": [{ "binding": "AGENT_BUCKET", "bucket_name": "qyvr-base-agent" }],

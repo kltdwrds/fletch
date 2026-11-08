@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { selfHost } from './self-host.mjs';
 import { NAME_RE, parseSelfHostArgs, SELF_HOST_CONFIG, SELF_HOST_VAR_KEYS, secretsToMint, selfHostConfig, selfHostEnv, setupLink } from './self-host-plan.mjs';
 import { fakeAccount } from './preview-fakes.mjs';
+import { RENDERER_BINDING, RENDERER_CONTAINER } from './preview-plan.mjs';
 
 // `pnpm self-host` (scripts/self-host.mjs, scripts/self-host-plan.mjs): the arguments and their refusals, the deploy's
 // config from the agent's real base config, and whole runs against a fake account answering wrangler's calls
@@ -140,6 +141,14 @@ describe('self-host: the deploy config', () => {
     assert.equal(c.worker_loaders, undefined);
     assert.equal(c.images, undefined);
     assert.ok(!JSON.stringify(c).includes('LOADER') && !JSON.stringify(c).includes('IMAGES'));
+  });
+
+  it('[F56] adds the Renderer binding and its container exactly with --paid, and neither without', () => {
+    const paid = selfHostConfig(BASE, { ...opts, paid: true });
+    assert.deepEqual(paid.containers, [RENDERER_CONTAINER]);
+    assert.deepEqual(paid.durable_objects.bindings, [...BASE.durable_objects.bindings, RENDERER_BINDING]);
+    assert.equal(c.containers, undefined);
+    assert.deepEqual(c.durable_objects, BASE.durable_objects);
   });
 
   it("names no key outside the agent's config but its name, account and workers.dev, and none of the base's resources", () => {

@@ -16,6 +16,8 @@ import {
   LEASE_OBJECT,
   r2Names,
   record,
+  RENDERER_BINDING,
+  RENDERER_CONTAINER,
   SLOT_OWNER,
   SLOT_VAR_KEYS,
   slotConfig,
@@ -103,6 +105,21 @@ describe('preview plan: the slot config', () => {
     assert.deepEqual(paid.worker_loaders, [{ binding: 'LOADER' }]);
     assert.deepEqual(paid.images, { binding: 'IMAGES' });
     assert.equal(slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', paid: true, placeholder: true }).worker_loaders, undefined);
+  });
+
+  it('[F56] adds the Renderer binding and its pandoc container only when paid, beside the lease, and never to the placeholder', () => {
+    assert.equal(app.containers, undefined);
+    assert.ok(!app.durable_objects.bindings.some((b) => b.name === 'RENDERER'));
+    assert.deepEqual(BASE.exports.Renderer, { type: 'durable-object', storage: 'sqlite' }, 'the class is on every deploy');
+    const paid = slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', paid: true });
+    assert.deepEqual(paid.containers, [RENDERER_CONTAINER]);
+    assert.deepEqual(paid.durable_objects.bindings.slice(-2), [RENDERER_BINDING, { name: LEASE_OBJECT.binding, class_name: LEASE_OBJECT.className }]);
+    const ph = slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', paid: true, placeholder: true });
+    assert.equal(ph.containers, undefined);
+    // The image is the one the Renderer's code names, so the deployed container is the pandoc it speaks to.
+    const tsImage = readFileSync(path.join(REPO, 'packages', 'agent', 'src', 'render', 'render.ts'), 'utf8').match(/RENDER_IMAGE = "([^"]+)"/)?.[1];
+    assert.equal(RENDERER_CONTAINER.image, tsImage);
+    assert.equal(RENDERER_CONTAINER.class_name, RENDERER_BINDING.class_name);
   });
 
   it("sets the model vars --var names, over the base config and under the slot's own, and refuses any other var", () => {
