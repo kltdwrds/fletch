@@ -476,7 +476,9 @@ step | Muse observable | fletch today | gap
 2. **One streamed bubble; no `message_break`.** fletch streams the reply as it is written, so the person has words
    before Muse would have any; holding the reply to split it would give that up. Two paragraphs read as well as two
    bubbles. `send_to_user` stays as the deliberate early message Muse lacks; T-P2-03 grades that nothing streams
-   before the last tool result unless the agent calls it. Logged.
+   before the last tool result unless the agent calls it. Text beside a tool call in a step that continues is
+   commentary and is neither streamed nor stored as a reply, so a step's words reach the page when the step ends (F45).
+   Logged.
 3. **A steer folds into the running turn.** Muse ends the turn and starts a new one with an interruption note; fletch
    keeps the turn and gives the model the `STEER_POLICY` line and the fenced message at the next boundary. The
    person sees the same thing: one reply that answers the steered work. fletch's shape keeps the completed tool

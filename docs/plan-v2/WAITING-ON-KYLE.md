@@ -9,6 +9,22 @@ Kyle's own lines go under `## Steering`.
 
 ## Open
 
+- [ ] 2026-11-08 decide: **D-0027, shopping and bookings: purchase or flag-only per vertical (O5), and provider APIs on egress.**
+  P16 was interrogated tonight (Queue 9): Muse's shopping is a research widget plus a hand-over to the live page, its
+  commitments go through connectors and a wallet provider fletch does not have, your memory line of 2026-09-19 already
+  makes tickets flag-only, and every seller refused dates a year out (Duffel 0 offers, Google Flights "too far in the
+  future", a 360-day hotel picker, 0 Ticketmaster events against 113 near term), so no flight, hotel or ticket offer
+  card exists as evidence. The contract (13 clauses, 12 tasks, nothing built) assumes: find, compare, cite, hand over;
+  no purchase, booking, hold or cart by the agent; no provider API on the allowlist; the person pays in the live page
+  (D-0017, still proposed). What "accept" changes: the orchestrator writes P16's six tier-1 must-have parts from the
+  contract. What "purchase for a vertical" changes: that vertical needs D-0017 reversed or a provider path, an egress
+  entry and a `commerce` `HostFeature`, each proposed then. Three smaller rulings sit in Q43 (remembering a reported
+  booking, the ticket rule's reach, a re-interrogation inside the sale window). Left in your Muse: side chat
+  `ad785849…` (33 items, 3 browser tasks, 1 results card), three completed research sub-agents, one `shopping_results`
+  widget, nine scratch files under `/tmp` and `/var/tmp`; nothing bought, saved, granted or changed.
+  [D-0027](../decisions/0027-shopping-is-find-and-hand-over.md),
+  [Q43](QUESTIONS.md#q43-p16-2026-11-08-d-0027-shopping-and-bookings-purchase-or-flag-only-per-vertical-provider-apis-and-three-smaller-rulings),
+  [the P16 contract](contracts/P16-shopping-bookings.md), [design O5](2026-10-29-parity-framework-design.md).
 - [ ] 2026-11-08 decide: **D-0026, pick or pass on P13 (voice, audio, podcasts), and if picked, which doors open.** P13 was
   interrogated tonight (Queue 9): Muse reads a reply aloud by running a TTS tool and attaching an mp3, a generated audio
   piece has no row and no source, a voice note's transcript column has no rows in your account, a temporary public link
@@ -87,6 +103,7 @@ Kyle's own lines go under `## Steering`.
   Spark then. [PR #96](https://github.com/kltdwrds/fletch/pull/96); [F42 in parts.md](parts.md#f42-credentials-say-why-a-host-is-refused-the-bound-host-words-and-t-p9-15s-re-grade);
   [P9 row](SCORECARD.md).
   Default taken (for Kyle, 2026-11-07), Q31 and this item: the cross-cutting part is F45 (parts.md, the lead-in bubble), F42 waits for it and is rebased onto it, then P9's must-haves run again on Muse Spark (ORCHESTRATOR-OVERNIGHT.md, Queue 5 and 6).
+  2026-11-08: F45 is merged (PR #111: `ACCEPT F45: PASS`, verifier clean, T-P9-13 and T-P12-10 3 of 3 on Muse Spark); F42's rebase onto it and its declared run of T-P9-15, T-P9-13 and T-P9-14 are under way on PR #96.
 
 - [ ] 2026-11-02 look: **P10 and P11 are interrogated, from the cloud; the evidence is in the session's tarball, not on
   your Mac yet.** Two Opus agents ran `evidence/p10-search/scenario.md` and `evidence/p11-files/scenario.md` in your Muse
@@ -587,6 +604,8 @@ Kyle's own lines go under `## Steering`.
   [Q29](QUESTIONS.md#q29-f34-2026-10-30-may-f34-count-its-last-33-runs-and-keep-the-two-widened-must-have-graders); [F34 in parts.md](parts.md#f34-delegation-says-what-happened-p3s-tier-2-on-a-slot);
   [PR #64](https://github.com/kltdwrds/fletch/pull/64).
   Default taken (for Kyle, 2026-11-07), Q29: (1) one run declared before it starts on the final tree counts, earlier runs staying as evidence (KICKOFF's rule since PR #73); (2) both widenings stay. A cloud builder runs the declared run of T-P3-14 and T-P3-16 on current main tonight; F34 goes DONE and P3 to level 2 on its pass.
+  2026-11-08: the run was made (PR #107, tree dfd25a51): T-P3-16 3 of 3; T-P3-14 0 of 3 on Muse Spark's launch words (future tense, three acknowledgements, "keep you posted"), so F46, a line part, is written in parts.md and builds after F45; F34 and P3 level 2 close on its pass.
+  2026-11-08, later: F46 built and merged (PR #115: `ACCEPT F46: PASS`, `VERIFIER: no blocking findings`, T-P3-14 3 of 3 on Muse Spark at declared tree 67ec581c); F34 and F46 are DONE and P3 is at level 2. Nothing left here but your read of the default.
 - [ ] 2026-10-30 uat: **delegation on a slot after F33 and F34** (https://fletch-pv-3.edwards-ky1.workers.dev while
   F34's lease holds, to 2026-10-31T13:27Z; after that `pnpm preview up` on main). Hand the agent a two-source question
   and watch: the launch reply says what started and ends its turn (no polling, nothing said aside); the task drawer's

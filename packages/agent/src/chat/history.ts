@@ -13,6 +13,9 @@
 // live `reasoning` frame is. It is never part of an `agent` entry's text: `textOf` reads text blocks
 // alone.
 //
+// From F45 a step's words beside a call, when the step continued, are commentary (`commentary.ts`): its row keeps them
+// for the model and history draws no `agent` entry for them; reasoning and delivered `send_to_user` texts stay.
+//
 // From M18.1 (QYVR-151) a person's entry carries the page's id for the send that wrote it, so a page
 // that never heard back about a send can tell from a re-sync whether it was stored; the approval and
 // link cards a turn showed are entries of their own, so a reload of a turn that ended on a card draws
@@ -21,6 +24,7 @@
 import type { Message } from "@earendil-works/pi-ai";
 import type { LinkCard } from "../workspace/surfaces.ts";
 import type { CardView } from "./cards.ts";
+import { isCommentary } from "./commentary.ts";
 import { failureText } from "./failure-words.ts";
 import type { QuoteWho } from "./message-actions.ts";
 
@@ -120,7 +124,8 @@ export function visibleHistory(
       for (const p of Array.isArray(parts) ? parts : []) {
         if (p.type === "thinking" && typeof p.thinking === "string" && p.thinking.trim()) entries.push({ kind: "thinking", text: p.thinking, at, order: seq });
       }
-      const said = textOf(parts);
+      // Words beside a call in a step that continued were commentary (F45): the model's, never an entry of its own.
+      const said = isCommentary(message) ? "" : textOf(parts);
       if (said) entries.push({ kind: "agent", text: said, at, mid: `m${seq}`, order: seq });
       let k = 0;
       for (const p of Array.isArray(parts) ? parts : []) {

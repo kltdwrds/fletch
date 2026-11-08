@@ -27,6 +27,67 @@
         }
       ],
       "status": "pass"
+    },
+    {
+      "run_at": "2026-11-08T05:52:58.831Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the share waits on Sam",
+          "started_at": "2026-11-08T05:52:58.831Z",
+          "finished_at": "2026-11-08T05:53:39.532Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the share waits on Sam",
+          "started_at": "2026-11-08T05:53:39.532Z",
+          "finished_at": "2026-11-08T05:54:17.859Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the share waits on Sam",
+          "started_at": "2026-11-08T05:54:17.859Z",
+          "finished_at": "2026-11-08T05:54:56.538Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
+    },
+    {
+      "run_at": "2026-11-08T06:20:54.182Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the share waits on Sam",
+          "started_at": "2026-11-08T06:20:54.182Z",
+          "finished_at": "2026-11-08T06:21:29.052Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the share waits on Sam",
+          "started_at": "2026-11-08T06:21:29.052Z",
+          "finished_at": "2026-11-08T06:21:59.625Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-08T06:21:59.625Z",
+          "finished_at": "2026-11-08T06:22:31.292Z"
+        }
+      ],
+      "status": "fail"
     }
   ]
 }

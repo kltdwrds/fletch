@@ -126,6 +126,37 @@
         }
       ],
       "status": "fail"
+    },
+    {
+      "run_at": "2026-11-08T06:22:17.540Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a mail goes as Sam's agent under the platform's label from the host's address, and no calendar or document tool exists",
+          "started_at": "2026-11-08T06:22:17.540Z",
+          "finished_at": "2026-11-08T06:22:27.327Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the envelope's model line is the source",
+          "started_at": "2026-11-08T06:22:27.327Z",
+          "finished_at": "2026-11-08T06:22:35.231Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "a mail goes as Sam's agent under the platform's label from the host's address, and no calendar or document tool exists",
+          "started_at": "2026-11-08T06:22:35.231Z",
+          "finished_at": "2026-11-08T06:22:45.073Z"
+        }
+      ],
+      "status": "fail"
     }
   ]
 }
