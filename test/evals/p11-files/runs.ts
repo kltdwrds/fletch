@@ -145,4 +145,128 @@ export const runs: Record<string, () => Run> = {
     ],
   }),
 };
+
+const deck = "documents/p11-deck.pptx";
+const PPTX = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+/** Sam's request to a route, kept under `name`. */
+const ask = (name: string, method: string, path: string, body?: unknown) => async (t: P11Tier1) => {
+  const r = await t.w.http(sam.email, method, path, body);
+  await t.keep(name, "sam", { status: r.status, text: JSON.stringify(r.body) });
+};
+
+/** The runs of the tasks F101 to F103 make pass (T-P11-05, 07, 11, 12, 15) and the tier-2 tasks' scripted runs (16 to 18). */
+export const later: Record<string, () => Run> = {
+  "T-P11-05": () => ({
+    spec: { script: [] },
+    seed: async (t) => {
+      await t.seedText(MEMO_MD, "# p11 memo\n\nfirst\n");
+      t.w.clock.now += 60_000;
+      await t.seedText(MEMO_MD, "# p11 memo\n\nsecond\n");
+    },
+    turns: [
+      ask("versions", "GET", `/app/file/versions?path=${encodeURIComponent(MEMO_MD)}`),
+      ask("v1", "GET", `/app/file/version?path=${encodeURIComponent(MEMO_MD)}&n=1`),
+      async (t) => {
+        await ask("restore", "POST", "/app/file/restore", { path: MEMO_MD, n: 1 })(t);
+        await ask("after-restore", "GET", `/app/file/versions?path=${encodeURIComponent(MEMO_MD)}`)(t);
+      },
+      ask("delete", "POST", "/app/file/delete", { path: MEMO_MD }),
+      ask("trash", "GET", "/app/trash"),
+      ask("restore-trash", "POST", "/app/trash/restore", { path: MEMO_MD }),
+    ],
+  }),
+  "T-P11-07": () => ({
+    spec: { script: [load(["documents"]), render({ markdown: "# p11 memo\n\n---\n\n## Plan\n\n---\n\n## Risks\n", to: "pptx", name: "p11-memo-deck" }), { text: `Made [the deck](files/${DECK}).` }], render: ["docx", "pptx"] },
+    seed: async (t) => {
+      await t.seedDocx(MEMO_DOCX);
+      await t.seedText(MEMO_MD, MEMO_MARKDOWN);
+    },
+    turns: [prompt],
+  }),
+  "T-P11-11": () => ({
+    spec: { script: [load(["documents"]), call("share_list", {}, "sl1"), { text: "Two links are live." }, call("share_revoke", { id: "memo" }, "sr1"), { text: "Revoked the link to the memo." }] },
+    seed: async (t) => {
+      await t.seedDocx(MEMO_DOCX);
+      await t.seedText(BUDGET_HTML, "<p>p11 budget</p>");
+      for (const path of [MEMO_DOCX, BUDGET_HTML]) await t.w.host(sam.email).links.share({ path }, sam.email);
+      const { pat } = await import("./harness.ts");
+      await t.w.host(pat.email).files.write({ path: "documents/p11-pat.html", text: "<p>p11 pat</p>" }, { requester: pat.email, writer: pat.email });
+      await t.w.host(pat.email).links.share({ path: "documents/p11-pat.html" }, pat.email);
+    },
+    turns: [
+      prompt,
+      async (t, turn) => {
+        const memo = t.shares().find((s) => s.path === MEMO_DOCX);
+        await prompt(t, turn);
+        const sig = "0".repeat(64);
+        await t.getAs("revoked", "none", `/hooks/share/${memo?.id}.${sig}`);
+        await t.getAs("unknown", "none", `/hooks/share/${"c".repeat(32)}.${sig}`);
+      },
+    ],
+  }),
+  "T-P11-12": () => ({
+    spec: { script: [load(["files"]), call("file_delete", { path: deck }, "d1"), { text: "Deleted the deck; its share link ended." }] },
+    seed: async (t) => {
+      const r = await t.w.host(sam.email).files.writeBytes({ path: deck, bytes: new TextEncoder().encode("PK p11 deck slide"), mediaType: PPTX }, { requester: sam.email, writer: `agent:${sam.email}` });
+      if (!r.ok) throw new Error(r.code);
+      const s = await t.w.host(sam.email).links.share({ path: deck }, sam.email);
+      (t as unknown as { url: string }).url = s.ok ? s.url : "";
+    },
+    turns: [
+      async (t, turn) => {
+        await prompt(t, turn);
+        await t.getAs("share", "none", (t as unknown as { url: string }).url);
+        const bytes = t.w.r2.bytes(`person/sam%40solo-sam.example/files/${deck}`);
+        if (bytes) t.answers.bytes = { who: "sam", status: 200, code: null, body: "present" };
+      },
+    ],
+  }),
+  "T-P11-15": () => ({
+    spec: { script: [...script09, { text: `Shared: [p11 memo](files/${MEMO_DOCX}).` }], render: ["docx"] },
+    seed: (t) => t.seedDocx(MEMO_DOCX),
+    turns: [
+      async (t, turn) => {
+        await prompt(t, turn);
+        await t.approve();
+        await t.keep("transcript-before", "sam", { status: 200, text: JSON.stringify(t.entries()) });
+      },
+      async (t) => {
+        const href = shared(t);
+        await t.w.http(sam.email, "POST", "/app/file/delete", { path: MEMO_DOCX });
+        (t as unknown as { href: string }).href = href;
+      },
+      async (t) => {
+        const page = await t.w.http(sam.email, "GET", `/chats/${t.chat}`);
+        await t.keep("page", "sam", { status: page.status, text: String((page.body as { html?: string }).html ?? JSON.stringify(page.body)) });
+        await t.getAs("share", "none", (t as unknown as { href: string }).href);
+        await t.getAs("file", "sam", `/app/file?path=${encodeURIComponent(MEMO_DOCX)}`);
+        await t.keep("transcript", "sam", { status: 200, text: JSON.stringify(t.entries()) });
+      },
+    ],
+  }),
+  "T-P11-16": () => ({
+    spec: { script: [load(["files"]), write(MEMO_MD, MEMO_MARKDOWN), { text: `Saved [p11 eval memo](files/${MEMO_MD}).` }, read(MEMO_MD), write(MEMO_MD, MEMO_WITH_RISKS, "w2"), { text: `Changed [p11 eval memo](files/${MEMO_MD}): a Risks section. The earlier version was replaced and not kept.` }] },
+    turns: [prompt, prompt],
+  }),
+  "T-P11-17": () => ({
+    spec: { script: [...script09, { text: "The link is on the share card with its expiry; I sent it to no one." }, call("share_revoke", { id: "memo" }, "sr1"), { text: "Revoked." }], render: ["docx"] },
+    seed: (t) => t.seedDocx(MEMO_DOCX),
+    turns: [
+      async (t, turn) => {
+        await prompt(t, turn);
+        t.mark("before-approval");
+      },
+      async (t) => {
+        await t.approve();
+        t.mark("after-approval");
+        t.answers.link = { who: "sam", status: 200, code: null, body: shared(t) };
+      },
+      async (t, turn) => {
+        await prompt(t, turn);
+        await t.getAs("revoked", "none", shared(t));
+      },
+    ],
+  }),
+  "T-P11-18": () => ({ spec: { script: script06 }, turns: [prompt, prompt] }),
+};
 export { DECK };
