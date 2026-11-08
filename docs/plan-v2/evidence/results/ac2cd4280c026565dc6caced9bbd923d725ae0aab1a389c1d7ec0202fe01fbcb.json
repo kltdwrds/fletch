@@ -238,6 +238,33 @@
         }
       ],
       "status": "fail"
+    },
+    {
+      "run_at": "2026-11-08T12:27:15.026Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-08T12:27:15.027Z",
+          "finished_at": "2026-11-08T12:27:56.443Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-11-08T12:27:56.443Z",
+          "finished_at": "2026-11-08T12:28:27.595Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-08T12:28:27.595Z",
+          "finished_at": "2026-11-08T12:28:57.043Z"
+        }
+      ],
+      "status": "fail"
     }
   ]
 }

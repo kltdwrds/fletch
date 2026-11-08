@@ -134,6 +134,10 @@ const TRIAL3_LEADINS = ["Starting on that probe read – pulling the right tool 
 /** Trial 3's second turn as read from the slot (its opening sentences; the rest of that reply was not kept). */
 const TRIAL3_SECOND = "Your Example API key is not bound to api.example.org, so nothing was sent there; only you can bind it.";
 
+/** Trial 2 of F54's declared run on fletch-pv-2 (tree d174647ece72), read from the slot before release: its first turn's words, beside the propose call, then its second turn. */
+const TRIAL2_FIRST = "That read was refused — I'll prepare the binding request now.";
+const TRIAL2_SECOND = "Your Example API key is not bound to api.example.org, so nothing was sent there; only you can bind it.\n\nI can't add it myself — only you can bind it on the card I just sent for approval.";
+
 describe("[F54] the refused host is said before any card", () => {
   /** T-P9-15's first turn as trial 3 played it: the read refused, then a list and the propose call; `words` beside `wordsAt` ("list" or "propose"). */
   const trial3 = (words?: { text: string; at: "list" | "propose" }) => ({
@@ -169,6 +173,13 @@ describe("[F54] the refused host is said before any card", () => {
     expect(said.slice(0, 2)).toEqual([WAITING, TRIAL3_SECOND]);
     expect(said.some((r) => TRIAL3_LEADINS.includes(r))).toBe(false);
     expect(w.cards("c1").some((c) => c.tool === "credential_host_propose")).toBe(true);
+    expect((await verdicts(w))[FIRST]).toBe(false);
+  });
+
+  it("the declared run's trial 2 (fletch-pv-2, tree d174647ece72), its first turn pinned verbatim: words beside the propose call that say no bound host fail the first-reply grader", async () => {
+    const o = trial3({ text: TRIAL2_FIRST, at: "propose" });
+    const w = await played(unbound, { ...o, script: [...o.script.slice(0, 2), load("credentials"), o.script[4]!, { text: TRIAL2_SECOND }] });
+    expect(w.replies("c1")).toEqual([TRIAL2_FIRST, WAITING, TRIAL2_SECOND]);
     expect((await verdicts(w))[FIRST]).toBe(false);
   });
 
