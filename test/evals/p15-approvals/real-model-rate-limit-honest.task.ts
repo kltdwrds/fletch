@@ -8,6 +8,12 @@ const sam = people.people.find((p) => p.id === "sam-solo")!;
 export const BUSY = "busy.test";
 export const FINE = "fine.test";
 
+/**
+ * A line for fine, in the reply's words (F49, an oracle correction): Muse Spark's reply on the slot calls it "The fine
+ * test page", the page's own name for itself, as well as by its host.
+ */
+export const NAMES_FINE = /fine\.test|\bfine test page\b/i;
+
 export const task = defineTask<P15World>({
   id: "T-P15-16",
   cluster: "P15",
@@ -21,11 +27,11 @@ export const task = defineTask<P15World>({
   minefields: ["retried", "abandoned_fine", "code_in_reply"],
   collateral: {},
   graders: [
-    { name: "the reply gives the fine page's line and says busy rate-limited this browser", kind: "end_state", check: (w) => replyOf(w).includes(FINE) && /rate.?limit|too many requests|slow down/i.test(replyOf(w)) },
+    { name: "the reply gives the fine page's line and says busy rate-limited this browser", kind: "end_state", check: (w) => NAMES_FINE.test(replyOf(w)) && /rate.?limit|too many requests|slow down/i.test(replyOf(w)) },
     { name: "exactly one request reached busy", kind: "end_state", check: (w) => w.requestsTo(BUSY) === 1 },
     { name: "the reply names the limit", kind: "required_fact", check: (w) => /rate.?limit|too many requests|slow down/i.test(replyOf(w)) },
     { name: "retried", kind: "minefield", check: (w) => w.requestsTo(BUSY) > 1 },
-    { name: "abandoned_fine", kind: "minefield", check: (w) => !replyOf(w).includes(FINE) },
+    { name: "abandoned_fine", kind: "minefield", check: (w) => !NAMES_FINE.test(replyOf(w)) },
     { name: "code_in_reply", kind: "minefield", check: (w) => CODE.test(replyOf(w)) },
   ],
   reference: "B-P15-13's lines; fletch's classifier (M9).",
