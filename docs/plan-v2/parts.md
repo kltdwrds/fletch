@@ -1229,7 +1229,7 @@ Translation's deltas 1, 5, 6, 7 and 8, the Fresh-session check, the Build notes)
 `packages/agent/src/http/app/thread-work.ts` (`STATUS_WORDS`), `test/workers/m9-browse.test.ts`, `m9-fill.test.ts`,
 `m24-3-browser-logins.test.ts`, `test/workers/support/browse-world.ts` and `fake-cdp-browser.ts`,
 `docs/plan-v2/QUESTIONS.md` Q18 (a reply's required words are instruction lines, not harness sentences). No one-way
-door: D-0028 (search, places and image generation) stays proposed and nothing here builds on it; the part adds tests
+door: D-0029 (search, places and image generation) stays proposed and nothing here builds on it; the part adds tests
 and deletes one stale word.
 
 **Scope:** (1) `test/m0/f90-contract.test.ts` holds the P10 contract as `f31-contract.test.ts` holds P5: seventeen
@@ -1251,7 +1251,7 @@ have (a link card, a browser card, a window list), the file grades the fletch fo
 `VERIFIER: no blocking findings`.
 
 **Not in scope:** a web search, places, image generation or social tool, a provider on the egress allowlist or a new
-`HostFeature` (D-0028, proposed); an instruction line (F91); a link, browser, map or image card in the thread (F92's
+`HostFeature` (D-0029, proposed); an instruction line (F91); a link, browser, map or image card in the thread (F92's
 specimens first); named browser profiles or a window list (delta 5); tier 2 (F91); a change to a clause.
 
 ## F91 Search and media say what this deploy cannot reach: one instruction line, the slot's probe pages and P10's tier 2
@@ -1260,7 +1260,7 @@ specimens first); named browser profiles or a window list (delta 5); tier 2 (F91
 B-P10-11, B-P10-13 to B-P10-15, the tier-2 tasks, delta 1, the Build notes), the F90 world and tasks under
 `test/evals/p10-search/`, `packages/agent/src/chat/instructions.ts` (`WORK_WORDS`, the bot-check and rate-limit lines),
 `scripts/preview-slot/test-host.mjs`, `test-host-sites.mjs` and `test-host-p5.mjs` as the pattern for a probe page,
-`docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q18, `docs/decisions/0028-search-places-images-are-owner-connected.md`
+`docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q18, `docs/decisions/0029-search-places-images-are-owner-connected.md`
 (proposed: the line says what is missing in words and names no code until it is accepted). No one-way door. A live
 step: `pnpm evals` runs on this worktree's slot (`pnpm preview up`); if no slot can be leased, that is a question, not
 a reason to skip.
@@ -1279,7 +1279,7 @@ T-P10-12 and T-P10-13 (nice-to-have), three trials each, the results files commi
 T-P10-12 and T-P10-13 run and their results recorded whatever the verdict; `ACCEPT F91: PASS`;
 `VERIFIER: no blocking findings`.
 
-**Not in scope:** a search, places, image or social capability or its code (D-0028); a code-written reply line (Q18);
+**Not in scope:** a search, places, image or social capability or its code (D-0029); a code-written reply line (Q18);
 new instruction lines beyond the one, unless a failing must-have needs a second, named in the PR body with its task;
 the live lane on a slot (the test host has no live browser); a change to a clause.
 
@@ -1310,4 +1310,4 @@ specimen file exists, names each of the four blocks by a heading and uses only t
 test passes; `pnpm check` green; `ACCEPT F92: PASS`; `VERIFIER: no blocking findings`.
 
 **Not in scope:** drawing any of the four in the live thread or Library (a later part after Kyle's look, and for the
-map and the image card after D-0028); a capability behind them; a change to a clause.
+map and the image card after D-0029); a capability behind them; a change to a clause.

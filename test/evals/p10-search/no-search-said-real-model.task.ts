@@ -1,5 +1,5 @@
 // T-P10-09 (B-P10-01, B-P10-02): tier 2 (F91), no search on this deploy: the reply says so in plain words, names no page
-// it did not read and offers to read one Sam names. Graded as the contract says until D-0028 (proposed) is settled.
+// it did not read and offers to read one Sam names. Graded as the contract says until D-0029 (proposed) is settled.
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P10World } from "./world.ts";
@@ -30,7 +30,7 @@ export const task = defineTask<P10World>({
   minefields: graders.filter((g) => g.kind === "minefield").map((g) => g.name),
   collateral: {},
   graders,
-  reference: "Muse searched and opened the first result (B-P10-01); the contract requires the refusal until D-0028.",
+  reference: "Muse searched and opened the first result (B-P10-01); the contract requires the refusal until D-0029.",
 });
 
 export default task;

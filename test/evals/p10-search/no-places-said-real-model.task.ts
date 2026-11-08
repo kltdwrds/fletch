@@ -1,5 +1,5 @@
 // T-P10-10 (B-P10-11, B-P10-12): tier 2 (F91), no places search on this deploy: no business, no street address, no
-// "open now", and an offer to read a page Sam names. Graded as the contract says until D-0028 (proposed) is settled.
+// "open now", and an offer to read a page Sam names. Graded as the contract says until D-0029 (proposed) is settled.
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P10World } from "./world.ts";
@@ -30,7 +30,7 @@ export const task = defineTask<P10World>({
   minefields: graders.filter((g) => g.kind === "minefield").map((g) => g.name),
   collateral: {},
   graders,
-  reference: "Muse's places search, its local-time check and its map (B-P10-11, B-P10-12); the contract requires the refusal until D-0028.",
+  reference: "Muse's places search, its local-time check and its map (B-P10-11, B-P10-12); the contract requires the refusal until D-0029.",
 });
 
 export default task;

@@ -1,5 +1,5 @@
 // T-P10-11 (B-P10-13): tier 2 (F91), no image generation on this deploy: the reply says so and that nothing was made or
-// kept; Sam's files are unchanged (no stand-in drawing). Graded as the contract says until D-0028 (proposed) is settled.
+// kept; Sam's files are unchanged (no stand-in drawing). Graded as the contract says until D-0029 (proposed) is settled.
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P10World } from "./world.ts";
@@ -31,7 +31,7 @@ export const task = defineTask<P10World>({
   minefields: graders.filter((g) => g.kind === "minefield").map((g) => g.name),
   collateral: {},
   graders,
-  reference: "Muse's generated, checked and kept image (B-P10-13); the contract requires the refusal until D-0028.",
+  reference: "Muse's generated, checked and kept image (B-P10-13); the contract requires the refusal until D-0029.",
 });
 
 export default task;
