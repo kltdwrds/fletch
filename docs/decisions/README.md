@@ -75,4 +75,7 @@ After adding or changing a record, run `node scripts/check-decisions.mjs --write
 | [D-0021](0021-paid-bindings-opt-in-self-host.md) | Code Mode and Images are not in the base config; pnpm self-host --paid adds them | accepted | two-way | 2026-10-30 |  |
 | [D-0022](0022-self-host-deploys-from-a-checkout.md) | pnpm self-host deploys the agent from a fletch checkout on the owner's wrangler login; there is no setup package | accepted | two-way | 2026-10-30 |  |
 | [D-0023](0023-setup-token-minted-by-self-host.md) | The first passkey on a deploy needs a one-time setup token minted by pnpm self-host | accepted | one-way | 2026-10-31 | 2026-12-31 |
+| [D-0024](0024-muse-spark-prompt-cache.md) | Every Muse Spark request extends the one before it, so Meta's prompt cache keeps the history | accepted | two-way | 2026-11-02 |  |
+| [D-0025](0025-rooms-with-outsiders.md) | fletch's agent speaks in a room with outsiders only as the owner's agent, through a transport Kyle names, behind a fence on every outsider's words; until Kyle rules, no room exists | proposed | one-way | 2026-11-08 | 2026-12-31 |
+| [D-0026](0026-speech-on-fletch.md) | Speech on fletch, if P13 is picked: Workers AI models for transcription and voice, a refusal by name where a deploy has none, no public feed, no kept voice audio and no live calls until Kyle opens each door | proposed | one-way | 2026-11-08 | 2026-12-31 |
 <!-- index:end -->

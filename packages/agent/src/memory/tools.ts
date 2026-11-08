@@ -12,7 +12,8 @@ import type { Refusal, SearchResult, Setting, Written } from "./store.ts";
 export type MemoryWriteInput =
   | { target: "daily"; text: string }
   | { target: "team"; team: string; text: string }
-  | { target: "memory"; sha256: string; edits: Array<{ op: "replace" | "insert" | "delete"; line: number; text?: string }> };
+  | { target: "memory"; sha256: string; edits: Array<{ op: "replace" | "insert" | "delete"; line: number; text?: string }> }
+  | { target: "person"; name: string; relationship: string };
 
 export interface WriteContext {
   requester: string;
@@ -20,6 +21,11 @@ export interface WriteContext {
   source: string;
   dedupe: string;
   timeZone?: string;
+  /**
+   * The person's own words this turn (their latest typed message, a quote of the agent left out), set by the chat's
+   * code and never by the model: a person page is written only for a name they wrote there (F44, delta 7).
+   */
+  said?: string;
 }
 
 /** A page of a file; `scope` names a company or team file, or a personal one read with other readers. */
@@ -36,7 +42,9 @@ export type ExplainResult =
       supersededBy: string[];
     }
   | Refusal;
-export type WriteResult = Written | { ok: true; sha256: string; lines: number } | (Refusal & { sha256?: string });
+/** A person page's write: the line it saved, cited, and the page it wrote (F44, delta 7). */
+export type PersonWritten = Written & { page: string };
+export type WriteResult = Written | PersonWritten | { ok: true; sha256: string; lines: number; citations: string[] } | (Refusal & { sha256?: string });
 
 /**
  * What the chat reaches on the owner's `Person` object, over RPC in production. `also` names the other
@@ -60,6 +68,8 @@ export interface MemoryToolContext {
   setting: Setting;
   source: string;
   timeZone?: string;
+  /** The person's own words this turn, read by code (`WriteContext.said`); absent where no person typed (a job). */
+  said?: () => string | undefined;
 }
 
 const text = (t: string, details: unknown = {}) => ({ content: [{ type: "text" as const, text: t }], details });
@@ -91,6 +101,11 @@ const WriteParams = Type.Union([
       Type.Object({ op: Type.Union([Type.Literal("replace"), Type.Literal("insert"), Type.Literal("delete")]), line: Type.Integer({ minimum: 0 }), text: Type.Optional(Type.String()) }),
       { minItems: 1 },
     ),
+  }),
+  Type.Object({
+    target: Type.Literal("person"),
+    name: Type.String({ minLength: 1, description: "The person's name exactly as the person wrote it in their message, such as Ana Lima." }),
+    relationship: Type.String({ minLength: 1, description: "What they are to the person, in a few words from the message, such as: sister-in-law; visits every summer." }),
   }),
 ]);
 
@@ -140,12 +155,15 @@ export function memoryTools(c: MemoryToolContext): AgentTool<never>[] {
     name: "memory_write",
     label: "Save to memory",
     description:
-      "Save a durable fact, preference or decision as a line in today's note (target daily; the hourly upkeep turns lines into claims), a fact a team of the person's shares (target team), or edit MEMORY.md by line against the sha256 you read (target memory). Say it is saved only after this returns.",
+      "Save a durable fact, preference or decision as a line in today's note (target daily; the hourly upkeep turns lines into claims): a new fact goes there. A fact a team of the person's shares is target team. Edit MEMORY.md by line against the sha256 you read (target memory) only when the person asks to change what it says. When the person states their relationship with someone they name, target person saves that line and writes the person's page (memory/people/<name>.md). Say it is saved only after this returns, with the citation it returned.",
     parameters: WriteParams,
     execute: async (id, p) => {
-      const r = unwrap(await c.api.memoryWrite(p as MemoryWriteInput, { requester: c.requester, setting: c.setting, source: c.source, dedupe: id, timeZone: c.timeZone }));
+      const said = c.said?.();
+      const r = unwrap(await c.api.memoryWrite(p as MemoryWriteInput, { requester: c.requester, setting: c.setting, source: c.source, dedupe: id, timeZone: c.timeZone, ...(said === undefined ? {} : { said }) }));
+      if ("page" in r) return text(`saved ${r.citation}; wrote the person page ${r.page}`, r);
       if ("citation" in r) return text(`saved ${r.citation}`, r);
-      return text(`saved MEMORY.md, now ${r.lines} lines, sha256 ${r.sha256}`, r);
+      // Each line the edit wrote, cited, so a reply quotes the citation the tool returned (F44, delta 1).
+      return text(`saved MEMORY.md, now ${r.lines} lines, sha256 ${r.sha256}${r.citations.length ? `; wrote ${r.citations.join(", ")}` : ""}`, r);
     },
   };
   return [search, get, explain, write] as unknown as AgentTool<never>[];

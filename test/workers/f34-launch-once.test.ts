@@ -6,6 +6,7 @@ import type { AgentTool } from "@earendil-works/pi-agent-core";
 import { Type } from "@earendil-works/pi-ai";
 import { describe, expect, it } from "vitest";
 import type { TurnContext } from "../../packages/agent/src/chat/gate.ts";
+import { isCommentary } from "../../packages/agent/src/chat/commentary.ts";
 import { EffectBuffer } from "../../packages/agent/src/chat/tools.ts";
 import { runTurnLoop, type Step } from "../../packages/agent/src/chat/turn.ts";
 import { assemble } from "../../packages/agent/src/context/assemble.ts";
@@ -42,12 +43,16 @@ describe("[F34] the launch reply is said once", () => {
     expect(fake.requests.length).toBe(1);
   });
 
-  it("words said before the call, beside another tool, end the turn at the launch as well", async () => {
+  // Until F45 this pinned words beside `tool_search` as said, so the launch after them ended the turn with no reply of
+  // its own (steps [false, true], two requests). Words beside a call in a step that continues are commentary (B-P2-03):
+  // never said, so the launch with no words continues and the reply is written once after it.
+  it("words said before the call, beside another tool, are commentary: the launch continues and the reply follows it", async () => {
     const other = { name: "tool_search", label: "load", description: "d", parameters: Type.Object({}), execute: async () => ({ content: [{ type: "text", text: "loaded" }], details: {} }) } as unknown as AgentTool<never>;
-    const { fake, steps, run } = loop([{ toolCall: { name: "tool_search", arguments: {} }, text: LAUNCH }, { toolCall: call }, { text: "Launched again." }], undefined, other);
-    expect(await run()).toMatchObject({ status: "done", steps: 2 });
-    expect(steps.map((s) => s.final)).toEqual([false, true]);
-    expect(fake.requests.length).toBe(2);
+    const { fake, steps, run } = loop([{ toolCall: { name: "tool_search", arguments: {} }, text: LAUNCH }, { toolCall: call }, { text: "Launched." }], undefined, other);
+    expect(await run()).toMatchObject({ status: "done", steps: 3 });
+    expect(steps.map((s) => s.final)).toEqual([false, false, true]);
+    expect(steps.map((s) => isCommentary(s.message))).toEqual([true, false, false]);
+    expect(fake.requests.length).toBe(3);
   });
 
   it("a delegate call with no words beside it continues, so the reply is written once after the call", async () => {

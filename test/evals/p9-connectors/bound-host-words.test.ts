@@ -42,6 +42,15 @@ const saying = (w: P9World, text: string): P9World =>
       return [t[0]!, { kind: "agent", text }, ...(next < 0 ? [] : t.slice(next))];
     },
   });
+/** `w` with its first turn drawn as `bubbles` (Sam's ask, then each bubble), as the slot drew it before F45. */
+const asDrawn = (w: P9World, bubbles: string[]): P9World =>
+  Object.assign(Object.create(w) as P9World, {
+    thread: (c?: Parameters<P9World["thread"]>[0]) => {
+      const t = w.thread(c);
+      const next = t.findIndex((e, i) => i > 0 && e.kind === "you");
+      return [t[0]!, ...bubbles.map((text) => ({ kind: "agent", text })), ...(next < 0 ? [] : t.slice(next))];
+    },
+  });
 /** Every chat model request carries the line, as the prompt assembles it. */
 const carried = (prompts: string[]) => prompts.length > 0 && prompts.every((p) => p.includes(LINE));
 
@@ -52,7 +61,6 @@ describe("[F42] a credential refused on a host: the bound-host line", () => {
     expect(LINE).toMatch(/only the person can bind it/);
     expect(LINE).toMatch(/"only you can bind it"/);
     expect(LINE).toMatch(/never call it a list of allowed hosts/);
-    expect(LINE).toMatch(/write no words in any step until the keyed call's result has come back/);
     expect(LINE).toMatch(/nothing was sent: your first message says in these words/);
     for (const ask of ASKS) expect(WORK_WORDS).not.toContain(ask);
     const example = /Example: "([^"]+)"/.exec(LINE)?.[1] ?? "";
@@ -84,9 +92,14 @@ describe("[F42] a credential refused on a host: the bound-host line", () => {
 
     it("the refused turn from the slot, pinned verbatim, passes every grader; the old grader read its lead-in and refused it", async () => {
       const w = await played(unbound, slotLike(SLOT_WORDS));
-      expect(w.replies("c1").slice(0, 2)).toEqual([SLOT_LEADIN, SLOT_WORDS]);
-      expect(oldFirst(w)).toBe(false);
+      // Since F45 the lead-in beside the first step's call is commentary: kept on its row for the model, never a bubble.
+      expect(w.replies("c1")[0]).toBe(SLOT_WORDS);
       expect(await verdicts(w)).toEqual(held);
+      // The turn as the slot drew it before F45, the lead-in its own bubble, pinned verbatim.
+      const drawn = asDrawn(w, [SLOT_LEADIN, SLOT_WORDS]);
+      expect(drawn.replies("c1").slice(0, 2)).toEqual([SLOT_LEADIN, SLOT_WORDS]);
+      expect(oldFirst(drawn)).toBe(false);
+      expect(await verdicts(drawn)).toEqual(held);
     });
 
     it("planted: the old reply after the lead-in, the lead-in alone, and the words only in the second turn each still fail", async () => {
@@ -98,8 +111,11 @@ describe("[F42] a credential refused on a host: the bound-host line", () => {
     it("planted: the first turn's \"only you\" with no card and a second turn that says neither fails the second-turn grader, which the old reading passed", async () => {
       const w = await played(unbound, slotLike(SLOT_WORDS, "I can look at other options for that host."));
       expect(w.cards("c1")).toEqual([]);
-      expect(oldSecond(w)).toBe(true);
       expect((await verdicts(w))[SECOND]).toBe(false);
+      // Drawn as before F45, the lead-in a bubble of its own: the old reading took the first turn's words for the second's.
+      const drawn = asDrawn(w, [SLOT_LEADIN, SLOT_WORDS]);
+      expect(oldSecond(drawn)).toBe(true);
+      expect((await verdicts(drawn))[SECOND]).toBe(false);
     });
   });
 });

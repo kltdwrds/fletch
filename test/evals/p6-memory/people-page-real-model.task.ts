@@ -1,8 +1,7 @@
 // T-P6-14 (B-P6-11): tier 2, three passing mentions of Pat Solo make no page; a stated relationship makes one, with the
 // six sections and cited facts, and the index lists Pat. fletch writes a page through the Person's `upsertEntity`,
-// which no model tool reaches today (delta 7's seam): under the scripted fake this task runs and fails on the page,
-// and `people-page-real-model.test.ts` holds that, until a later part gives the model the seam (F28 ran it on a slot
-// and recorded the same failure).
+// which the chat reaches through `memory_write` target person since F44 (delta 7's seam; until then no model tool did,
+// and F28 recorded the failure on a slot); `people-page-real-model.test.ts` runs it under the scripted fake.
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask } from "../../support/task.ts";
 import { INDEX, PAGE, SECTIONS } from "./people-page-shape.task.ts";

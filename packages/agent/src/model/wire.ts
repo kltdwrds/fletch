@@ -1,6 +1,7 @@
 // The wire format between pi's transcript and the OpenAI-compatible chat completions of Workers AI and
 // Meta: messages and tools out, SSE chunks in.
 import type { Message, Tool } from "@earendil-works/pi-ai";
+import { isEnvelope } from "../context/assemble.ts";
 
 /** A content part of a user message: text, or an image as a data URL (M24.3, where the route's model takes images). */
 export type WirePart = { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } };
@@ -29,8 +30,14 @@ export const wireText = (content: WireMessage["content"]): string => (typeof con
  * envelope) stays where it is. Tools are the leading system messages' declarations minus removals.
  * An image a tool returned cannot ride in a tool message, so it follows the step's tool messages as
  * one user message that names the call it came from (M24.3).
+ *
+ * `envelopeAs: "user"` sends each runtime envelope as a user message in its place, for a provider that folds every
+ * system message into the leading one by role, not position (Meta's Chat Completions, dev.meta.ai, read 2026-11-02).
+ * Folded, each turn's new envelope changed the instruction block right after the stable prefix, and Meta's prompt
+ * cache recomputed the whole history every turn (a preview slot, 2026-11-02). Its facts are the platform's either way;
+ * a colleague's text reaches the model fenced, so it cannot pass for one.
  */
-export function toWire(messages: Message[]): { messages: WireMessage[]; tools: WireTool[] } {
+export function toWire(messages: Message[], opts: { envelopeAs?: "system" | "user" } = {}): { messages: WireMessage[]; tools: WireTool[] } {
   const out: WireMessage[] = [];
   const tools = new Map<string, Tool>();
   let toolImages: WirePart[] = [];
@@ -44,7 +51,7 @@ export function toWire(messages: Message[]): { messages: WireMessage[]; tools: W
       case "system":
         for (const t of m.toolsAdded ?? []) tools.set(t.name, t);
         for (const t of m.toolsRemoved ?? []) tools.delete(t.name);
-        if (textOf(m.content)) out.push({ role: "system", content: textOf(m.content) });
+        if (textOf(m.content)) out.push({ role: isEnvelope(m) ? (opts.envelopeAs ?? "system") : "system", content: textOf(m.content) });
         break;
       case "user": {
         const images = imagesOf(m.content);

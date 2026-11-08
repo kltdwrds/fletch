@@ -159,18 +159,22 @@ describe("[M1.1] chat turns", () => {
     expect(fake.requests).toHaveLength(1);
   });
 
-  it("each turn's request carries that turn's envelope and no earlier one", async () => {
+  it("each turn's request carries that turn's envelope before its message, and each earlier one unchanged where it was sent", async () => {
     const { fake, chat, clock } = setup([{ text: "Morning." }, { text: "Afternoon." }]);
     await chat.instance.send({ person: ada.id, text: "First", timeZone: "Europe/London" });
     clock.now = T0 + 5 * 3_600_000;
     await chat.instance.send({ person: ada.id, text: "Second" });
+    const first = fake.requests[0]?.inputs.messages ?? [];
     const second = fake.requests[1]?.inputs.messages ?? [];
     const envelopes = second.filter((m) => m.role === "system" && String(m.content).startsWith(ENVELOPE_HEADING));
-    expect(envelopes).toHaveLength(1);
-    expect(String(envelopes[0]?.content)).toContain("2026-10-12T14:00:00.000Z");
-    expect(JSON.stringify(second)).not.toContain("2026-10-12T09:00:00.000Z");
+    expect(envelopes).toHaveLength(2);
+    // The latest envelope is this turn's, right before its message.
+    expect(String(envelopes[1]?.content)).toContain("2026-10-12T14:00:00.000Z");
     expect(second.at(-1)).toMatchObject({ role: "user", content: "Second" });
-    expect(second.at(-2)).toBe(envelopes[0]);
+    expect(second.at(-2)).toBe(envelopes[1]);
+    // The first turn's request is the second's beginning, its envelope (with its own time) included (prompt cache).
+    expect(second.slice(0, first.length)).toEqual(first);
+    expect(String(envelopes[0]?.content)).toContain("2026-10-12T09:00:00.000Z");
   });
 
   it("refuses a tool call with malformed arguments with TOOL_ARGS_MALFORMED and the parse reason", async () => {

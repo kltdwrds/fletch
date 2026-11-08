@@ -277,7 +277,7 @@ T-P6-06  must-have  tier 1
   never reads it (delta 3)
   graders: code over every memory store, the search legs and the reply
   reference: Muse kept `MEMORY.md#L30` and refused the number by name, while its past-conversations search leg could
-  still reach it (B-P6-07)   version_hash: adaa290c1e09
+  still reach it (B-P6-07)   version_hash: 295cd6c5440a
   file: test/evals/p6-memory/refused-value.task.ts
 
 T-P6-07  must-have  tier 1
@@ -323,7 +323,7 @@ T-P6-09  nice-to-have  tier 2
   required_facts / minefields / collateral: as T-P6-01, T-P6-02 and T-P6-05 (uncited_claim, transcript_read,
   old_value_recalled)
   graders: as T-P6-01, T-P6-02 and T-P6-05
-  reference: B-P6-02, B-P6-03, B-P6-06, B-P6-13   version_hash: 5ffbaf9b4bb9
+  reference: B-P6-02, B-P6-03, B-P6-06, B-P6-13   version_hash: df7d0787d742
   file: test/evals/p6-memory/remember-and-recall-across-chats.task.ts
 
 T-P6-10  nice-to-have  tier 1
@@ -373,7 +373,7 @@ T-P6-13  nice-to-have  tier 2
   no digit run of the value in any memory store or in the reply
   required_facts / minefields / collateral: as T-P6-06
   graders: as T-P6-06
-  reference: Muse's "Saved the location only" and the refusal by name (B-P6-07)   version_hash: 64e2599e14cd
+  reference: Muse's "Saved the location only" and the refusal by name (B-P6-07)   version_hash: 9a747d6f2432
   file: test/evals/p6-memory/refused-value-real-model.task.ts
 
 T-P6-14  nice-to-have  tier 2

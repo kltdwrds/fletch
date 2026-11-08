@@ -5,48 +5,114 @@ One item per entry: `- [ ] <date> <kind>: <what>`, kinds `uat`, `record`, `quest
 orchestrator wants his eyes on, not blocking). An entry carries enough context to make the high-level decision from
 its paragraph alone (what it is, what was decided or found, what his answer changes, the recommended answer) and
 deep links (a path with its heading or line, a record id, a PR) to the artifact or section for a deep-dive review.
-Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the agent's name and avatar are your settings, written only through the
-  app; until then it has no name and says so.** What it decides: no model turn, tool or chat message ever names the
-  agent; a sentence like "you are now called Probe" changes the transcript and nothing else; when naming is built it is
-  one Person row and a Settings control you use. Why now: Muse writes its name from a chat turn the model interprets
-  (the one place its configuration comes from message content), and fletch's panel today promises "Naming comes later"
-  behind a disabled Edit; F40 replaces the promise with the honest words and D-0018 fixes where a name will come from.
-  Nothing in F40 or F41 depends on your answer. Recommended: accept, and name the agent when you want to, as a part
-  after the spine. Say under Steering if you would rather the model could take a name from chat, or if a name should
-  also reach the mail label and a colleague's cards. Deep dive: [the record](../decisions/0018-agent-name-is-the-owners-setting.md),
-  [Q33](QUESTIONS.md#q33-p14-2026-10-30-d-0018-proposed-the-agents-name-is-the-owners-setting-never-a-messages-and-p14s-reversible-choices-and-open-doors)
-  (also the four doors left as questions: an owner's export, an owner's deletion, a theme row, a session list),
-  [B-P14-01 and B-P14-02](contracts/P14-identity.md#clauses), [deltas 1 to 7](contracts/P14-identity.md#translation);
-  evidence on your Mac under `docs/plan-v2/evidence/p14-identity/` (`answers/step-1.md`, `answers/step-2.md`,
-  `step-2-menu.png`, `step-2-rename-prefill.png`, `step-2-dialog.png`).
-- [ ] 2026-10-30 look: **the P14 identity contract: what the agent is, says it is, and can touch.** Twelve clauses from
-  the muse.ai interrogation (165 tool calls, all reads; nothing of your identity changed). What fletch adopts as words:
-  the agent is your agent and never you to a third party, it names a person whose pronouns it does not know or says
-  "they", it says sign-in is a passkey and one recovery code with nothing it can read or change, it says every setting
-  is yours by pane, and it says export and deletion as what exists (for you on a standalone deploy, neither, yet). What
-  fletch keeps stronger than Muse: no sub-agent, job or colleague turn sees your standing files or memory (Muse's
-  sub-agents inherit them), no setting changes on a sentence (Muse changes appearance, feed and preferences on request),
-  nothing writes about you unasked (Muse's background upkeep logged one section per probe turn). One defect found in
-  fletch and fixed by F40: a standalone owner finishing offboarding is purged before the last-owner refusal. One
-  surface to come with its specimen first: a Security pane listing your passkeys by date with Remove and Add a passkey
-  (F41). Deep dive: [the clauses](contracts/P14-identity.md#clauses), [the properties](contracts/P14-identity.md#properties),
-  [F40 and F41 in parts.md](parts.md#f40-identity-as-it-is-the-p14-contract-check-fourteen-task-files-the-identity-and-sign-in-lines-honest-words-the-last-owner-refused-first-and-tier-1);
-  evidence on your Mac under `docs/plan-v2/evidence/p14-identity/` (`answers/step-0.md` to `step-11.md`, the
-  `dump/` folder with the twelve table guides and the Settings panes quoted in full).
-- [ ] 2026-10-30 do: **what the P14 interrogation left in your Muse account, for you to remove or keep.** Nothing of
-  your identity changed: no rename, avatar, setting, passkey, device, session or sign-in method; `runtime.avatar_state`
-  stayed at revision 49 and `IDENTITY.md`, `SOUL.md`, `USER.md` and `MEMORY.md` are unchanged. What remains: the side
-  chat "Generate tools.json account…" (thread `ceb6e00a-7685-44d9-86be-dd484ea5d5c4`, 52 messages, archive or delete
-  it from the sidebar), and the sections Muse's background memory upkeep wrote about the probe into
-  `~/memory/2026-10-30.md` from line 824 (one per turn, last at 18:37:44Z; "forget the P14 probe notes" in chat runs
-  the forget skill, which shows you the scope first). Two small things to know: the browser pane twice reported the
-  page writing to your clipboard during synthetic input (steps 2 and 5; nothing was pasted or sent), and the Settings
-  page loads Meta's pixel and four ad-network frames on every open (`step-10-requests.json`, hosts by name). Deep dive:
-  `docs/plan-v2/evidence/p14-identity/answers/step-11.md` (the audit, rows by table) and
-  `answers/step-10.md` (the reload and the third-party hosts), on your Mac.
-## Steering`.
+Kyle's own lines go under `## Steering`.
 
 ## Open
+
+- [ ] 2026-11-08 decide: **D-0026, pick or pass on P13 (voice, audio, podcasts), and if picked, which doors open.** P13 was
+  interrogated tonight (Queue 9): Muse reads a reply aloud by running a TTS tool and attaching an mp3, a generated audio
+  piece has no row and no source, a voice note's transcript column has no rows in your account, a temporary public link
+  costs one card per upload and cannot be revoked, a feed episode is public with no unpublish line; web Settings has a
+  Voice and avatar tab (100 voices, a live-avatar switch) and the Library a Podcasts section that Muse's docs do not name.
+  The contract (15 clauses, 14 tasks, nothing built) assumes: transcription and speech through Workers AI, an artifact
+  record with a source for every generated piece, no public feed, transcript kept and audio not, no live calls. What
+  "pass" changes: D-0026 is rejected, P13 stays at level 0, nothing else moves. What "pick" changes: you open door 1 (an
+  agent-local refusal code, or `speech` as a published `HostFeature`) and door 2 (the two models and a monthly cap on
+  their spend), and the orchestrator writes P13's tier-1 parts. Left in your Muse: the side chat (25 items), a `p13
+  probe` audio item, its trashed mp3 (expires 2026-12-08) and a media artifact Muse's speech service holds that neither
+  it nor the agent can remove. Also for your eye: P14's slice moved (`avatar.wear` gone, `ui.sidebar` new); no P14
+  clause cites it. [D-0026](../decisions/0026-speech-on-fletch.md),
+  [Q42](QUESTIONS.md#q42-p13-2026-11-08-d-0026-speech-on-fletch-is-p13-picked-and-which-of-its-five-doors-open),
+  [the contract](contracts/P13-voice-audio.md).
+
+- [ ] 2026-11-08 decide: **D-0025, may your agent ever speak in a room with outsiders, and if so as whom, over what, stored how.** P8
+  was interrogated tonight (Queue 9): Muse has no group table, no room fence and no wake-on-mention rule, your account has no
+  group and no messaging service linked, so the contract is a mapping of prompt and doc lines, with 11 clauses and 10 tasks
+  written and nothing built. D-0025 (proposed) puts the four doors in order: (1) whether at all (O4); (2) only as your agent,
+  or also as you through a connected account; (3) the transport, its egress host and Ingress path, identity bound to the
+  channel; (4) a `room` ChatKind, a per-room rule store, a room audience on memory. What "no" to door 1 changes: D-0025 is
+  rejected, P8 stays at level 0 for good, nothing else moves. What "yes" changes: you name the transport and the name rule,
+  the orchestrator writes P8's tier-1 parts from the contract. Also for your eye: two Muse-side changes the dump diff found,
+  B-P15-09's `worker.update_discretion` (now `rules` and `everything`, no own-turn limit) and B-P1-04's `muse.nothing_to_do`
+  (no longer names a group message); neither re-opens a cluster tonight. The side chat the agent used (thread A) is left in
+  your Muse chat list, unarchived; archive it if you like.
+  [D-0025](../decisions/0025-rooms-with-outsiders.md), [Q41](QUESTIONS.md#q41-p8-2026-11-08-d-0025-rooms-with-outsiders-four-one-way-doors-before-any-p8-part-and-two-findings-for-other-contracts),
+  [the contract](contracts/P8-group-chats.md), [design O4](2026-10-29-parity-framework-design.md).
+
+- [ ] 2026-11-07 question: **defaults taken for you tonight on the read-only questions, one line each, reversible under Steering.**
+  The overnight run (`ORCHESTRATOR-OVERNIGHT.md`, Defaults, your words of 2026-11-07) answered every open question by its
+  recommended answer and moved it to `## Answered by default` in `QUESTIONS.md`; the ones with an item of their own carry
+  the line in that item below. The rest, taken as written: Q38 and Q34 (closed by their orchestrator lines); Q37 (F41's
+  choices stand; the lost-device and pronoun lines become a nice-to-have P14 line part, Queue 8); Q35 (F43 closed it);
+  Q28 (a settled-delegation row in a later P3 or P5 pass, not tonight); Q26 and Q25 (the delegation choices and F31's
+  Stop stand); Q24 (no lessons store; the removed job's card folds into T-P7-13 later); Q23 (the `jobs_enable` card and
+  Off in Upcoming stay); Q22 (F44 was the part); Q21 (no editions or feed in the spine); Q17, Q15, Q14, Q11 (none
+  needed; the kit folds when a second cluster hits the limit); Q6 (the D-0010 stub stands until you paste the record);
+  Q2 (the spike needs an account only you create, so it stays a `do` of yours: run `docs/runbooks/free-plan-spike.md`
+  on a throwaway free-plan account when you want `LOADER` and `IMAGES` on by default). Not taken: Q10 (D-0015 spends
+  money on CI). What your answer changes: any line you reverse under Steering is acted on by the next cycle.
+  [QUESTIONS.md, Answered by default](QUESTIONS.md#answered-by-default); [the Defaults](ORCHESTRATOR-OVERNIGHT.md#defaults-kyle-2026-11-07).
+
+- [ ] 2026-11-02 decide: **Q40, F44: accept T-P6-09 at 2 of 3 and set F44 DONE, or ask for a rerun.** F44 (memory's reach:
+  a citation per `MEMORY.md` line, a new fact to today's note, a person page the chat writes through `upsertEntity`)
+  is merged (PR #99) with its row BLOCKED on one line: T-P6-09, a nice-to-have, passed 2 of 3 on the declared final run
+  (trial 3 `GRADER_FAILED`; the run before, on the tree before the refusal-line fix, passed it 3 of 3, and two unscored
+  samples on the final tree passed). Everything else held: the must-haves 3 of 3, T-P6-12, 13 and 14 3 of 3, accept
+  1676 tests, the verifier clear but for that line. What your answer changes: the row (DONE or a rerun by the next P6
+  part). Recommended: accept 2 of 3 for a nice-to-have and set the row DONE in your own commit. [Q40](QUESTIONS.md);
+  [F44 in parts.md](parts.md#f44-memorys-reach-a-citation-per-saved-line-new-facts-to-todays-note-a-person-page-the-chat-can-write-and-p6s-nice-to-have-tier-2);
+  [PR #99](https://github.com/kltdwrds/fletch/pull/99).
+  Default taken (for Kyle, 2026-11-07), Q40: T-P6-09 accepted at 2 of 3 for a nice-to-have; F44's row is DONE (PROGRESS.md) and P6's row says so. Reverse it by a line under Steering and the row goes back to BLOCKED.
+
+- [ ] 2026-11-02 decide: **Q39, F44's two-way choices, one of them an oracle correction you may want reverted.** The
+  T-P6-13 transcript grader now accepts the typed card as the `[credential:cred://typed-<id>]` reference the hold
+  stores since F38, not the digits; if P6 delta 3 means the digits themselves stay in the transcript, revert that one.
+  The rest (T-P6-09's graders reading each prompt's answer rather than the line beside a tool call; the refusal line
+  naming only a passport or licence number a government ID number) is for your read. Recommended: keep all.
+  [Q39](QUESTIONS.md); [PR #99](https://github.com/kltdwrds/fletch/pull/99).
+  Default taken (for Kyle, 2026-11-07), Q39: keep all, the T-P6-13 grader included.
+
+- [ ] 2026-11-02 decide: **F42 (PR #96, a draft, not merged): the bound-host words, a clause past its scope, and the
+  finding that P9's level 2 rests on the old model.** The builder's line makes T-P9-15 pass 3 of 3 on GLM but 2 of 3
+  on Muse Spark, and carries a clause the part did not ask for ("write no words until the keyed call's result has come
+  back") that the verifier called out of scope and that lifted the score when present. The larger finding: T-P9-13, a
+  P9 must-have, fails 0 of 3 on main itself under the Muse Spark default (PR #94); F37's 3 of 3 ran on GLM the day
+  before. The cause is cross-cutting: Muse Spark opens nearly every turn with a lead-in bubble beside its first tool
+  call, and graders that read the first bubble or count replies take it for the reply; F43 (T-P12-10) and F44
+  (T-P6-09, T-P6-13) met the same thing and corrected each grader under KICKOFF's rule. The builder's question in PR
+  #96 (numbered Q39 there; it becomes Q41 when the branch is rebased, since F44's Q39 merged first) proposes one
+  cross-cutting part for the lead-in bubble instead of a correction per task. What your answer changes: whether F42
+  merges as BLOCKED like F44, or waits; whether that part is written; whether P9's row is re-verified on the default
+  model. Recommended: write the cross-cutting part next, hold F42 until it lands, and re-run P9's must-haves on Muse
+  Spark then. [PR #96](https://github.com/kltdwrds/fletch/pull/96); [F42 in parts.md](parts.md#f42-credentials-say-why-a-host-is-refused-the-bound-host-words-and-t-p9-15s-re-grade);
+  [P9 row](SCORECARD.md).
+  Default taken (for Kyle, 2026-11-07), Q31 and this item: the cross-cutting part is F45 (parts.md, the lead-in bubble), F42 waits for it and is rebased onto it, then P9's must-haves run again on Muse Spark (ORCHESTRATOR-OVERNIGHT.md, Queue 5 and 6).
+
+- [ ] 2026-11-02 look: **P10 and P11 are interrogated, from the cloud; the evidence is in the session's tarball, not on
+  your Mac yet.** Two Opus agents ran `evidence/p10-search/scenario.md` and `evidence/p11-files/scenario.md` in your Muse
+  account through a headless browser signed in with the code you pasted (the login persisted on disk for the session;
+  the browser and its cookies are gone with the container; each folder's `answers/driver-notes.md` says how the UI is
+  driven). Unpack the tarball from the session chat into `docs/plan-v2/evidence/` on the Mac, then run the deferred dump
+  diffs (`dump/diff-deferred.md` in each). Findings for your read, from the raw answers: a new weekday job ran at once
+  as a catch-up for its last missed slot, took "7am" as UTC and needed no card to create or delete (P10 step 10);
+  `browser.open` returns a crawled copy, not the live page (P10 step 2); a generated image has no media row, only a
+  workspace file and a widget row, and there is no video-search tool (P10 steps 7 and 8); edits overwrite a memo and a
+  sheet in place with no versions (P11 steps 3 and 5); a pending approval card freezes its own chat and leaves no row
+  (P11 step 8); deleting a deck hard-deletes its files, keeps its identity row and writes no audit row (P11 step 12).
+  Next for the orchestrator: Translate both (contracts, tasks, deltas). [P10 row and P11 row](SCORECARD.md).
+  Orchestrator, 2026-11-07: the tarball is not on this Mac (no `docs/plan-v2/evidence/p10-search/` or `p11-files/`, nothing in the mirror), so Translate P10 and P11 (ORCHESTRATOR-OVERNIGHT.md, Queue 7) is blocked on this item; nothing else waits on it.
+
+- [ ] 2026-11-02 do: **what the P10 and P11 interrogations left in your Muse account.** Listed in each folder's
+  `answers/step-12.md`: two side chats per cluster; the lighthouse image under `imagine_media/`; the p11 probe memo,
+  budget and text files in the Library; the deleted weekday job's history rows (Muse has no tool that removes them);
+  about 49 lines of P10 notes in Muse's daily memory. Nothing external was left: the one public link (P11 step 8,
+  approved by you) was revoked at 23:36Z.
+
+- [ ] 2026-11-02 uat: **memory's reach after F44** (https://fletch-pv-3.edwards-ky1.workers.dev, lease to
+  2026-11-03T00:33Z, serving F44's final code; merged, PR #99). In chat: "I prefer plain text, remember that" gets a
+  reply naming where it went (today's note, with its citation); "Pat Solo is my accountant" writes Pat's page with the
+  relationship cited, listed where pages are listed; "the Acme team is my client" is refused by code as not a person;
+  a name you did not type yourself is refused. Nothing blocks.
 
 - [ ] 2026-11-01 look: **every slot the uat items below name expired on 2026-10-31; fletch-pv-1 now serves main for all of
   them.** The orchestrator, run from a cloud session on 2026-11-01, took back the expired leases (`pnpm preview gc`) and
@@ -95,6 +161,7 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
   so only if you would rather keep the briefs. Deep dive:
   [Q12](QUESTIONS.md#q12-f20-2026-10-29-the-dump-brief-and-the-designs-muse-counts-are-stale),
   [design §5.1 and §7](2026-10-29-parity-framework-design.md).
+  Default taken (for Kyle, 2026-11-07), Q12: the briefs under `docs/briefs/` are deleted and §7's count corrected in the orchestrator's ledger truth pass tonight (a reversible docs change).
 - [ ] 2026-10-29 question: **Q13, builders cannot open their PR.** The F21 builder (Opus, `--permission-mode auto`)
   finished the part, `ACCEPT F21: PASS` and `VERIFIER: no blocking findings`, then its `gh pr create --draft` was
   refused by the permission classifier ("Create Public Surface") and it looped on the block until the orchestrator
@@ -106,6 +173,7 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
   opened [PR #31](https://github.com/kltdwrds/fletch/pull/31) itself without a refusal, so the classifier is not
   consistent; the question stands until a setting makes it so. Update 2026-10-30: the F27 builder was refused again
   (its Q20, folded into Q13); the orchestrator opened [PR #45](https://github.com/kltdwrds/fletch/pull/45).
+  Default taken (for Kyle, 2026-11-07), Q13: the orchestrator opens a builder's PR whenever the classifier refuses it; the allow rule is a `.claude/` setting only you change, so this item stays open and blocks nothing.
 
 - [ ] 2026-10-29 uat: **F22, the care register: a reaction on a win, a heart on hard news.** On main since
   [PR #31](https://github.com/kltdwrds/fletch/pull/31). What changed: the agent's `REACTING` guidance names three
@@ -185,6 +253,7 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
   [PR #36](https://github.com/kltdwrds/fletch/pull/36), `test/evals/p2-loop/reply-after-last-tool.task.ts`,
   `test/evals/p2-loop/real-model-failure-honest.task.ts` and its `.test.ts`, the three T-P2-13 results files under
   `evidence/results/` (`bc83…` 0 of 3, `55e8…` 1 of 3, `5c68…` 3 of 3).
+  Default taken (for Kyle, 2026-11-07), Q16: keep both; a fresh Opus verifier on the merged code on 2026-11-07 cleared both grader changes under KICKOFF's oracle-correction rule and blocked only on the accept output's missing per-step counts; `pnpm accept F24` was rerun on main and its full output recorded, and the second pass came back `VERIFIER: no blocking findings`: F24 is DONE and P2 at level 2 (PROGRESS.md, SCORECARD.md). Its one non-blocking note worth your eye: T-P2-13's grader regexes changed again in 288ad12 and the task hash did not move, so the hash is blind to grader constants.
 
 - [ ] 2026-10-29 uat: **F24, the thread shows the work: the status line, the file card, a job's result wakes the
   agent.** On main since [PR #36](https://github.com/kltdwrds/fletch/pull/36), deployed on
@@ -238,6 +307,7 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
   call in `packages/agent/src/chat/engine.ts`, `test/evals/p15-approvals/real-model-declined-no-retry.task.ts`,
   `test/evals/p15-approvals/pause-words.test.ts`, the T-P15-13 results files under `evidence/results/` (`e729…` the
   failed runs, `51dd…` 3 of 3).
+  Default taken (for Kyle, 2026-11-07), Q18: keep both; the fresh Opus verifier on the merged code returned `VERIFIER: no blocking findings` on 2026-11-07, F26 is DONE and P15 at level 2 (PROGRESS.md, SCORECARD.md). Reverse it under Steering and both go back.
 
 - [ ] 2026-10-30 uat: **F26, nothing goes around a card: the gate at the egress, the bot wall, the rate limit, the
   waiting line.** On main since [PR #42](https://github.com/kltdwrds/fletch/pull/42), deployed on
@@ -284,6 +354,7 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
   now (then F28 grows a third part and the record is proposed first). Deep dive:
   [Q19](QUESTIONS.md#q19-p6-2026-10-30-goals-and-tracked-items-have-no-fletch-seam-four-attested-clauses-one-reload-finding),
   [B-P6-14 and B-P6-15](contracts/P6-memory.md#clauses), `answers/step-9.md` and `answers/step-10.md` on your Mac.
+  Default taken (for Kyle, 2026-11-07), Q19: a later cluster after the spine, not P6; nothing built.
 - [ ] 2026-10-30 uat: **F27, memory as it is: a number is refused by memory itself, and a sub-agent has no memory.**
   On main since [PR #45](https://github.com/kltdwrds/fletch/pull/45) (no slot deployed for it; `pnpm preview up` in
   any worktree). What changed: `memory_write` refuses a credential, verification code, card, bank account or
@@ -449,6 +520,7 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
   [Q27](QUESTIONS.md#q27-p9-2026-10-30-the-oauth-door-d-0016-a-playlist-left-in-your-music-account-and-nine-muse-credential-findings-fletch-already-rules-out),
   [contract, One-way doors](contracts/P9-connectors.md), `docs/plan-v2/evidence/p9-connectors/answers/step-6.md` and
   `step-12.md` ("Left behind in Muse").
+  Default taken (for Kyle, 2026-11-07), Q27: D-0016 stays `proposed`; per the Defaults the loop may build on its recommended option only as a redirect route and a refresh-token kind that come out by deleting what the build added, last in the Queue (ORCHESTRATOR-OVERNIGHT.md, Queue 10): built on the default; reject the record and it comes out. The playlist stays yours to remove.
 - [ ] 2026-10-30 look: **the P9 credentials and connectors contract and its nine deltas from Muse.** The interrogation
   of muse.ai (one side chat, 13 steps, 95 files through `pnpm redact`, no value entered, nothing pressed on a card,
   nothing connected or disconnected) found that a secret typed in chat is refused "not in memory, not in a file" and
@@ -514,6 +586,8 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
   T-P3-16 at 91cc684 or later and P3 rises to level 2 on those lines; until then P3 stays at 1.
   [Q29](QUESTIONS.md#q29-f34-2026-10-30-may-f34-count-its-last-33-runs-and-keep-the-two-widened-must-have-graders); [F34 in parts.md](parts.md#f34-delegation-says-what-happened-p3s-tier-2-on-a-slot);
   [PR #64](https://github.com/kltdwrds/fletch/pull/64).
+  Default taken (for Kyle, 2026-11-07), Q29: (1) one run declared before it starts on the final tree counts, earlier runs staying as evidence (KICKOFF's rule since PR #73); (2) both widenings stay. A cloud builder runs the declared run of T-P3-14 and T-P3-16 on current main tonight; F34 goes DONE and P3 to level 2 on its pass.
+  2026-11-08: the run was made (PR #107, tree dfd25a51): T-P3-16 3 of 3; T-P3-14 0 of 3 on Muse Spark's launch words (future tense, three acknowledgements, "keep you posted"), so F46, a line part, is written in parts.md and builds after F45; F34 and P3 level 2 close on its pass.
 - [ ] 2026-10-30 uat: **delegation on a slot after F33 and F34** (https://fletch-pv-3.edwards-ky1.workers.dev while
   F34's lease holds, to 2026-10-31T13:27Z; after that `pnpm preview up` on main). Hand the agent a two-source question
   and watch: the launch reply says what started and ends its turn (no polling, nothing said aside); the task drawer's
@@ -542,6 +616,7 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
   QUESTIONS.md because `docs/decisions/log.md` is at its 40 KB cap, which only you prune (the orchestrator shortens
   lines there; it does not delete). Say if any reads as softening, or if the log's cap should move.
   [Q30](QUESTIONS.md#q30-f36-2026-10-30-f36s-two-way-choices-recorded-here-because-the-decision-log-is-at-its-cap).
+  Default taken (for Kyle, 2026-11-07), Q30: none needed; the choices stand.
 
 - [ ] 2026-10-30 question: **Q31: T-P9-15 fails 0/3 on the slot, and F37's reversible choices, for your read.** P9 is
   at level 2 on its two must-haves (T-P9-13, T-P9-14, 3 of 3 each on fletch-pv-1 at a46d617, PR #68). The nice-to-have
@@ -553,6 +628,7 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
   the slot's Vault answers api.example.com in-process through a protected `network()` seam only the test host
   overrides, and each trial starts with Sam's credential rows deleted. [Q31](QUESTIONS.md#q31-f37-2026-10-30-t-p9-15-fails-03-on-the-slot-because-the-model-says-allowed-hosts-not-bound-and-f37s-two-way-choices);
   [F37 in parts.md](parts.md#f37-credentials-say-what-happened-p9s-tier-2-on-a-slot); [PR #68](https://github.com/kltdwrds/fletch/pull/68).
+  Default taken (for Kyle, 2026-11-07), Q31: one `WORK_WORDS` line, not a wider grader: F42 carries it (PR #96), after F45.
 
 - [ ] 2026-10-30 decide: **D-0017 (proposed): fletch holds no payment instrument and submits no payment; the person
   pays in a live page they take over.** P12 is translated (`contracts/P12-wallet.md`, 11 clauses, 13 tasks) and its two
@@ -569,6 +645,7 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
   [P12 contract](contracts/P12-wallet.md);
   [F38 in parts.md](parts.md#f38-payments-as-they-are-the-p12-contract-check-thirteen-task-files-the-typed-card-shape-four-instruction-lines-the-purchase-title-and-tier-1);
   [F39 in parts.md](parts.md#f39-payments-say-what-happened-p12s-tier-2-on-a-slot).
+  Default taken (for Kyle, 2026-11-07), Q32: D-0017 stays `proposed`; the loop builds on its recommended option, which is nothing new (F38 and F39 ship it). Accepting the record stays yours.
 - [ ] 2026-10-30 do: **what the P12 interrogation left in your Muse account, for you to remove or keep.** No money
   moved, nothing was bought or added, no provider was connected or changed, nothing was pressed on any card, and no
   value was entered anywhere. Left behind: one side chat (thread `5153e9f6-4941-481e-94d4-b337ac917a6e`, 59 messages,
@@ -644,6 +721,48 @@ Kyle's own lines go under `- [ ] 2026-10-30 decide: **D-0018 (proposed): the age
   with an Orchestrator line that says the same.
   [F1 in PROGRESS](PROGRESS.md); [Q1](QUESTIONS.md); [D-0022](../decisions/0022-self-host-deploys-from-a-checkout.md);
   [self-host runbook](../runbooks/self-host.md); [PR #91](https://github.com/kltdwrds/fletch/pull/91).
+  Default taken (for Kyle, 2026-11-07), Q1: F1 folds into D-0022 the way F7, F16 and F17 folded; its row is FOLDED (PROGRESS.md) and nothing is built for it. If you would rather close it on your own `pnpm self-host` run, say so under Steering and the row becomes DONE on that run.
+
+- [ ] 2026-10-30 decide: **D-0018 (proposed): the agent's name and avatar are your settings, written only through the
+  app; until then it has no name and says so.** What it decides: no model turn, tool or chat message ever names the
+  agent; a sentence like "you are now called Probe" changes the transcript and nothing else; when naming is built it is
+  one Person row and a Settings control you use. Why now: Muse writes its name from a chat turn the model interprets
+  (the one place its configuration comes from message content), and fletch's panel today promises "Naming comes later"
+  behind a disabled Edit; F40 replaces the promise with the honest words and D-0018 fixes where a name will come from.
+  Nothing in F40 or F41 depends on your answer. Recommended: accept, and name the agent when you want to, as a part
+  after the spine. Say under Steering if you would rather the model could take a name from chat, or if a name should
+  also reach the mail label and a colleague's cards. Deep dive: [the record](../decisions/0018-agent-name-is-the-owners-setting.md),
+  [Q33](QUESTIONS.md#q33-p14-2026-10-30-d-0018-proposed-the-agents-name-is-the-owners-setting-never-a-messages-and-p14s-reversible-choices-and-open-doors)
+  (also the four doors left as questions: an owner's export, an owner's deletion, a theme row, a session list),
+  [B-P14-01 and B-P14-02](contracts/P14-identity.md#clauses), [deltas 1 to 7](contracts/P14-identity.md#translation);
+  evidence on your Mac under `docs/plan-v2/evidence/p14-identity/` (`answers/step-1.md`, `answers/step-2.md`,
+  `step-2-menu.png`, `step-2-rename-prefill.png`, `step-2-dialog.png`).
+  Default taken (for Kyle, 2026-11-07), Q33: D-0018 stays `proposed`; the loop builds on its recommended option, which is nothing new (F40 ships it); the four doors stay open with no record. Accepting the record stays yours.
+- [ ] 2026-10-30 look: **the P14 identity contract: what the agent is, says it is, and can touch.** Twelve clauses from
+  the muse.ai interrogation (165 tool calls, all reads; nothing of your identity changed). What fletch adopts as words:
+  the agent is your agent and never you to a third party, it names a person whose pronouns it does not know or says
+  "they", it says sign-in is a passkey and one recovery code with nothing it can read or change, it says every setting
+  is yours by pane, and it says export and deletion as what exists (for you on a standalone deploy, neither, yet). What
+  fletch keeps stronger than Muse: no sub-agent, job or colleague turn sees your standing files or memory (Muse's
+  sub-agents inherit them), no setting changes on a sentence (Muse changes appearance, feed and preferences on request),
+  nothing writes about you unasked (Muse's background upkeep logged one section per probe turn). One defect found in
+  fletch and fixed by F40: a standalone owner finishing offboarding is purged before the last-owner refusal. One
+  surface to come with its specimen first: a Security pane listing your passkeys by date with Remove and Add a passkey
+  (F41). Deep dive: [the clauses](contracts/P14-identity.md#clauses), [the properties](contracts/P14-identity.md#properties),
+  [F40 and F41 in parts.md](parts.md#f40-identity-as-it-is-the-p14-contract-check-fourteen-task-files-the-identity-and-sign-in-lines-honest-words-the-last-owner-refused-first-and-tier-1);
+  evidence on your Mac under `docs/plan-v2/evidence/p14-identity/` (`answers/step-0.md` to `step-11.md`, the
+  `dump/` folder with the twelve table guides and the Settings panes quoted in full).
+- [ ] 2026-10-30 do: **what the P14 interrogation left in your Muse account, for you to remove or keep.** Nothing of
+  your identity changed: no rename, avatar, setting, passkey, device, session or sign-in method; `runtime.avatar_state`
+  stayed at revision 49 and `IDENTITY.md`, `SOUL.md`, `USER.md` and `MEMORY.md` are unchanged. What remains: the side
+  chat "Generate tools.json account…" (thread `ceb6e00a-7685-44d9-86be-dd484ea5d5c4`, 52 messages, archive or delete
+  it from the sidebar), and the sections Muse's background memory upkeep wrote about the probe into
+  `~/memory/2026-10-30.md` from line 824 (one per turn, last at 18:37:44Z; "forget the P14 probe notes" in chat runs
+  the forget skill, which shows you the scope first). Two small things to know: the browser pane twice reported the
+  page writing to your clipboard during synthetic input (steps 2 and 5; nothing was pasted or sent), and the Settings
+  page loads Meta's pixel and four ad-network frames on every open (`step-10-requests.json`, hosts by name). Deep dive:
+  `docs/plan-v2/evidence/p14-identity/answers/step-11.md` (the audit, rows by table) and
+  `answers/step-10.md` (the reload and the third-party hosts), on your Mac.
 
 ## Steering
 

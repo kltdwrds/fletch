@@ -5,9 +5,15 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
-### Q39 (F42), 2026-11-01: may F42's must-haves count, when the lead-in bubble both models write fails T-P9-13 at origin/main too?
+None open. Every question here on 2026-11-07 was answered by its recommended default under the pre-authorised
+Defaults of `ORCHESTRATOR-OVERNIGHT.md` and moved to `## Answered by default`; Kyle reverses any of them by a line under
+`## Steering` in `WAITING-ON-KYLE.md`.
 
-**Blocks:** F42's acceptance, so the part is BLOCKED; all else is in: the line, its tier-1 test, `ACCEPT F42: PASS`.
+## Open, not blocking
+
+### Q43 (F42), 2026-11-01 (Q39 on the F42 branch until 2026-11-08, renumbered beside main's Q39): may F42's must-haves count, when the lead-in bubble both models write fails T-P9-13 at origin/main too?
+
+**Blocks:** nothing since F45 merged (2026-11-08, PR #111): F45 is option (a) below, and F42 is rebased onto it and runs its declared tier 2 again (Q31's default). Until then it blocked F42's acceptance; all else was in: the line, its tier-1 test, `ACCEPT F42: PASS`.
 The declared runs on the final tree (c16fa2e, fletch-pv-2): run 9 on Muse Spark, T-P9-15 2/3, T-P9-13 0/3, T-P9-14 3/3;
 run 10 on GLM 5.3 Flash, T-P9-15 3/3, T-P9-13 2/3, T-P9-14 3/3 (results in `evidence/results/`, runs 1 to 10 in the PR).
 The cause of every T-P9-13 failure read, and of T-P9-15's before the oracle correction, is a lead-in bubble the model
@@ -32,6 +38,89 @@ refused turn pinned verbatim as a pass and four planted negatives in `test/evals
 runs 1 to 4 in `evidence/results/b3f0abb43bf0….json`); the old second-turn reading had been passing on the first turn's
 "only you".
 
+### Q42 (P13), 2026-11-08: D-0026, speech on fletch: is P13 picked, and which of its five doors open
+
+**Blocks:** nothing in progress; every P13 part, since P13 is "by pick" (design §7) and not picked. The P13
+interrogation (`contracts/P13-voice-audio.md`, `evidence/p13-voice-audio/`) found Muse's read-aloud to be the agent
+running a text-to-speech tool and attaching the mp3, a generated audio piece with no row and no source, a voice-note
+transcript column with no rows behind it, an unrevocable 48-hour public link behind one card per upload, and a public
+feed with no unpublish line. D-0026 (proposed) holds the five doors: (1) a `speech` HostFeature in the published
+`@qyvr/host` or an agent-local refusal code; (2) spend on Workers AI speech models (whisper-large-v3-turbo or nova-3 in,
+melotts or aura-2 out) at a unit `PRICES` does not have; (3) a public podcast RSS feed; (4) keeping a voice note's audio
+in R2 against its transcript alone; (5) live voice calls. One finding touches a locked cluster: P14's dump slice moved
+(`avatar.wear` is gone, `avatar` has 6 functions, `ui.sidebar` is new), which re-opens P14 at Interrogate only if a
+P14 clause cites `avatar.wear`; none does, so it is a note on P14's contract in the next truth pass.
+
+**Recommended answer:** pick or pass on P13 first; if picked, open doors 1 and 2 (an agent-local code, the two
+transcription and speech models named with a monthly cap) and keep 3, 4 and 5 closed, which is what the contract's
+clauses already assume; the orchestrator then writes P13's tier-1 parts from the contract.
+
+Orchestrator, 2026-11-08: not taken by default. The pick is yours (design §8) and every door is one-way; D-0026 stays
+proposed with nothing built on it.
+
+### Q41 (P8), 2026-11-08: D-0025, rooms with outsiders: four one-way doors before any P8 part, and two findings for other contracts
+
+**Blocks:** nothing in progress; every P8 task and part, which O4 (design §8) already holds until you rule. The P8
+interrogation (`contracts/P8-group-chats.md`, `evidence/p8-group-chats/`) found Muse's rooms to be prompt and doc lines
+with no table, no fence and no wake rule, so the contract is a mapping. D-0025 (proposed) states the four doors in order:
+whether the agent speaks in a room at all; under whose name (only as your agent, or also as you through a connected
+account); the transport (which service, its egress host, its Ingress path, how a sender is bound to the channel); the
+storage (a `room` ChatKind, a per-room rule store, a room audience on memory). The contract's four deltas (fence room
+text, an Activity row per refusal, one agent with an audience rather than a worker per room, no writing under your name
+until door 2) are proposed, none accepted. Two findings touch locked clauses: B-P15-09's `worker.update_discretion`
+now takes `rules` and `everything` and dropped "It works only on the user's own turn" (the discretion layers can now be
+tested); B-P1-04's `muse.nothing_to_do` no longer names a group or channel message. Neither re-opens a cluster tonight:
+both are changes in Muse's slice, not in a behaviour a fletch task grades.
+
+**Recommended answer:** rule door 1 first; if "no", D-0025 is rejected and P8 stays mapped (a line in the scorecard
+and nothing else); if "yes", name the transport and the agent's name rule, and the orchestrator writes the tier-1 parts
+from the contract. Accept the two findings as notes on the P15 and P1 contracts in the next truth pass, or re-open
+B-P15-09 at Interrogate if the layers should be graded.
+
+Orchestrator, 2026-11-08: not taken by default. Door 1 is O4, which the design reserves for you, and the Defaults list no
+one-way door; D-0025 stays proposed with nothing built on it.
+
+### Q10 (F19), 2026-10-29: Accept D-0015, tier-2 evals in CI with the slot token and a spend cap
+
+**Blocks:** nothing. The runner (`pnpm evals`, `docs/runbooks/evals.md`) runs from Kyle's Mac against the worktree's
+leased slot, and a part's PR body carries its table. Open decision O9 (design §10) was agreed in principle; F19 wrote
+the record, `docs/decisions/0015-tier2-evals-in-ci.md`, with the key's scope (the existing slot token, D-0008, as a
+repository secret in a `tier2` environment; no model key, since a slot's chat model is Workers AI through its binding),
+the spend cap (12 tasks of 3 trials per run, one job of 60 minutes, a 10 USD notification and a 25 USD stop per month)
+and the trigger (PRs touching `packages/agent/`, one comment, never a gate: O2).
+
+**Recommended answer:** accept D-0015 as proposed after the dry run (F20) shows stable verdicts, then the workflow
+file is a plain PR citing it and the three secrets are Kyle's to set. The alternative, keeping the runner on Kyle's Mac,
+costs nothing and leaves tier 2 to the orchestrator's sessions; it is the state today.
+
+Orchestrator, 2026-11-07: not taken by default. D-0015 adds a credential to CI and spends money there, which the Defaults of
+`ORCHESTRATOR-OVERNIGHT.md` do not cover; it stays Kyle's, listed in `WAITING-ON-KYLE.md`.
+
+## Answered by default
+
+Each question here was open on 2026-11-07 and answered by its own recommended answer (or the orchestrator's line under it)
+as Kyle's, under the Defaults he pre-authorised for the overnight run (`ORCHESTRATOR-OVERNIGHT.md`, Defaults, Kyle,
+2026-11-07). The line `Default taken (for Kyle, <date>)` under each is the orchestrator's, never Kyle's own answer; he
+reverses one by a line under `## Steering` in `WAITING-ON-KYLE.md`, and only he moves a question to `## Answered`.
+
+### Q40 (F44), 2026-11-02: T-P6-09 passes 2 of 3 on F44's declared run on the final tree
+
+**Blocks:** F44's acceptance line "`pnpm evals T-P6-09` `pass` (three of three)", and so its DONE row. Everything else
+is in on `claude/f44-memory-reach` (PR #99): scope items 1 to 4 and 6, `ACCEPT F44: PASS`, and the declared run 4 on
+fletch-pv-3 at tree `513692a` (HEAD 6f177ef), where T-P6-12, T-P6-13, T-P6-14 and the must-haves T-P6-03 and T-P6-04
+pass 3/3 and T-P6-09 passes 2/3 (trial 3 failed "one line holds the fact, and c1's first reply cites it after the
+write"; results in adea703). Run 3, on the tree before 6f177ef narrowed the refusal line's government-ID wording (a
+line T-P6-09 does not exercise), passed T-P6-09 3/3, and two unscored samples on run 4's tree after it passed every
+grader. So the model gets it right in 8 of 9 scored trials since the oracle correction (Q39 (e)). The results file
+records no words, so the failed trial's cause is not known. It may have been a paraphrased line: the first grader
+wants the literal "plain text over PDFs" in exactly one daily line. A run is not repeated for a model's fail
+(KICKOFF), and changing code only to declare another run would be gaming the score.
+**Recommended answer:** accept T-P6-09 at 2/3 for this nice-to-have (P6's must-haves are 3/3 on the final tree) and
+mark F44 DONE with that recorded. Alternatively, have the next part that touches `MEMORY_WORDS` run T-P6-09 again on
+its own declared tree.
+
+Default taken (for Kyle, 2026-11-07): accept T-P6-09 at 2 of 3 for a nice-to-have (P6's must-haves are 3 of 3 on the final tree) and mark F44 DONE with that recorded; the next part that touches `MEMORY_WORDS` runs T-P6-09 again on its own declared tree.
+
 ### Q38 (F41), 2026-10-30: No preview slot is free for P14's tier 2
 
 **Blocks:** F41's tier 2 (`pnpm evals P14`: T-P14-10, 11 and 12 must-have, 13 and 14 recorded) and so its DONE row.
@@ -47,6 +136,9 @@ add any instruction line a failing must-have needs, then the verifier and the DO
 before the run; the inert passkey the `p14` op seeds is described in Q37 (e).
 
 Orchestrator, 2026-10-30: fletch-pv-1 released from F37's merged branch at 21:20Z and leased to F41, so F41 is not blocked.
+
+Default taken (for Kyle, 2026-11-07): closed by its orchestrator line: fletch-pv-1 was leased to F41 on 2026-10-30 and F41 is DONE; nothing stays open.
+
 ### Q34 (F40), 2026-10-30: The F40 draft PR could not be opened from the session
 
 **Blocks:** the last step of F40's protocol (KICKOFF step 7), the draft PR. Everything else in F40 is done:
@@ -63,6 +155,8 @@ refused first". The body is the PR summary in the session transcript. Alternativ
 
 Orchestrator, 2026-10-30: PR #79 opened from the orchestrator session, so F40 is not blocked; what stays open is the
 permission for builder sessions, already listed in `WAITING-ON-KYLE.md` from Q13.
+
+Default taken (for Kyle, 2026-11-07): closed by its orchestrator line: PR #79 was opened from the orchestrator session; the permission for builder sessions stays with Q13.
 
 ### Q29 (F34), 2026-10-30: may F34 count its last 3/3 runs, and keep the two widened must-have graders?
 
@@ -100,6 +194,8 @@ The verifier notes that `saidBefore` also ends the turn after an unrelated earli
 before it starts, on the final tree; the earlier runs stay committed as evidence. Under that reading, F34 needs one
 declared run each of T-P3-14 and T-P3-16 at 91cc684 or later, which a builder can do on the next pass.
 
+Default taken (for Kyle, 2026-11-07): both widenings are corrections and stay; a must-have counts the trials of one run declared before it starts on the final tree, earlier runs staying as evidence (KICKOFF's rule since PR #73); F34 closes on one declared run each of T-P3-14 and T-P3-16 on current main (ORCHESTRATOR-OVERNIGHT.md, Queue 3).
+
 ### Q18 (F26), 2026-10-30: may F26 keep `pauseWords` and the widened `claimed_sent` that T-P15-13's pass needs?
 
 **Blocks:** F26's verifier pass, so the part is not DONE. Everything else is in. `ACCEPT F26: PASS` (TREE
@@ -136,6 +232,8 @@ If you agree (in a commit or a PR comment), a session reruns the verifier and ma
   becomes a prompt or engine item for P15's Interrogate.
 - To revert the `claimed_sent` edit, its must-have fails on honest replies until the task's wording changes.
 
+Default taken (for Kyle, 2026-11-07): keep both: `pauseWords` says a true thing in code the way a card's own status does and never fakes the model's words, and the `claimed_sent` edit corrects an oracle that had never been run; a fresh verifier reruns on the merged code and F26 is marked DONE on its pass.
+
 ### Q16 (F24), 2026-10-29: may F24 keep two grader changes the verifier calls softening?
 
 **Blocks:** F24's verifier pass, so the part is not DONE. Everything else is in: `ACCEPT F24: PASS` (TREE
@@ -162,6 +260,8 @@ second signal, one on the model's honest reply), not a lowered bar. Agreeing in 
 a session rerun the verifier and mark F24 DONE. If you'd rather not, say which to revert, and T-P2-13's must-have
 becomes a P2 Interrogate item for a prompt change.
 
+Default taken (for Kyle, 2026-11-07): keep both grader changes as corrections to oracles that had never been run; a fresh verifier reruns on the merged code and F24 is marked DONE on its pass.
+
 ### Q13 (F21), 2026-10-29: The F21 draft PR could not be opened from the session
 
 **Blocks:** the last step of F21's protocol (KICKOFF step 7), the draft PR. F21 is otherwise done: `ACCEPT F21: PASS`
@@ -180,6 +280,8 @@ Orchestrator, 2026-10-30: the F27 builder (Opus, `--permission-mode auto`) was r
 up as Q20 under BLOCKED; folded here as the same class. PR #45 was opened from the orchestrator session and merged, so
 F27 is DONE and nothing is blocked. The F22 and F26 builders opened their PRs themselves; the classifier is not consistent.
 
+Default taken (for Kyle, 2026-11-07): the orchestrator opens a builder's PR whenever the classifier refuses it; the allow rule for builder sessions is a `.claude/` setting only Kyle changes, so it stays listed in `WAITING-ON-KYLE.md` and blocks nothing.
+
 ### Q1 (F1), 2026-10-22: A throwaway account for the live exit test
 
 **Blocks:** F1's last acceptance claim, one passing run of `test/live/f1-deploy.live.test.ts`, and the tag `v0.1.0`.
@@ -192,7 +294,48 @@ the free-plan spike (Q2).
 Orchestrator, 2026-10-30: PR #91 (D-0022) deleted `test/live/f1-deploy.live.test.ts`, the live-deploy workflow and its
 runbook, so this question can no longer be answered as written; F1's new shape is a decide item in `WAITING-ON-KYLE.md`.
 
-## Open, not blocking
+Default taken (for Kyle, 2026-11-07): fold F1 into D-0022 (`pnpm self-host` from a checkout) the way F7, F16 and F17 folded into clusters: the row FOLDED, nothing to build; the first owner's own `pnpm self-host` run is the deploy the claim meant, and `v0.1.0` is tagged when Kyle wants a tag.
+
+### Q39 (F44), 2026-11-01: F44's two-way choices, recorded here because the decision log is at its cap
+
+**Blocks nothing; for your read.** (a) The person page's tool path is a fifth `memory_write` target, `person` (a name
+and a relationship), not a new tool: it saves the relationship as one daily line through the same write as any fact
+(idempotent by the call id, armed for the render), then calls `upsertEntity` with that line cited under Facts and The
+relationship (`<relationship> — memory/<date>.md#L<n>`, a bare citation as B-P6-11 has it, since a citation in
+parentheses would not resolve), the summary the relationship, the rank kept or 1. No table or column changes: it is a
+row in `entities` and a page in the home tree (`packages/agent/src/memory/entities.ts`, `notePerson`). (b) "A person
+the owner named" is held by code twice: the name must read as a person's (one to five words of letters, the first and
+last capitalised, no digits, no organisation word such as Corp, Team, Group or Club, no group page of that slug,
+`MEMORY_PERSON_NOT_A_PERSON`), and it must be in the person's own latest typed message, which the chat's code passes
+as `WriteContext.said` (`store.latestTypedText()`, a quoted agent message left out) and the Person checks
+(`MEMORY_PERSON_NOT_NAMED`); a name only a tool result, a page or memory holds is refused, and a job or a colleague's
+turn carries no words. An empty relationship is `MEMORY_PERSON_NO_RELATIONSHIP`. The rejected alternatives: a
+separate `memory_note_person` tool (one more name on every turn's tool list for a write the existing one already
+gates as `mutates`), and trusting the model's own claim that the person named them (message content is data). The
+shape check is a heuristic: a person named in lower case, or with a digit, is refused and said so by code. (c)
+`upsertEntity` now refuses a page write that lost its etag race (`MEMORY_STALE`) instead of reporting it written; the
+relationships loop already drops a refused upsert with its code. (d) Three existing `MEMORY_WORDS` lines were
+sharpened and one added beyond the three items, each for a nice-to-have the acceptance needs at 3/3 and each failing
+on the slot on its reply words (Q18's pattern): the refusal line names the number by what it is and the place kept
+(T-P6-13), the forget line gives the remaining copies in fixed words, the chat and any job or skill (T-P6-12), and a
+recall line asks for a fresh search on every question about a person even when the chat answered it before, the
+later of two disagreeing lines holding (T-P6-09's second recall in c2). (e) Two oracle corrections under KICKOFF's rule, each with the slot's words pinned verbatim as a pass in the task's
+tier-1 test, planted negatives that still fail, and the failed runs' results files kept; three `version_hash` lines
+moved in the contract (T-P6-06, T-P6-09, T-P6-13). T-P6-09 failed 0/3 on two declared runs (trees 5890d87 and
+9728aaa) while the model's answers were what the task asks: its graders read the chat's first agent bubble, which is
+the line the model writes beside its tool call ("I'll save Pat Solo's plain-text preference."), though the first one
+had already found the reply after the write; they now read each prompt's answer (its last words with no tool call). A
+`MEMORY_WORDS` line asking for no words beside a memory call was tried on the second run, changed nothing, and was
+removed. T-P6-13 failed 0/3 on "the chat transcript keeps Sam's message as sent" alone, every other grader holding:
+since F38 the typed-secret hold (`packages/agent/src/vault/typed.ts`, P12 delta 1) keeps a Luhn-valid 13 to 19 digit
+run out of every transcript as a `[credential:cred://typed-<id>]` reference, and P6's planted all-zero sixteen digits
+pass Luhn; the grader (shared with T-P6-06) now takes the message whole with the number or that one reference. The
+rejected alternatives: exempting an all-zero run from the card hold (narrows a guard), and a new planted value that
+fails Luhn (rewrites the task's prompt and the contract's text). If you read delta 3 ("the person's own words are
+theirs") as requiring the digits themselves in the transcript, revert that grader, and the hold's reach is P12's
+question instead.
+
+Default taken (for Kyle, 2026-11-07): keep all: the T-P6-13 and T-P6-06 transcript grader reads the typed card as the hold's reference, T-P6-09's graders read each prompt's answer, and the refusal line names a passport or licence number a government ID number; (a) to (d) stand as written.
 
 ### Q37 (F41), 2026-10-30: F41's two-way choices, recorded here because the decision log is at its cap
 
@@ -229,6 +372,8 @@ agent's own name, never on "call me Sam"), the sign-in line for T-P14-11 (four s
 call-me lines for T-P14-12 (the whole write-as sentence, no gendered pronoun even in a denial; memory_write before the
 one reply). No line was added for T-P14-14, a nice-to-have that fails 0/3 on the mail's label and address.
 
+Default taken (for Kyle, 2026-11-07): taken as written, (a) to (j) standing; the lost-device reply (T-P14-13) and the pronoun line (T-P14-14) are one nice-to-have line part under P14 (ORCHESTRATOR-OVERNIGHT.md, Queue 8).
+
 ### Q35 (F39), 2026-10-30: T-P12-12 and T-P12-13 fail on the slot on their reply words; and F39's two-way choices
 
 **Blocks nothing; for your read.** On fletch-pv-3 at 25fa380 (the final lines), T-P12-12 failed 3/3 (twice the second
@@ -258,6 +403,15 @@ purchase line was sharpened for T-P12-10 (a trial said "Nothing was ordered or p
 `browse_live` and then `browse_open`, one offered "its live view"): it asks for no sentence about a sale, one read with
 `browse_open` alone, and the words "live page"; and the typed-card line for "I will not keep" written out and nothing
 about where a card could be saved. Both must-haves then passed 3/3 at 25fa380.
+
+Orchestrator, 2026-11-01: F43 (PR #97, merged at 9173fed) added the two lines this question recommends, and T-P12-12 and
+T-P12-13 each pass 3 of 3 on fletch-pv-3 (declared run 2 at 6237795). T-P12-10, a must-have, needed an oracle correction
+under KICKOFF's rule: the Muse Spark default (PR #94) writes a line beside its first tool call, its own bubble in the
+same turn, and the old grader counted bubbles; it now counts the chat's turns, as the minefield's own words say, with
+the refused trial pinned, a second turn planted and still failing, and the failed runs kept (`db13366a12ec…`). The
+contract's T-P12-10 hash is `ef54a05e4a68`. What stays open for your read: F39's reversible choices (a) to (e).
+
+Default taken (for Kyle, 2026-11-07): taken as written: F43 (PR #97) added the two lines and both tasks pass 3 of 3; the reversible choices (a) to (e) stand.
 
 ### Q33 (P14), 2026-10-30: D-0018 proposed: the agent's name is the owner's setting, never a message's; and P14's reversible choices and open doors
 
@@ -298,6 +452,8 @@ the F1 login, m27, P6 and lifecycle worlds; (g) every count graded against the t
 account. Gaps left open: whether a job or a sub-agent should ever see `USER.md`'s one line (none do today; Muse's
 sub-agents inherit all of it); the colleague-facing name on cards ("Your agent asks to:") once a name exists.
 
+Default taken (for Kyle, 2026-11-07): D-0018 stays `proposed` and the loop builds on its recommended option, which is nothing new (the agent has no name and says so, as F40 ships); the four doors stay open with no record; the F40 `LAST_OWNER` fix stays in F40; P14's reversible choices stand.
+
 ### Q32 (P12), 2026-10-30: D-0017 proposed: fletch holds no payment instrument and submits no payment; and P12's reversible choices
 
 **Blocks nothing; a one-way door for you to accept, amend or reject.** The P12 interrogation found Muse's wallet to be a
@@ -324,6 +480,8 @@ composed from the P15, P7 and P3 worlds, no wallet fixture that pretends to a pr
 against the tables, never the model's history; (f) the evidence folder keeps `scenario.md` step 3 with the fixture
 address masked by the redaction gate (the step had already run; restoring it was not worth a second pass).
 
+Default taken (for Kyle, 2026-11-07): D-0017 stays `proposed` and the loop builds on its recommended option, which is nothing new (no instrument, no submission, as F38 and F39 ship); the three gaps wait for the first owner who asks; P12's reversible choices stand.
+
 ### Q31 (F37), 2026-10-30: T-P9-15 fails 0/3 on the slot because the model says "allowed hosts", not "bound"; and F37's two-way choices
 
 **Blocks nothing; for your read.** On fletch-pv-1 at a46d617, T-P9-15 (nice-to-have) failed 3/3 on "the first reply
@@ -339,6 +497,8 @@ Example API's stand-in, and since a Worker cannot fetch its own `workers.dev` ho
 only the slot's test host overrides; (b) each P9 trial starts with Sam's credential rows deleted by the test host;
 (c) the slot's chats offer the tier-1 fixture connector, on every cluster's trials.
 
+Default taken (for Kyle, 2026-11-07): taken as written: one `WORK_WORDS` line for a credential refused on a host, not a wider grader; F42 carries it (PR #96), rebased onto the lead-in part F45 (ORCHESTRATOR-OVERNIGHT.md, Queue 5); the reversible choices (a) to (c) stand.
+
 ### Q30 (F36), 2026-10-30: F36's two-way choices, recorded here because the decision log is at its cap
 
 **Blocks nothing; for your read.** The decision log is at its 40 KB cap (`scripts/check-decisions.mjs`; pruning it
@@ -353,6 +513,8 @@ revocation); their harness (`test/evals/p9-connectors/harness-surface.ts`) count
 audit rows, so a revocation is an added row rather than a row gone. Recommended answer: none needed; move any of these
 into a record if others come to rely on it.
 
+Default taken (for Kyle, 2026-11-07): none needed; the four choices stand, and any of them moves into a record when others come to rely on it.
+
 ### Q28 (P3, P5, F34), 2026-10-30: a task whose delegation the model closed reads Running for ever
 
 **Blocks nothing.** Found while building F34's slot settle. When a steer closes a running child (`subagents_close`,
@@ -366,6 +528,9 @@ it. F34 waits on the chat's newest task only (`scripts/evals/p3-slot.ts`), as P5
 runner does. **Recommended answer:** a part in P5's or P3's next pass counts a delegation whose every child is closed
 as settled (the task reads Done, or Stopped when the person pressed Stop), with a tier-1 task that reads the first
 task's row after a steer; two-way, no storage change.
+
+Default taken (for Kyle, 2026-11-07): a part in P5's or P3's next pass counts a delegation whose every child is closed as settled, with a tier-1 task reading the first task's row after a steer; two-way, no storage change, nothing in the spine waits on it, not built tonight.
+
 ### Q27 (P9), 2026-10-30: the OAuth door D-0016, a playlist left in your music account, and nine Muse credential findings fletch already rules out
 
 **Blocks nothing on the spine; two things are yours alone.** (a) `docs/decisions/0016-oauth-connectors.md` is a
@@ -389,6 +554,8 @@ pasted on the wrong host's form; `request_new_password` (a generated password: n
 `docs/plan-v2/evidence/p9-connectors/answers/step-2.md`, `step-4.md`, `step-5.md`, `step-6.md`, `step-8.md`,
 `step-10.md`, `step-11.md`, `step-12.md`; `contracts/P9-connectors.md`.
 
+Default taken (for Kyle, 2026-11-07): (a) D-0016 stays `proposed` and is built on per Defaults only as a redirect route and a refresh-token kind that come out by deleting what the build added (ORCHESTRATOR-OVERNIGHT.md, Queue 10), its WAITING item saying so; (b) the playlist and the other Muse leftovers are Kyle's to remove; (c) and (d) are reads, taken as written.
+
 ### Q26 (P3), 2026-10-30: six Muse delegation findings fletch already rules out, recorded for Kyle's read
 
 **Blocks nothing.** The P3 interrogation (one side chat, thread A, 13 steps, 106 files through `pnpm redact`) found
@@ -409,6 +576,8 @@ new delegation said so, no send into a facet (delta 2); a reply that is only a n
 renderer fix in P2's surface). Evidence: `docs/plan-v2/evidence/p3-delegation/answers/step-1.md`, `step-2.md`,
 `step-5.md`, `step-6.md`, `step-8.md`, `step-10.md`, `step-12.md`; `contracts/P3-delegation.md`.
 
+Default taken (for Kyle, 2026-11-07): taken as read; both two-way choices (a steer closes and re-delegates, a bare number is drawn as text) stand.
+
 ### Q25 (P5, F31), 2026-10-30: should Stop end the sub-agents the stopped turn launched, or let them run on?
 
 T-P5-08's stop variant says the parent reads `stopped` and the child says what became of it, never `running`. F31
@@ -419,6 +588,8 @@ spent. While the turn has ended and the delegation is still out, the task drawer
 reads Complete after the stop and the contract's stop variant would need amending. Two-way either way; F31's choice
 stands until Kyle says. Evidence: `test/evals/p5-activity/subagent-section.task.ts`, `docs/decisions/log.md`
 (2026-10-30 F31).
+
+Default taken (for Kyle, 2026-11-07): F31's choice stands: a Stop ends the stopped turn's sub-agents not yet settled and the row reads Stopped; the contract's stop variant is unchanged.
 
 ### Q22 (F28), 2026-10-30: three nice-to-have P6 tier-2 tasks fail on the slot; a people page has no tool path
 
@@ -431,6 +602,9 @@ some of these (a MEMORY.md edit returning each line's citation; a line sending n
 verifier called them out of F28's scope and they were removed (1d3ff3e), left for a later part. Recommended answer:
 one more P6 part after the spine ("F-next: memory's reach"), scoped to those two changes plus a `memory_write` target
 for a person page, with T-P6-09, 12, 13, 14 as its acceptance; nothing in the spine waits on it.
+
+Default taken (for Kyle, 2026-11-07): taken as written: the one more P6 part is F44 (PR #99), which carried the two F28 changes and the person-page target; T-P6-12, 13 and 14 pass 3 of 3 there and T-P6-09 is Q40's.
+
 ### Q24 (P5), 2026-10-30: Muse keeps a store about its own work that nothing shows; a removed job's card dangles; four Muse findings
 
 **Blocks nothing.** Recorded from the P5 interrogation (`contracts/P5-activity.md`, B-P5-11 and B-P5-14, which have no
@@ -453,6 +627,8 @@ task of their own), for Kyle's eye.
    no message and no row (B-P5-09); usage is a plan percentage with no model column while the probe chat spent about
    23 million tokens (B-P5-12); the detail dialog's Summary is a one-word strip at phone width (B-P5-02).
 
+Default taken (for Kyle, 2026-11-07): taken as written: no lessons store (one would be a proposed record with a reader and a surface first); the removed job's card folds into T-P7-13's end state in a later P7 pass; the four findings are recorded with no action.
+
 ### Q23 (P7, F29), 2026-10-30: B-P7-01 says no card; fletch's agent-made job waits on one, and paused jobs sit under Off
 
 **Blocks nothing.** Two places where F29 grades fletch's form against a clause's wording, for Kyle's eye.
@@ -466,6 +642,8 @@ task of their own), for Kyle's eye.
    group after Reminders, Daily and Weekly so its dialog can turn it on again (T-P7-06's last turn); the job route
    says `listed: "off"`. T-P7-14 (tier 2, F30) grades the cadence groups without it. Recommended answer: keep it, or
    name another place for a paused job's dialog.
+
+Default taken (for Kyle, 2026-11-07): keep the `jobs_enable` card for an agent-made job, and keep a paused job under Off in Upcoming.
 
 ### Q21 (P7), 2026-10-30: proactivity editions and the feed have no fletch seam; three attested clauses; five findings
 
@@ -493,6 +671,8 @@ Kyle's Mac) leaves three things for Kyle's eye.
 
 **Recommended answer:** as above; the deltas stand unless Kyle wants unasked work in fletch.
 
+Default taken (for Kyle, 2026-11-07): neither proactivity editions nor the feed in the spine; the three attested clauses accepted as written; the five findings' deltas stand.
+
 ### Q19 (P6), 2026-10-30: goals and tracked items have no fletch seam; four attested clauses; one reload finding
 
 **Blocks nothing.** The P6 interrogation (`contracts/P6-memory.md`, evidence under `evidence/p6-memory/` on Kyle's
@@ -516,6 +696,7 @@ Mac) leaves three things for Kyle's eye.
    assistant reply between them, though earlier reloads had shown them (`step-12.png`). Cause undetermined (a history
    window or lazy paging). Nothing in fletch rests on it; recorded so the P6 capture set is read with that in mind.
 
+Default taken (for Kyle, 2026-11-07): a later cluster ("P6b goals and tracking") after the spine with a proposed record for its store when translated; a goal is not a memory line until then; the attested clauses stand and the reload finding is noted.
 
 ### Q17 (P15), 2026-10-29: one attested clause and four findings from the P15 interrogation
 
@@ -542,6 +723,8 @@ foreground tool call (B-P15-12, `step-10-running-no-stop.png`); fletch's Stop (M
 Muse behaviours fletch does not copy, each with the delta that says why; if you want fletch to solve bot checks or to
 re-ask after a decline, say so and the delta becomes a question.
 
+Default taken (for Kyle, 2026-11-07): none beyond the live window the uat item asks for; (2) and (3) stay Muse behaviours fletch does not copy, each with its delta.
+
 ### Q15 (P2), 2026-10-29: three things the P2 interrogation attests rather than instruments, and two dump-slice oddities
 
 **Blocks:** nothing. (1) `contracts/P2-loop.md` tags parts of B-P2-04 (which tool name maps to which status words:
@@ -557,6 +740,8 @@ marked unavailable; the loader reports no unavailable state at all today.
 (2) and (3) are notes for the next dump refresh (`INTERROGATE.md`), where the slice's `deferred` flags are compared
 against a load of each eager namespace.
 
+Default taken (for Kyle, 2026-11-07): none; a later P2 pass provokes (1) when cheap; (2) and (3) are notes for the next dump refresh.
+
 ### Q14 (F22), 2026-10-29: a task's version hash depends on the loader, and T-P1-02 misses on counting
 
 **Blocks:** nothing. (1) `versionHash()` hashes each grader's `toString()`; vitest's transform rewrites that source, so
@@ -571,6 +756,8 @@ the register; its next recorded run may say `regressed`.
 or record the loader) when it next touches `test/support/task.ts`, and decides whether T-P1-02's count grader should
 accept a number word or the prompt should carry a fixed multi-line body.
 
+Default taken (for Kyle, 2026-11-07): none; the orchestrator folds (1) into the kit when it next touches `test/support/task.ts` and settles T-P1-02's count grader then.
+
 ### Q11 (F18), 2026-10-29: two limits of the task kit, found by P1's Build
 
 **Blocks:** nothing. `defineTask`'s `collateral` keys a snapshot by exact id and reads any removed key as collateral, so
@@ -580,6 +767,8 @@ key messages by `message:<chat>:<ordinal>:<kind>` (`docs/plan-v2/contracts/P1-re
 
 **Recommended answer:** none from you; the orchestrator folds a `removes:` field and ordinal keys into the kit when a
 second cluster hits the same limit (AGENTS.md, "Raising a rule": twice, then one change).
+
+Default taken (for Kyle, 2026-11-07): none; a `removes:` field and ordinal keys go into the kit when a second cluster hits the same limit.
 
 ### Q12 (F20), 2026-10-29: the dump brief and the design's Muse counts are stale
 
@@ -591,18 +780,8 @@ functions in 19 namespaces with 9 unavailable, not the 108 in 32 the design's §
 
 **Recommended answer:** none needed from you beyond a read: the briefs are deleted in the PR after F20 (design §5.1),
 and the orchestrator corrects §7's count in that PR. Say so if you would rather keep the briefs.
-### Q10 (F19), 2026-10-29: Accept D-0015, tier-2 evals in CI with the slot token and a spend cap
 
-**Blocks:** nothing. The runner (`pnpm evals`, `docs/runbooks/evals.md`) runs from Kyle's Mac against the worktree's
-leased slot, and a part's PR body carries its table. Open decision O9 (design §10) was agreed in principle; F19 wrote
-the record, `docs/decisions/0015-tier2-evals-in-ci.md`, with the key's scope (the existing slot token, D-0008, as a
-repository secret in a `tier2` environment; no model key, since a slot's chat model is Workers AI through its binding),
-the spend cap (12 tasks of 3 trials per run, one job of 60 minutes, a 10 USD notification and a 25 USD stop per month)
-and the trigger (PRs touching `packages/agent/`, one comment, never a gate: O2).
-
-**Recommended answer:** accept D-0015 as proposed after the dry run (F20) shows stable verdicts, then the workflow
-file is a plain PR citing it and the three secrets are Kyle's to set. The alternative, keeping the runner on Kyle's Mac,
-costs nothing and leaves tier 2 to the orchestrator's sessions; it is the state today.
+Default taken (for Kyle, 2026-11-07): the briefs under `docs/briefs/` are deleted and §7's count corrected, as the recommendation says; the orchestrator does both in the ledger truth pass (ORCHESTRATOR-OVERNIGHT.md, Queue 11), a reversible docs change.
 
 ### Q6 (F4), 2026-10-23: D-0010 is a stub until the artifact record lands
 
@@ -616,12 +795,16 @@ F4 to F7 preamble and in F4's and F6's rulings, but the record was never in this
 starts (F6 must leave that collection free). The alternative, rewording the plan's citations, edits other parts' text
 and loses the link.
 
+Default taken (for Kyle, 2026-11-07): the stub stands as written until Kyle pastes the artifact thread's record under the id D-0010 (only he has the thread); F6 is DONE and left the collection free, so nothing is built on it.
+
 ### Q2 (F1), 2026-10-22: Run the free-plan spike for Code Mode and Images
 
 **Blocks:** nothing yet; it decides whether `create-fletch` adds `LOADER` and `IMAGES` by default or only with
 `--paid` (D-0004).
 
 **Recommended answer:** run it on the Q1 account (`docs/runbooks/free-plan-spike.md`) and paste the table.
+
+Default taken (for Kyle, 2026-11-07): taken as written, which leaves it with Kyle: the spike needs a Cloudflare account only he can create (Q1's account is gone with F1's fold), so it stays a WAITING `do` item and D-0004 keeps `LOADER` and `IMAGES` behind `--paid` until it runs.
 
 ## Answered
 

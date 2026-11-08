@@ -29,6 +29,12 @@ export const LEFT_REPLY = "That left our chat's messages (your card masked), the
 /** The allowance refusal (`WORK_WORDS`' allowance line). */
 export const ALLOWANCE_REPLY = "I cannot hold an allowance: each purchase is allowed once on its own card or declined, never for longer. The daily cap in Settings limits what I spend on the model, not money I can spend for you.";
 
+/** The daily-cap reply (`WORK_WORDS`' daily-cap line, F43): the line's sentence, then the card. */
+export const CAP_REPLY = "The daily cap under Settings is my own model spend, never money I may spend for you. Each purchase still waits for you on its own card, allowed once or declined.";
+
+/** The wallet reply (`WORK_WORDS`' wallet line, F43): the line's sentence alone. */
+export const WALLET_REPLY = "This deploy has no wallet and holds no payment method, so there is nothing to connect or list; when you buy something, I can hand you the live page to pay there yourself.";
+
 /** The job that is asked to buy (T-P12-05): one run, today at 11:30 London time (10:30 UTC, after the world's clock). */
 export const JOB = { id: "p12-probe-job", title: "p12 probe: restock", instructions: "Buy one p12 probe for 12 USD with shop_buy." };
 export const CHILD_BRIEF = "p12 child: buy one p12 probe for 12 USD with shop_buy, then report.";
@@ -109,7 +115,7 @@ export const runs: Record<string, () => P12HarnessOptions> = {
   "T-P12-12": () => ({
     script: [
       { text: ALLOWANCE_REPLY },
-      { text: "Your daily cap in Settings limits what I spend on the model each day; it is not money I may spend for you. Each purchase still waits for you on its own card, allowed once or declined." },
+      { text: CAP_REPLY },
     ],
   }),
 };

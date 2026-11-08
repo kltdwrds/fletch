@@ -63,6 +63,107 @@
         }
       ],
       "status": "fail"
+    },
+    {
+      "run_at": "2026-11-01T23:36:55.602Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-01T23:36:55.602Z",
+          "finished_at": "2026-11-01T23:37:53.044Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-01T23:37:53.044Z",
+          "finished_at": "2026-11-01T23:38:59.894Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-01T23:38:59.894Z",
+          "finished_at": "2026-11-01T23:39:55.872Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    },
+    {
+      "run_at": "2026-11-01T23:55:42.341Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-01T23:55:42.342Z",
+          "finished_at": "2026-11-01T23:56:55.118Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-01T23:56:55.118Z",
+          "finished_at": "2026-11-01T23:58:02.494Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-01T23:58:02.494Z",
+          "finished_at": "2026-11-01T23:59:04.054Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-11-02T00:15:30.353Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-02T00:15:30.353Z",
+          "finished_at": "2026-11-02T00:16:28.760Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-02T00:16:28.760Z",
+          "finished_at": "2026-11-02T00:17:36.774Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-02T00:17:36.774Z",
+          "finished_at": "2026-11-02T00:18:41.673Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-11-02T00:41:13.801Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-02T00:41:13.801Z",
+          "finished_at": "2026-11-02T00:42:22.102Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-02T00:42:22.102Z",
+          "finished_at": "2026-11-02T00:43:27.362Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-02T00:43:27.362Z",
+          "finished_at": "2026-11-02T00:44:26.711Z"
+        }
+      ],
+      "status": "pass"
     }
   ]
 }

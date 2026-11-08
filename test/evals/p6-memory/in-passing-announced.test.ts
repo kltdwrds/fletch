@@ -33,7 +33,8 @@ describe("[F28] P6 memory: the turn that saves in passing is told to name the sa
     const w = await played(scripted["T-P6-04"]!());
     const context = w.context("c1");
     const lines = MEMORY_WORDS.split("\n");
-    expect(lines).toHaveLength(4);
+    // Four F28 lines and F44's three: where a new fact goes, a person page, recall after a correction.
+    expect(lines).toHaveLength(7);
     for (const line of lines) expect(context).toContain(line);
     expect(lines[0]).toMatch(/citation the tool returned/);
     expect(lines[0]).toMatch(/Never save silently/);

@@ -3,7 +3,7 @@
 // placed around the transcript are recorded, so a resumed step replays them (`projection.ts`).
 import type { StreamFn } from "@earendil-works/pi-agent-core";
 import type { Message, Model } from "@earendil-works/pi-ai";
-import { assemble } from "../context/assemble.ts";
+import { assemble, type Envelope, envelopeMessage, envelopeText } from "../context/assemble.ts";
 import type { Route } from "../model/routes.ts";
 import { toolReference } from "../tools/reference.ts";
 import type { ToolSession } from "../tools/registry.ts";
@@ -19,10 +19,40 @@ import { standingSnapshot } from "./standing-copy.ts";
 import type { ChatStore } from "./store.ts";
 import { takeTodoNudge, todoAfterSummary } from "./todo.ts";
 
-/** The live transcript: the compaction summary and the checklist kept with it (M24.2), then every message kept. */
-export function liveTranscript(store: ChatStore): Message[] {
+/** Each turn's envelope as it was sent, by the seq of the user message it was sent before. */
+export const ENVELOPES_KEY = "envelopes";
+type KeptEnvelopes = Record<string, { turn: string; text: string }>;
+const keptEnvelopes = (store: ChatStore): KeptEnvelopes => JSON.parse(store.meta(ENVELOPES_KEY) ?? "{}") as KeptEnvelopes;
+
+/**
+ * The live transcript: the compaction summary and the checklist kept with it (M24.2), then every message kept, with
+ * each earlier turn's envelope back before the user message it was sent with. A turn's first request then repeats the
+ * turn before's last one byte for byte, so Meta's prompt cache keeps the history instead of computing it again from
+ * where an envelope was dropped (measured on a preview slot, 2026-11-02). `turnId`'s own envelope is left out: the
+ * assembler places it, and a resumed step replays it from the turn's projection.
+ */
+export function liveTranscript(store: ChatStore, turnId?: string): Message[] {
   const summary = store.meta("summary");
-  return [...(summary ? [summaryMessage(summary, 0), ...todoAfterSummary(store)] : []), ...store.transcript().map((r) => r.message)];
+  const kept = keptEnvelopes(store);
+  const rows = store.transcript().flatMap((r) => {
+    const e = kept[String(r.seq)];
+    return e && e.turn !== turnId ? [envelopeMessage(e.text, 0), r.message] : [r.message];
+  });
+  return [...(summary ? [summaryMessage(summary, 0), ...todoAfterSummary(store)] : []), ...rows];
+}
+
+/**
+ * Keeps this turn's envelope against the latest user message, the one the assembler sends it before, in place of any
+ * earlier turn's there; an envelope whose message was compacted away is dropped with it.
+ */
+function keepEnvelope(store: ChatStore, turnId: string, envelope: Envelope): void {
+  const rows = store.transcript();
+  const latest = rows.findLast((r) => r.message.role === "user");
+  if (!latest) return;
+  const live = new Set(rows.map((r) => String(r.seq)));
+  const kept = Object.fromEntries(Object.entries(keptEnvelopes(store)).filter(([seq]) => live.has(seq)));
+  kept[String(latest.seq)] = { turn: turnId, text: envelopeText(envelope) };
+  store.transaction(() => store.setMeta(ENVELOPES_KEY, JSON.stringify(kept)));
 }
 
 export interface AssembleDeps {
@@ -54,8 +84,11 @@ export async function assembleTurn(d: AssembleDeps, turnId: string, person: stri
   const keep = (k: string, v: string) => store.transaction(() => store.setMeta(k, v));
   const shared = await sharedContext({ company: hooks.companyInstructions, memory: hooks.memory?.(person), meta: (k) => store.meta(k), keep, context: d.context, turnId, person });
   if (!shared.ok) return shared;
-  const transcript = liveTranscript(store);
   const owner = store.meta("owner") ?? person;
+  // The reactions standing now (F10): per turn, in the envelope, since a reaction changes after the message it is on.
+  const envelope: Envelope = { now: d.now(), timeZone, surface: "chat", modelId: model.id, owner: person, reactions: reactionsLead(store.history(), hooks.nameOf?.(owner) ?? owner) };
+  keepEnvelope(store, turnId, envelope);
+  const transcript = liveTranscript(store, turnId);
   const messages = assemble({
     platform: PLATFORM_INSTRUCTIONS,
     // A chat opened for a colleague's request keeps its own task block for its whole life.
@@ -66,8 +99,7 @@ export async function assembleTurn(d: AssembleDeps, turnId: string, person: stri
     memory: shared.memory,
     skills: shortlist,
     toolReference: toolReference(session.registry.namespaces, session.loaded),
-    // The reactions standing now (F10): per turn, in the envelope, since a reaction changes after the message it is on.
-    envelope: { now: d.now(), timeZone, surface: "chat", modelId: model.id, owner: person, reactions: reactionsLead(store.history(), hooks.nameOf?.(owner) ?? owner) },
+    envelope,
     tools: session.tools,
     transcript,
   });

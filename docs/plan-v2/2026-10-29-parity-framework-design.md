@@ -94,7 +94,7 @@ against the previous dump is read before anything else.
 
 ### 4.2 The dump and the browser
 
-The dump (`tools.json`: 108 functions in 32 namespaces; the reconstructed system prompt; the `muse.db` schema
+The dump (`tools.json`: 109 functions in 19 namespaces, 9 unavailable, per the P1 refresh of 2026-10-29 (Q12); later slices count more as namespaces load; the reconstructed system prompt; the `muse.db` schema
 guide; workspace tree, hooks, skills) is the static ground truth and is refreshed per cluster. The browser captures
 what only the UI shows: states (empty, loading, building, error), cards, approval cards, a reload to separate
 persisted state from optimistic UI; a screenshot per step, a DOM note of roles, labels, hrefs and order, and the
@@ -304,7 +304,7 @@ examples[]:    model prose, never asserted
 - Phase 0 is trimmed to what the dry run exercises and opens with the pare-down (§5.1). Atlases, the WebSocket
   wrapper and tier 3 wait for a cluster that needs them.
 - Four artifact templates collapse into one contract file per cluster. Three tiers of done collapse into two.
-- `tools.json` is 108 functions in 32 namespaces; the unverifiable "185 envelopes" is gone.
+- `tools.json` is 109 functions in 19 namespaces with 9 unavailable (the P1 refresh, Q12; the spec's 108 in 32 was stale); the unverifiable "185 envelopes" is gone.
 
 ## Kyle's answers to the open decisions (2026-10-29)
 

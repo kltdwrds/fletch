@@ -8,6 +8,7 @@
 import { type AgentEvent, type AgentTool, runAgentLoopContinue, type StreamFn } from "@earendil-works/pi-agent-core";
 import type { AssistantMessage, Message, Model, ToolResultMessage } from "@earendil-works/pi-ai";
 import { fence } from "../context/fence.ts";
+import { isCommentaryStep, markCommentary, saysWords } from "./commentary.ts";
 import { type Effect, type EffectBuffer, refuseMalformed } from "./tools.ts";
 import { traceTool, traceTurn } from "../obs/spans.ts";
 
@@ -26,7 +27,9 @@ export interface Step {
 }
 
 /**
- * Frames streamed to the chat's sockets while a turn runs. `status` names the tool now running (F24, B-P2-04), and
+ * Frames streamed to the chat's sockets while a turn runs. A step's `delta`s are held until the step ends and released
+ * only when its words are a reply (F45): words beside a call in a step that continues are commentary and reach no
+ * socket. `reasoning` streams as it comes. `status` names the tool now running (F24, B-P2-04), and
  * `tool: null` once it returned: the page words it from its own table, never from the model's text.
  */
 export type StreamFrame = { type: "delta"; turn: string; text: string } | { type: "reasoning"; turn: string; text: string } | { type: "status"; turn: string; tool: string | null };
@@ -77,13 +80,16 @@ async function turnLoop(o: TurnLoopOptions): Promise<TurnOutcome> {
   let stopped = false;
   let failure: { code: string; detail: string } | undefined;
   let barrierError: unknown;
+  // The step's words as they stream, held until the step ends: a reply's are released, commentary's dropped (F45).
+  let held = "";
 
   const emit = async (event: AgentEvent) => {
+    if (event.type === "message_start" && event.message.role === "assistant") held = "";
     if (event.type === "tool_execution_start") o.onFrame({ type: "status", turn: o.turnId, tool: event.toolName });
     if (event.type === "tool_execution_end") o.onFrame({ type: "status", turn: o.turnId, tool: null });
     if (event.type !== "message_update") return;
     const e = event.assistantMessageEvent;
-    if (e.type === "text_delta") o.onFrame({ type: "delta", turn: o.turnId, text: e.delta });
+    if (e.type === "text_delta") held += e.delta;
     if (e.type === "thinking_delta") o.onFrame({ type: "reasoning", turn: o.turnId, text: e.delta });
   };
 
@@ -103,18 +109,27 @@ async function turnLoop(o: TurnLoopOptions): Promise<TurnOutcome> {
       finishTurn: async ({ message, toolResults }) => {
         // pi calls this for a failed response too; a failed step is never committed and its
         // effects are dropped with it. The outcome is read from the message after the loop.
+        const words = held;
+        held = "";
         if (message.stopReason === "error" || message.stopReason === "aborted") {
           o.effects.drain();
           return { action: "end" };
         }
         steps++;
         // A step whose tools' results all ask it (`endsTurnIfSaid`: the launch of sub-agents, F34) ends the turn
-        // there once the turn has said words, beside the call or before it, so its reply is said once.
-        saidBefore ||= message.content.some((c) => c.type === "text" && c.text.trim() !== "");
-        const ends = saidBefore && toolResults.length > 0 && toolResults.every((r) => (r.details as { endsTurnIfSaid?: boolean } | undefined)?.endsTurnIfSaid === true);
+        // there once the turn has said a reply, beside the call or in an earlier reply, so its reply is said once.
+        const said = saysWords(message);
+        const ends = (saidBefore || said) && toolResults.length > 0 && toolResults.every((r) => (r.details as { endsTurnIfSaid?: boolean } | undefined)?.endsTurnIfSaid === true);
         const isFinal = ends || !message.content.some((c) => c.type === "toolCall");
         const stop = o.stopRequested?.() ?? false;
         const pause = !stop && !isFinal && (o.pauseAfter?.(message) ?? false);
+        // Words beside a call in a step that continues are commentary (F45, B-P2-03): kept for the model, marked on the
+        // row, never streamed and never counted as said. A reply's held words reach the sockets before the barrier.
+        if (said && isCommentaryStep(message, { paused: pause, ends })) markCommentary(message);
+        else {
+          saidBefore ||= said;
+          if (words) o.onFrame({ type: "delta", turn: o.turnId, text: words });
+        }
         // Input the person added meanwhile is taken at this boundary while a step remains to answer it;
         // otherwise it waits in the mailbox and starts the next turn.
         const steer = !stop && !pause && steps < o.maxSteps && (o.queued?.() ?? false);

@@ -18,6 +18,9 @@ apart from the one who wrote it (`GOAL-PROMPT.md`, `VERIFIER-PROMPT.md`).
 
 ## Running it
 
+For a night Kyle is not watching, with every open question answered by its recommended default and builders in
+parallel, use the variant in `ORCHESTRATOR-OVERNIGHT.md` (its runbook: `docs/runbooks/orchestrator-overnight.md`).
+
 On Kyle's Mac, in the main checkout, in a shell that holds no credential (AGENTS.md gotcha 1; wrangler's own login
 serves the preview slots). Muse is reached through the built-in browser, so run the orchestrator where that browser is
 available: the desktop app's session, or `-p` with the browser tools. Tier 2 runs here until O9 is accepted.
