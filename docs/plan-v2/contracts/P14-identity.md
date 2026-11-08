@@ -529,7 +529,7 @@ identity-adjacent write is `device.unpair` behind a prompt-level confirmation (B
 sessions and recovery in the Company's SQLite behind the host's routes; the agent package touches them only through
 one RPC the host calls; no tool, route or job names them; the person manages them on `/login` and (F41) a Security pane
 | verdict: equal in reach (the agent sees and touches none), stronger in visibility once F41 draws the pane | proof:
-T-P14-03, T-P14-04, `packages/host-cloudflare/test/passkeys-routes.test.ts`, `test/live/f1-deploy.live.test.ts` |
+T-P14-03, T-P14-04, `packages/host-cloudflare/test/passkeys-routes.test.ts`, `test/workers/f1-login.test.ts` (the live lane that once stood here was deleted unrun, PR #91) |
 status: held (routes), pending (pane)
 
 settings on a sentence | muse: a class of settings changes on request with no card, decided by what the active client
@@ -602,7 +602,7 @@ Translate stage 2026-10-30, from an Opus agent's read-only survey of the worktre
   after the purge has run; the Ledger, the grants journal and the audit are not purged; no UI, no tool, no deletion of
   a standalone deploy's data.
 - tests: `test/workers/f1-login*.test.ts`, `f1-self-host-ui.test.ts`, `packages/host-cloudflare/test/passkeys-*.test.ts`,
-  `test/live/f1-deploy.live.test.ts`, `test/workers/m27-settings.test.ts` (the mode row), `m27-panel.test.ts` (the
+  `test/workers/m27-settings.test.ts` (the mode row), `m27-panel.test.ts` (the
   Identity tab), `m2-memory.test.ts`, `m7-subagents.test.ts`, `m12-semantic.test.ts` (purge removes vectors),
   `m24-3-browser-logins.test.ts`, `test/workers/support/lifecycle-world.ts`,
   `test/evals/p2-loop/operating-block-per-turn.test.ts` (`IDENTITY_LINES[0]`). No test holds an agent name, the

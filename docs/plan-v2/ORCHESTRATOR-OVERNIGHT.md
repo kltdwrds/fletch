@@ -101,7 +101,7 @@ PR opens as a draft: review, `gh pr ready`, gate with `gh pr checks <n> --repo k
 10. **D-0016, OAuth connectors**, last and only after 1 to 8: a part under P9 built on the record's recommended
     option per Defaults (a redirect route, a refresh-token kind in the Vault, both deletable), its WAITING decide
     item saying so. Skip if a slot or the night is not left for it.
-11. **Ledger truth pass**, interleaved while builders run: the P14 contract's two `test/live/*` citations (lines
+11. **Ledger truth pass** *(in progress: the P14 citations, §7's count, `docs/briefs/` and the log shortened in the truth-pass PR; the uat slot and the handoff note at the night's end when the builders release a slot)*, interleaved while builders run: the P14 contract's two `test/live/*` citations (lines
     532 and 605) rewritten for the deleted lane; every uat item in `WAITING-ON-KYLE.md` pointed at one live slot on
     main (lease it for 48 h and name it once at the top); the decision log shortened under its cap, no line deleted;
     the handoff note kept current.
