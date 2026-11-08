@@ -66,6 +66,130 @@
       "status": "fail"
     },
     {
+      "run_at": "2026-11-01T22:02:29.719Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-11-01T22:02:29.719Z",
+          "finished_at": "2026-11-01T22:03:17.899Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-11-01T22:03:17.900Z",
+          "finished_at": "2026-11-01T22:03:50.548Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-11-01T22:03:50.548Z",
+          "finished_at": "2026-11-01T22:04:23.877Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-11-01T22:07:51.043Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-11-01T22:07:51.043Z",
+          "finished_at": "2026-11-01T22:08:28.540Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-11-01T22:08:28.540Z",
+          "finished_at": "2026-11-01T22:09:12.781Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-11-01T22:09:12.781Z",
+          "finished_at": "2026-11-01T22:10:01.547Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-11-01T22:13:11.723Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-11-01T22:13:11.723Z",
+          "finished_at": "2026-11-01T22:13:52.935Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-11-01T22:13:52.935Z",
+          "finished_at": "2026-11-01T22:14:32.590Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-11-01T22:14:32.590Z",
+          "finished_at": "2026-11-01T22:15:09.962Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-11-01T22:17:58.483Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-11-01T22:17:58.484Z",
+          "finished_at": "2026-11-01T22:18:36.892Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-11-01T22:18:36.892Z",
+          "finished_at": "2026-11-01T22:19:16.512Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says the host is not one the key is bound to",
+          "started_at": "2026-11-01T22:19:16.512Z",
+          "finished_at": "2026-11-01T22:20:01.689Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
       "run_at": "2026-11-08T06:10:49.638Z",
       "preview_slot": "fletch-pv-3",
       "trials": [
