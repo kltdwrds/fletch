@@ -5,6 +5,25 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
+### Q49 (F42), 2026-11-08: T-P9-14 2 of 3 and T-P9-15 2 of 3 on F42's final tree, after main's F50 and F51 lines; 9 of 9 one merge earlier
+
+**Blocks:** F42's DONE row (its acceptance: T-P9-15 3 of 3 and the must-haves T-P9-13 and T-P9-14 3 of 3 on the declared
+run on the final tree) and P9's level-2 claim on the current main. Declared run 12 (tree e98053c61d91, main 08788bd
+merged, fletch-pv-1, Muse Spark): all three 3 of 3; `ACCEPT F42: PASS` on a runner and `VERIFIER: no blocking
+findings` at f45ae66. The branch then merged main 8f4259b (PRs #123 and #128), which adds F50's line 94 and F51's line
+109 to `WORK_WORDS`; a prompt change after a declared run invalidates it (F42's second verifier pass), so declared run
+13 on tree f9be6aaa7610 (34d345f, fletch-pv-1, Muse Spark): T-P9-13 3 of 3; T-P9-14 trial 1 failed "the reply repeats
+none of it, says it is not kept in chat and points at the secure form"; T-P9-15 trial 2 failed "the first reply says
+the host is not one the key is bound to". Both `GRADER_FAILED`, neither infra; the replies were not read before the
+slot was released (the orchestrator's miss), so whether either was right in other words is unknown. F42's line touches
+T-P9-15 only; T-P9-14 is a must-have no part touched, 3 of 3 on sweep C (tree 77effb9) and on run 12. Of these three
+tasks' eighteen trials on two trees today, sixteen passed.
+**Recommended answer:** merge F42 as BLOCKED, as F44 and F48 were (its line, its tier-1 test and accept hold; the merge
+is two-way), and run P9's tier-2 tasks once more on main with the slot kept and every failed reply read, under Queue
+6's rule: a reply right in other words is an oracle correction with KICKOFF's three things, a wrong one is a line part;
+a run with the must-haves 3 of 3 sets F42 DONE and P9's row. Whether a must-have's bar is one run of three trials, or
+more, is yours: the orchestrator takes no default on it. Alternative: hold PR #96 open until that run.
+
 ### Q48 (F48), 2026-11-08 (Q46 on the F48 branch until 2026-11-08, renumbered past main's Q46 and F42's Q47): F48's scope widened mid-part, after the first verifier pass, for the tier-1 re-pins the engine's sentence forces
 
 **Blocks:** F48's `VERIFIER: no blocking findings`, and so its DONE row and F47's. F48's rule adds one agent message ("Waiting for your decision: <label>. It has not run yet.") to every step that pauses on a real card. Six tier-1 P15 tasks pin the count of agent messages in their journal collateral (T-P15-01, -03, -04, -05, -07, -12) and T-P15-01's `card_words_from_model` minefield reads the reply's sentences for the card's status words, so the rule cannot land without re-pinning those counts and excluding code's exact sentence from that minefield; their `version_hash` lines move with them. F48's scope (4) as written on 2026-11-08 said "no clause, task or hash changes" and its Not in scope "any grader", so the first verifier pass blocked on them, and the orchestrator amended the section (commit c774858 on `claude/f48-local`) to allow exactly these; the second pass held that widening a part's scope mid-part to clear a finding is Kyle's ruling, not the orchestrator's, and asked for it here. The substance both passes found sound: the re-pins tighten rather than loosen, the minefield skips code's one sentence only, and a planted model echo of the card's words still fires it (`test/evals/p15-approvals/pause-words.test.ts`, the task file's planted negative).
@@ -14,6 +33,33 @@ Default taken (for Kyle, 2026-11-08): the amendment stands, as recommended; the 
 The fourth verifier pass (fresh Opus, 2026-11-08, at 19511d3) held that this default is the orchestrator's own, since the orchestrator raised and answered the question in one commit, and that widening a part's scope mid-part is Kyle's ruling, which Defaults cannot take; so the question stays open for him. F48 and F47 are BLOCKED on it; PR #126 is merged as F44's was, with the rule and its re-pins on main. Kyle's line under Steering confirming the amendment sets both rows DONE; one rejecting it reverts PR #126 (the sentence, the re-pins and the minefield's exclusion come out together) and the sentence waits for a part that makes it a frame the journal does not count.
 
 ## Open, not blocking
+
+### Q47 (F42), 2026-11-01 (Q39 on the F42 branch until 2026-11-08, then Q45; renumbered past main's Q39, Q43, Q45 and Q46): may F42's must-haves count, when the lead-in bubble both models write fails T-P9-13 at origin/main too?
+
+**Blocks:** nothing since F45 merged (2026-11-08, PR #111): F45 is option (a) below, and F42 is rebased onto it and runs its declared tier 2 again (Q31's default). Until then it blocked F42's acceptance; all else was in: the line, its tier-1 test, `ACCEPT F42: PASS`.
+The declared runs on the final tree (c16fa2e, fletch-pv-2): run 9 on Muse Spark, T-P9-15 2/3, T-P9-13 0/3, T-P9-14 3/3;
+run 10 on GLM 5.3 Flash, T-P9-15 3/3, T-P9-13 2/3, T-P9-14 3/3 (results in `evidence/results/`, runs 1 to 10 in the PR).
+The cause of every T-P9-13 failure read, and of T-P9-15's before the oracle correction, is a lead-in bubble the model
+writes beside its first step's calls ("I'll read that probe with your Example API key.", "I'll get the secure form to
+connect that API."): Muse Spark (the default since e67f694, 2026-10-31) in every T-P9-13 and nearly every T-P9-15 trial,
+GLM in some. A grader that reads the chat's first bubble or counts replies takes the lead-in for the reply: T-P9-13
+fails "one reply" 0/3 on Muse at origin/main a72e7a6 too (a dry run, results outside the repository). F37's 3/3 for
+T-P9-13 and T-P9-14 ran on 2026-10-30 on GLM. No instruction line stops the bubble: from run 2 F42's line asks for no
+words before the keyed result, naming react and tool_search, and it stays; the verifier's first pass found that clause
+past scope line (1), not blocking, and cut to the words alone (run 7, ccad997) T-P9-15 fell to 2/3, so the final line
+is runs 5 and 6's, for your ruling. Run 9's failing T-P9-15 trial raised the `credentials.host` card in the first turn
+and said the words only in the second; that one is the model's. Every cluster's tier-2 task that reads `replies()[0]` or
+counts replies is exposed the same way on the default model. The fix is outside F42's scope (no other instruction line,
+no grader change but an oracle correction).
+**Recommended answer:** one cross-cutting part for the lead-in before P9's must-haves are scored again: either (a) code
+folds a step's words beside its calls into the turn's reply when that step is not the last, so the person sees one
+reply per ask, or (b) each exposed grader is oracle-corrected to read the turn's bubbles, as F42 did for T-P9-15; (a)
+fixes what the person sees, (b) only the measurement. Then F42's tier 2 is rerun as one declared run, or F42 is merged
+on its tier 1 with T-P9-15's runs recorded. F42's oracle correction, for your read: T-P9-15's graders read "the first
+reply" and "the second turn" as what the agent said between Sam's ask and her next, with KICKOFF's three things (the
+refused turn pinned verbatim as a pass and four planted negatives in `test/evals/p9-connectors/bound-host-words.test.ts`,
+runs 1 to 4 in `evidence/results/b3f0abb43bf0….json`); the old second-turn reading had been passing on the first turn's
+"only you".
 
 ### Q44 (P3), 2026-11-08: T-P3-15's steer lands after the child has finished
 

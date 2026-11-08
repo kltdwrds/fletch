@@ -124,7 +124,7 @@ export const runs: Record<string, () => P9HarnessOptions> = {
     },
     script: [
       load("fixture"), call("fixture_read", { url: PROBE_OTHER }, "read1"),
-      replyFrom((r) => `I couldn't read it: ${/EGRESS_[A-Z_]+/.exec(lastResult(r))?.[0] ?? "a refusal"}. Your Example API key (${API_REF}) is not bound to ${OTHER_HOST}, so the request was refused before anything was sent. Only you can bind it to another host.`),
+      replyFrom((r) => (/EGRESS_(CRED_)?HOST_DENIED/.test(lastResult(r)) ? BOUND_REPLY : `The read of ${OTHER_HOST} came back: ${lastResult(r).slice(0, 80)}`)),
       load("credentials"), call("credential_host_propose", { ref: API_REF, host: OTHER_HOST }, "prop1"),
     ],
   }),
@@ -164,6 +164,9 @@ export const savedReply = (ref: string, host: string): FakeStep =>
 
 /** The answer to a typed secret: held, not kept, and where a key is saved instead (no four characters of it). */
 export const TYPED_REPLY = "I won't keep a value typed in chat: I held it out of our conversation, so it shows only as a credential reference. To save an API key, tell me the host it is for and I'll give you the secure form to enter it on.";
+
+/** The refusal on a host the key is not bound to, in the words of `WORK_WORDS`' bound-host line (F42), only when the tool said so. */
+export const BOUND_REPLY = `Your Example API key is not bound to ${OTHER_HOST}, so nothing was sent there; only you can bind it to that host.`;
 
 /** What T-P9-18's turns left, as the tables hold it. */
 export const LEFT_REPLY = "That left: this chat's messages, with your typed key shown only as a reference; one held secret, which expires in 24 hours; one audit row for the refused read to api.example.org; and the card waiting on you for that host. Nothing reached a provider, so there is nothing to remove there, and no memory, file or job was written.";
