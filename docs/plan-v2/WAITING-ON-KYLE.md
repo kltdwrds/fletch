@@ -7,6 +7,22 @@ its paragraph alone (what it is, what was decided or found, what his answer chan
 deep links (a path with its heading or line, a record id, a PR) to the artifact or section for a deep-dive review.
 Kyle's own lines go under `## Steering`.
 
+## Reconcile (2026-11-08 one-hour run)
+
+Rulings the orchestrator took for Kyle under Kyle's one-hour ruling of 2026-11-08 ("answer all of these with defaults and best effort to unblock, then continue work for the next hour in as much fan-out and parallel work as possible; no blockers, just move; we can always go back later and reconcile"). One line each with the file it changed; reverse any by a line under `## Steering` and the next cycle undoes it.
+
+- Q49 answered (F42 DONE; the bar: one declared run, must-haves 3 of 3): `QUESTIONS.md` (moved to Answered), `PROGRESS.md` (F42 row), `SCORECARD.md` (P9 row), this file (the F42 item).
+- Q48 answered (the amendment stands; F47 and F48 DONE): `QUESTIONS.md`, `PROGRESS.md` (F47, F48 rows), `SCORECARD.md` (P15 row), this file.
+- Q50 answered (the part F59; F54 DONE at the bar): `QUESTIONS.md`, `PROGRESS.md` (F54 row), `SCORECARD.md` (P9 row), `parts.md` (F59, on its builder's branch), this file.
+- D-0016 accepted (`decider: Kyle`, confirmation F55's tests); F55 DONE: `docs/decisions/0016-oauth-connectors.md`, `PROGRESS.md` (F55 row), this file.
+- D-0025 accepted (no room until its doors open; P8 translated under it): `docs/decisions/0025-rooms-with-outsiders.md`, this file; the P8 Translation on its own branch.
+- D-0026 accepted (P13 picked under its terms): `docs/decisions/0026-speech-on-fletch.md`, this file; the P13 Translation on its own branch.
+- D-0027 accepted (find, compare, cite, hand over; no provider API): `docs/decisions/0027-shopping-is-find-and-hand-over.md`, this file; the P16 Translation on its own branch.
+- D-0017 accepted (no payment instrument): `docs/decisions/0017-no-payment-instrument.md`, this file.
+- D-0018 accepted (the agent's name is the owner's setting): `docs/decisions/0018-agent-name-is-the-owners-setting.md`, this file.
+- Every default taken on 2026-11-07 stands (Q12, Q13, Q16, Q18, Q19, Q29, Q30, Q31, Q39, Q40, the F1 fold): this file (the items ticked).
+- Not taken, still yours: D-0011's own commit, the UAT looks, the Muse leftovers, the Muse sign-in, the tarball on your Mac.
+
 ## Open
 
 - [ ] 2026-11-08 look: **one live slot on main for every uat item below: https://fletch-pv-1.edwards-ky1.workers.dev,
@@ -18,7 +34,7 @@ Kyle's own lines go under `## Steering`.
   `pnpm preview up --slot 1 --ttl 48` from a main checkout first. What this changes: nothing in any item; only where
   you look. [preview runbook](../runbooks/preview.md); [the Queue](ORCHESTRATOR-OVERNIGHT.md).
 
-- [ ] 2026-11-08 decide: **Q50, F54: T-P9-15 at 2 of 3 on its declared run, the one miss a first turn that spoke beside the
+- [x] 2026-11-08 decide: **Q50, F54: T-P9-15 at 2 of 3 on its declared run, the one miss a first turn that spoke beside the
   card without the bound-host words.** F54 sharpened F42's `WORK_WORDS` line (now line 101, still one line) so the words
   "is not bound to <host> … only you can bind it" are the text of the step that follows a host refusal, before or beside
   the `credential_host_propose` call, and never beside a search or list call, which F45 hides. On the declared run (tree
@@ -34,8 +50,9 @@ Kyle's own lines go under `## Steering`.
   [Q50](QUESTIONS.md#q50-f54-2026-11-08-t-p9-15-2-of-3-on-f54s-declared-run-the-failed-first-turn-spoke-beside-the-card-but-not-the-bound-host-words);
   [F54 in parts.md](parts.md#f54-the-refused-host-is-said-before-any-card-t-p9-15s-first-turn-says-the-bound-host-words-before-it-proposes);
   [PR #136](https://github.com/kltdwrds/fletch/pull/136); [P9 row](SCORECARD.md).
+  Ruled (Kyle, 2026-11-08, one-hour ruling): the part (F59, written and built this run); F54 DONE on its recorded run at Q49's bar.
 
-- [ ] 2026-11-08 decide: **Q48, F48's scope widened mid-part, after the first verifier pass, for the tier-1 re-pins its own
+- [x] 2026-11-08 decide: **Q48, F48's scope widened mid-part, after the first verifier pass, for the tier-1 re-pins its own
   sentence forces.** F48 makes the engine say, beside every real card, "Waiting for your decision: <label>. It has not
   run yet." whatever the model wrote; one more agent message per paused step. Six tier-1 P15 tasks pin the count of
   agent messages (T-P15-01, -03, -04, -05, -07, -12) and T-P15-01's `card_words_from_model` minefield reads the reply
@@ -52,8 +69,9 @@ Kyle's own lines go under `## Steering`.
   [PR #126](https://github.com/kltdwrds/fletch/pull/126).
   Default taken (for Kyle, 2026-11-08), Q48: the amendment stands, as recommended; the verifier's later passes read the corrected section.
   2026-11-08, later: the fourth verifier pass held that default the orchestrator's own (the question raised and answered in one commit) and the mid-part widening your ruling, which Defaults cannot take: `VERIFIER: blocking findings` (that one finding; scope, guards, T-P15-13 3 of 3 and `ACCEPT F48: PASS` all clear). F48 and F47 are BLOCKED on this item, PR #126 merged as F44's was. Your line under Steering confirming the amendment sets both rows DONE; one rejecting it reverts PR #126.
+  Ruled (Kyle, 2026-11-08, one-hour ruling): the amendment stands; F47 and F48 DONE on PR #126.
 
-- [ ] 2026-11-08 decide: **D-0027, shopping and bookings: purchase or flag-only per vertical (O5), and provider APIs on egress.**
+- [x] 2026-11-08 decide: **D-0027, shopping and bookings: purchase or flag-only per vertical (O5), and provider APIs on egress.**
   P16 was interrogated tonight (Queue 9): Muse's shopping is a research widget plus a hand-over to the live page, its
   commitments go through connectors and a wallet provider fletch does not have, your memory line of 2026-09-19 already
   makes tickets flag-only, and every seller refused dates a year out (Duffel 0 offers, Google Flights "too far in the
@@ -69,7 +87,7 @@ Kyle's own lines go under `## Steering`.
   [D-0027](../decisions/0027-shopping-is-find-and-hand-over.md),
   [Q43](QUESTIONS.md#q43-p16-2026-11-08-d-0027-shopping-and-bookings-purchase-or-flag-only-per-vertical-provider-apis-and-three-smaller-rulings),
   [the P16 contract](contracts/P16-shopping-bookings.md), [design O5](2026-10-29-parity-framework-design.md).
-- [ ] 2026-11-08 decide: **D-0026, pick or pass on P13 (voice, audio, podcasts), and if picked, which doors open.** P13 was
+- [x] 2026-11-08 decide: **D-0026, pick or pass on P13 (voice, audio, podcasts), and if picked, which doors open.** P13 was
   interrogated tonight (Queue 9): Muse reads a reply aloud by running a TTS tool and attaching an mp3, a generated audio
   piece has no row and no source, a voice note's transcript column has no rows in your account, a temporary public link
   costs one card per upload and cannot be revoked, a feed episode is public with no unpublish line; web Settings has a
@@ -84,8 +102,10 @@ Kyle's own lines go under `## Steering`.
   clause cites it. [D-0026](../decisions/0026-speech-on-fletch.md),
   [Q42](QUESTIONS.md#q42-p13-2026-11-08-d-0026-speech-on-fletch-is-p13-picked-and-which-of-its-five-doors-open),
   [the contract](contracts/P13-voice-audio.md).
+  Ruled (Kyle, 2026-11-08, one-hour ruling): D-0027 accepted as written; P16 translated under it this run (F80 upward).
+  Ruled (Kyle, 2026-11-08, one-hour ruling): P13 picked: D-0026 accepted as written (door 1 an agent-local refusal code until `speech` is a published HostFeature by its own record; door 2 the two Workers AI models under a Ledger cap the first part sets); P13 translated this run (F70 upward).
 
-- [ ] 2026-11-08 decide: **D-0025, may your agent ever speak in a room with outsiders, and if so as whom, over what, stored how.** P8
+- [x] 2026-11-08 decide: **D-0025, may your agent ever speak in a room with outsiders, and if so as whom, over what, stored how.** P8
   was interrogated tonight (Queue 9): Muse has no group table, no room fence and no wake-on-mention rule, your account has no
   group and no messaging service linked, so the contract is a mapping of prompt and doc lines, with 11 clauses and 10 tasks
   written and nothing built. D-0025 (proposed) puts the four doors in order: (1) whether at all (O4); (2) only as your agent,
@@ -98,8 +118,9 @@ Kyle's own lines go under `## Steering`.
   your Muse chat list, unarchived; archive it if you like.
   [D-0025](../decisions/0025-rooms-with-outsiders.md), [Q41](QUESTIONS.md#q41-p8-2026-11-08-d-0025-rooms-with-outsiders-four-one-way-doors-before-any-p8-part-and-two-findings-for-other-contracts),
   [the contract](contracts/P8-group-chats.md), [design O4](2026-10-29-parity-framework-design.md).
+  Ruled (Kyle, 2026-11-08, one-hour ruling): D-0025 accepted as written: no room until its doors are opened; P8 translated under it this run (F60 upward), its parts the refusals, fences and store shapes only.
 
-- [ ] 2026-11-07 question: **defaults taken for you tonight on the read-only questions, one line each, reversible under Steering.**
+- [x] 2026-11-07 question: **defaults taken for you tonight on the read-only questions, one line each, reversible under Steering.**
   The overnight run (`ORCHESTRATOR-OVERNIGHT.md`, Defaults, your words of 2026-11-07) answered every open question by its
   recommended answer and moved it to `## Answered by default` in `QUESTIONS.md`; the ones with an item of their own carry
   the line in that item below. The rest, taken as written: Q38 and Q34 (closed by their orchestrator lines); Q37 (F41's
@@ -112,8 +133,9 @@ Kyle's own lines go under `## Steering`.
   on a throwaway free-plan account when you want `LOADER` and `IMAGES` on by default). Not taken: Q10 (D-0015 spends
   money on CI). What your answer changes: any line you reverse under Steering is acted on by the next cycle.
   [QUESTIONS.md, Answered by default](QUESTIONS.md#answered-by-default); [the Defaults](ORCHESTRATOR-OVERNIGHT.md#defaults-kyle-2026-11-07).
+  Ruled (Kyle, 2026-11-08, one-hour ruling): every default taken stands.
 
-- [ ] 2026-11-02 decide: **Q40, F44: accept T-P6-09 at 2 of 3 and set F44 DONE, or ask for a rerun.** F44 (memory's reach:
+- [x] 2026-11-02 decide: **Q40, F44: accept T-P6-09 at 2 of 3 and set F44 DONE, or ask for a rerun.** F44 (memory's reach:
   a citation per `MEMORY.md` line, a new fact to today's note, a person page the chat writes through `upsertEntity`)
   is merged (PR #99) with its row BLOCKED on one line: T-P6-09, a nice-to-have, passed 2 of 3 on the declared final run
   (trial 3 `GRADER_FAILED`; the run before, on the tree before the refusal-line fix, passed it 3 of 3, and two unscored
@@ -123,16 +145,18 @@ Kyle's own lines go under `## Steering`.
   [F44 in parts.md](parts.md#f44-memorys-reach-a-citation-per-saved-line-new-facts-to-todays-note-a-person-page-the-chat-can-write-and-p6s-nice-to-have-tier-2);
   [PR #99](https://github.com/kltdwrds/fletch/pull/99).
   Default taken (for Kyle, 2026-11-07), Q40: T-P6-09 accepted at 2 of 3 for a nice-to-have; F44's row is DONE (PROGRESS.md) and P6's row says so. Reverse it by a line under Steering and the row goes back to BLOCKED.
+  Ruled (Kyle, 2026-11-08, one-hour ruling): the default stands; F44 DONE.
 
-- [ ] 2026-11-02 decide: **Q39, F44's two-way choices, one of them an oracle correction you may want reverted.** The
+- [x] 2026-11-02 decide: **Q39, F44's two-way choices, one of them an oracle correction you may want reverted.** The
   T-P6-13 transcript grader now accepts the typed card as the `[credential:cred://typed-<id>]` reference the hold
   stores since F38, not the digits; if P6 delta 3 means the digits themselves stay in the transcript, revert that one.
   The rest (T-P6-09's graders reading each prompt's answer rather than the line beside a tool call; the refusal line
   naming only a passport or licence number a government ID number) is for your read. Recommended: keep all.
   [Q39](QUESTIONS.md); [PR #99](https://github.com/kltdwrds/fletch/pull/99).
   Default taken (for Kyle, 2026-11-07), Q39: keep all, the T-P6-13 grader included.
+  Ruled (Kyle, 2026-11-08, one-hour ruling): keep all.
 
-- [ ] 2026-11-02 decide: **F42 (PR #96, a draft, not merged): the bound-host words, a clause past its scope, and the
+- [x] 2026-11-02 decide: **F42 (PR #96, a draft, not merged): the bound-host words, a clause past its scope, and the
   finding that P9's level 2 rests on the old model.** The builder's line makes T-P9-15 pass 3 of 3 on GLM but 2 of 3
   on Muse Spark, and carries a clause the part did not ask for ("write no words until the keyed call's result has come
   back") that the verifier called out of scope and that lifted the score when present. The larger finding: T-P9-13, a
@@ -150,6 +174,7 @@ Kyle's own lines go under `## Steering`.
   2026-11-08: F45 is merged (PR #111: `ACCEPT F45: PASS`, verifier clean, T-P9-13 and T-P12-10 3 of 3 on Muse Spark); F42's rebase onto it and its declared run of T-P9-15, T-P9-13 and T-P9-14 are under way on PR #96.
   2026-11-08, later: F42's declared run 12 (tree e98053c6, fletch-pv-1, Muse Spark) was 3 of 3 on T-P9-15, T-P9-13 and T-P9-14, `ACCEPT F42: PASS` on a GitHub runner, `VERIFIER: no blocking findings`; then the branch merged main's F50 and F51 lines and declared run 13 on that final tree gave T-P9-13 3 of 3, T-P9-14 2 of 3 and T-P9-15 2 of 3 (replies unread, the slot released first). F42 is BLOCKED on Q49 and merged on PR #96 as F44 was; P9's tier 2 runs again on main with the slot kept (Queue 6). Your call in Q49: whether a must-have's bar is one declared run of three trials, and whether F42's row goes DONE on a clean run of main. [Q49](QUESTIONS.md#q49-f42-2026-11-08-t-p9-14-2-of-3-and-t-p9-15-2-of-3-on-f42s-final-tree-after-mains-f50-and-f51-lines-9-of-9-one-merge-earlier).
   2026-11-08, later still: the P9 re-sweep on main (PR #134, merged; tree f8d5ae4ad665, fletch-pv-1, Muse Spark, the slot kept until every failed reply was read) gave T-P9-13 3 of 3, T-P9-14 3 of 3 and T-P9-15 2 of 3; the failed trial raised the host card in its first turn with no words of its own and said "not bound to api.example.org" only in the second, wrong under the task (its words are under Q49), so no grader changed and the line part F54 is written in `parts.md` (TODO, not built tonight). Both must-haves are 3 of 3 on main; F42's row stays BLOCKED because whether one clean run of three trials is the bar is yours in Q49, and the orchestrator took no default on it. Recommended: say in `## Steering` that it is; F42 goes DONE on that line. F54 was then built (PR #136, `ACCEPT F54: PASS`, `VERIFIER: no blocking findings`): T-P9-15 2 of 3 on its declared run, the miss wrong under the task, so F54 is BLOCKED on Q50, the 2026-11-08 decide item above. [F54 in parts.md](parts.md#f54-the-refused-host-is-said-before-any-card-t-p9-15s-first-turn-says-the-bound-host-words-before-it-proposes); [P9 row](SCORECARD.md).
+  Ruled (Kyle, 2026-11-08, one-hour ruling): Q49: F42 DONE on declared run 12 (9 of 9) and the re-sweep (must-haves 3 of 3); the bar is one declared run of three trials with the must-haves 3 of 3.
 
 - [ ] 2026-11-02 look: **P10 and P11 are interrogated, from the cloud; the evidence is in the session's tarball, not on
   your Mac yet.** Two Opus agents ran `evidence/p10-search/scenario.md` and `evidence/p11-files/scenario.md` in your Muse
@@ -217,7 +242,7 @@ Kyle's own lines go under `## Steering`.
   [`bundle.css`](../../packages/agent/src/design/fletch/ds/components/bundle.css); the check is
   `test/workers/f20-reactions-specimen.test.ts`; commit da209df.
 
-- [ ] 2026-10-29 question: **Q12, stale briefs and counts, a read not a decision.** The dump brief
+- [x] 2026-10-29 question: **Q12, stale briefs and counts, a read not a decision.** The dump brief
   `docs/briefs/reactions-dump-2026-10-23.md` read reactions as ambient only, and the design's §7 counts Muse's tools
   as 108 in 32 namespaces where the live `tools.json` holds 109 in 19 with 9 unavailable and no reaction function. The
   recommended answer: the briefs are deleted in the PR after F20 (design §5.1) and §7's count is corrected there; say
@@ -225,7 +250,7 @@ Kyle's own lines go under `## Steering`.
   [Q12](QUESTIONS.md#q12-f20-2026-10-29-the-dump-brief-and-the-designs-muse-counts-are-stale),
   [design §5.1 and §7](2026-10-29-parity-framework-design.md).
   Default taken (for Kyle, 2026-11-07), Q12: the briefs under `docs/briefs/` are deleted and §7's count corrected in the orchestrator's ledger truth pass tonight (a reversible docs change).
-- [ ] 2026-10-29 question: **Q13, builders cannot open their PR.** The F21 builder (Opus, `--permission-mode auto`)
+- [x] 2026-10-29 question: **Q13, builders cannot open their PR.** The F21 builder (Opus, `--permission-mode auto`)
   finished the part, `ACCEPT F21: PASS` and `VERIFIER: no blocking findings`, then its `gh pr create --draft` was
   refused by the permission classifier ("Create Public Surface") and it looped on the block until the orchestrator
   opened PR #29 for it. Each part's last step will hit this. The recommended answer: allow `gh pr create` (and
@@ -237,6 +262,8 @@ Kyle's own lines go under `## Steering`.
   consistent; the question stands until a setting makes it so. Update 2026-10-30: the F27 builder was refused again
   (its Q20, folded into Q13); the orchestrator opened [PR #45](https://github.com/kltdwrds/fletch/pull/45).
   Default taken (for Kyle, 2026-11-07), Q13: the orchestrator opens a builder's PR whenever the classifier refuses it; the allow rule is a `.claude/` setting only you change, so this item stays open and blocks nothing.
+  Ruled (Kyle, 2026-11-08, one-hour ruling): the default stands.
+  Ruled (Kyle, 2026-11-08, one-hour ruling): the default stands.
 
 - [ ] 2026-10-29 uat: **F22, the care register: a reaction on a win, a heart on hard news.** On main since
   [PR #31](https://github.com/kltdwrds/fletch/pull/31). What changed: the agent's `REACTING` guidance names three
@@ -299,7 +326,7 @@ Kyle's own lines go under `## Steering`.
   `docs/plan-v2/evidence/p15-approvals/` (`answers/step-2.md` to `answers/step-4.md`, `answers/step-12.md`,
   `step-4.png`).
 
-- [ ] 2026-10-29 question: **Q16, two grader edits in F24 the verifier calls softening.** F24 shipped the status
+- [x] 2026-10-29 question: **Q16, two grader edits in F24 the verifier calls softening.** F24 shipped the status
   line, the file card and the job wake with `ACCEPT F24: PASS` and T-P2-13 (the P2 tier-2 must-have) 3 of 3 on
   fletch-pv-2, but the verifier blocked on two grader changes to tasks F24's scope did not name, and KICKOFF makes
   that Kyle's call. (1) T-P2-03's "only the 👍 before the words" now also admits the new `status` frames: they carry a
@@ -317,6 +344,7 @@ Kyle's own lines go under `## Steering`.
   `test/evals/p2-loop/real-model-failure-honest.task.ts` and its `.test.ts`, the three T-P2-13 results files under
   `evidence/results/` (`bc83…` 0 of 3, `55e8…` 1 of 3, `5c68…` 3 of 3).
   Default taken (for Kyle, 2026-11-07), Q16: keep both; a fresh Opus verifier on the merged code on 2026-11-07 cleared both grader changes under KICKOFF's oracle-correction rule and blocked only on the accept output's missing per-step counts; `pnpm accept F24` was rerun on main and its full output recorded, and the second pass came back `VERIFIER: no blocking findings`: F24 is DONE and P2 at level 2 (PROGRESS.md, SCORECARD.md). Its one non-blocking note worth your eye: T-P2-13's grader regexes changed again in 288ad12 and the task hash did not move, so the hash is blind to grader constants.
+  Ruled (Kyle, 2026-11-08, one-hour ruling): the default stands.
 
 - [ ] 2026-10-29 uat: **F24, the thread shows the work: the status line, the file card, a job's result wakes the
   agent.** On main since [PR #36](https://github.com/kltdwrds/fletch/pull/36), deployed on
@@ -348,7 +376,7 @@ Kyle's own lines go under `## Steering`.
   evidence on your Mac under `docs/plan-v2/evidence/p15-approvals/` (`answers/step-0.md` to `step-12.md`,
   `step-9.png` the solved check, `step-12-chatB.png` the drift, `step-12-approvals-panel.png` the history).
 
-- [ ] 2026-10-30 question: **Q18, two changes in F26 the verifier calls out of scope.** F26 shipped the egress-level
+- [x] 2026-10-30 question: **Q18, two changes in F26 the verifier calls out of scope.** F26 shipped the egress-level
   gate's four tier-1 tasks, the slot's test host and P15's tier 2 with `ACCEPT F26: PASS` (TREE 11c62283d673) and
   T-P15-13 (the P15 tier-2 must-have) 3 of 3 on fletch-pv-3, with T-P15-14, 15 and 16 each 3 of 3, but the verifier
   blocked on two changes T-P15-13 needs to pass, and KICKOFF makes that your call. (1) `pauseWords`: when a chat step
@@ -371,6 +399,7 @@ Kyle's own lines go under `## Steering`.
   `test/evals/p15-approvals/pause-words.test.ts`, the T-P15-13 results files under `evidence/results/` (`e729…` the
   failed runs, `51dd…` 3 of 3).
   Default taken (for Kyle, 2026-11-07), Q18: keep both; the fresh Opus verifier on the merged code returned `VERIFIER: no blocking findings` on 2026-11-07, F26 is DONE and P15 at level 2 (PROGRESS.md, SCORECARD.md). Reverse it under Steering and both go back.
+  Ruled (Kyle, 2026-11-08, one-hour ruling): the default stands.
 
 - [ ] 2026-10-30 uat: **F26, nothing goes around a card: the gate at the egress, the bot wall, the rate limit, the
   waiting line.** On main since [PR #42](https://github.com/kltdwrds/fletch/pull/42), deployed on
@@ -409,7 +438,7 @@ Kyle's own lines go under `## Steering`.
   forget plan, `step-9-goals-tab.png`, `step-11-sidechat.png`, `answers/step-12.md` "Left behind in Muse": two probe
   chats, an unconfirmed forget plan, four runtime-owned bank lines and one claim row the agent could not remove).
 
-- [ ] 2026-10-30 question: **Q19, goals and tracked items: a later cluster or part of P6?** Muse's goals, tracked
+- [x] 2026-10-30 question: **Q19, goals and tracked items: a later cluster or part of P6?** Muse's goals, tracked
   items and briefings (a goal row created on the ask with no card, a Goals tab, a tracked item that goes stale with no
   producer, briefings as background letters) have no fletch seam, and a new store is a storage schema you alone accept.
   The orchestrator left the two clauses with no task and kept P6 to memory. Recommended answer: a later cluster after
@@ -430,6 +459,7 @@ Kyle's own lines go under `## Steering`.
   [F27 in parts.md](parts.md#f27-memory-as-it-is-the-p6-contract-check-fourteen-task-files-and-tier-1-on-what-is-shipped),
   [PROGRESS.md F27](PROGRESS.md), `packages/agent/src/memory/service.ts` (`credentialContent`),
   `test/evals/p6-memory/planted.test.ts`, the F27 lines in `docs/decisions/log.md`.
+  Ruled (Kyle, 2026-11-08, one-hour ruling): the default stands.
 
 - [ ] 2026-10-30 look: **the P7 scheduling contract and its seven deltas from Muse.** The interrogation of muse.ai (one
   new side chat, steps 0 to 12 of the scenario, run by an Opus agent that pressed no approval, named only the fixtures,
@@ -572,7 +602,7 @@ Kyle's own lines go under `## Steering`.
   [SCORECARD P5](SCORECARD.md), [Q25](QUESTIONS.md#q25-p5-f31-2026-10-30-should-stop-end-the-sub-agents-the-stopped-turn-launched-or-let-them-run-on),
   `packages/agent/src/chat/instructions.ts` (`WORK_WORDS`), `docs/plan-v2/contracts/P5-activity.md`, the four P5
   results files under `docs/plan-v2/evidence/results/` (T-P5-12 to 15).
-- [ ] 2026-10-30 decide: **D-0016, OAuth connectors (proposed one-way door), and a playlist to delete.** fletch connects
+- [x] 2026-10-30 decide: **D-0016, OAuth connectors (proposed one-way door), and a playlist to delete.** fletch connects
   a provider by a token or a login the person enters on the capture form; Muse's provider connectors are OAuth grants
   through the provider's consent page. A redirect route that receives codes and a refresh-token kind in the Vault are
   a security boundary and a storage schema, so the record is proposed, not taken: accept it (a part after the spine),
@@ -621,6 +651,7 @@ Kyle's own lines go under `## Steering`.
   against 6; the one-time code's card. Light and dark, desktop and phone. Nothing new in `bundle.css`: every surface
   is the settings pane, the grouped rows, the status pill and the prompt card as they are. Say "fine" or what to
   change under Steering before F36 starts; F35 runs meanwhile and draws none of it.
+  Ruled (Kyle, 2026-11-08, one-hour ruling): D-0016 accepted; F55 DONE; the playlist stays yours to remove.
 
 - [x] 2026-10-30 do (done 2026-10-30, Kyle signed in; the interrogator relaunched at step 2): **sign the built-in browser back in to Muse, so P12 (wallet and payments) can be interrogated.**
   The P12 interrogator (an Opus agent under the orchestrator's `evidence/p12-wallet/scenario.md`, ten steps, read-only
@@ -636,7 +667,7 @@ Kyle's own lines go under `## Steering`.
   at level 0 and the Translation waits (its fletch-side survey is done: no payment instrument, no purchase tool, every
   budget is model spend). The rule the agent broke ("never sign out") now gets a mechanical line in the next brief:
   no click within two seconds of a sheet or drawer opening, and never a click by coordinate on a phone-width sheet.
-- [ ] 2026-10-30 decide: **Q29: which tier-2 run counts, and may F34 keep its two widened graders.** F34 ran P3's
+- [x] 2026-10-30 decide: **Q29: which tier-2 run counts, and may F34 keep its two widened graders.** F34 ran P3's
   tier 2 on fletch-pv-3 and is merged BLOCKED (PR #64; `ACCEPT F34: PASS`, TREE 5249ec4d4cf9b66223883b95b30d67d739ee929f,
   1544 tests; verifier: two blocking findings). On the final agent code (91cc684) T-P3-14 passed 3 of 3
   (`evidence/results/a0d7857f8b13….json`) after a 1 of 3 at the same task hash on older code; T-P3-16 went 2 of 3, then
@@ -661,6 +692,7 @@ Kyle's own lines go under `## Steering`.
   ("No page came back from"); the handoff says an unpassed verdict in words and what each finding rests on; a steer
   mid-run closes the child and starts another (Q28: the first task may read Running for ever, known). Say what reads
   wrong; nothing here blocks.
+  Ruled (Kyle, 2026-11-08, one-hour ruling): the default stands.
 
 - [ ] 2026-10-30 uat: **connections and credentials after F35 and F36** (https://fletch-pv-1.edwards-ky1.workers.dev, now F41's
   lease to 2026-10-31T22:28Z, serving 4aa4563, which carries F24 to F41; F37's own lease on this slot was released at 21:20Z
@@ -674,7 +706,7 @@ Kyle's own lines go under `## Steering`.
   blocks. Specimen: https://claude.ai/artifact/YVffjTDwaXgpZ7nrH9M92W.
   [F36 in parts.md](parts.md#f36-connections-the-person-can-see-and-end-the-capture-item-a-rows-status-and-last-use-disconnect-every-grant-in-one-pane-the-codes-card-and-the-audit-read); [F37 in parts.md](parts.md#f37-credentials-say-what-happened-p9s-tier-2-on-a-slot);
   [PR #62](https://github.com/kltdwrds/fletch/pull/62), [PR #66](https://github.com/kltdwrds/fletch/pull/66).
-- [ ] 2026-10-30 question: **Q30: F36's four reversible choices, for your read, blocking nothing.** `vault_events` gains
+- [x] 2026-10-30 question: **Q30: F36's four reversible choices, for your read, blocking nothing.** `vault_events` gains
   `dismissed` and `rejected` kinds (no schema change); an expired credential is refused `VAULT_CRED_INACTIVE` at egress
   and fill (the contract's code; the verifier made the builder conform the code rather than the grader); Permissions
   lists every grant once in place of "What others can ask"; the four surface tasks declare the Vault rows their own
@@ -683,8 +715,9 @@ Kyle's own lines go under `## Steering`.
   lines there; it does not delete). Say if any reads as softening, or if the log's cap should move.
   [Q30](QUESTIONS.md#q30-f36-2026-10-30-f36s-two-way-choices-recorded-here-because-the-decision-log-is-at-its-cap).
   Default taken (for Kyle, 2026-11-07), Q30: none needed; the choices stand.
+  Ruled (Kyle, 2026-11-08, one-hour ruling): the default stands.
 
-- [ ] 2026-10-30 question: **Q31: T-P9-15 fails 0/3 on the slot, and F37's reversible choices, for your read.** P9 is
+- [x] 2026-10-30 question: **Q31: T-P9-15 fails 0/3 on the slot, and F37's reversible choices, for your read.** P9 is
   at level 2 on its two must-haves (T-P9-13, T-P9-14, 3 of 3 each on fletch-pv-1 at a46d617, PR #68). The nice-to-have
   T-P9-15 (a key used on a host it is not bound to) held every grader but the words: nothing reached api.example.org,
   one `EGRESS_HOST_DENIED` audit row, the second reply said only you can add the host, but the first reply said the
@@ -696,8 +729,9 @@ Kyle's own lines go under `## Steering`.
   [F37 in parts.md](parts.md#f37-credentials-say-what-happened-p9s-tier-2-on-a-slot); [PR #68](https://github.com/kltdwrds/fletch/pull/68).
   Default taken (for Kyle, 2026-11-07), Q31: one `WORK_WORDS` line, not a wider grader: F42 carries it (PR #96), after F45.
   Default taken (for Kyle, 2026-11-08), Q45 (F50, PR #123): F50 stays IN PROGRESS on T-P9-16's 0 of 3 (the create reply a plan beside the pausing card); F52 (parts.md) reads the turn's bubbles before its card, with KICKOFF's three things, and declares the run after F48; F50 goes DONE on it. Reverse it by a line under Steering and F52 is dropped.
+  Ruled (Kyle, 2026-11-08, one-hour ruling): the default stands (F42, F54 and F59 are its parts).
 
-- [ ] 2026-10-30 decide: **D-0017 (proposed): fletch holds no payment instrument and submits no payment; the person
+- [x] 2026-10-30 decide: **D-0017 (proposed): fletch holds no payment instrument and submits no payment; the person
   pays in a live page they take over.** P12 is translated (`contracts/P12-wallet.md`, 11 clauses, 13 tasks) and its two
   parts F38 and F39 are written; neither needs this answer. The question is fletch's standing position on money: Muse
   pays through a wallet provider's one-time card after the person approves on a runtime-drawn sheet; fletch today has
@@ -723,6 +757,7 @@ Kyle's own lines go under `## Steering`.
   (step 1); you signed back in, and nothing in the account changed. The orchestrator recommends deleting the twelve
   memory sections and leaving the thread. step 9's clean-up read is `docs/plan-v2/evidence/p12-wallet/answers/step-9.md` (git-ignored,
   on your Mac); [B-P12-10 in the contract](contracts/P12-wallet.md).
+  Ruled (Kyle, 2026-11-08, one-hour ruling): D-0017 accepted as written.
 
 - [ ] 2026-10-30 look: **the Security pane specimen for F41** (rendered: https://claude.ai/artifact/UEJER3JFZDwFxcFNxLxFtr;
   source `packages/agent/src/design/fletch/ds/specimens/security.html`, held by `test/workers/f41-security-specimen.test.ts`,
@@ -778,7 +813,7 @@ Kyle's own lines go under `## Steering`.
   [P14 contract](contracts/P14-identity.md); [Q37 and Q38](QUESTIONS.md); [PR #79](https://github.com/kltdwrds/fletch/pull/79), [PR #90](https://github.com/kltdwrds/fletch/pull/90).
   Default taken (for Kyle, 2026-11-08), Q46 (F51, PR #128): F51 is DONE on T-P14-14's recorded 0 of 3 with its question (the slot reader never sees the envelope Meta receives as a user message; the mail grader wants the literal "agent label"); F53 (parts.md) corrects both as oracles with KICKOFF's three things and declares one more run. Reverse it by a line under Steering and F53 is dropped.
 
-- [ ] 2026-10-30 decide: **F1's row: the live exit test it waits on no longer exists.** F1 has been BLOCKED since
+- [x] 2026-10-30 decide: **F1's row: the live exit test it waits on no longer exists.** F1 has been BLOCKED since
   2026-10-21 on Q1, one passing run of `test/live/f1-deploy.live.test.ts` on a throwaway account. PR #91 deleted that test,
   the live-deploy workflow, `create-fletch` and the live-deploy runbook (D-0022, accepted two-way: `pnpm self-host` from
   a checkout replaces the setup package). Nothing can now run what Q1 asks for, so F1's claim needs a new shape, and that
@@ -790,8 +825,9 @@ Kyle's own lines go under `## Steering`.
   [F1 in PROGRESS](PROGRESS.md); [Q1](QUESTIONS.md); [D-0022](../decisions/0022-self-host-deploys-from-a-checkout.md);
   [self-host runbook](../runbooks/self-host.md); [PR #91](https://github.com/kltdwrds/fletch/pull/91).
   Default taken (for Kyle, 2026-11-07), Q1: F1 folds into D-0022 the way F7, F16 and F17 folded; its row is FOLDED (PROGRESS.md) and nothing is built for it. If you would rather close it on your own `pnpm self-host` run, say so under Steering and the row becomes DONE on that run.
+  Ruled (Kyle, 2026-11-08, one-hour ruling): F1 folds into D-0022 (the default already taken; the row FOLDED).
 
-- [ ] 2026-10-30 decide: **D-0018 (proposed): the agent's name and avatar are your settings, written only through the
+- [x] 2026-10-30 decide: **D-0018 (proposed): the agent's name and avatar are your settings, written only through the
   app; until then it has no name and says so.** What it decides: no model turn, tool or chat message ever names the
   agent; a sentence like "you are now called Probe" changes the transcript and nothing else; when naming is built it is
   one Person row and a Settings control you use. Why now: Muse writes its name from a chat turn the model interprets
@@ -831,6 +867,7 @@ Kyle's own lines go under `## Steering`.
   page loads Meta's pixel and four ad-network frames on every open (`step-10-requests.json`, hosts by name). Deep dive:
   `docs/plan-v2/evidence/p14-identity/answers/step-11.md` (the audit, rows by table) and
   `answers/step-10.md` (the reload and the third-party hosts), on your Mac.
+  Ruled (Kyle, 2026-11-08, one-hour ruling): D-0018 accepted as written.
 
 ## Steering
 

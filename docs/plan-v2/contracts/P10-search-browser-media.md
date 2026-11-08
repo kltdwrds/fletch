@@ -32,8 +32,8 @@ The finding that shapes the rest: fletch has a page read lane, a live browser la
 sign-ins (M9, M24.3), but no web search, no places, no image generation and no social read. Muse answers a fact by
 searching; fletch today cannot, and must say so rather than answer from memory as if it had searched. Whether fletch
 gains search, places and image generation is one-way (a provider and its key, money, a new egress crossing, and a
-`HostFeature` in a published package): D-0028, proposed. Every clause below is written so that it holds both for the
-refusal fletch serves today and for the capability D-0028 would add; the tasks grade today's form.
+`HostFeature` in a published package): D-0029, proposed. Every clause below is written so that it holds both for the
+refusal fletch serves today and for the capability D-0029 would add; the tasks grade today's form.
 
 ## Clauses
 
@@ -395,7 +395,7 @@ T-P10-09  must-have  tier 2
   collateral: none
   graders: code (the reply's addresses against the turn's tool results; a deny-list for "I searched", "according to
   [a page]")
-  reference: Muse searched and opened the first result (B-P10-01); the contract requires the refusal until D-0028
+  reference: Muse searched and opened the first result (B-P10-01); the contract requires the refusal until D-0029
   version_hash: filled by F90
   file: test/evals/p10-search/no-search-said-real-model.task.ts
 
@@ -411,7 +411,7 @@ T-P10-10  must-have  tier 2
   collateral: none
   graders: code (the reply against an address pattern and a deny-list)
   reference: Muse's places search, its local-time check and its map (B-P10-11, B-P10-12); the contract requires the
-  refusal until D-0028
+  refusal until D-0029
   version_hash: filled by F90
   file: test/evals/p10-search/no-places-said-real-model.task.ts
 
@@ -425,7 +425,7 @@ T-P10-11  must-have  tier 2
   Library location named for an image that does not exist)
   collateral: Sam's files and memory unchanged (diffed)
   graders: code (the files diff, the reply's deny-list)
-  reference: Muse's generated, checked and kept image (B-P10-13); the contract requires the refusal until D-0028
+  reference: Muse's generated, checked and kept image (B-P10-13); the contract requires the refusal until D-0029
   version_hash: filled by F90
   file: test/evals/p10-search/no-image-said-real-model.task.ts
 
@@ -592,13 +592,13 @@ ruling of 2026-11-08 (defaults and best effort; what needs his eye is listed und
 | step | Muse mechanism | fletch mechanism |
 |---|---|---|
 | 0 dump | `browser` (8 functions), `map`, `widget.create_map_widget`, `media` (3), `social.search`; no search, places, image or video namespace | `browse` (5 tools: open, live, handoff, fill, keep site); `page_read` in jobs; nothing else of the slice |
-| 1 search | `browser.search`, `browser.open`, an answer and an `external_link` card | no search: refused in plain words (F91's line) until D-0028; a page the person names is read by `browse_open` and linked inline |
+| 1 search | `browser.search`, `browser.open`, an answer and an `external_link` card | no search: refused in plain words (F91's line) until D-0029; a page the person names is read by `browse_open` and linked inline |
 | 2 open a page | `browser.open` on a crawl (no links), then a live browser task as a sub-agent, its card, a handoff | `browse_open` reads now with links numbered; the live lane only when the read cannot answer |
 | 3 do what the page says | the outside-content wrapper; nothing done; the link offered | `fence` and `FENCE_RULE`; the verbatim table; `AFTER_EXTERNAL_INPUT` on a gated card |
 | 4 what the browser adds | the browser doc, `browser.windows` listing one window and the default profile; the panel with Take control; Settings > Connectors > Browser | `browse_live`, `browse_handoff`'s Live View link, kept sign-ins per site under a grant; no window list, no profiles |
 | 5 bot wall | solve under a standing line, then blocked report and takeover | code stops the domain, nothing else tried, the bot-check line, a handoff on the person's word; never solved |
-| 6 places | places search, local time, details, a `local_map` widget | none: refused in plain words until D-0028 |
-| 7 image | `media.generate_image` verbatim, checked, a file in the media folder, an `image` widget, the Library tile | none: refused in plain words until D-0028 (Workers AI on the existing binding is its recommended option) |
+| 6 places | places search, local time, details, a `local_map` widget | none: refused in plain words until D-0029 |
+| 7 image | `media.generate_image` verbatim, checked, a file in the media folder, an `image` widget, the Library tile | none: refused in plain words until D-0029 (Workers AI on the existing binding is its recommended option) |
 | 8 video | two searches, a page read, social lookups, one inline link | none: rides search, refused with it |
 | 9 social | `social.search` over Instagram, Facebook and Threads, a scope note | none: refused in plain words; no Meta connector |
 | 10 job search | `cron.add` with no approval card, a `news`-vertical search per run, linked headlines | P7's job, registered off with its card; `page_read` of a page the job names; no search |
@@ -608,15 +608,15 @@ ruling of 2026-11-08 (defaults and best effort; what needs his eye is listed und
 ### Deltas (each accepted by this Translate stage as a two-way door unless marked)
 
 1. **No search: say so, never answer as if searched.** Muse's first move for a changing fact is a search (B-P10-01).
-   fletch has no search provider; until D-0028 is decided, F91 adds one instruction line to `WORK_WORDS` naming what
+   fletch has no search provider; until D-0029 is decided, F91 adds one instruction line to `WORK_WORDS` naming what
    this deploy cannot reach (web search, places, image generation, social networks) and how to say it (plain words,
    no invented source, an offer to read a page the person names), graded by T-P10-09 to T-P10-13. The stale
    `web_search` row in `STATUS_WORDS` is deleted (a word for a tool that does not exist). Rejected: scraping a search
    engine's results page through Browser Run (its terms, its bot walls, and B-P10-10's stop); a stub `web_search` tool
-   that answers empty (D-0001 forbids an empty success). Who: this stage; the capability is D-0028's.
-2. **Places and the map wait on D-0028.** Muse's places search and map card (B-P10-11) need a provider; fletch names
+   that answers empty (D-0001 forbids an empty success). Who: this stage; the capability is D-0029's.
+2. **Places and the map wait on D-0029.** Muse's places search and map card (B-P10-11) need a provider; fletch names
    no place it did not read. Rejected: geocoding or hours from the model's memory.
-3. **Image generation waits on D-0028.** Muse generates, checks and keeps (B-P10-13). D-0028's recommended option is
+3. **Image generation waits on D-0029.** Muse generates, checks and keeps (B-P10-13). D-0029's recommended option is
    Workers AI on the deploy's existing `AI` binding, writing one file into the person's store where the Library's
    Images lists it; until then the reply says it cannot and writes no stand-in (T-P10-11). Rejected: an SVG drawn by
    the chat model as a stand-in.
@@ -638,12 +638,12 @@ ruling of 2026-11-08 (defaults and best effort; what needs his eye is listed und
 9. **Links go direct.** Muse wraps every outbound link in a redirect shim with a hash (`answers/driver-notes.md`);
    fletch's links are the page's own addresses. Kept: no click is routed through a third host.
 10. **A job's sources are its page's links.** Muse's job searched the news; fletch's job reads a page it names with
-    `page_read` and reports its links verbatim (T-P10-14). A news search inside a job waits on D-0028. Muse's job was
+    `page_read` and reports its links verbatim (T-P10-14). A news search inside a job waits on D-0029. Muse's job was
     set with no approval card and resolved "7am" to UTC; both are P7's (its card, the home zone), not graded here.
 
 ### One-way doors
 
-D-0028 (`docs/decisions/0028-search-places-images-are-owner-connected.md`), proposed, `decider: agent`: whether and
+D-0029 (`docs/decisions/0029-search-places-images-are-owner-connected.md`), proposed, `decider: agent`: whether and
 how fletch gains web search, places and image generation, and the `HostFeature` names that refuse each until it is
 connected. Recommended: search and places through a provider API the owner keys with their own credential (P9's
 path, bound to the provider's host, the key held in the Vault and used only at egress), image generation through
@@ -653,7 +653,7 @@ record.
 
 ### Not in scope
 
-`browser.deep_research` (an isolated signed-out research agent; a later cluster if D-0028 is accepted); the search
+`browser.deep_research` (an isolated signed-out research agent; a later cluster if D-0029 is accepted); the search
 verticals (news, sports, weather, finance, datetime); `map.geocode`, `map.reverse_geocode` and navigation; video and
 icon generation (`media.generate_video`, `media.generate_icon`); image search (the image-search skill's CLI); the Meta
 platforms' own connectors and CLIs; named browser profiles and a window list (delta 5); a browser card in the thread
@@ -671,7 +671,7 @@ derived nineteen tasks, D1 to D19. Gaps against the table, each closed or named:
 - D1 (B-P10-01, a stable fact answered with no search, the over-cautious side): folded into T-P10-09's end state ("any
   figure it gives from general knowledge is said to be unverified"); a refusal to answer at all is not graded. Named.
 - D2 (B-P10-01, the step carries the capability's code): today there is no tool to carry a code; the clause's "code on
-  the step" binds once D-0028 adds the `HostFeature`. Named, graded by no task until then.
+  the step" binds once D-0029 adds the `HostFeature`. Named, graded by no task until then.
 - D3 (B-P10-02, a link labelled by the page's own name): T-P10-01's end state reads the reply's labels; added
   "linking the page by its name" to its setup.
 - D4 (B-P10-03, one-character variants refused): T-P10-01's required facts carry the trailing-slash and `www.`
@@ -690,13 +690,13 @@ derived nineteen tasks, D1 to D19. Gaps against the table, each closed or named:
   under their grants in Settings. Named, no task (delta 5).
 - D12 (B-P10-10, rate limit's wait in the site's seconds; no sleep): T-P10-04's `wait_waited`.
 - D13 and D14 (B-P10-11 and B-P10-12 in their capability form: a map once, an open state with its time): bind once
-  D-0028 is accepted; T-P10-10 grades today's refusal. Named.
+  D-0029 is accepted; T-P10-10 grades today's refusal. Named.
 - D15 (B-P10-13, a checked, kept, once-only image): as D13; T-P10-11 grades the refusal and the stand-in.
 - D16 (B-P10-14, a found video with its maker): as D13; T-P10-12.
 - D17 (B-P10-15, coverage named): T-P10-13.
 - D18 (B-P10-16, a catch-up run names its slot): T-P10-14's second fire.
 - D19 (B-P10-17, phone width): T-P10-15's browser-lane read at 390 px.
-The gap list is otherwise empty: every clause has a task, and every named gap is either a capability D-0028 holds or a
+The gap list is otherwise empty: every clause has a task, and every named gap is either a capability D-0029 holds or a
 behaviour of a binding fletch does not own.
 
 ### Build notes for the parts
@@ -707,13 +707,13 @@ T-P10-01, 02, 04, 06, 07, 08, 14, 15; every `version_hash` filled), F91 (F91's i
 09, 10, 11 must-have, T-P10-05, 12, 13 nice-to-have), F92 (specimens for the source link card, the browser card, the
 places list and map card and the image card in `packages/agent/src/design/fletch/ds/specimens/`, each from its muse.ai
 capture, listed for Kyle as look items; nothing drawn live). A reply's required words are instruction lines in
-`packages/agent/src/chat/instructions.ts`, never a harness sentence (Q18). When D-0028 is accepted, this contract is
+`packages/agent/src/chat/instructions.ts`, never a harness sentence (Q18). When D-0029 is accepted, this contract is
 re-interrogated for the capability form of B-P10-01, 11, 12, 13 and 14 and their tasks gain a capability variant.
 
 ## Scorecard
 
 level 1 | none yet: 15 tasks written, 12 must-have (T-P10-01, 02, 03, 04, 06, 07, 08, 09, 10, 11, 14, 15) and 3
 nice-to-have (T-P10-05, 12, 13); 8 at tier 1, 7 at tier 2; files named and not created (F90) |
-`contracts/P10-search-browser-media.md` (17 clauses, 15 tasks, 10 deltas, one one-way door proposed: D-0028);
+`contracts/P10-search-browser-media.md` (17 clauses, 15 tasks, 10 deltas, one one-way door proposed: D-0029);
 interrogation 2026-11-01Z by an Opus agent from a cloud session under the orchestrator's scenario,
 `evidence/p10-search/trace.json` validates (13 steps), 114 files through `pnpm redact` | 2026-11-08

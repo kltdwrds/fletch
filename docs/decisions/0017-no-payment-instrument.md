@@ -1,14 +1,16 @@
 ---
 id: D-0017
 title: fletch holds no payment instrument and submits no payment; the person pays in a live page they take over
-status: proposed
+status: accepted
 door: one-way
-decided: 2026-10-30
-decider: agent
+decided: 2026-11-08
+decider: Kyle
 confirmation: review
 review-by: 2026-12-31
 revisit-when: the first owner asks the agent to pay for something it cannot hand over, or a connector fletch wants (a direct checkout, a booking API) can only complete with a payment method the agent holds
 ---
+Accepted on Kyle's one-hour ruling of 2026-11-08 ("answer all of these with defaults and best effort to unblock, then continue work for the next hour in as much fan-out and parallel work as possible; no blockers, just move; we can always go back later and reconcile"); reconcile at his next check-in: a line under `## Steering` in `docs/plan-v2/WAITING-ON-KYLE.md` reverses it and the record goes back to `proposed`.
+
 Ruling: the agent keeps no payment instrument of any shape (no card number, expiry or code, no provider customer or
 method id, no network token) and never submits a payment; a purchase is proposed to the person's card and, when
 allowed once, the agent hands the live page over (`browse_handoff`) and the person pays there with their own method;

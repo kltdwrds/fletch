@@ -1,5 +1,5 @@
 ---
-id: D-0028
+id: D-0029
 title: Web search, places and image generation are capabilities the owner connects, each refused by a HostFeature code until it is
 status: proposed
 door: one-way
