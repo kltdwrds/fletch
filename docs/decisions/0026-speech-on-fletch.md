@@ -1,14 +1,16 @@
 ---
 id: D-0026
 title: Speech on fletch, if P13 is picked: Workers AI models for transcription and voice, a refusal by name where a deploy has none, no public feed, no kept voice audio and no live calls until Kyle opens each door
-status: proposed
+status: accepted
 door: one-way
 decided: 2026-11-08
-decider: agent
+decider: Kyle
 confirmation: review
 review-by: 2026-12-31
 revisit-when: Kyle picks P13 (design §7, "by pick"), names the speech models and their spend, or rules on a public podcast feed, kept voice audio or live calls
 ---
+Accepted on Kyle's one-hour ruling of 2026-11-08 ("answer all of these with defaults and best effort to unblock, then continue work for the next hour in as much fan-out and parallel work as possible; no blockers, just move; we can always go back later and reconcile"); reconcile at his next check-in: a line under `## Steering` in `docs/plan-v2/WAITING-ON-KYLE.md` reverses it and the record goes back to `proposed`. Confirmation to come: the contract check test the Translate part F70 adds names this record; until it exists the record is held by `review` with its review-by date.
+
 Ruling: if Kyle picks P13, fletch transcribes a voice note and reads a reply aloud through Workers AI speech models on
 the `AI` binding under a per-minute or per-character price the Ledger learns (`PRICES` in
 `packages/agent/src/ledger/budget.ts`), a deploy without those models refuses by name (D-0001) through an agent-local
