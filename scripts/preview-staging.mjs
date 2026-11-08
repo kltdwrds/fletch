@@ -122,6 +122,6 @@ export async function stagingCommand(ctx, sub, opts) {
     const health = await ctx.fetch(`${origin(plan)}/health`).then(async (r) => `${r.status} ${await r.text()}`, (e) => `no answer: ${e.message}`);
     ctx.log(`preview: slot ${plan.n}: ${lease.staging ? 'staging' : 'marked staging in the inventory, NOT converted yet'}\n  serving ${lease.serving} (deploy ${lease.deploy})\n  app     ${origin(plan)}: /health ${health}`);
   } else {
-    throw new Error('usage: pnpm preview staging <convert|deploy|status> [--paid] [--var K=V]...');
+    throw new Error('usage: pnpm preview staging <convert|deploy|status|secrets> [--paid] [--var K=V]...');
   }
 }
