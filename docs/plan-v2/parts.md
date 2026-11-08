@@ -734,3 +734,64 @@ and `pnpm evals T-P6-04` `pass`; `ACCEPT F44: PASS`; `VERIFIER: no blocking find
 **Not in scope:** goals and tracked items (Q19); a background summariser or relationships loop (deltas 6 and 7 beyond
 the one tool path); a grader change (only an oracle correction with KICKOFF's three things); a change to a clause; a
 new table or column.
+
+## F45 The lead-in is commentary: text beside a tool call is neither shown nor stored as a reply, and the graders read the reply again on a slot
+
+**Read:** `docs/plan-v2/contracts/P2-loop.md` (B-P2-03: the agent has no text channel before the turn ends, commentary
+is forbidden, the reply is written after the last tool call; T-P2-03's end_state and its `early_bubble` minefield;
+delta 2, the one streamed bubble and `send_to_user` as the deliberate early message), the chat engine's path for a
+step's text (`packages/agent/src/model/read.ts`, `packages/agent/src/chat/turn.ts` `emit`, `finishTurn`, `saidBefore`
+and `endsTurnIfSaid`, `packages/agent/src/chat/engine.ts` the barrier and `broadcast`, `packages/agent/src/chat/history.ts`
+`visibleHistory`, `packages/agent/src/chat/message-actions.ts` `namedSince`, `packages/agent/src/chat/activity-steps.ts`
+`summaryOf`, `packages/agent/src/chat/cards.ts` `pauseWords`), the F42 finding (PR #96: Muse Spark opens nearly every
+turn with a lead-in bubble beside its first tool call, "I'll read that probe with your Example API key.", and graders
+that read the first bubble or count replies take it for the reply; F43's T-P12-10 and F44's T-P6-09 met the same
+thing and corrected their graders one by one), `docs/plan-v2/QUESTIONS.md` Q18, `docs/plan-v2/KICKOFF.md` "A grader
+changes after a run only as an oracle correction", `docs/runbooks/evals.md`. No one-way door: no table, column,
+schema, package contract or money; the stored row keeps its shape and gains a mark. A live step: `pnpm evals` on this
+worktree's slot (`pnpm preview up`), the run declared before it starts.
+
+**Why one part and not a correction per task:** B-P2-03 already forbids the text; fletch's engine lets it through
+(streams it as `delta` frames, stores it as the step's assistant text, lists it as an `agent` entry in history and
+in the `named` frame, counts it in `replyChars`, in `saidBefore` and in `pauseWords`, and quotes it in Activity's
+summary when the final step has no words). Every cluster's graders then see one bubble more than the contract allows,
+and three parts have each widened one grader for it. The contract's wording supports an engine rule, so the fix is
+one rule in the engine that holds the clause, and the graders stay as written.
+
+**Scope:** (1) The rule, in the engine: in a step whose assistant message carries one or more tool calls and that
+neither pauses on a card (`pauseWords`' step, B-P15-06: words beside a card call are that reply) nor ends the turn
+(`endsTurnIfSaid`: words beside a launch are the launch reply), the message's text blocks are commentary. Commentary
+reaches the person nowhere: no `delta` or `message` frame carries it, history (`visibleHistory`) lists no `agent`
+entry for it, the `named` frame names it to no one, `replyChars` leaves it out, and Activity's summary never quotes it.
+The model keeps it: the stored row holds the text with a mark (the transcript the model is sent on its next step and on
+later turns is unchanged in content), so nothing about what the model sees changes. How the frames are held is the
+builder's two-way choice, logged with its reason: a step's `delta`s held until the step's message ends and released
+only when the step is final, pausing or ending (the reply then reaches the page at the step's end rather than token by
+token), or streamed live and retracted by one frame the page honours when a tool call follows (a `retract` frame the
+page applies to the open reply bubble). (2) `saidBefore` counts only words that were a reply (a final, pausing or
+ending step's), never commentary, so a turn whose earlier step had a lead-in does not end its launch with no stored
+reply. (3) T-P2-03's minefield `early_bubble` stays as written and its tier-1 test gains the planted case that today
+pins the defect the other way round (`test/evals/p2-loop/planted.test.ts`, "Working on it." beside a lookup, expected
+`early_bubble` true): with the rule it is false, and the planted violation is the rule removed (a world flag or the
+engine seam the test reaches, never a production flag), which makes it true again. (4) Tests that pinned the old
+behaviour are updated to pin the new, each named in the PR body with the line it pinned (at least
+`test/evals/p12-wallet/tier2-fake.test.ts`, the narration bubble; `test/workers/f34-launch-once.test.ts`, words beside
+`tool_search` counting as said); no test is deleted. (5) Tier 1: a hermetic test per item that plants the violation on
+the production path (a lead-in beside a non-final call that reaches a frame, a history entry, the `named` frame,
+`replyChars` or the Activity summary; a paused step's words dropped; an ending step's words dropped; the model's next
+step not carrying the text). (6) Delta 2 in `contracts/P2-loop.md` gains one sentence naming the rule (text beside a
+tool call in a step that continues is commentary and is neither streamed nor stored as a reply; F45); no clause
+changes. (7) Tier 2 on the slot, declared before it starts: T-P9-13 and T-P12-10 (the two must-haves the lead-in
+failed, each three trials) and T-P2-13 (P2's must-have, three trials) to show no regression; the results files
+committed, the table in the PR body. (8) Every P2, P9 and P12 hash in the contract matches (no grader changes, so
+none moves).
+
+**Acceptance:** `pnpm evals T-P9-13`, `pnpm evals T-P12-10` and `pnpm evals T-P2-13` `pass` (three of three);
+`ACCEPT F45: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a grader change (only an oracle correction with KICKOFF's three things, and none is expected: the
+graders already say what the contract says); a change to a clause or to T-P2-03's end_state; `send_to_user` (the
+deliberate early message stays, and so does its `message` frame); `<message_break/>`; any `WORK_WORDS` line about
+words beside a call (the engine holds the rule now; F42's line loses its no-words clause when it is rebased onto this
+part, in F42); a change to what the model is sent; the Activity drawer's step list (commentary stays a step's text
+there, as the model's own words).
