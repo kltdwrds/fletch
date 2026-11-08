@@ -1,5 +1,5 @@
 // What a fletch preview slot's Worker answers at /__preview/, before the agent or the placeholder sees the request
-// (docs/preview.md): its lease, a claim of it, a reset of the slot's bucket and memory index, and its test host's reads. It works through the
+// (docs/preview.md): its lease, a claim of it, marking it staging, a reset of the slot's bucket and memory index, and its test host's reads. It works through the
 // slot's own bindings, so the scoped token that deploys a slot needs no R2 or Vectorize permission. A caller proves it
 // may by a key: the secret PREVIEW_KEY_<tag> it set on this Worker. The lease (./lease.mjs) says which tag owns the
 // slot. The agent's Durable Objects are wiped by the placeholder's deploy, not here. The agent never imports this file.
@@ -84,7 +84,8 @@ export async function ops(request, env, { lease: store, now = Math.floor(Date.no
   if (!url.pathname.startsWith('/__preview/')) return null;
   const lease = await store.read();
   const tag = caller(request, env);
-  const holds = Boolean(tag && lease && lease.expiresAt > now && lease.tag === tag);
+  // Nobody holds the staging lease: no key resets it, reads its test host, or renews it.
+  const holds = Boolean(tag && lease && !lease.staging && lease.expiresAt > now && lease.tag === tag);
   const serving = { serving: env.PREVIEW_SERVING ?? null, deploy: env.PREVIEW_DEPLOY ?? null };
 
   if (request.method === 'GET' && url.pathname === '/__preview/lease') return json(200, { ...(tag ? fullLease(lease, now) : publicLease(lease, now)), ...serving });
@@ -104,13 +105,21 @@ export async function ops(request, env, { lease: store, now = Math.floor(Date.no
 
   if (url.pathname === '/__preview/reset') {
     // The holder resets its own slot; gc resets one whose lease it judged over, only while that lease is still the one it judged.
-    const forced = body.force === true && typeof body.expectTag === 'string' && lease?.tag === body.expectTag;
+    // The staging slot is reset only by `down --slot n --force`, which says `unstage`: never by gc, nor by code that predates staging.
+    const forced = body.force === true && typeof body.expectTag === 'string' && lease?.tag === body.expectTag && (!lease?.staging || body.unstage === true);
     if (!holds && !forced) return refuse(409, 'conflict', 'this slot is not yours to reset, or its lease changed');
     if (!(await emptyStores(env))) return json(200, { done: false });
     // A fresh lease resets what the last one left and keeps itself; a release ends the lease it reset.
     if (holds && body.keepLease === true) return json(200, { done: true });
-    await store.end(forced ? { force: true, expectTag: body.expectTag } : { tag }, now);
+    await store.end(forced ? { force: true, expectTag: body.expectTag, unstage: body.unstage === true } : { tag }, now);
     return json(200, { done: true });
+  }
+  if (url.pathname === '/__preview/staging') {
+    // Marks the slot staging (`pnpm preview staging convert`), keeping its data, secrets and objects: a compare-and-set on the tag the converter read.
+    if (body.expectTag !== null && typeof body.expectTag !== 'string') return refuse(400, 'invalid', 'send { expectTag }: the lease tag read, or null');
+    const r = await store.stage({ expectTag: body.expectTag }, now);
+    if (r.conflict) return json(409, { error: { code: 'conflict', message: 'the lease changed since it was read' }, lease: fullLease(lease, now) });
+    return json(200, { ...fullLease(r.lease ?? lease, now), already: Boolean(r.already) });
   }
   if (url.pathname === '/__preview/test-host') {
     // The slot's test host (./test-host.mjs, F26) reads a chat's log and the stores a grader scans: its holder's alone.

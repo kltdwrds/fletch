@@ -5,6 +5,7 @@
     {
       "n": 1,
       "name": "fletch-pv-1",
+      "staging": true,
       "resources": [
         {
           "created": true,

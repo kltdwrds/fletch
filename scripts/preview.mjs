@@ -12,7 +12,7 @@ import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { authMode, CLOUD_HOSTS, DEFAULT_TTL_HOURS, freeSlot, gcReason, mintSecrets, origin, ownerTag, PREFIX, SECRETS, sha256Hex, slotPlan, tokenForm, wranglerEnv } from './preview-plan.mjs';
+import { authMode, CLOUD_HOSTS, DEFAULT_TTL_HOURS, freeSlot, gcReason, leaseLabel, mintSecrets, origin, ownerTag, PREFIX, refusal, SECRETS, sha256Hex, slotPlan, stagingSlots, tokenForm, wranglerEnv } from './preview-plan.mjs';
 import { agentDir, CONFIG, account, deploySlot, deprovision, drainBucket, INVENTORY, knownSubdomain, needInventory, provision, readJson, tailOf, wranglerRunner, writeWhole } from './preview-pool.mjs';
 
 /** The account a new pool is made on unless `provision --account` names another (D-0008); an inventory names its own. */
@@ -28,7 +28,11 @@ const USAGE = `usage: pnpm preview <command>
   doctor                  which credential is in use, whether the network takes it, each slot, the hosts to allow
   provision --slots N [--account id]   (Kyle's login) make the pool's slots, on this account for a new pool; idempotent
   deprovision [--slot n]  (Kyle's login) delete what the inventory records for one slot, or all
-  token [--template id] [--group id] [--env-file path] [--admin-env NAME]   (Kyle's Mac) make or update the slot Workers' token`;
+  token [--template id] [--group id] [--env-file path] [--admin-env NAME]   (Kyle's Mac) make or update the slot Workers' token
+  staging convert         (Kyle's login, a clean main checkout) once: deploy main to the staging slot and mark its lease staging, its data kept
+  staging deploy          (a clean main checkout; CI on merge) redeploy main to the staging slot, its secrets and data kept
+  staging status          the staging slot's lease, what it serves and its /health
+  down --slot n --force   (Kyle's login) unstage the staging slot and release it: its data wiped, as \`down\` does`;
 
 // Leases: through the slot Worker's /__preview/ ops, authorised by this worktree's key, kept in a git-ignored lease
 // file in <git common dir>/fletch-previews/ with the slot's setup token.
@@ -67,13 +71,13 @@ async function opOnce(ctx, plan, method, name, { key, tag, body } = {}) {
   }
 }
 
-const must = (r, what) => {
+export const must = (r, what) => {
   if (r.status !== 200) throw new Error(`preview: ${what} failed (${r.status}): ${r.body?.error?.message ?? JSON.stringify(r.body)}`);
   return r.body;
 };
 
 /** Waits until the slot's Worker accepts a key just set (a secret takes seconds to reach every location). */
-async function keyAccepted(ctx, plan, auth) {
+export async function keyAccepted(ctx, plan, auth) {
   for (let i = 0; i < 30; i++) {
     const r = await op(ctx, plan, 'GET', 'lease', auth);
     if (r.status === 200 && 'owner' in r.body) return true;
@@ -104,7 +108,7 @@ async function rotate(ctx, plan, auth) {
 }
 
 /** Deletes every PREVIEW_KEY_* the slot's Worker holds: this session's, and any a crashed one left. */
-function dropKeys(ctx, plan) {
+export function dropKeys(ctx, plan) {
   const acc = account(ctx.run);
   const keys = acc.secretNames(plan.worker).filter((n) => n.startsWith('PREVIEW_KEY_'));
   if (keys.length > 0) acc.secrets(plan.worker, Object.fromEntries(keys.map((k) => [k, null])));
@@ -115,8 +119,10 @@ const claimBody = (ctx, ttlHours) => ({ branch: ctx.branch, owner: ctx.owner, tt
 /** Claims a free slot for this worktree: its own key recorded, then set, then one claim; a lost race tries the next. */
 async function claimSlot(ctx, inv, { slot: wanted, ttlHours }) {
   const tag = ownerTag(ctx.root);
+  const staging = stagingSlots(inv);
+  if (wanted && staging.includes(wanted)) throw refusal('PREVIEW_SLOT_STAGING', `slot ${wanted} is the staging slot, deployed from main on merge; a branch takes another (\`pnpm preview up\` without --slot)`);
   const leases = [];
-  for (const n of wanted ? [wanted] : inv.slots.map((s) => s.n)) leases.push({ n, lease: (await op(ctx, planOf(ctx, n), 'GET', 'lease')).body });
+  for (const n of wanted ? [wanted] : inv.slots.map((s) => s.n).filter((n) => !staging.includes(n))) leases.push({ n, lease: (await op(ctx, planOf(ctx, n), 'GET', 'lease')).body });
   for (const { n, lease } of leases) {
     if (lease?.leased !== false) continue;
     const plan = planOf(ctx, n);
@@ -161,7 +167,8 @@ export async function up(ctx, { slot, ttlHours = DEFAULT_TTL_HOURS, paid = false
   const inv = needInventory(ctx);
   const held = loadLease(ctx);
   let claim;
-  if (held?.state === 'held') {
+  if (held && stagingSlots(inv).includes(held.slot)) ctx.log(`preview: slot ${held.slot} is the staging slot now; letting go of this worktree's lease file on it and taking another`);
+  if (held?.state === 'held' && !stagingSlots(inv).includes(held.slot)) {
     const plan = planOf(ctx, held.slot);
     const auth = { key: held.key, tag: held.tag };
     const r = await op(ctx, plan, 'POST', 'claim', { ...auth, body: claimBody(ctx, ttlHours) });
@@ -188,7 +195,7 @@ export async function up(ctx, { slot, ttlHours = DEFAULT_TTL_HOURS, paid = false
 }
 
 /** Puts a slot back as provisioning left it: the placeholder (the agent's objects deleted), new secrets, its bucket and index emptied, its lease ended, its keys gone. */
-async function release(ctx, inv, plan, auth, resetBody) {
+export async function release(ctx, inv, plan, auth, resetBody) {
   deploySlot(ctx, inv, plan.n, { placeholder: true });
   await rotate(ctx, plan, auth);
   await resetAll(ctx, plan, auth, resetBody);
@@ -202,6 +209,12 @@ export async function down(ctx) {
   const inv = needInventory(ctx);
   const held = loadLease(ctx);
   if (!held) throw new Error('preview: this worktree holds no slot');
+  if (stagingSlots(inv).includes(held.slot)) {
+    // A lease file left from before the slot became staging: the slot is not this worktree's, so only the file goes.
+    dropLease(ctx);
+    dropConfig(ctx);
+    throw refusal('PREVIEW_SLOT_STAGING', `slot ${held.slot} is the staging slot; down never releases it (this worktree's stale lease file is gone, the slot untouched). On Kyle's login, \`pnpm preview down --slot ${held.slot} --force\` unstages and wipes it`);
+  }
   const plan = planOf(ctx, held.slot);
   const auth = { key: held.key, tag: held.tag };
   // Renewed first: a lease that lapsed is still this worktree's to reset while nobody else has taken it.
@@ -247,12 +260,18 @@ export function mergedBranchHashes(root, log = console.error, spawn = spawnSync)
 export async function gc(ctx, { dryRun = false, slot: only, force = false } = {}) {
   if (force && (ctx.mode !== 'oauth' || !only)) throw new Error("preview: `gc --force` takes back one live lease (`--slot n`), on Kyle's login only");
   const inv = needInventory(ctx);
+  const staging = stagingSlots(inv);
+  if (force && staging.includes(only)) throw refusal('PREVIEW_SLOT_STAGING', `slot ${only} is the staging slot; gc never releases it. On Kyle's login, \`pnpm preview down --slot ${only} --force\` unstages and wipes it`);
   const merged = ctx.mergedHashes();
   const now = Math.floor(ctx.now() / 1000);
   const tag = ownerTag(ctx.root);
   const failures = [];
   for (const s of inv.slots.filter((x) => !only || x.n === only)) {
     const plan = planOf(ctx, s.n);
+    if (staging.includes(s.n)) {
+      ctx.log(`preview: slot ${s.n}: staging; gc never releases it`);
+      continue;
+    }
     try {
       const lease = must(await op(ctx, plan, 'GET', 'lease'), `reading slot ${s.n}'s lease`);
       const reason = gcReason(lease, merged, now) ?? (force && lease.expiresAt ? 'forced (--force)' : null);
@@ -380,6 +399,9 @@ async function main(argv) {
   const ctx = {
     root,
     mode,
+    treeClean: () => git(root, ['status', '--porcelain', '--untracked-files=no']) === '',
+    headCommit: () => git(root, ['rev-parse', '--verify', '-q', 'HEAD']),
+    originMainCommit: () => git(root, ['rev-parse', '--verify', '-q', 'refs/remotes/origin/main']),
     env: process.env,
     accountId,
     dir: path.join(common, 'fletch-previews'),
@@ -412,12 +434,19 @@ async function main(argv) {
     const full = (await op(ctx, plan, 'GET', 'lease', auth)).body;
     const health = await fetch(`${origin(plan)}/health`).then(async (r) => `${r.status} ${await r.text()}`, (e) => `no answer: ${e.message}`);
     const mine = full.tag === lease.tag && full.leased;
-    console.log(`preview: slot ${lease.slot} (${lease.branch})\n  lease   ${mine ? `this worktree's until ${new Date(full.expiresAt * 1000).toISOString()}` : "NOT this worktree's any more"}\n  serving ${full.serving}\n  app     ${origin(plan)}: /health ${health}\n  setup   ${setupLink(plan, lease.setupToken)}`);
+    const whose = mine ? `this worktree's until ${new Date(full.expiresAt * 1000).toISOString()}` : full.staging ? "staging: NOT this worktree's (`pnpm preview up` takes another slot)" : "NOT this worktree's any more";
+    console.log(`preview: slot ${lease.slot} (${lease.branch})\n  lease   ${whose}\n  serving ${full.serving}\n  app     ${origin(plan)}: /health ${health}\n  setup   ${setupLink(plan, lease.setupToken)}`);
   } else if (command === 'tail') {
     const { plan } = held();
     process.exitCode = ctx.run(['tail', plan.worker, '--format', 'pretty', ...rest], { inherit: true }).status;
+  } else if (command === 'down' && flags.slot !== undefined) {
+    const { unstage } = await import('./preview-staging.mjs');
+    console.log(`preview: slot ${(await unstage(ctx, intFlag(flags.slot, 'slot'), { force: flags.force === true })).n} unstaged and released`);
   } else if (command === 'down') {
     console.log(`preview: slot ${(await down(ctx)).n} released`);
+  } else if (command === 'staging') {
+    const { stagingCommand } = await import('./preview-staging.mjs');
+    await stagingCommand(ctx, rest[0], { paid: flags.paid === true, vars: varFlags(flags.var) });
   } else if (command === 'gc') {
     const failures = await gc(ctx, { dryRun: flags['dry-run'] === true, slot: intFlag(flags.slot, 'slot'), force: flags.force === true });
     if (failures.length > 0) throw new Error(`preview: gc left ${failures.length}:\n- ${failures.join('\n- ')}`);
@@ -430,8 +459,7 @@ async function main(argv) {
         (r) => r.body,
         (e) => ({ error: { message: e.message } }),
       );
-      const what = l.error ? `no answer: ${l.error.message}` : l.leased ? `leased until ${new Date(l.expiresAt * 1000).toISOString()}` : l.expiresAt ? 'expired, its data still there (gc takes it back)' : 'free';
-      console.log(`slot ${s.n}  ${plan.host}  ${what}${mine?.slot === s.n ? '  (this worktree)' : ''}`);
+      console.log(`slot ${s.n}  ${plan.host}  ${leaseLabel(l, { staging: s.staging === true })}${mine?.slot === s.n ? '  (this worktree)' : ''}`);
     }
   } else if (command === 'doctor') {
     await doctor(ctx, inv, accountId);

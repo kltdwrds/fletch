@@ -346,3 +346,9 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   form's redirect to that list; a key's or a login's form keeps 'self', and OAuth fields submitted from one come back
   on the OAuth form. Rejected: a page with a link the person clicks (a second click for nothing) and a Vault-side
   fetch of the consent page.
+- 2026-11-08 Preview slot 1 (`fletch-pv-1`) is staging for Kyle's and Muse's UAT: the inventory marks it, its lease row
+  says `staging` and never expires, no `up`, `gc` or plain `down` takes or wipes it, and every push to main redeploys
+  main to it (`.github/workflows/deploy-staging.yml`, `pnpm preview staging deploy`) on the scoped token with no lease
+  key, since that token already deploys every slot Worker. Reversing: `pnpm preview down --slot 1 --force` on Kyle's
+  login, then a PR that drops the mark and the workflow. Rejected: a lease key for the runner (it proves nothing the
+  token does not), and a fresh lease per deploy (it would wipe the passkey and workspace).

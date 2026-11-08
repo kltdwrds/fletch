@@ -1,0 +1,49 @@
+name: deploy-staging
+# Every push to main redeploys main to the staging slot, fletch-pv-1 (docs/runbooks/preview.md, Staging): the slot the
+# inventory marks "staging": true, whose lease row says staging once `pnpm preview staging convert` ran on Kyle's
+# login. A redeploy keeps the slot's secrets, Durable Objects, bucket and index, so the owner's passkey and workspace
+# stay. Dispatch it by hand from main to redeploy without a merge:
+#   gh workflow run deploy-staging.yml --ref main
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Two merges queue: the one running finishes, and only the newest waiting one runs after it (a wrangler deploy is
+# never cancelled halfway).
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    # Staging serves main alone; `pnpm preview staging deploy` refuses any other branch too.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The Cloudflare secrets are this step's alone: `pnpm check` runs without them, as in ci.yml.
+      - name: Check (pnpm check)
+        env:
+          CHECK_FILE_SIZES_BASE: ${{ github.event.before != '0000000000000000000000000000000000000000' && github.event.before || '' }}
+        run: pnpm check
+      # The scoped token deploys only the slot Workers (D-0008). The command reads the slot's public lease and deploys
+      # only when it says staging; any failure fails the job, and it never falls back to another slot.
+      - name: Deploy main to the staging slot (pnpm preview staging deploy)
+        env:
+          FLETCH_PREVIEW_AUTH: token
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          FLETCH_PREVIEW_SUBDOMAIN: ${{ secrets.FLETCH_PREVIEW_SUBDOMAIN }}
+        run: pnpm preview staging deploy

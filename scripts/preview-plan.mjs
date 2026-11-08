@@ -221,12 +221,33 @@ export function baseNames(raw) {
 /** The first slot whose public lease is free (never taken, or expired), or undefined. */
 export const freeSlot = (leases) => leases.find(({ lease }) => lease && !lease.leased)?.n;
 
-/** Why `gc` takes a slot back, or null: its lease expired with its data still there, or its branch merged. */
+/** Why `gc` takes a slot back, or null: its lease expired with its data still there, or its branch merged. Never the staging lease. */
 export function gcReason(lease, mergedHashes, now) {
-  if (!lease || lease.expiresAt === null) return null;
+  if (!lease || lease.expiresAt === null || lease.staging) return null;
   if (lease.expiresAt <= now) return 'its lease expired';
   if (mergedHashes.has(lease.branchHash)) return 'its branch merged';
   return null;
+}
+
+// Staging: the one slot the inventory marks `"staging": true`, deployed from main on every merge
+// (.github/workflows/deploy-staging.yml, scripts/preview-staging.mjs). No lease command takes, releases or wipes it.
+
+/** An Error with a stable `code`, which callers and tests branch on, never the message text. */
+export function refusal(code, message) {
+  const e = new Error(`${code}: ${message}`);
+  e.code = code;
+  return e;
+}
+
+/** The numbers of the slots the inventory marks staging. */
+export const stagingSlots = (inv) => (inv?.slots ?? []).filter((s) => s.staging === true).map((s) => s.n);
+
+/** What `list` says of a slot's public lease (`staging`: the inventory marks it so). */
+export function leaseLabel(lease, { staging = false } = {}) {
+  if (lease.error) return `no answer: ${lease.error.message}`;
+  if (lease.staging) return `staging (main, deployed on merge; serving ${lease.serving ?? 'nothing'})`;
+  const what = lease.leased ? `leased until ${new Date(lease.expiresAt * 1000).toISOString()}` : lease.expiresAt ? 'expired, its data still there (gc takes it back)' : 'free';
+  return staging ? `staging, not converted yet: ${what}` : what;
 }
 
 /** What Kyle puts in the account-owned token form for this pool, when `pnpm preview token` cannot. */
