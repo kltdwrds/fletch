@@ -542,11 +542,8 @@ export class VaultCore extends OAuthVault {
     // The provider refused the key it was sent (F36, P9 delta 5): the Connected row says so at the use that found it.
     if (result.ok && (result.status === 401 || result.status === 403)) for (const ref of sent) this.event(this.connectorOf(ref) !== null ? COMPANY : who.person, ref, "rejected", "provider", `HTTP ${result.status}`);
     // A keyed call refused for its host carries the key's own label, so code can say which key is not bound (F59).
-    if (!result.ok && result.ref && HOST_REFUSALS.has(result.code)) {
-      const owner = this.connectorOf(result.ref) !== null ? COMPANY : who.person;
-      const label = this.sql("SELECT label FROM secrets WHERE owner = ? AND ref = ?", owner, result.ref)[0]?.label;
-      if (typeof label === "string" && label) return { ...result, label };
-    }
+    const label = !result.ok && result.ref && HOST_REFUSALS.has(result.code) ? this.sql("SELECT label FROM secrets WHERE owner = ? AND ref = ?", this.connectorOf(result.ref) !== null ? COMPANY : who.person, result.ref)[0]?.label : undefined;
+    if (!result.ok && typeof label === "string" && label) return { ...result, label };
     const connector = [...used][0];
     return result.ok && connector ? { ...result, scope: { kind: "company", connector } } : result;
   }
