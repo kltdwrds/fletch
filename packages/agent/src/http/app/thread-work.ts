@@ -46,7 +46,6 @@ export const STATUS_WORDS: Record<string, string> = {
   page_read: "Reading a web page",
   browse_open: "Reading a web page",
   browse_live: "Using the live browser",
-  web_search: "Searching the web",
 };
 
 /** The line for a tool the table does not name. */

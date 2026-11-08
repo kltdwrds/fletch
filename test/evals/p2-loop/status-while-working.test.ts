@@ -5,7 +5,7 @@
 // turn's end, the scripted model ends the turn with no words.
 import { describe, expect, it } from "vitest";
 import { STEP_WORDS } from "../../../packages/agent/src/chat/activity-steps.ts";
-import { STATUS_WORDS } from "../../../packages/agent/src/http/app/thread-work.ts";
+import { STATUS_OTHER, STATUS_WORDS } from "../../../packages/agent/src/http/app/thread-work.ts";
 import type { FakeStep } from "../../support/fake-model.ts";
 import { webNamespace } from "../../support/p2-fixtures.ts";
 import { runTask, type TaskHarness, type Turn } from "../../support/task.ts";
@@ -148,7 +148,9 @@ describe("[F24] T-P2-04's status line, planted", () => {
   it("the line is the table's words for the tool, sent as the tool started, and it goes when the tool returns", async () => {
     const w = await StatusWorld.open();
     await play(w, task.turns[0] as Turn);
-    expect(w.working().status).toBe(STATUS_WORDS[TOOL]);
+    // F90 (P10 delta 1): fletch has no `web_search`, so the table has no word for it; the test host's held tool is
+    // worded as any tool the table does not name.
+    expect(w.working().status).toBe(STATUS_OTHER);
     expect(w.frames().filter((f) => f.type === "status")).toEqual([expect.objectContaining({ tool: TOOL })]);
     await play(w, task.turns[1] as Turn);
     expect(w.frames().filter((f) => f.type === "status").map((f) => f.tool)).toEqual([TOOL, null]);
