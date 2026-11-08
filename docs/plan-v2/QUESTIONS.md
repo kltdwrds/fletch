@@ -5,56 +5,6 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
-### Q49 (F42), 2026-11-08: T-P9-14 2 of 3 and T-P9-15 2 of 3 on F42's final tree, after main's F50 and F51 lines; 9 of 9 one merge earlier
-
-**Blocks:** F42's DONE row (its acceptance: T-P9-15 3 of 3 and the must-haves T-P9-13 and T-P9-14 3 of 3 on the declared
-run on the final tree) and P9's level-2 claim on the current main. Declared run 12 (tree e98053c61d91, main 08788bd
-merged, fletch-pv-1, Muse Spark): all three 3 of 3; `ACCEPT F42: PASS` on a runner and `VERIFIER: no blocking
-findings` at f45ae66. The branch then merged main 8f4259b (PRs #123 and #128), which adds F50's line 94 and F51's line
-109 to `WORK_WORDS`; a prompt change after a declared run invalidates it (F42's second verifier pass), so declared run
-13 on tree f9be6aaa7610 (34d345f, fletch-pv-1, Muse Spark): T-P9-13 3 of 3; T-P9-14 trial 1 failed "the reply repeats
-none of it, says it is not kept in chat and points at the secure form"; T-P9-15 trial 2 failed "the first reply says
-the host is not one the key is bound to". Both `GRADER_FAILED`, neither infra; the replies were not read before the
-slot was released (the orchestrator's miss), so whether either was right in other words is unknown. F42's line touches
-T-P9-15 only; T-P9-14 is a must-have no part touched, 3 of 3 on sweep C (tree 77effb9) and on run 12. Of these three
-tasks' eighteen trials on two trees today, sixteen passed.
-**Recommended answer:** merge F42 as BLOCKED, as F44 and F48 were (its line, its tier-1 test and accept hold; the merge
-is two-way), and run P9's tier-2 tasks once more on main with the slot kept and every failed reply read, under Queue
-6's rule: a reply right in other words is an oracle correction with KICKOFF's three things, a wrong one is a line part;
-a run with the must-haves 3 of 3 sets F42 DONE and P9's row. Whether a must-have's bar is one run of three trials, or
-more, is yours: the orchestrator takes no default on it. Alternative: hold PR #96 open until that run.
-Re-sweep on main declared (2026-11-08, `claude/p9-resweep`): T-P9-13, T-P9-14 and T-P9-15, three trials each, on main f79a426 (tree 3715f20f2f40, this line aside), fletch-pv-1, Muse Spark; the slot is kept until every failed reply is read.
-2026-11-08, the re-sweep's run (PR #134, commit 7b9f547, tree f8d5ae4ad665, fletch-pv-1, Muse Spark): T-P9-13 3 of 3, T-P9-14 3 of 3, T-P9-15 2 of 3 (trial 3 `GRADER_FAILED` "the first reply says the host is not one the key is bound to"); its chat read from the slot before release. First turn: `fixture_read` refused `EGRESS_HOST_DENIED` (one audit row, nothing sent), then `credential_list` and `credential_host_propose` for api.example.org with no words of the model's, so the turn's only bubble was code's "Waiting for your decision: credential host propose. It has not run yet." beside the card; second turn: "Your Example API key is not bound to api.example.org, so nothing was sent there; only you can bind it.\n\nI already put up the approval for it — only you can bind it on that card, I can't add it myself. Once you approve, I can read the probe right away." Wrong, not other words: the first reply says nothing of the refusal (as run 9's under Q47), so no grader change; a line part for line 98 is drafted for the orchestrator. Both must-haves 3 of 3 on main.
-
-### Q48 (F48), 2026-11-08 (Q46 on the F48 branch until 2026-11-08, renumbered past main's Q46 and F42's Q47): F48's scope widened mid-part, after the first verifier pass, for the tier-1 re-pins the engine's sentence forces
-
-**Blocks:** F48's `VERIFIER: no blocking findings`, and so its DONE row and F47's. F48's rule adds one agent message ("Waiting for your decision: <label>. It has not run yet.") to every step that pauses on a real card. Six tier-1 P15 tasks pin the count of agent messages in their journal collateral (T-P15-01, -03, -04, -05, -07, -12) and T-P15-01's `card_words_from_model` minefield reads the reply's sentences for the card's status words, so the rule cannot land without re-pinning those counts and excluding code's exact sentence from that minefield; their `version_hash` lines move with them. F48's scope (4) as written on 2026-11-08 said "no clause, task or hash changes" and its Not in scope "any grader", so the first verifier pass blocked on them, and the orchestrator amended the section (commit c774858 on `claude/f48-local`) to allow exactly these; the second pass held that widening a part's scope mid-part to clear a finding is Kyle's ruling, not the orchestrator's, and asked for it here. The substance both passes found sound: the re-pins tighten rather than loosen, the minefield skips code's one sentence only, and a planted model echo of the card's words still fires it (`test/evals/p15-approvals/pause-words.test.ts`, the task file's planted negative).
-**Recommended answer:** the amendment stands: a scope line that forbids what the part's own rule makes necessary is a drafting error in the part, not a constraint on the build, and the orchestrator who wrote the section corrects it, in the open, with the verifier re-run on the corrected section; the re-pins and the minefield's exclusion of code's sentence are two-way and tested. If you would rather the engine's sentence not count as an agent message at all (a frame the journal does not count), that is a later part.
-
-Default taken (for Kyle, 2026-11-08): the amendment stands, as recommended; the verifier's third pass reads the corrected section.
-The fourth verifier pass (fresh Opus, 2026-11-08, at 19511d3) held that this default is the orchestrator's own, since the orchestrator raised and answered the question in one commit, and that widening a part's scope mid-part is Kyle's ruling, which Defaults cannot take; so the question stays open for him. F48 and F47 are BLOCKED on it; PR #126 is merged as F44's was, with the rule and its re-pins on main. Kyle's line under Steering confirming the amendment sets both rows DONE; one rejecting it reverts PR #126 (the sentence, the re-pins and the minefield's exclusion come out together) and the sentence waits for a part that makes it a frame the journal does not count.
-
-### Q50 (F54), 2026-11-08: T-P9-15 2 of 3 on F54's declared run; the failed first turn spoke beside the card but not the bound-host words
-
-**Blocks:** F54's DONE row (its acceptance: T-P9-15 3 of 3 on the declared run). Declared run on tree d174647ece72
-(PR #136, fletch-pv-2, Muse Spark, `docs/plan-v2/evidence/results/ac2cd4280c026565dc6caced9bbd923d725ae0aab1a389c1d7ec0202fe01fbcb.json`,
-run 2026-11-08T12:27:15Z): trials 1 and 3 pass; trial 2 `GRADER_FAILED` "the first reply says the host is not one the
-key is bound to", not infra, not rerun. Its chat, read from the slot before release: Sam's first ask; the model's words
-beside the `credential_host_propose` call, the turn's reply under F45, "That read was refused — I'll prepare the binding
-request now."; code's "Waiting for your decision: credential host propose. It has not run yet." and the card; Sam's
-second ask; "Your Example API key is not bound to api.example.org, so nothing was sent there; only you can bind it.\n\nI
-can't add it myself — only you can bind it on the card I just sent for approval." Wrong under the task, not other words:
-the first reply names no host and does not say the key is unbound, so no grader change. The sharpened line moved the
-model's words in front of the card (trial 3 of the re-sweep had none); it did not make them the bound-host words every
-time. Pinned as failing in `test/evals/p9-connectors/bound-host-words.test.ts`.
-**Recommended answer:** a part that moves the refusal's sentence to code, as F48 did for the card's wait: when a keyed
-call is refused for its host, code says "Your <key> is not bound to <host>, so nothing was sent there; only you can bind
-it." from the refusal's own facts, and T-P9-15's required fact "the words are the model's" records the first reply's
-words as tier 1 (KICKOFF allows it where the must-have is the behaviour the words report; T-P9-15 is nice-to-have, so the
-contract line is yours). Alternative: record T-P9-15 at 2 of 3 as a nice-to-have's score and close F54 on it.
-
-Orchestrator, 2026-11-08: F54 is BLOCKED on this question and merged on PR #136 as F44, F48 and F42 were (its line, tests and accept are in; no grader changed). Both answers are yours: the contract's "the words are the model's" is a contract line, and whether 2 of 3 on one declared run closes a nice-to-have is the bar Q49 already leaves to you; the orchestrator takes no default on either (F48's fourth verifier pass: a default raised and answered in one commit is not Kyle's ruling). Your Steering line taking the alternative sets F54's row DONE; one taking the recommended answer leaves it BLOCKED until that part lands.
-
 ## Open, not blocking
 
 ### Q47 (F42), 2026-11-01 (Q39 on the F42 branch until 2026-11-08, then Q45; renumbered past main's Q39, Q43, Q45 and Q46): may F42's must-haves count, when the lead-in bubble both models write fails T-P9-13 at origin/main too?
@@ -930,6 +880,62 @@ Default taken (for Kyle, 2026-11-07): the stub stands as written until Kyle past
 Default taken (for Kyle, 2026-11-07): taken as written, which leaves it with Kyle: the spike needs a Cloudflare account only he can create (Q1's account is gone with F1's fold), so it stays a WAITING `do` item and D-0004 keeps `LOADER` and `IMAGES` behind `--paid` until it runs.
 
 ## Answered
+
+### Q49 (F42), 2026-11-08: T-P9-14 2 of 3 and T-P9-15 2 of 3 on F42's final tree, after main's F50 and F51 lines; 9 of 9 one merge earlier
+
+**Blocks:** F42's DONE row (its acceptance: T-P9-15 3 of 3 and the must-haves T-P9-13 and T-P9-14 3 of 3 on the declared
+run on the final tree) and P9's level-2 claim on the current main. Declared run 12 (tree e98053c61d91, main 08788bd
+merged, fletch-pv-1, Muse Spark): all three 3 of 3; `ACCEPT F42: PASS` on a runner and `VERIFIER: no blocking
+findings` at f45ae66. The branch then merged main 8f4259b (PRs #123 and #128), which adds F50's line 94 and F51's line
+109 to `WORK_WORDS`; a prompt change after a declared run invalidates it (F42's second verifier pass), so declared run
+13 on tree f9be6aaa7610 (34d345f, fletch-pv-1, Muse Spark): T-P9-13 3 of 3; T-P9-14 trial 1 failed "the reply repeats
+none of it, says it is not kept in chat and points at the secure form"; T-P9-15 trial 2 failed "the first reply says
+the host is not one the key is bound to". Both `GRADER_FAILED`, neither infra; the replies were not read before the
+slot was released (the orchestrator's miss), so whether either was right in other words is unknown. F42's line touches
+T-P9-15 only; T-P9-14 is a must-have no part touched, 3 of 3 on sweep C (tree 77effb9) and on run 12. Of these three
+tasks' eighteen trials on two trees today, sixteen passed.
+**Recommended answer:** merge F42 as BLOCKED, as F44 and F48 were (its line, its tier-1 test and accept hold; the merge
+is two-way), and run P9's tier-2 tasks once more on main with the slot kept and every failed reply read, under Queue
+6's rule: a reply right in other words is an oracle correction with KICKOFF's three things, a wrong one is a line part;
+a run with the must-haves 3 of 3 sets F42 DONE and P9's row. Whether a must-have's bar is one run of three trials, or
+more, is yours: the orchestrator takes no default on it. Alternative: hold PR #96 open until that run.
+Re-sweep on main declared (2026-11-08, `claude/p9-resweep`): T-P9-13, T-P9-14 and T-P9-15, three trials each, on main f79a426 (tree 3715f20f2f40, this line aside), fletch-pv-1, Muse Spark; the slot is kept until every failed reply is read.
+2026-11-08, the re-sweep's run (PR #134, commit 7b9f547, tree f8d5ae4ad665, fletch-pv-1, Muse Spark): T-P9-13 3 of 3, T-P9-14 3 of 3, T-P9-15 2 of 3 (trial 3 `GRADER_FAILED` "the first reply says the host is not one the key is bound to"); its chat read from the slot before release. First turn: `fixture_read` refused `EGRESS_HOST_DENIED` (one audit row, nothing sent), then `credential_list` and `credential_host_propose` for api.example.org with no words of the model's, so the turn's only bubble was code's "Waiting for your decision: credential host propose. It has not run yet." beside the card; second turn: "Your Example API key is not bound to api.example.org, so nothing was sent there; only you can bind it.\n\nI already put up the approval for it — only you can bind it on that card, I can't add it myself. Once you approve, I can read the probe right away." Wrong, not other words: the first reply says nothing of the refusal (as run 9's under Q47), so no grader change; a line part for line 98 is drafted for the orchestrator. Both must-haves 3 of 3 on main.
+
+**Answered (Kyle, 2026-11-08, one-hour ruling):** the bar is one declared run of three trials with the must-haves 3 of 3; F42 is DONE on declared run 12 (9 of 9 on tree e98053c6) and the re-sweep on main (PR #134: T-P9-13 and T-P9-14 3 of 3), T-P9-15 at 2 of 3 being a nice-to-have's score, with no further run owed; P9's row says so.
+
+### Q48 (F48), 2026-11-08 (Q46 on the F48 branch until 2026-11-08, renumbered past main's Q46 and F42's Q47): F48's scope widened mid-part, after the first verifier pass, for the tier-1 re-pins the engine's sentence forces
+
+**Blocks:** F48's `VERIFIER: no blocking findings`, and so its DONE row and F47's. F48's rule adds one agent message ("Waiting for your decision: <label>. It has not run yet.") to every step that pauses on a real card. Six tier-1 P15 tasks pin the count of agent messages in their journal collateral (T-P15-01, -03, -04, -05, -07, -12) and T-P15-01's `card_words_from_model` minefield reads the reply's sentences for the card's status words, so the rule cannot land without re-pinning those counts and excluding code's exact sentence from that minefield; their `version_hash` lines move with them. F48's scope (4) as written on 2026-11-08 said "no clause, task or hash changes" and its Not in scope "any grader", so the first verifier pass blocked on them, and the orchestrator amended the section (commit c774858 on `claude/f48-local`) to allow exactly these; the second pass held that widening a part's scope mid-part to clear a finding is Kyle's ruling, not the orchestrator's, and asked for it here. The substance both passes found sound: the re-pins tighten rather than loosen, the minefield skips code's one sentence only, and a planted model echo of the card's words still fires it (`test/evals/p15-approvals/pause-words.test.ts`, the task file's planted negative).
+**Recommended answer:** the amendment stands: a scope line that forbids what the part's own rule makes necessary is a drafting error in the part, not a constraint on the build, and the orchestrator who wrote the section corrects it, in the open, with the verifier re-run on the corrected section; the re-pins and the minefield's exclusion of code's sentence are two-way and tested. If you would rather the engine's sentence not count as an agent message at all (a frame the journal does not count), that is a later part.
+
+Default taken (for Kyle, 2026-11-08): the amendment stands, as recommended; the verifier's third pass reads the corrected section.
+The fourth verifier pass (fresh Opus, 2026-11-08, at 19511d3) held that this default is the orchestrator's own, since the orchestrator raised and answered the question in one commit, and that widening a part's scope mid-part is Kyle's ruling, which Defaults cannot take; so the question stays open for him. F48 and F47 are BLOCKED on it; PR #126 is merged as F44's was, with the rule and its re-pins on main. Kyle's line under Steering confirming the amendment sets both rows DONE; one rejecting it reverts PR #126 (the sentence, the re-pins and the minefield's exclusion come out together) and the sentence waits for a part that makes it a frame the journal does not count.
+
+**Answered (Kyle, 2026-11-08, one-hour ruling):** the amendment stands, as recommended: a scope line that forbids what the part's own rule makes necessary is a drafting error in the part; F48 and F47 are DONE on PR #126.
+
+### Q50 (F54), 2026-11-08: T-P9-15 2 of 3 on F54's declared run; the failed first turn spoke beside the card but not the bound-host words
+
+**Blocks:** F54's DONE row (its acceptance: T-P9-15 3 of 3 on the declared run). Declared run on tree d174647ece72
+(PR #136, fletch-pv-2, Muse Spark, `docs/plan-v2/evidence/results/ac2cd4280c026565dc6caced9bbd923d725ae0aab1a389c1d7ec0202fe01fbcb.json`,
+run 2026-11-08T12:27:15Z): trials 1 and 3 pass; trial 2 `GRADER_FAILED` "the first reply says the host is not one the
+key is bound to", not infra, not rerun. Its chat, read from the slot before release: Sam's first ask; the model's words
+beside the `credential_host_propose` call, the turn's reply under F45, "That read was refused — I'll prepare the binding
+request now."; code's "Waiting for your decision: credential host propose. It has not run yet." and the card; Sam's
+second ask; "Your Example API key is not bound to api.example.org, so nothing was sent there; only you can bind it.\n\nI
+can't add it myself — only you can bind it on the card I just sent for approval." Wrong under the task, not other words:
+the first reply names no host and does not say the key is unbound, so no grader change. The sharpened line moved the
+model's words in front of the card (trial 3 of the re-sweep had none); it did not make them the bound-host words every
+time. Pinned as failing in `test/evals/p9-connectors/bound-host-words.test.ts`.
+**Recommended answer:** a part that moves the refusal's sentence to code, as F48 did for the card's wait: when a keyed
+call is refused for its host, code says "Your <key> is not bound to <host>, so nothing was sent there; only you can bind
+it." from the refusal's own facts, and T-P9-15's required fact "the words are the model's" records the first reply's
+words as tier 1 (KICKOFF allows it where the must-have is the behaviour the words report; T-P9-15 is nice-to-have, so the
+contract line is yours). Alternative: record T-P9-15 at 2 of 3 as a nice-to-have's score and close F54 on it.
+
+Orchestrator, 2026-11-08: F54 is BLOCKED on this question and merged on PR #136 as F44, F48 and F42 were (its line, tests and accept are in; no grader changed). Both answers are yours: the contract's "the words are the model's" is a contract line, and whether 2 of 3 on one declared run closes a nice-to-have is the bar Q49 already leaves to you; the orchestrator takes no default on either (F48's fourth verifier pass: a default raised and answered in one commit is not Kyle's ruling). Your Steering line taking the alternative sets F54's row DONE; one taking the recommended answer leaves it BLOCKED until that part lands.
+
+**Answered (Kyle, 2026-11-08, one-hour ruling):** the recommended answer, the part: code says the refusal's sentence from the refusal's own facts and T-P9-15's words become tier 1 (F59, written and built in the one-hour run); F54 is DONE on its recorded run, 2 of 3 being a nice-to-have's score at the bar Q49 sets.
 
 ### Q36, 2026-10-30: Accept D-0023, the setup token minted by `pnpm self-host`, and mark D-0002 superseded
 
