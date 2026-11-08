@@ -9,6 +9,15 @@ Kyle's own lines go under `## Steering`.
 
 ## Open
 
+- [ ] 2026-11-08 look: **one live slot on main for every uat item below: https://fletch-pv-1.edwards-ky1.workers.dev,
+  leased to 2026-11-10T12:15Z.** The overnight orchestrator deployed main at 3f57aee (every merged part through F52,
+  F53's PR #132 following; F42 and F48 merged BLOCKED, so their code is on it) from a docs-only worktree, so the slot's
+  code is main's; the first-passkey setup link went to you in the session's chat, never here. Use this address for each
+  uat item below in place of the one it names. Two cautions: the lease is held by the branch `claude/ledgers-night-end-2`,
+  so `pnpm preview gc` would release it once that PR merges; run `gc` after you have looked, or renew with
+  `pnpm preview up --slot 1 --ttl 48` from a main checkout first. What this changes: nothing in any item; only where
+  you look. [preview runbook](../runbooks/preview.md); [the Queue](ORCHESTRATOR-OVERNIGHT.md).
+
 - [ ] 2026-11-08 decide: **Q48, F48's scope widened mid-part, after the first verifier pass, for the tier-1 re-pins its own
   sentence forces.** F48 makes the engine say, beside every real card, "Waiting for your decision: <label>. It has not
   run yet." whatever the model wrote; one more agent message per paused step. Six tier-1 P15 tasks pin the count of
@@ -123,6 +132,7 @@ Kyle's own lines go under `## Steering`.
   Default taken (for Kyle, 2026-11-07), Q31 and this item: the cross-cutting part is F45 (parts.md, the lead-in bubble), F42 waits for it and is rebased onto it, then P9's must-haves run again on Muse Spark (ORCHESTRATOR-OVERNIGHT.md, Queue 5 and 6).
   2026-11-08: F45 is merged (PR #111: `ACCEPT F45: PASS`, verifier clean, T-P9-13 and T-P12-10 3 of 3 on Muse Spark); F42's rebase onto it and its declared run of T-P9-15, T-P9-13 and T-P9-14 are under way on PR #96.
   2026-11-08, later: F42's declared run 12 (tree e98053c6, fletch-pv-1, Muse Spark) was 3 of 3 on T-P9-15, T-P9-13 and T-P9-14, `ACCEPT F42: PASS` on a GitHub runner, `VERIFIER: no blocking findings`; then the branch merged main's F50 and F51 lines and declared run 13 on that final tree gave T-P9-13 3 of 3, T-P9-14 2 of 3 and T-P9-15 2 of 3 (replies unread, the slot released first). F42 is BLOCKED on Q49 and merged on PR #96 as F44 was; P9's tier 2 runs again on main with the slot kept (Queue 6). Your call in Q49: whether a must-have's bar is one declared run of three trials, and whether F42's row goes DONE on a clean run of main. [Q49](QUESTIONS.md#q49-f42-2026-11-08-t-p9-14-2-of-3-and-t-p9-15-2-of-3-on-f42s-final-tree-after-mains-f50-and-f51-lines-9-of-9-one-merge-earlier).
+  2026-11-08, later still: the P9 re-sweep on main (PR #134, merged; tree f8d5ae4ad665, fletch-pv-1, Muse Spark, the slot kept until every failed reply was read) gave T-P9-13 3 of 3, T-P9-14 3 of 3 and T-P9-15 2 of 3; the failed trial raised the host card in its first turn with no words of its own and said "not bound to api.example.org" only in the second, wrong under the task (its words are under Q49), so no grader changed and the line part F54 is written in `parts.md` (TODO, not built tonight). Both must-haves are 3 of 3 on main; F42's row stays BLOCKED because whether one clean run of three trials is the bar is yours in Q49, and the orchestrator took no default on it. Recommended: say in `## Steering` that it is; F42 goes DONE on that line, and F54 waits for a slot. [F54 in parts.md](parts.md#f54-the-refused-host-is-said-before-any-card-t-p9-15s-first-turn-says-the-bound-host-words-before-it-proposes); [P9 row](SCORECARD.md).
 
 - [ ] 2026-11-02 look: **P10 and P11 are interrogated, from the cloud; the evidence is in the session's tarball, not on
   your Mac yet.** Two Opus agents ran `evidence/p10-search/scenario.md` and `evidence/p11-files/scenario.md` in your Muse

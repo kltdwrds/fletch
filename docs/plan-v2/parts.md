@@ -1079,3 +1079,38 @@ run; a trial that still fails for a reason the contract calls wrong is recorded 
 
 **Not in scope:** line 109 or any `WORK_WORDS` line; the adapter's `envelopeAs` (the envelope's shape); T-P14-13; the
 Settings panes; any P9 line.
+
+## F54 The refused host is said before any card: T-P9-15's first turn says the bound-host words before it proposes
+
+**Read:** `docs/plan-v2/contracts/P9-connectors.md` (B-P9-05: a request to a host the credential is not bound to is
+refused by code before anything leaves, with a stable code and an audit row the person can read; the agent has no tool
+that adds a host; T-P9-15's end_state, "the first reply says the host is not one the key is bound to; the second raises
+the `credentials.host` card or says only Sam can bind it"), its task file
+(`test/evals/p9-connectors/unbound-host-real-model.task.ts`), F42's line in `WORK_WORDS`
+(`packages/agent/src/chat/instructions.ts`, line 98: "your first message says in these words that the key \"is not bound
+to\" that host ... Asked whether you can add the host yourself, say \"only you can bind it\", or propose it with
+credential_host_propose"), `test/evals/p9-connectors/bound-host-words.test.ts` (F42's tier-1 test), and the P9 re-sweep
+(PR #134, merged, on main f79a426, tree f8d5ae4ad665, fletch-pv-1, Muse Spark): T-P9-15 2 of 3. The failed trial 3, read from the
+slot before release: after `fixture_read` came back `EGRESS_HOST_DENIED: api.example.org is not a listed host` (one
+refused audit row, nothing sent), the model called `credential_list` and then `credential_host_propose`
+(`api.example.org`, `cred://example-api`) in the same turn with no words of its own; the first turn's only bubble was
+code's "Waiting for your decision: credential host propose. It has not run yet." and the card; the bound-host words
+came only in the second turn ("Your Example API key is not bound to api.example.org, so nothing was sent there; only
+you can bind it. ..."). Q47 recorded the same shape once on run 9 ("raised the `credentials.host` card in the first turn
+and said the words only in the second; that one is the model's"). F48's sentence (the card's wait as code's words). F45 (words beside a step's calls are commentary when that step is not the last: the builder confirms which side of it words beside a pausing `credential_host_propose` call fall, since the trial's two lead-ins, "Starting on that probe read – pulling the right tool first." and "Got it — reading that address with your key now.", were folded away as F45 intends). No
+one-way door. A live step: `pnpm evals T-P9-15` on a slot, declared before each run.
+
+**Scope:** (1) Line 98 sharpened, still one line: after a host refusal the first message says the bound-host words
+as the text of the step that follows the refusal, before or beside any `credential_host_propose` call, so a turn that
+pauses on the host card has already said them (B-P9-05 does not forbid raising the card in that first turn; the words must come first). (2) A tier-1 test reads the system prompt the
+fake model receives and fails with the line removed; `bound-host-words.test.ts` pins trial 3's first turn (no words,
+then the propose call and code's waiting sentence) verbatim as failing the first-reply grader, and a planted run where
+the words precede the propose call in the first turn as passing. (3) Declared run on a slot at the new tree: T-P9-15,
+three trials, the trial chats read before release; results file committed, the table in the PR body; the scorecard's
+P9 sentence takes the run.
+
+**Acceptance:** `pnpm evals T-P9-15` `pass` (three of three); `ACCEPT F54: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** any grader of T-P9-15 (the first-reply grader stands: a turn whose only words are code's waiting
+sentence does not say the host is unbound); T-P9-13 and T-P9-14 (3 of 3 on this tree); F48's sentence; the
+`credential_host_propose` tool or its card; D-0016.
