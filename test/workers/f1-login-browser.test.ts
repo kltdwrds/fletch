@@ -7,7 +7,7 @@
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { type Browser, chromium, type Page } from "playwright-core";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, onTestFailed } from "vitest";
 import { passkeyIdentity, SESSION_COOKIE } from "@qyvr/host-cloudflare";
 import { serve } from "../../packages/agent/src/http/serve.ts";
 import { ada, authorityWorld, TENANT } from "./support/authority-world.ts";
@@ -87,14 +87,20 @@ describe("[F1] the login page in a browser", () => {
     const ORIGIN = site.origin;
     const b = await owner();
     const pg = b.pg;
+    // On CI this test has timed out at its 60 s budget with no step named (2026-11-08, three runs of six): the step in
+    // progress is kept here and printed on failure, so the next timeout says where the page stopped.
+    let at = "start";
+    onTestFailed(() => console.error(`f1-login-browser: failed at step "${at}", page at ${pg.url()}`));
     try {
       // Signed out, the app's own address sends the browser to sign-in; before any passkey that is the setup notice.
+      at = "signed out: / sends to /login";
       await pg.goto(`${ORIGIN}/`);
       expect(new URL(pg.url()).pathname).toBe("/login");
       expect(await stateOf(pg)).toBe("setup");
       expect(d.seen[0]).toEqual({ method: "GET", path: "/", status: 302 });
 
       // The setup link: create the passkey; the recovery code is shown once.
+      at = "setup link: register the passkey";
       await pg.goto(`${ORIGIN}/login?setup=${SETUP_TOKEN}`);
       expect(await stateOf(pg)).toBe("register");
       await pg.click("#go");
@@ -106,6 +112,7 @@ describe("[F1] the login page in a browser", () => {
       expect(code.length).toBeGreaterThanOrEqual(16);
       expect(await d.company.loginCall({ op: "count" })).toBe(1);
 
+      at = "recovery code: copy feedback";
       // Tapping the code copies it. A missing clipboard and a refused write each say so and select the code instead;
       // the keyboard reaches the same copy.
       const feedback = (text: string) => pg.locator("#copied", { hasText: text }).waitFor();
@@ -127,35 +134,42 @@ describe("[F1] the login page in a browser", () => {
       await feedback("Copied.");
       expect(await pg.evaluate("navigator.clipboard.readText()")).toBe(code);
 
+      at = "done: first click arms";
       // The first click on the done button only arms it, since the code is gone once the page is left; the second leaves.
       await pg.click("#done");
       await pg.locator("#done", { hasText: "It is not shown again. Click again to leave" }).waitFor();
       expect(new URL(pg.url()).pathname).toBe("/login");
       expect(await shown(pg, "saved")).toBe(true);
 
+      at = "done: second click, wait for /";
       // On to the app, which reads this owner's session. The wait starts before the click: the app moves on from `/` to
       // its open chat as soon as it loads, so a wait begun after the click can miss `/` and hang to the timeout.
       await Promise.all([pg.waitForURL(`${ORIGIN}/`), pg.click("#done")]);
+      at = "app: logout button wired";
       await pg.waitForFunction('typeof document.getElementById("logout")?.onclick === "function"');
       expect(d.seen.some((s) => s.path === "/me" && s.status === 200)).toBe(true);
 
+      at = "log out: POST /logout, wait for /login";
       // Log out: a same-origin POST to /logout, then sign-in.
       await pg.evaluate('document.getElementById("logout").click()');
       await pg.waitForURL(`${ORIGIN}/login`);
       expect(d.seen).toContainEqual({ method: "POST", path: "/logout", status: 204 });
       expect(await stateOf(pg)).toBe("authenticate");
+      at = "signed out again: / sends to /login, /me is 401";
       // The session is gone: the app's address sends the browser back to sign-in, and an API call is a JSON 401.
       await pg.goto(`${ORIGIN}/`);
       expect(new URL(pg.url()).pathname).toBe("/login");
       const api = await pg.evaluate("fetch('/me').then(async (r) => [r.status, (await r.json()).code])");
       expect(api).toEqual([401, "SESSION_MISSING"]);
 
+      at = "sign in with the passkey, wait for /";
       // Sign in with the passkey: back in the app.
       await Promise.all([pg.waitForURL(`${ORIGIN}/`), pg.click("#go")]);
       expect(await pg.evaluate("fetch('/me').then((r) => r.json())")).toMatchObject({ person: ada.email, shape: "standalone" });
       // A standalone deploy's owner is offered no Invite (spec section 4).
       expect(await shown(pg, "head-invite")).toBe(false);
 
+      at = "revoked elsewhere: next API call sends to /login";
       // The session ends under the open app (revoked elsewhere): the app's next API call sends it to sign-in.
       const cookie = (await pg.context().cookies()).find((c) => c.name === SESSION_COOKIE);
       expect(cookie?.httpOnly).toBe(true);
