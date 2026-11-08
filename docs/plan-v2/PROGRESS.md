@@ -56,6 +56,11 @@ test counts, the verifier's result, the duration and `model: <model>` for parts 
 | F60 | TODO | | 2026-11-08 | Rooms refused by name as they are (P8 under D-0025): the contract check, fifteen task files (nine held by D-0025 door 1), `TOOL_ROOM_REFUSED` in the registry, `CHAT_ROOM_REFUSED` on `POST /app/chats`, one room line in `WORK_WORDS`, tier 1 on T-P8-10, 11, 12, 14 and 15. |
 | F61 | TODO | | 2026-11-08 | Rooms said as not made: P8 tier 2 on a slot, T-P8-13 must-have. |
 
+| F70 | TODO | | 2026-11-08 | Voice and audio as they are (P13, D-0026 under Kyle's ruling of 2026-11-08): the contract check, sixteen task files, the audio class and transcript column, `SPEECH_UNAVAILABLE` and `VOICE_CALL_UNAVAILABLE` by name, tier 1 on T-P13-01, 04, 11, 13. |
+| F71 | TODO | | 2026-11-08 | Speech behind the AI binding: whisper-large-v3-turbo and aura-2-en under `SPEECH_PRICES` and a $5 monthly cap (`SPEECH_BUDGET_EXHAUSTED`), transcript kept and audio not, `speak` and the audio record, the voice record, share revoke, removal with restore. |
+| F72 | TODO | | 2026-11-08 | Audio the person can see, after specimens: the chat audio item, the Library Audio section, Settings > Voice, the episode with its feed refused `PODCAST_FEED_UNAVAILABLE`. |
+| F73 | TODO | | 2026-11-08 | Speech says what happened: T-P13-14 on a slot, three trials, under F71's cap. |
+
 ## The first plan (closed 2026-10-29)
 
 F0 to F17 were worked under the first plan (`git show 34c6b0a:docs/plan/parts.md`). F0 and F1 predate the protocol:

@@ -1333,3 +1333,120 @@ sharpened (never a code-written reply, Q18) and the change named in the PR body 
 
 **Not in scope:** T-P8-09 (held, D-0025 door 1); a room in any form; a change to a clause; a line beyond what T-P8-13
 needs.
+
+## F70 Voice and audio as they are: the P13 contract check, sixteen task files, the audio class, the refusal by name and tier 1 on what is shipped
+
+**Read:** `docs/plan-v2/contracts/P13-voice-audio.md` (every clause, the Tasks, the Translation's deltas 1, 2, 8 and
+9, the Build notes), `docs/decisions/0026-speech-on-fletch.md` (accepted by Kyle's ruling of 2026-11-08; the
+orchestrator's PR records it), the P9 world and tasks under `test/evals/p9-connectors/` as the pattern,
+`test/support/contract.ts`, `test/support/task.ts`, `test/m0/f35-contract.test.ts`,
+`packages/agent/src/attachments/` (`caps.ts`, `store.ts`, `wiring.ts`), `packages/agent/src/http/attachment-routes.ts`,
+`packages/agent/src/migrations/catalog.ts`, `packages/agent/src/chat/instructions.ts` (`WORK_WORDS`),
+`packages/agent/src/tools/registry.ts`. No one-way door beyond D-0026: no model call, no spend, no change to
+`@qyvr/host`.
+
+**Scope:** (1) `test/m0/f70-contract.test.ts` holds the P13 contract as `f35-contract.test.ts` holds P9: fifteen
+clauses, sixteen tasks, every `version_hash` filled where the contract says "filled by F70". (2) The sixteen
+`.task.ts` files under `test/evals/p13-voice-audio/` with a `world.ts` (a Chat and a Person Durable Object, a fake `AI`
+binding answering `@cf/openai/whisper-large-v3-turbo` with a fixed transcript and `@cf/deepgram/aura-2-en` with a short
+MP3 generated in the test, both able to fail or cut short on cue) and a `harness.ts`; tier 1 for T-P13-01, 04, 11 and
+13 under an `[F70]` describe, every minefield planted in a `planted.test.ts`; the F71 and F72 tasks skipped by name,
+their files saying which part runs them. (3) The code T-P13-13 and T-P13-11 need, with no model call: `AttachmentClass`
+gains `audio` and `ATTACHMENT_TYPES` the audio types under `AUDIO_MAX` (8 MiB, `ATTACHMENT_TOO_LARGE_AUDIO`); the
+`attachments` row gains a `transcript` column by a named migration; `speechOf(env)` is null when `AI` is unbound or
+the `SPEECH` var is `off`, and in this part it is always off, so a voice note is kept as a row with
+`SPEECH_UNAVAILABLE`, no transcript, and its R2 object deleted (D-0026: the audio is not kept); a read-aloud or an
+episode ask is refused `SPEECH_UNAVAILABLE` with its reason (a `speak` tool that refuses until F71); an ask to call is
+refused `VOICE_CALL_UNAVAILABLE`, and one `WORK_WORDS` line says this deploy has no voice calls and keeps nothing from
+one.
+
+**Acceptance:** T-P13-01, 04, 11 and 13 pass under vitest and each planted minefield fails without its guard; the
+F71 and F72 tasks are skipped by name; `test/m0/f70-contract.test.ts` passes; `pnpm check` and the hermetic suite
+green; `ACCEPT F70: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** any call to a speech model and any spend (F71); the audio record, the voice record and the Library
+or chat surfaces (F71, F72); a `speech` `HostFeature` in `@qyvr/host` (D-0026 keeps it agent-local); a feed or a
+call; tier 2 (F73); a change to a clause.
+
+## F71 Speech behind the AI binding: transcription, read-aloud, the audio record, the voice, a monthly cap and removal
+
+**Read:** `docs/plan-v2/contracts/P13-voice-audio.md` (B-P13-02 to B-P13-10, B-P13-13 to B-P13-15, the Translation's
+deltas 1 to 4, 6, 7, 9 and 10), `docs/decisions/0026-speech-on-fletch.md` (the spend, record and retention terms this
+part builds), the F70 world and the skipped tasks under `test/evals/p13-voice-audio/`,
+`packages/agent/src/ledger/budget.ts` (`PRICES`, `chargeMicros`, `admitPolicy`, `decide`, `Budgets`),
+`packages/agent/src/objects/ledger.ts` (`admit`, `record`, `journal`), `packages/agent/src/model/caption.ts` and
+`packages/agent/src/attachments/wiring.ts` (the precedent), `packages/agent/src/model/routes.ts` (`MODEL_TIERS`),
+`packages/agent/src/files/store.ts` (`writeBytes`), `packages/agent/src/files/links.ts`,
+`packages/agent/src/render/tools.ts` (`share_document`), `packages/agent/src/grants/engine.ts` (`FRESH_CARD_KINDS`).
+Spend is one-way and D-0026, accepted by Kyle's ruling, holds it only under a Ledger price and a monthly cap.
+
+**Scope:** (1) Spend first: `SPEECH_PRICES` in `budget.ts` (whisper-large-v3-turbo $0.0005 per audio minute,
+aura-2-en $0.030 per 1,000 characters) and `speechMicros`; the two models join `MODEL_TIERS`; `Budgets` gains
+`tenantSpeechMonthlyMicros`, default $5 a UTC calendar month in the existing `budgets` table; the Ledger's `admit` on
+route `speech` refuses `SPEECH_BUDGET_EXHAUSTED`, its reason naming the month's spend and the cap, before any
+`AI.run` once the month's `route = 'speech'` sum reaches the cap; every speech call writes a `model_calls` row with its
+`cost_micros`; the daily caps still count it; no speech call exists outside this admission (T-P13-15). (2)
+Transcription: `packages/agent/src/speech/transcribe.ts` on the model `captionImage` follows; `keep` writes the
+transcript on the row, then deletes the R2 object; the model sees a block marked as a transcript; a model error is
+`SPEECH_FAILED` on the row (T-P13-02, T-P13-03). (3) `speak` in a `speech` namespace (`packages/agent/src/speech/tools.ts`):
+the text verbatim, the person's speaker, the MP3's duration from its frames (`mp3Duration`) checked against the
+text's bounds, `SPEECH_FAILED` or `SPEECH_PARTIAL` with nothing written otherwise, the file through `writeBytes` under
+`files/audio/`, an `audio_items` row (kind, file, duration, voice, model, source, topics), an `audio` chat effect; no
+card (T-P13-05, T-P13-06). (4) `audio_list` and `audio_read` over the rows (T-P13-07's record half). (5) The voice:
+a `speech_settings` table, `voice_set` writing it on an explicit ask with a Ledger `journal` row, a transcript never
+changing it (T-P13-09). (6) Sharing the audio file through `share_document`'s card each time, the share item naming
+its end, and a revoke that sets the share's expiry to now (`SHARE_EXPIRED`) (T-P13-08). (7) `audio_remove` and
+`audio_restore`: the row's `removed_at` and the object moved under the person's `trash/` prefix and back, in one
+action each (T-P13-12). (8) `speechOf(env)` turns on where `AI` is bound and `SPEECH` is not `off`; F70's refusals
+still hold where it is off. The skipped tasks run under an `[F71]` describe with their minefields planted.
+
+**Acceptance:** T-P13-02, 03, 05, 06, 07 (record half), 08, 09, 12 and 15 pass under vitest and each planted
+minefield fails without its guard; F70's tasks still pass; `pnpm check` and the hermetic suite green;
+`ACCEPT F71: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** any owner-visible surface (F72: the chat audio item, the Library Audio section, the Settings Voice
+row); a podcast episode's two-voice render (F72); a feed or a call (D-0026); keeping voice-note audio (D-0026); a
+person-wide trash or a sweep (P4); a model other than the two named; tier 2 (F73); a change to a clause.
+
+## F72 Audio the person can see: the chat audio item, the Library's Audio section, the Settings Voice row and the episode
+
+**Read:** `docs/plan-v2/contracts/P13-voice-audio.md` (B-P13-05, B-P13-07, B-P13-10, B-P13-11, the Translation's
+deltas 4, 5 and 8, the Build notes' specimens), the specimens the orchestrator lists in `WAITING-ON-KYLE.md` under
+`ds/specimens/` for this part (the chat audio item from `step-4.jpg` and `step-4-phone.jpg`, the Library Audio section
+from `step-7.jpg`, `step-7-phone.jpg` and `step-9-reload.jpg`, the Voice row from `step-1-dom.md`), the F70 and F71
+world and the skipped tasks under `test/evals/p13-voice-audio/`, `packages/agent/src/http/app/library.ts`
+(`LIB_KINDS`, `LIB_SECTIONS`), `packages/agent/src/http/app/chat.ts`, `packages/agent/src/http/app/settings-panes.ts`,
+`packages/agent/src/files/links.ts`. No one-way door beyond D-0026; no spend beyond F71's cap; Kyle's look on the
+specimens comes before the drawing.
+
+**Scope:** (1) The chat draws the `audio` effect as an item with an `<audio>` player on the signed read link, the
+duration and the voice, opening the record; the same after a reload and at phone width. (2) `LIB_KINDS` gains
+`mp3: "audio"`, `LIB_SECTIONS` an `audio` section in the media group listing the `audio_items` rows, each opening its
+player (T-P13-07's Library half). (3) Settings > Voice lists aura-2's speakers and writes the F71 record with writer
+`settings` (T-P13-16). (4) An episode: `speak` with a two-voice script renders turn by turn into one MP3 and one
+`audio_items` row of kind `episode` with script and topics; it shows in the Audio section; an ask to publish it to a
+feed is refused `PODCAST_FEED_UNAVAILABLE` with its reason and no feed route exists (T-P13-10). The tasks run under an
+`[F72]` describe with their minefields planted.
+
+**Acceptance:** T-P13-07 (whole), T-P13-10 and T-P13-16 pass under vitest and each planted minefield fails without its
+guard; F70's and F71's tasks still pass; `pnpm check` and the hermetic suite green; `ACCEPT F72: PASS`;
+`VERIFIER: no blocking findings`; the three surfaces listed for Kyle's UAT with the preview address.
+
+**Not in scope:** a public feed (D-0026); a Podcasts-only section; a voice preview in the picker
+(each preview is a spend; a later part under the same cap); the avatar; tier 2 (F73); a change to a clause.
+
+## F73 Speech says what happened: P13's tier 2 on a slot
+
+**Read:** `docs/plan-v2/contracts/P13-voice-audio.md` (B-P13-02, B-P13-05, B-P13-06, T-P13-14), the F70 to F72 world
+and tasks under `test/evals/p13-voice-audio/`, `docs/runbooks/evals.md`, `docs/runbooks/preview.md`. Spend on a slot
+runs under F71's monthly cap, which the runner sets to $1 on the slot; a live step: `pnpm evals` runs from Kyle's Mac
+on this worktree's slot, and if no slot can be leased, that is a question, not a reason to skip.
+
+**Scope:** (1) The runner generates `p13-probe.mp3` from the fixture sentence through the slot's own `speak` and sends
+it back as a voice note, so no recording of a person exists. (2) Tier 2 on the slot: T-P13-14, three trials, the
+results file committed, the table in the PR body, the Ledger's speech spend for the run in the PR body. (3) Every P13
+hash in the contract matches.
+
+**Acceptance:** `pnpm evals T-P13-14` `pass` (three of three); `ACCEPT F73: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a change to a clause; another model; raising the slot's cap beyond $1 without a question.
