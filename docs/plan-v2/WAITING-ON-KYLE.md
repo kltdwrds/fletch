@@ -87,6 +87,7 @@ Kyle's own lines go under `## Steering`.
   Spark then. [PR #96](https://github.com/kltdwrds/fletch/pull/96); [F42 in parts.md](parts.md#f42-credentials-say-why-a-host-is-refused-the-bound-host-words-and-t-p9-15s-re-grade);
   [P9 row](SCORECARD.md).
   Default taken (for Kyle, 2026-11-07), Q31 and this item: the cross-cutting part is F45 (parts.md, the lead-in bubble), F42 waits for it and is rebased onto it, then P9's must-haves run again on Muse Spark (ORCHESTRATOR-OVERNIGHT.md, Queue 5 and 6).
+  2026-11-08: F45 is merged (PR #111: `ACCEPT F45: PASS`, verifier clean, T-P9-13 and T-P12-10 3 of 3 on Muse Spark); F42's rebase onto it and its declared run of T-P9-15, T-P9-13 and T-P9-14 are under way on PR #96.
 
 - [ ] 2026-11-02 look: **P10 and P11 are interrogated, from the cloud; the evidence is in the session's tarball, not on
   your Mac yet.** Two Opus agents ran `evidence/p10-search/scenario.md` and `evidence/p11-files/scenario.md` in your Muse
