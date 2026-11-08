@@ -23,6 +23,7 @@ is two-way), and run P9's tier-2 tasks once more on main with the slot kept and 
 6's rule: a reply right in other words is an oracle correction with KICKOFF's three things, a wrong one is a line part;
 a run with the must-haves 3 of 3 sets F42 DONE and P9's row. Whether a must-have's bar is one run of three trials, or
 more, is yours: the orchestrator takes no default on it. Alternative: hold PR #96 open until that run.
+Re-sweep on main declared (2026-11-08, `claude/p9-resweep`): T-P9-13, T-P9-14 and T-P9-15, three trials each, on main f79a426 (tree 3715f20f2f40, this line aside), fletch-pv-1, Muse Spark; the slot is kept until every failed reply is read.
 
 ### Q48 (F48), 2026-11-08 (Q46 on the F48 branch until 2026-11-08, renumbered past main's Q46 and F42's Q47): F48's scope widened mid-part, after the first verifier pass, for the tier-1 re-pins the engine's sentence forces
 
