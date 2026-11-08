@@ -77,6 +77,38 @@
         }
       ],
       "status": "pass"
+    },
+    {
+      "run_at": "2026-11-08T06:09:01.704Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the turn ends with the reply: one reply, no secrets row, no card, no grant, no audit row",
+          "started_at": "2026-11-08T06:09:01.704Z",
+          "finished_at": "2026-11-08T06:09:11.537Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the turn ends with the reply: one reply, no secrets row, no card, no grant, no audit row",
+          "started_at": "2026-11-08T06:09:11.537Z",
+          "finished_at": "2026-11-08T06:09:23.099Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the turn ends with the reply: one reply, no secrets row, no card, no grant, no audit row",
+          "started_at": "2026-11-08T06:09:23.099Z",
+          "finished_at": "2026-11-08T06:09:32.645Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
     }
   ]
 }
