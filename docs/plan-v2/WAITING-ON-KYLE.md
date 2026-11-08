@@ -96,7 +96,7 @@ Kyle's own lines go under `## Steering`.
   before. The cause is cross-cutting: Muse Spark opens nearly every turn with a lead-in bubble beside its first tool
   call, and graders that read the first bubble or count replies take it for the reply; F43 (T-P12-10) and F44
   (T-P6-09, T-P6-13) met the same thing and corrected each grader under KICKOFF's rule. The builder's question in PR
-  #96 (numbered Q39 there; it becomes Q41 when the branch is rebased, since F44's Q39 merged first) proposes one
+  #96 (Q39 there; Q47 on main, renumbered past F44's, F50's and F51's questions) proposes one
   cross-cutting part for the lead-in bubble instead of a correction per task. What your answer changes: whether F42
   merges as BLOCKED like F44, or waits; whether that part is written; whether P9's row is re-verified on the default
   model. Recommended: write the cross-cutting part next, hold F42 until it lands, and re-run P9's must-haves on Muse
@@ -104,6 +104,7 @@ Kyle's own lines go under `## Steering`.
   [P9 row](SCORECARD.md).
   Default taken (for Kyle, 2026-11-07), Q31 and this item: the cross-cutting part is F45 (parts.md, the lead-in bubble), F42 waits for it and is rebased onto it, then P9's must-haves run again on Muse Spark (ORCHESTRATOR-OVERNIGHT.md, Queue 5 and 6).
   2026-11-08: F45 is merged (PR #111: `ACCEPT F45: PASS`, verifier clean, T-P9-13 and T-P12-10 3 of 3 on Muse Spark); F42's rebase onto it and its declared run of T-P9-15, T-P9-13 and T-P9-14 are under way on PR #96.
+  2026-11-08, later: F42 is DONE (PR #96): declared run 12 on the final tree e98053c6 on fletch-pv-1, Muse Spark, T-P9-15, T-P9-13 and T-P9-14 each 3 of 3; `ACCEPT F42: PASS` on a GitHub runner; `VERIFIER: no blocking findings`. P9's must-haves hold on the default model; this item is closed by that run, nothing left to decide.
 
 - [ ] 2026-11-02 look: **P10 and P11 are interrogated, from the cloud; the evidence is in the session's tarball, not on
   your Mac yet.** Two Opus agents ran `evidence/p10-search/scenario.md` and `evidence/p11-files/scenario.md` in your Muse
