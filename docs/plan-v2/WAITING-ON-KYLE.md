@@ -9,7 +9,7 @@ Kyle's own lines go under `## Steering`.
 
 ## Open
 
-- [ ] 2026-11-08 decide: **Q46, F48's scope widened mid-part, after the first verifier pass, for the tier-1 re-pins its own
+- [ ] 2026-11-08 decide: **Q48, F48's scope widened mid-part, after the first verifier pass, for the tier-1 re-pins its own
   sentence forces.** F48 makes the engine say, beside every real card, "Waiting for your decision: <label>. It has not
   run yet." whatever the model wrote; one more agent message per paused step. Six tier-1 P15 tasks pin the count of
   agent messages (T-P15-01, -03, -04, -05, -07, -12) and T-P15-01's `card_words_from_model` minefield reads the reply
@@ -21,10 +21,11 @@ Kyle's own lines go under `## Steering`.
   card's words still fires it. What your answer changes: whether the amendment stands (F48 and F47 DONE on PR #126) or
   the re-pins come out and the sentence waits for a part that makes it a frame the journal does not count.
   Recommended: the amendment stands; a scope line that forbids what the part's own rule makes necessary is a drafting
-  error in the part. [Q46](QUESTIONS.md#q46-f48-2026-11-08-f48s-scope-widened-mid-part-after-the-first-verifier-pass-for-the-tier-1-re-pins-the-engines-sentence-forces);
+  error in the part. [Q48](QUESTIONS.md#q48-f48-2026-11-08-q46-on-the-f48-branch-until-2026-11-08-renumbered-past-mains-q46-and-f42s-q47-f48s-scope-widened-mid-part-after-the-first-verifier-pass-for-the-tier-1-re-pins-the-engines-sentence-forces);
   [F48 in parts.md](parts.md#f48-the-cards-wait-is-codes-sentence-beside-every-real-card-the-engine-says-it-waits-and-has-not-run-whatever-the-model-wrote);
   [PR #126](https://github.com/kltdwrds/fletch/pull/126).
-  Default taken (for Kyle, 2026-11-08), Q46: the amendment stands, as recommended; the verifier's later passes read the corrected section. Reverse it by a line under Steering and F48's and F47's rows go back to IN PROGRESS.
+  Default taken (for Kyle, 2026-11-08), Q48: the amendment stands, as recommended; the verifier's later passes read the corrected section.
+  2026-11-08, later: the fourth verifier pass held that default the orchestrator's own (the question raised and answered in one commit) and the mid-part widening your ruling, which Defaults cannot take: `VERIFIER: blocking findings` (that one finding; scope, guards, T-P15-13 3 of 3 and `ACCEPT F48: PASS` all clear). F48 and F47 are BLOCKED on this item, PR #126 merged as F44's was. Your line under Steering confirming the amendment sets both rows DONE; one rejecting it reverts PR #126.
 
 - [ ] 2026-11-08 decide: **D-0027, shopping and bookings: purchase or flag-only per vertical (O5), and provider APIs on egress.**
   P16 was interrogated tonight (Queue 9): Muse's shopping is a research widget plus a hand-over to the live page, its
