@@ -27,6 +27,34 @@
         }
       ],
       "status": "pass"
+    },
+    {
+      "run_at": "2026-11-08T05:56:27.386Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-08T05:56:27.386Z",
+          "finished_at": "2026-11-08T05:56:43.842Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-08T05:56:43.842Z",
+          "finished_at": "2026-11-08T05:57:00.493Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply gives the fine page's line and says busy rate-limited this browser",
+          "started_at": "2026-11-08T05:57:00.493Z",
+          "finished_at": "2026-11-08T05:57:15.964Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
     }
   ]
 }
