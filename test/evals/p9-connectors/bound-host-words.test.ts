@@ -11,10 +11,10 @@
 import { describe, expect, it } from "vitest";
 import { CHAT_TASK, WORK_WORDS } from "../../../packages/agent/src/chat/instructions.ts";
 import { played } from "./harness.ts";
-import { BOUND_REPLY, runs } from "./runs.ts";
+import { BOUND_REPLY, call, load, runs } from "./runs.ts";
 import unbound, { ASKS } from "./unbound-host-real-model.task.ts";
 import type { P9World } from "./world.ts";
-import { OTHER_HOST } from "./world.ts";
+import { API_REF, OTHER_HOST, PROBE_OTHER } from "./world.ts";
 
 const FIRST = "the first reply says the host is not one the key is bound to";
 const lines = WORK_WORDS.split("\n").filter((l) => l.includes('"is not bound to"'));
@@ -117,5 +117,70 @@ describe("[F42] a credential refused on a host: the bound-host line", () => {
       expect(oldSecond(drawn)).toBe(true);
       expect((await verdicts(drawn))[SECOND]).toBe(false);
     });
+  });
+});
+
+// F54 (B-P9-05): on the P9 re-sweep (PR #134, fletch-pv-1, tree f8d5ae4ad665) T-P9-15's trial 3 called `credential_list`
+// and `credential_host_propose` after the refusal with no words of its own; the first turn's only bubble was code's
+// waiting sentence and the words came in the second turn (`evidence/results/ac2cd4280c02….json`). The line now asks for
+// the words as the text of the step after the refusal, before or beside any `credential_host_propose` call, never beside
+// another call. Words beside a call in a step that pauses on a card are that turn's reply (F45, `commentary.ts`), so a
+// turn that waits on the host card has already said them; words beside a list or a search are commentary and never shown.
+const F54_CLAUSE = "before or beside any credential_host_propose call and never beside another call";
+/** Code's waiting sentence for the host card (F48's `pauseWords`), the only bubble of trial 3's first turn. */
+const WAITING = "Waiting for your decision: credential host propose. It has not run yet.";
+/** Trial 3's two lead-ins beside its first steps' calls, folded away as commentary (F45). */
+const TRIAL3_LEADINS = ["Starting on that probe read – pulling the right tool first.", "Got it — reading that address with your key now."];
+/** Trial 3's second turn as read from the slot (its opening sentences; the rest of that reply was not kept). */
+const TRIAL3_SECOND = "Your Example API key is not bound to api.example.org, so nothing was sent there; only you can bind it.";
+
+describe("[F54] the refused host is said before any card", () => {
+  /** T-P9-15's first turn as trial 3 played it: the read refused, then a list and the propose call; `words` beside `wordsAt` ("list" or "propose"). */
+  const trial3 = (words?: { text: string; at: "list" | "propose" }) => ({
+    seed: runs["T-P9-15"]!().seed,
+    script: [
+      { ...load("fixture"), text: TRIAL3_LEADINS[0] },
+      { ...call("fixture_read", { url: PROBE_OTHER }, "read1"), text: TRIAL3_LEADINS[1] },
+      load("credentials"),
+      { ...call("credential_list", {}, "list1"), ...(words?.at === "list" ? { text: words.text } : {}) },
+      { ...call("credential_host_propose", { ref: API_REF, host: OTHER_HOST }, "prop1"), ...(words?.at === "propose" ? { text: words.text } : {}) },
+      { text: TRIAL3_SECOND },
+    ],
+  });
+
+  it("the system prompt the fake model receives carries the sharpened line on every chat request; without it the prompt is caught", async () => {
+    expect(LINE).toContain(F54_CLAUSE);
+    expect(LINE).toMatch(/as the text of the step that follows the refusal/);
+    expect(LINE).toMatch(/so a turn that waits on the host card has already said them/);
+    const w = await played(unbound, trial3({ text: SLOT_WORDS, at: "propose" }));
+    expect(w.prompts().length).toBeGreaterThan(0);
+    expect(w.prompts().every((p) => p.includes(LINE) && p.includes(F54_CLAUSE))).toBe(true);
+    // Planted: the line removed from the system prompt, and the line's old text (before F54) in its place.
+    expect(carried(w.prompts().map((p) => p.replace(LINE, "")))).toBe(false);
+    const before = LINE.replace(/, as the text of the step that follows the refusal, .*?, so a turn that waits on the host card has already said them/, "");
+    expect(before).not.toContain(F54_CLAUSE);
+    expect(w.prompts().map((p) => p.replace(LINE, before)).every((p) => p.includes(F54_CLAUSE))).toBe(false);
+  });
+
+  it("trial 3's first turn, pinned verbatim (no words of the model's, then the propose call and code's waiting sentence), fails the first-reply grader", async () => {
+    const w = await played(unbound, trial3());
+    const said = w.replies("c1");
+    expect(said[0]).toBe(WAITING);
+    expect(said.slice(0, 2)).toEqual([WAITING, TRIAL3_SECOND]);
+    expect(said.some((r) => TRIAL3_LEADINS.includes(r))).toBe(false);
+    expect(w.cards("c1").some((c) => c.tool === "credential_host_propose")).toBe(true);
+    expect((await verdicts(w))[FIRST]).toBe(false);
+  });
+
+  it("planted: the words before the propose call in the first turn, beside it, pass every grader", async () => {
+    const w = await played(unbound, trial3({ text: SLOT_WORDS, at: "propose" }));
+    expect(w.replies("c1").slice(0, 2)).toEqual([SLOT_WORDS, WAITING]);
+    expect(await verdicts(w)).toEqual(held);
+  });
+
+  it("planted: the words beside the list call are commentary, never shown, and the first reply still fails", async () => {
+    const w = await played(unbound, trial3({ text: SLOT_WORDS, at: "list" }));
+    expect(w.replies("c1")[0]).toBe(WAITING);
+    expect((await verdicts(w))[FIRST]).toBe(false);
   });
 });
