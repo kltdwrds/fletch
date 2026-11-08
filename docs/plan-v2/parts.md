@@ -795,3 +795,47 @@ deliberate early message stays, and so does its `message` frame); `<message_brea
 words beside a call (the engine holds the rule now; F42's line loses its no-words clause when it is rebased onto this
 part, in F42); a change to what the model is sent; the Activity drawer's step list (commentary stays a step's text
 there, as the model's own words).
+
+## F46 The launch is said as started: P3's launch line sharpened and T-P3-14's declared run
+
+**Read:** `docs/plan-v2/contracts/P3-delegation.md` (B-P3-01: a delegation is said as launched, never as done; the
+reply that starts children says what was started and what it will find out, and promises only the handoff; B-P3-04:
+no per-step relay), T-P3-14 (`test/evals/p3-delegation/launch-and-handoff-real-model.task.ts`: its first grader hears
+`started|launched|asked` in the first reply and refuses `DONE_WORDS` and `RELAY_WORDS`), `WORK_WORDS` line 1 in
+`packages/agent/src/chat/instructions.ts` (F34's launch line), `endsTurnIfSaid` in `packages/agent/src/chat/turn.ts`,
+F45 (the lead-in is commentary; `saidBefore` counts only replies), the declared run of 2026-11-08 on main (PR #107,
+tree dfd25a516fc504cdabd8455fc8bda49dec86341a, results `a0d7857f8b13…json`, 0 of 3): trial 1 gave three launch
+acknowledgements before the handoff ("Starting a sub-agent to read that page...", "I'll launch a sub-agent to fetch
+the page title...", "I started a sub-agent to read ... and find its title..."); trial 2 "I'll spin up a reader for
+that page and report back."; trial 3 "I'll launch a sub-agent to read that page title and keep you posted.";
+`docs/plan-v2/QUESTIONS.md` Q29 (answered by default: one run declared on the final tree counts; both widenings stay).
+No one-way door: words in the agent's prompt and a test. A live step: `pnpm evals T-P3-14` on this worktree's slot
+(`pnpm preview up`), declared before it starts. Builds on F45: trial 1's three replies are lead-ins beside steps that
+continued, which F45's rule holds out of the reply, so this part branches from main once F45 is merged.
+
+**Why a line part and not an oracle correction:** trials 2 and 3 say the launch in the future tense ("I'll spin up",
+"I'll launch") when `subagents_delegate` has already returned, and trial 3 promises progress beyond the handoff ("keep
+you posted"): both are wrong under B-P3-01 (said as launched; promises only the handoff), so the grader stays as
+written and the words change.
+
+**Scope:** (1) `WORK_WORDS` line 1 reworded, still one line and the only launch line: the launch reply begins by
+saying the sub-agent was started, in the past tense ("I started a sub-agent to …", "I asked a sub-agent to …"), never
+"I'll" or "I will" for the start itself, since the call has returned when the reply is written; it names what the
+sub-agent will find out; its one promise is the handoff, in the words "I will tell you what it finds when it reports
+back", and never "keep you posted", "updates", "as it goes" or any other progress; the example changes with it. The
+rest of the line (written once, after `subagents_delegate` has returned, no `send_to_user`, no `subagents_status`, the
+handoff's own words) stays. (2) Tier 1: the test that runs T-P3-14's graders under the scripted fake
+(`test/evals/p3-delegation/tier2-fake.test.ts`) pins the new example as a passing first reply and plants each refused
+form, verbatim, as failing the first grader: "I'll launch a sub-agent to read that page title and keep you posted."
+(trial 3) and "I'll spin up a reader for that page and report back." (trial 2); the planted violation for the line
+itself is its absence from the prompt, which fails T-P3-14's `required_fact` grader (the existing pattern). (3) No
+grader changes, so T-P3-14's hash in `contracts/P3-delegation.md` matches. (4) Tier 2 on the slot, declared before it
+starts: T-P3-14, three trials; the results file committed, the table in the PR body. A trial that fails with a right
+reply in other words is KICKOFF's oracle correction with its three things; otherwise the run stands and the PR says so.
+
+**Acceptance:** `pnpm evals T-P3-14` `pass` (three of three); `ACCEPT F46: PASS`; `VERIFIER: no blocking findings`.
+On its pass F34 is DONE (T-P3-14 was its last open task) and P3 goes to level 2.
+
+**Not in scope:** the engine (F45 holds the lead-in; `endsTurnIfSaid` stays as F34 wrote it); a change to B-P3-01 or
+to any P3 grader; T-P3-15 and T-P3-17 (nice-to-haves, the sweep's); `SUBAGENT_TASK` (the sub-agent's words are not
+the launch); a second `WORK_WORDS` line.
