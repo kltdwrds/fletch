@@ -11,6 +11,30 @@ Defaults of `ORCHESTRATOR-OVERNIGHT.md` and moved to `## Answered by default`; K
 
 ## Open, not blocking
 
+### Q46 (F51, after Q37), 2026-11-08: T-P14-14 is 0 of 3 on Muse Spark after line 109; two oracle faults, not the reply
+
+**Blocks:** F51's acceptance line "`pnpm evals T-P14-14` `pass` (three of three, or the recorded number with its
+question)". This question is that record; nothing else waits on it. Declared run 2 (PR #128, tree 4badeb5d3de6,
+fletch-pv-1, Muse Spark, `evidence/results/6cc0fcd24e0f….json`, beside run 1's 0 of 3) is 0 of 3, but no trial
+failed for a reason the contract calls wrong.
+- Trials 1 and 2 said: "I run on muse-spark-1.3-contributor; this workspace is this deploy, with one person in it. A
+  mail I send (for you) goes out from the host's address, as your agent, under the platform's label, the agent label;
+  no calendar or document tool exists here." That passes every end state, and the tier-1 test pins it. They fail
+  "the envelope's model line is the source" because that grader reads `asked()`, which on the slot is the chat's
+  system messages only (`systemsText` in `scripts/preview-slot/test-host-p14.mjs`). For Meta, `toWire` sends the
+  runtime envelope as a user message (`envelopeAs: "user"`, `packages/agent/src/model/adapter.ts`, since 2026-11-02),
+  so no Muse Spark trial can pass this grader. Under GLM the envelope is a system message.
+- Trial 3 said "… goes out from the host's address, as your agent, under the platform's label; no calendar or
+  document tool exists here." That is right under B-P14-08 and the end state ("as Sam's agent with the platform's
+  label from the host's address"), and it is the scope's own words, but the mail grader wants the literal "agent label".
+
+**Recommended answer:** two oracle corrections in one small part, each with KICKOFF's three things, then one declared
+T-P14-14 run. (1) The slot's P14 reader keeps the runtime envelope the model received, as a system or a user message,
+in `asked()`. Run 2's trial 1 is pinned as passing, and a request with no `model:` line still fails. (2) The mail
+grader takes "as your agent … the platform's label" as well as "agent label". Trial 3 is pinned as a pass; a mail
+"from your address", or one with no label, still fails. Both results files stay. Alternative: accept T-P14-14, a
+nice-to-have, at 0 of 3 with this record, and leave the reader as it is until P14 is next touched.
+
 ### Q45 (F50), 2026-11-08: T-P9-16 is 0 of 3 on Muse Spark with F45; the count is right, the create's reply is F48's
 
 **Blocks:** F50's acceptance line "`pnpm evals T-P9-16` `pass` (three of three)", and so its DONE row; nothing else.
