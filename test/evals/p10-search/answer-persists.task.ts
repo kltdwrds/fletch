@@ -2,9 +2,9 @@
 // as a reload reads it: the reply with its two links is the same, character for character, and at phone width the
 // links are anchors with the same href. The history is the transcript's; the page's text is stored nowhere else.
 import { defineTask, type Grader } from "../../support/task.ts";
+import { ASK } from "./page-read-names-source.task.ts";
 import type { P10World } from "./world.ts";
 import { PROBE, PROBE_LINK, replyOf } from "./world.ts";
-import { ASK } from "./page-read-names-source.task.ts";
 
 const graders: Grader<P10World>[] = [
   { name: "the reply with its two links is returned the same after the reload", kind: "end_state", check: async (w) => (await w.reloaded()).join("\n") === replyOf(w) && replyOf(w).includes(PROBE) && replyOf(w).includes(PROBE_LINK) },

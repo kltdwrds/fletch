@@ -3,7 +3,7 @@
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P10World } from "./world.ts";
-import { WALLED, replyOf } from "./world.ts";
+import { replyOf, WALLED } from "./world.ts";
 
 const sam = people.people.find((p) => p.id === "sam-solo")!;
 

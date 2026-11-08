@@ -9,8 +9,8 @@ import { STATUS_OTHER, STATUS_WORDS } from "../../../packages/agent/src/http/app
 import type { FakeStep } from "../../support/fake-model.ts";
 import { webNamespace } from "../../support/p2-fixtures.ts";
 import { runTask, type TaskHarness, type Turn } from "../../support/task.ts";
-import { page } from "../../workers/support/page-harness.ts";
 import { authorityWorld } from "../../workers/support/authority-world.ts";
+import { page } from "../../workers/support/page-harness.ts";
 import { anchorsOf, fileCardsOf, P2Tier1World, type Page, sam, statusOf } from "./harness.ts";
 import type { Drawn, LoopPageWorld, Working } from "./page-world.ts";
 import task, { TOOL } from "./status-while-working.task.ts";

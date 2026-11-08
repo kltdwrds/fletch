@@ -8,14 +8,16 @@ import { PROBE, PROBE_HEADING, PROBE_HEADING_2, resultsOf } from "./world.ts";
 export const ASK = `p10 probe: what is the heading of ${PROBE}?`;
 export const AGAIN = `p10 probe: and what is the heading of ${PROBE} now?`;
 const reads = (w: P10World) => resultsOf(w, "browse_open").filter((r) => !r.isError);
+/** A result's head: its first line inside the fence. */
+const head = (text: string) => text.split("\n")[1] ?? "";
 
 const graders: Grader<P10World>[] = [
   { name: "two reads reached the browser, one per turn", kind: "end_state", check: (w) => w.browserLog().reads.filter((r) => r.url === PROBE).length === 2 },
-  { name: "each tool result's head names the engine", kind: "end_state", check: (w) => reads(w).length === 2 && reads(w).every((r) => r.text.split("\n")[0]?.startsWith(`${PROBE} (via `)) },
+  { name: "each tool result's head names the engine", kind: "end_state", check: (w) => reads(w).length === 2 && reads(w).every((r) => head(r.text).startsWith(`${PROBE} (via `)) },
   { name: "the second turn's result carries the second heading", kind: "end_state", check: (w) => reads(w)[0]?.text.includes(PROBE_HEADING) === true && reads(w)[1]?.text.includes(PROBE_HEADING_2) === true },
   { name: "browse memory holds the engine, the state and the code only", kind: "required_fact", check: async (w) => { const m = await w.browseMemory(); return m.length === 1 && Object.keys(m[0] ?? {}).every((k) => ["domain", "engine", "state", "code", "updated_at", "at", "until", "retry_after"].includes(k)) && !JSON.stringify(m).includes(PROBE_HEADING); } },
   { name: "served_from_store", kind: "minefield", check: (w) => w.browserLog().reads.length < 2 || reads(w)[1]?.text.includes(PROBE_HEADING_2) !== true },
-  { name: "engine_unsaid", kind: "minefield", check: (w) => reads(w).some((r) => !/^\S+ \(via \w+/.test(r.text)) },
+  { name: "engine_unsaid", kind: "minefield", check: (w) => reads(w).some((r) => !/^\S+ \(via \w+/.test(head(r.text))) },
   { name: "cached_unmarked", kind: "minefield", check: (w) => reads(w).length === 2 && reads(w)[0]?.text === reads(w)[1]?.text },
 ];
 
