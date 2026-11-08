@@ -1216,3 +1216,116 @@ PR as F44's and F48's were.
 a `WORK_WORDS` line; a provider-specific connector or catalogue row; PKCE and device-code flows (a later record if Kyle
 accepts D-0016); the company's shared connectors (M28); a tier-2 task; the capture form's look beyond the added fields
 (no specimen: the form is the existing capture page); D-0017 and D-0018.
+
+## F100 Files as they are: the P11 contract check, eighteen task files, an edit that says it replaced, a listing with its time, and tier 1
+
+**Read:** `docs/plan-v2/contracts/P11-files-documents.md` (every clause, the task table, the Properties rows, deltas 1
+to 5 and 7), `docs/plan-v2/evidence/p11-files/answers/step-1.md` to `step-12.md` on Kyle's Mac if reachable (the
+contract stands without them), `packages/agent/src/files/store.ts`, `packages/agent/src/files/links.ts`,
+`packages/agent/src/files/tools.ts`, `packages/agent/src/render/tools.ts`, `packages/agent/src/render/render.ts`,
+`packages/agent/src/files/ingest.ts`, `packages/agent/src/http/app/library.ts`, `packages/agent/src/http/app/chat.ts`,
+`packages/agent/src/chat/gate.ts`, `test/workers/m24-3-documents.test.ts`, `test/workers/m24-3-uploads.test.ts`,
+`test/support/task.ts`, `test/m0/f40-contract.test.ts` as the model for the contract check. No one-way door.
+
+**Scope:** (1) `test/m0/f100-contract.test.ts` holds P11 as F40's holds P14: seventeen clauses, eighteen tasks, every
+task file loads with its id and clause ids, every tier-1 `version_hash` F100 runs matches `versionHash()`. (2) The
+eighteen `.task.ts` files under `test/evals/p11-files/` as the task table names them, each with its `.test.ts`, and
+the P11 world (the test host, a recording Renderer port, Sam Solo and Pat Solo from `test/fixtures/people.json`). (3)
+Two result changes the tasks need, nothing else in the tools: `file_write` over an existing home file says in its
+result that it replaced an earlier file and that the earlier content was not kept (delta 1, until F103), and
+`file_list` gives each home file's last change (`updated_at`) beside its size. (4) Tier 1 under an `[F100]` describe,
+each with its planted faults, for T-P11-01, 02, 03, 04, 06, 08, 09, 10, 13 and 14: a render saved before the reply that
+says so, with its card; pdf refused `RENDER_FORMAT_REFUSED` and every render on `singleAccountHost`
+`HOST_RENDER_UNAVAILABLE` with nothing saved; the download link refused to another member and without a session; the
+edit on its own path with no sibling; the CSV total read back; an export beside its source; a share only after its
+card, no standing grant honoured, served by the deploy, `SHARE_CHANGED` after an edit; the composer live and a typed
+"go ahead" no approval while a card waits; an upload kept once; the listing's time. (5) The tasks for F101 to F103
+(T-P11-05, 07, 11, 12, 15 to 18) load and run under the scripted fake, their hashes written. (6) Every hash in the
+contract filled for the files written (the contract's `version_hash: filled by F100` lines replaced with the hash, the
+one edit F100 makes to the contract).
+
+**Acceptance:** the `[F100]` tests pass with their planted failures; `pnpm accept F100`; `ACCEPT F100: PASS`;
+`VERIFIER: no blocking findings`.
+
+**Not in scope:** share list and revoke, the delete's journal row, `pptx` and cards drawn from current state (F101);
+instruction lines and a tier-2 run (F102); versions and the trash (F103, D-0028); a PDF engine or an xlsx writer
+(delta 3); any change to a clause.
+
+## F101 Shares and deletes say what happened: share list and revoke, a journaled delete that ends its shares, decks, and cards from the store
+
+**Read:** `docs/plan-v2/contracts/P11-files-documents.md` (B-P11-07, B-P11-12 to B-P11-14, B-P11-17, deltas 6 to 8,
+the Translation's survey), the F100 world and tasks under `test/evals/p11-files/`, `packages/agent/src/files/links.ts`,
+`packages/agent/src/render/tools.ts`, `packages/agent/src/render/render.ts`, `packages/agent/src/files/store.ts`,
+`packages/agent/src/grants/journal.ts`, `packages/agent/src/objects/ledger.ts`, `packages/agent/src/http/app-routes.ts`,
+`packages/agent/src/http/app/thread-work.ts`, `packages/agent/src/http/app/library.ts`,
+`docs/plan-v2/evidence/p11-files/step-10-library.png`, `step-11-reload-deck.png` and `step-11-reload-link.png` on
+Kyle's Mac if reachable. No one-way door: every change uses a table that exists.
+
+**Scope:** (1) Before any surface changes, the specimen `packages/agent/src/design/fletch/ds/specimens/files.html` from
+the step-10 and step-11 captures: the Library item with kind, size and last change, the file card's deleted state and
+the share card's revoked state, in fletch's tokens, listed for Kyle as a `look` item by the orchestrator; the part
+draws only what the specimen shows. (2) `PersonLinks.list(requester)` and `PersonLinks.revoke(id, requester)`: the
+owner's live shares with path and expiry; a revoke deletes the row and the R2 pointer so the public path answers
+exactly as an unknown share (same status and body, `SHARE_UNKNOWN`), refused for a share not the requester's. (3)
+`share_list` (observation) and `share_revoke` (observation, `mutates`, no card: it narrows exposure, delta 6) in the
+`documents` namespace; the revoke's result says revoked only from the store's answer. (4) `file_delete` and
+`/app/file/delete` delete every share of the path with the file and write one Ledger `journal` row through
+`JournalRow` (`actionKind` `files.delete`, subject `resource:file:<path>`, no content); `share_document`'s run and a
+revoke write `files.share` and `files.unshare` rows the same way. (5) `pptx` joins `RENDER_FORMATS` (pandoc makes it
+from `---`-separated slides) and `RENDER_WORDS` names it. (6) The chat's file card and share card ask the owner's
+Person at draw time and say "deleted" or "revoked" from the page's word table (delta 8); the transcript is unchanged.
+(7) Tier 1 under `[F101]` with planted faults for T-P11-07, 11, 12 and 15: a revoked link still serving, a list across
+owners, a delete leaving its share, a journal row holding content, a stale share card.
+
+**Acceptance:** the `[F101]` tests pass with their planted failures; the specimen exists and is named in the PR body;
+`pnpm accept F101`; `ACCEPT F101: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a card before a revoke or a delete (delta 6, 7); a `revoked_at` column; versions and trash (F103);
+reply words (F102); any change to a clause.
+
+## F102 Files say what happened: the reply's words and P11's tier 2 on a slot
+
+**Read:** `docs/plan-v2/contracts/P11-files-documents.md` (B-P11-01, B-P11-04, B-P11-06, B-P11-09, B-P11-11, B-P11-12,
+deltas 1, 2 and 4, the tier-2 tasks), the F100 and F101 tasks under `test/evals/p11-files/`,
+`packages/agent/src/chat/instructions.ts`, `docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q18. No one-way door. A
+live step: `pnpm evals` on this worktree's slot (`pnpm preview up`) with the Renderer on; if no slot can be leased,
+that is a question, not a reason to skip.
+
+**Scope:** (1) `FILE_WORDS` in `instructions.ts`: a made or changed file is said only after its tool returned, with
+its `files/<path>` link in the same message; an edit says it replaced the earlier file and whether that was kept, in
+the tool's words; a spreadsheet's total is read back from the saved file before it is stated; a share's link and expiry
+are the tool's and it is sent to no one; a revoke is said only from the tool's answer; with a card pending, the reply
+says the card waits and has not run. (2) Tier 2 on the slot: T-P11-16 and T-P11-17 (must-have), T-P11-18, three trials
+each, the results files committed, the table in the PR body. (3) Every P11 hash in the contract matches.
+
+**Acceptance:** `pnpm evals T-P11-16` and `pnpm evals T-P11-17` `pass` (three of three); T-P11-18 run and recorded
+whatever the verdict; `ACCEPT F102: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a code-written reply line (Q18); versions (F103); a PDF engine; any change to a clause.
+
+## F103 A Library that keeps what it replaced: versions and a trash on the default (D-0028, built deletable)
+
+**Read:** `docs/plan-v2/contracts/P11-files-documents.md` (B-P11-05, B-P11-14, delta 9, T-P11-05),
+`docs/decisions/0028-library-versions-and-trash.md`, `packages/agent/src/files/store.ts`,
+`packages/agent/src/files/links.ts`, `packages/agent/src/files/tools.ts`, `packages/agent/src/migrations/catalog.ts`
+(`PERSON_MIGRATIONS`), `packages/agent/src/http/app/library.ts`, the F55 part above as the model for building on a
+proposed record. One-way door: D-0028, proposed; this part builds on the default taken for Kyle on 2026-11-08 and
+changes nothing of the record's status.
+
+**Scope:** (1) `PERSON_MIGRATIONS` gains `person.file-versions`: the `file_versions` and `file_trash` tables of D-0028,
+the bytes under the person's home key's `versions/` prefix. (2) `PersonFiles.write` and `writeBytes` keep the replaced
+bytes as version n first; `remove` moves the row and its versions to the trash; `versions`, `openVersion`,
+`restoreVersion`, `trash`, `restoreTrashed` and `emptyTrash`, owner-only, each refusal by code; the caps (20 versions,
+30 days) drop the oldest with a journal row; `purgeAll` ends them all. A share never serves a version or a trashed
+file. (3) `file_write`'s result names the kept version (replacing F100's "not kept"); `file_list` and `/app/library`
+carry the version count; the Library's Delete dialog says the file goes to the trash for 30 days. (4) Tier 1 for
+T-P11-05 under `[F103]` with its planted faults (a restore that loses the current version, a trashed file served by a
+share, another member's session reading versions). (5) The tables, prefix, routes, tool fields and codes listed in the
+PR body under "To revert D-0028".
+
+**Acceptance:** `pnpm exec vitest run` on the `[F103]` tests green with every planted guard; `ACCEPT F103: PASS`;
+`VERIFIER: no blocking findings`, or `VERIFIER: blocking findings` whose only finding is D-0028 itself, in which case
+the row is BLOCKED on the D-0028 decide item and the orchestrator merges it as F55 was.
+
+**Not in scope:** accepting or editing D-0028; R2 bucket versioning; versions of working-tree files (`work/`); a
+version diff view; any change to a clause.
