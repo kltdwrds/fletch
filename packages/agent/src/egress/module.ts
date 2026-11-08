@@ -54,6 +54,9 @@ export const RESPONSE_MAX = 1_000_000;
 const PASSED_HEADERS = new Set(["content-type", "etag", "last-modified", "link", "location", "retry-after", "x-ratelimit-remaining", "x-ratelimit-reset"]);
 
 /** The plan refusals that write an audit row: a host or a credential the request may not use. */
+/** The refusals of a keyed call for its host: the host is not listed, or the key may not be sent there (F59). */
+export const HOST_REFUSALS: ReadonlySet<EgressCode> = new Set(["EGRESS_HOST_DENIED", "EGRESS_CRED_HOST_DENIED"]);
+
 export const AUDITED_REFUSALS: ReadonlySet<EgressCode> = new Set(["EGRESS_HOST_DENIED", "EGRESS_CRED_HOST_DENIED", "EGRESS_CRED_UNKNOWN"]);
 
 export async function egressFetch(deps: EgressDeps, req: OutboundRequest, ctx: EgressContext): Promise<EgressResult> {
