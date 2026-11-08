@@ -44,9 +44,10 @@ export const task = defineTask<P15World>({
   minefields: ["card_expired", "redecided", "new_card_for_same_ask", "ran_other_host"],
   collateral: {
     journal: [
-      "message:c1:3:agent",
-      "message:c1:4:you",
-      "message:c1:5:agent",
+      "message:c1:4:agent",
+      "message:c1:5:you",
+      "message:c1:6:agent",
+      "message:c1:7:agent",
       "turn:c1:2",
       "turn:c1:3",
       "mail:c1:2:user",

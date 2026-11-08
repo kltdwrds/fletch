@@ -5,9 +5,13 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
-None open. Every question here on 2026-11-07 was answered by its recommended default under the pre-authorised
-Defaults of `ORCHESTRATOR-OVERNIGHT.md` and moved to `## Answered by default`; Kyle reverses any of them by a line under
-`## Steering` in `WAITING-ON-KYLE.md`.
+### Q48 (F48), 2026-11-08 (Q46 on the F48 branch until 2026-11-08, renumbered past main's Q46 and F42's Q47): F48's scope widened mid-part, after the first verifier pass, for the tier-1 re-pins the engine's sentence forces
+
+**Blocks:** F48's `VERIFIER: no blocking findings`, and so its DONE row and F47's. F48's rule adds one agent message ("Waiting for your decision: <label>. It has not run yet.") to every step that pauses on a real card. Six tier-1 P15 tasks pin the count of agent messages in their journal collateral (T-P15-01, -03, -04, -05, -07, -12) and T-P15-01's `card_words_from_model` minefield reads the reply's sentences for the card's status words, so the rule cannot land without re-pinning those counts and excluding code's exact sentence from that minefield; their `version_hash` lines move with them. F48's scope (4) as written on 2026-11-08 said "no clause, task or hash changes" and its Not in scope "any grader", so the first verifier pass blocked on them, and the orchestrator amended the section (commit c774858 on `claude/f48-local`) to allow exactly these; the second pass held that widening a part's scope mid-part to clear a finding is Kyle's ruling, not the orchestrator's, and asked for it here. The substance both passes found sound: the re-pins tighten rather than loosen, the minefield skips code's one sentence only, and a planted model echo of the card's words still fires it (`test/evals/p15-approvals/pause-words.test.ts`, the task file's planted negative).
+**Recommended answer:** the amendment stands: a scope line that forbids what the part's own rule makes necessary is a drafting error in the part, not a constraint on the build, and the orchestrator who wrote the section corrects it, in the open, with the verifier re-run on the corrected section; the re-pins and the minefield's exclusion of code's sentence are two-way and tested. If you would rather the engine's sentence not count as an agent message at all (a frame the journal does not count), that is a later part.
+
+Default taken (for Kyle, 2026-11-08): the amendment stands, as recommended; the verifier's third pass reads the corrected section.
+The fourth verifier pass (fresh Opus, 2026-11-08, at 19511d3) held that this default is the orchestrator's own, since the orchestrator raised and answered the question in one commit, and that widening a part's scope mid-part is Kyle's ruling, which Defaults cannot take; so the question stays open for him. F48 and F47 are BLOCKED on it; PR #126 is merged as F44's was, with the rule and its re-pins on main. Kyle's line under Steering confirming the amendment sets both rows DONE; one rejecting it reverts PR #126 (the sentence, the re-pins and the minefield's exclusion come out together) and the sentence waits for a part that makes it a frame the journal does not count.
 
 ## Open, not blocking
 

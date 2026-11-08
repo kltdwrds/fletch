@@ -915,13 +915,13 @@ the PR body with the line it pinned (at least `pause-words.test.ts` and `test/wo
 it counts the entries); no test is deleted. (3) T-P15-13's `collateral: messages ≤ 5` is checked against the new count
 (the first turn gains one entry per card) and left as written. (4) `contracts/P15-approvals.md` gains one sentence in
 its Translation deltas naming the rule (beside every real card code says it waits and has not run, whatever the model
-wrote; F48); no clause, task or hash changes. (5) Tier 2 on a slot, declared before it starts: T-P15-13, three trials,
+wrote; F48); no clause changes. The sentence is one more agent message in every paused step, so the tier-1 tasks that pin the count of agent messages in their journal collateral re-pin it (T-P15-01, -03, -04, -05, -07, -12), and T-P15-01's `card_words_from_model` minefield excludes code's exact sentence, since it is not the model's words; a planted model echo of the card's words must still fire it; their `version_hash` lines move with them (orchestrator, 2026-11-08, after the first verifier pass: the rule cannot land without them). (5) Tier 2 on a slot, declared before it starts: T-P15-13, three trials,
 on a tree that holds F47's branch; the results file committed, the table in the PR body; the scorecard's P15 sentence
 takes the run. On three of three, F47's acceptance is met at this tree (as F34's was under F46) and both rows go DONE.
 
 **Acceptance:** `pnpm evals T-P15-13` `pass` (three of three); `ACCEPT F48: PASS`; `VERIFIER: no blocking findings`.
 
-**Not in scope:** F45's rule for a step that continues or ends the turn; any grader (T-P15-13's are F47's); a second
+**Not in scope:** F45's rule for a step that continues or ends the turn; any grader beyond scope (4)'s re-pins and the T-P15-01 minefield (T-P15-13's are F47's); a second
 `STOPS` line; the card's own rendering; T-P15-14 and T-P15-16 (F49).
 
 ## F49 P15's nice-to-haves read again: T-P15-14 and T-P15-16 corrected as oracles under KICKOFF's rule
