@@ -329,6 +329,12 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   socket and a reply lands at its step's end rather than token by token (`chat/turn.ts`, `chat/commentary.ts`).
   Rejected: streaming live and retracting with a frame when a call follows, which still puts a `delta` before the last
   tool result (T-P2-03's `early_bubble`) and draws a bubble the page then takes away.
+- 2026-11-08 F48's `pauseWords` says a real card waits beside it even when the step also called `send_to_user` or a
+  tool delivered its own words: whether a card waits is a fact of the card store, not of any message. Each sentence is
+  queued just before its card, so a live page draws it where a reload does (after the model's words, before the card).
+  The extra message is pinned in the tier-1 P15 tasks' journal collateral (T-P15-01, -03, -04, -05, -07, -12, hashes
+  retaken), and T-P15-01's `card_words_from_model` leaves out code's own sentence, which repeats the card's status.
+  Rejected: staying silent when another delivery came, which leaves a card's wait to whatever the model chose to say.
 - 2026-11-08 `pnpm accept` can run on a GitHub runner: `.github/workflows/accept.yml`, dispatched by hand for one branch and
   one part, prints the same ACCEPT and TREE lines and keeps the log as its artifact; it deploys and writes nothing. Added
   when a laptop carrying four builder sessions timed the browser tests out in every full run while each failing file

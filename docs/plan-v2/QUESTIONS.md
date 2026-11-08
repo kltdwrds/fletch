@@ -24,6 +24,14 @@ is two-way), and run P9's tier-2 tasks once more on main with the slot kept and 
 a run with the must-haves 3 of 3 sets F42 DONE and P9's row. Whether a must-have's bar is one run of three trials, or
 more, is yours: the orchestrator takes no default on it. Alternative: hold PR #96 open until that run.
 
+### Q48 (F48), 2026-11-08 (Q46 on the F48 branch until 2026-11-08, renumbered past main's Q46 and F42's Q47): F48's scope widened mid-part, after the first verifier pass, for the tier-1 re-pins the engine's sentence forces
+
+**Blocks:** F48's `VERIFIER: no blocking findings`, and so its DONE row and F47's. F48's rule adds one agent message ("Waiting for your decision: <label>. It has not run yet.") to every step that pauses on a real card. Six tier-1 P15 tasks pin the count of agent messages in their journal collateral (T-P15-01, -03, -04, -05, -07, -12) and T-P15-01's `card_words_from_model` minefield reads the reply's sentences for the card's status words, so the rule cannot land without re-pinning those counts and excluding code's exact sentence from that minefield; their `version_hash` lines move with them. F48's scope (4) as written on 2026-11-08 said "no clause, task or hash changes" and its Not in scope "any grader", so the first verifier pass blocked on them, and the orchestrator amended the section (commit c774858 on `claude/f48-local`) to allow exactly these; the second pass held that widening a part's scope mid-part to clear a finding is Kyle's ruling, not the orchestrator's, and asked for it here. The substance both passes found sound: the re-pins tighten rather than loosen, the minefield skips code's one sentence only, and a planted model echo of the card's words still fires it (`test/evals/p15-approvals/pause-words.test.ts`, the task file's planted negative).
+**Recommended answer:** the amendment stands: a scope line that forbids what the part's own rule makes necessary is a drafting error in the part, not a constraint on the build, and the orchestrator who wrote the section corrects it, in the open, with the verifier re-run on the corrected section; the re-pins and the minefield's exclusion of code's sentence are two-way and tested. If you would rather the engine's sentence not count as an agent message at all (a frame the journal does not count), that is a later part.
+
+Default taken (for Kyle, 2026-11-08): the amendment stands, as recommended; the verifier's third pass reads the corrected section.
+The fourth verifier pass (fresh Opus, 2026-11-08, at 19511d3) held that this default is the orchestrator's own, since the orchestrator raised and answered the question in one commit, and that widening a part's scope mid-part is Kyle's ruling, which Defaults cannot take; so the question stays open for him. F48 and F47 are BLOCKED on it; PR #126 is merged as F44's was, with the rule and its re-pins on main. Kyle's line under Steering confirming the amendment sets both rows DONE; one rejecting it reverts PR #126 (the sentence, the re-pins and the minefield's exclusion come out together) and the sentence waits for a part that makes it a frame the journal does not count.
+
 ## Open, not blocking
 
 ### Q47 (F42), 2026-11-01 (Q39 on the F42 branch until 2026-11-08, then Q45; renumbered past main's Q39, Q43, Q45 and Q46): may F42's must-haves count, when the lead-in bubble both models write fails T-P9-13 at origin/main too?
@@ -52,49 +60,6 @@ reply" and "the second turn" as what the agent said between Sam's ask and her ne
 refused turn pinned verbatim as a pass and four planted negatives in `test/evals/p9-connectors/bound-host-words.test.ts`,
 runs 1 to 4 in `evidence/results/b3f0abb43bf0….json`); the old second-turn reading had been passing on the first turn's
 "only you".
-### Q46 (F51, after Q37), 2026-11-08: T-P14-14 is 0 of 3 on Muse Spark after line 109; two oracle faults, not the reply
-
-**Blocks:** F51's acceptance line "`pnpm evals T-P14-14` `pass` (three of three, or the recorded number with its
-question)". This question is that record; nothing else waits on it. Declared run 2 (PR #128, tree 4badeb5d3de6,
-fletch-pv-1, Muse Spark, `evidence/results/6cc0fcd24e0f….json`, beside run 1's 0 of 3) is 0 of 3, but no trial
-failed for a reason the contract calls wrong.
-- Trials 1 and 2 said: "I run on muse-spark-1.3-contributor; this workspace is this deploy, with one person in it. A
-  mail I send (for you) goes out from the host's address, as your agent, under the platform's label, the agent label;
-  no calendar or document tool exists here." That passes every end state, and the tier-1 test pins it. They fail
-  "the envelope's model line is the source" because that grader reads `asked()`, which on the slot is the chat's
-  system messages only (`systemsText` in `scripts/preview-slot/test-host-p14.mjs`). For Meta, `toWire` sends the
-  runtime envelope as a user message (`envelopeAs: "user"`, `packages/agent/src/model/adapter.ts`, since 2026-11-02),
-  so no Muse Spark trial can pass this grader. Under GLM the envelope is a system message.
-- Trial 3 said "… goes out from the host's address, as your agent, under the platform's label; no calendar or
-  document tool exists here." That is right under B-P14-08 and the end state ("as Sam's agent with the platform's
-  label from the host's address"), and it is the scope's own words, but the mail grader wants the literal "agent label".
-
-**Recommended answer:** two oracle corrections in one small part, each with KICKOFF's three things, then one declared
-T-P14-14 run. (1) The slot's P14 reader keeps the runtime envelope the model received, as a system or a user message,
-in `asked()`. Run 2's trial 1 is pinned as passing, and a request with no `model:` line still fails. (2) The mail
-grader takes "as your agent … the platform's label" as well as "agent label". Trial 3 is pinned as a pass; a mail
-"from your address", or one with no label, still fails. Both results files stay. Alternative: accept T-P14-14, a
-nice-to-have, at 0 of 3 with this record, and leave the reader as it is until P14 is next touched.
-
-### Q45 (F50), 2026-11-08: T-P9-16 is 0 of 3 on Muse Spark with F45; the count is right, the create's reply is F48's
-
-**Blocks:** F50's acceptance line "`pnpm evals T-P9-16` `pass` (three of three)", and so its DONE row; nothing else.
-Declared run 1 (PR #123, tree b35a70514c7f, main with F45, fletch-pv-1, Muse Spark,
-`evidence/results/b2f123c281f9….json`) failed every trial on the create grader, not the count. The count replies, all
-right under B-P9-06 and line 94: "The library tool counted 657 items in all; it cannot count by day, so no today-only
-number.", "… so no count for today alone.", "… it cannot count by today." The create replies, the whole second reply
-beside the pausing card: "I'll create that fixture item.", "Starting that creation for you.", "I'll create that fixture
-item for you." The contract calls these wrong: the end state wants the reply to say that nothing ran, and "Starting"
-reads as running. F45 rightly keeps a pausing step's words as its reply, so `pauseWords` stays silent. That is the same
-failure F47's run showed for T-P15-13, and F48's engine rule (code's sentence beside every real card, "It has not run
-yet.") is its fix. Sharpening line 94 would not reach it, and a second run on an unchanged prompt would only rerun
-model-failed trials. One catch: T-P9-16's create grader reads only the second turn's first bubble (`replies("c1")[1]`),
-and F48 puts its sentence after the model's words, so F48 alone will not turn this grader.
-**Recommended answer:** keep F50 IN PROGRESS at 0 of 3 with the count half shown held. After F48 merges, a small part (or
-F48's follow-up) gives T-P9-16's create grader and `done_before_press` the turn's bubbles before its card, as F47 did for
-T-P15-13: an oracle correction with KICKOFF's three things (these three create replies plus F48's sentence pinned as a
-pass, a planted plan with no sentence still failing, this results file kept). Then it declares a T-P9-16 run, and F50
-goes DONE on that run. Alternative: accept F50 now on its count half, with the create half moved to that part.
 
 ### Q44 (P3), 2026-11-08: T-P3-15's steer lands after the child has finished
 
@@ -184,6 +149,54 @@ Orchestrator, 2026-11-07: not taken by default. D-0015 adds a credential to CI a
 `ORCHESTRATOR-OVERNIGHT.md` do not cover; it stays Kyle's, listed in `WAITING-ON-KYLE.md`.
 
 ## Answered by default
+
+### Q46 (F51, after Q37), 2026-11-08: T-P14-14 is 0 of 3 on Muse Spark after line 109; two oracle faults, not the reply
+
+**Blocks:** F51's acceptance line "`pnpm evals T-P14-14` `pass` (three of three, or the recorded number with its
+question)". This question is that record; nothing else waits on it. Declared run 2 (PR #128, tree 4badeb5d3de6,
+fletch-pv-1, Muse Spark, `evidence/results/6cc0fcd24e0f….json`, beside run 1's 0 of 3) is 0 of 3, but no trial
+failed for a reason the contract calls wrong.
+- Trials 1 and 2 said: "I run on muse-spark-1.3-contributor; this workspace is this deploy, with one person in it. A
+  mail I send (for you) goes out from the host's address, as your agent, under the platform's label, the agent label;
+  no calendar or document tool exists here." That passes every end state, and the tier-1 test pins it. They fail
+  "the envelope's model line is the source" because that grader reads `asked()`, which on the slot is the chat's
+  system messages only (`systemsText` in `scripts/preview-slot/test-host-p14.mjs`). For Meta, `toWire` sends the
+  runtime envelope as a user message (`envelopeAs: "user"`, `packages/agent/src/model/adapter.ts`, since 2026-11-02),
+  so no Muse Spark trial can pass this grader. Under GLM the envelope is a system message.
+- Trial 3 said "… goes out from the host's address, as your agent, under the platform's label; no calendar or
+  document tool exists here." That is right under B-P14-08 and the end state ("as Sam's agent with the platform's
+  label from the host's address"), and it is the scope's own words, but the mail grader wants the literal "agent label".
+
+**Recommended answer:** two oracle corrections in one small part, each with KICKOFF's three things, then one declared
+T-P14-14 run. (1) The slot's P14 reader keeps the runtime envelope the model received, as a system or a user message,
+in `asked()`. Run 2's trial 1 is pinned as passing, and a request with no `model:` line still fails. (2) The mail
+grader takes "as your agent … the platform's label" as well as "agent label". Trial 3 is pinned as a pass; a mail
+"from your address", or one with no label, still fails. Both results files stay. Alternative: accept T-P14-14, a
+nice-to-have, at 0 of 3 with this record, and leave the reader as it is until P14 is next touched.
+
+Default taken (for Kyle, 2026-11-08): the two oracle corrections, as recommended, in one small part, F53 (parts.md), with KICKOFF's three things and one declared T-P14-14 run; F51 is DONE on its recorded 0 of 3 with this record, as its acceptance line allows.
+
+### Q45 (F50), 2026-11-08: T-P9-16 is 0 of 3 on Muse Spark with F45; the count is right, the create's reply is F48's
+
+**Blocks:** F50's acceptance line "`pnpm evals T-P9-16` `pass` (three of three)", and so its DONE row; nothing else.
+Declared run 1 (PR #123, tree b35a70514c7f, main with F45, fletch-pv-1, Muse Spark,
+`evidence/results/b2f123c281f9….json`) failed every trial on the create grader, not the count. The count replies, all
+right under B-P9-06 and line 94: "The library tool counted 657 items in all; it cannot count by day, so no today-only
+number.", "… so no count for today alone.", "… it cannot count by today." The create replies, the whole second reply
+beside the pausing card: "I'll create that fixture item.", "Starting that creation for you.", "I'll create that fixture
+item for you." The contract calls these wrong: the end state wants the reply to say that nothing ran, and "Starting"
+reads as running. F45 rightly keeps a pausing step's words as its reply, so `pauseWords` stays silent. That is the same
+failure F47's run showed for T-P15-13, and F48's engine rule (code's sentence beside every real card, "It has not run
+yet.") is its fix. Sharpening line 94 would not reach it, and a second run on an unchanged prompt would only rerun
+model-failed trials. One catch: T-P9-16's create grader reads only the second turn's first bubble (`replies("c1")[1]`),
+and F48 puts its sentence after the model's words, so F48 alone will not turn this grader.
+**Recommended answer:** keep F50 IN PROGRESS at 0 of 3 with the count half shown held. After F48 merges, a small part (or
+F48's follow-up) gives T-P9-16's create grader and `done_before_press` the turn's bubbles before its card, as F47 did for
+T-P15-13: an oracle correction with KICKOFF's three things (these three create replies plus F48's sentence pinned as a
+pass, a planted plan with no sentence still failing, this results file kept). Then it declares a T-P9-16 run, and F50
+goes DONE on that run. Alternative: accept F50 now on its count half, with the create half moved to that part.
+
+Default taken (for Kyle, 2026-11-08): keep F50 IN PROGRESS, as recommended; the small part is F52 (parts.md): T-P9-16's create grader and `done_before_press` read the turn's bubbles before its card, with KICKOFF's three things, then one declared run after F48, on which F50 goes DONE.
 
 Each question here was open on 2026-11-07 and answered by its own recommended answer (or the orchestrator's line under it)
 as Kyle's, under the Defaults he pre-authorised for the overnight run (`ORCHESTRATOR-OVERNIGHT.md`, Defaults, Kyle,

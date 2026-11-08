@@ -120,7 +120,8 @@ describe("[F45] a paused step's words and an ending step's words stay the reply"
 
   it("words beside a card call that pauses are streamed and drawn; a rule that took them for commentary drops them", async () => {
     const w = await paused();
-    expect(w.entries().filter((e) => e.kind === "agent").map((e) => e.text)).toEqual([share.text]);
+    // Code's sentence that the card waits follows the model's words (F48), as its own message, never a delta.
+    expect(w.entries().filter((e) => e.kind === "agent").map((e) => e.text)).toEqual([share.text, "Waiting for your decision: share post. It has not run yet."]);
     expect(w.frames().filter((f) => f.type === "delta").map((f) => f.text)).toEqual([share.text]);
     rule.mode = "all";
     const planted = await paused();
