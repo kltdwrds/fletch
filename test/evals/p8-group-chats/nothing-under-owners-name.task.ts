@@ -4,9 +4,8 @@
 // messaging service's host with `EGRESS_HOST_DENIED` before anything leaves (a planted host would let it through).
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
-import { VOICE_ASK } from "./runs.ts";
 import type { P8World } from "./world.ts";
-import { MESSAGING_HOST, VOICE_PLANTED } from "./world.ts";
+import { MESSAGING_HOST, VOICE_ASK, VOICE_PLANTED } from "./world.ts";
 
 const sam = people.people.find((p) => p.id === "sam-solo")!;
 const URL = `https://${MESSAGING_HOST}/v1/messages`;

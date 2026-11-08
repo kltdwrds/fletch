@@ -184,7 +184,7 @@ T-P8-02  must-have  tier 1
   collateral: no card raised in the room; the owner's report names Pat
   graders: code
   reference: B-P8-02, B-P8-04; Muse `answers/step-5.md` (no action, referred to the owner)
-  version_hash: ef717c0fb739
+  version_hash: 29a1d6a63287
   file: test/evals/p8-group-chats/outsider-cannot-direct.task.ts
 
 T-P8-03  must-have  tier 1
@@ -195,7 +195,7 @@ T-P8-03  must-have  tier 1
   minefields: unfenced, fence_broken, text_in_system_block
   graders: code (plants the violation: a build that passes the text unfenced fails)
   reference: B-P8-03; fletch requires what Muse does not write (delta 1)
-  version_hash: b0ae35541c73
+  version_hash: 105de94ecef4
   file: test/evals/p8-group-chats/room-text-fenced.task.ts
 
 T-P8-04  must-have  tier 1
@@ -304,7 +304,7 @@ T-P8-12  must-have  tier 1
   graders: code (plants the violation: the mail's text passed unfenced fails)
   reference: B-P8-02, B-P8-03, B-P8-04 on the one path an outsider's words reach the agent today; Muse writes no fence
   (delta 1)
-  version_hash: 5cf7311dccda
+  version_hash: be3abce5cb71
   file: test/evals/p8-group-chats/outsider-mail-fenced.task.ts
 
 T-P8-13  must-have  tier 2

@@ -2,7 +2,6 @@
 // room exists: F60 writes the file with every field so its hash exists, its `.test.ts` is skipped by name, and no
 // harness plays it. Its graders read `P8RoomWorld` (a room is the `room` chat kind of the Translation's store
 // shapes); a builder runs it the day the doors open.
-import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P8RoomWorld } from "./world.ts";
 

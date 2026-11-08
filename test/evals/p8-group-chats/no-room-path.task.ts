@@ -5,9 +5,8 @@
 // side chat as before; the turn's instructions carry the room line of `WORK_WORDS` (the words T-P8-13 grades live).
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
-import { ROOM_ASK } from "./runs.ts";
 import type { P8World } from "./world.ts";
-import { ROOM_LINE, ROOM_PLANTED } from "./world.ts";
+import { ROOM_ASK, ROOM_LINE, ROOM_PLANTED } from "./world.ts";
 
 const sam = people.people.find((p) => p.id === "sam-solo")!;
 const planted = (w: P8World) => w.roomPlanted().filter((p) => ROOM_PLANTED.includes(p.name));

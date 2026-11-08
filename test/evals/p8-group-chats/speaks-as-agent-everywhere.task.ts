@@ -4,9 +4,8 @@
 // to Pat reaches Pat's turn labelled by code "through Sam Solo's agent" (`requestText`), never as Sam writing.
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
-import { MAIL_ASK, MAIL_FROM, MAIL_TEXT, MAIN_ASK, REQUEST_TEXT, SIDE_ASK } from "./runs.ts";
 import type { P8World } from "./world.ts";
-import { AS_SAM, NOT_THE_PERSON_LINE, OWN_AGENT_LINE, of } from "./world.ts";
+import { AS_SAM, MAIL_ASK, MAIL_FROM, MAIL_TEXT, MAIN_ASK, NOT_THE_PERSON_LINE, OWN_AGENT_LINE, of, REQUEST_TEXT, SIDE_ASK } from "./world.ts";
 
 const sam = people.people.find((p) => p.id === "sam-solo")!;
 const SURFACES = ["main", "side", "request", "mail"] as const;

@@ -20,9 +20,8 @@ import { roomReach, ToolRegistry, type ToolSpec } from "../../../packages/agent/
 import type { FakeStep } from "../../support/fake-model.ts";
 import type { TaskHarness, Turn } from "../../support/task.ts";
 import { P14Tier1World, pat, plantedSpec, sam } from "../p14-identity/harness.ts";
-import { MAIL_ASK } from "./runs.ts";
 import type { Opened, P8World, Page, Planted, Prompt } from "./world.ts";
-import { ROOM_PLANTED, VOICE_PLANTED } from "./world.ts";
+import { MAIL_ASK, ROOM_PLANTED, VOICE_PLANTED } from "./world.ts";
 
 export { pat, plantedSpec, sam };
 
@@ -99,7 +98,7 @@ export class P8Tier1World extends P14Tier1World implements P8World {
     return [...ROOM_PLANTED, ...VOICE_PLANTED].map((name) => ({ name, refused: registeredIn(plantedIn(name), plantedSpec(name, PLANTED_DESCRIPTIONS[name])) }));
   }
 
-  prompts(): Prompt[] {
+  modelPrompts(): Prompt[] {
     return this.w.fake.requests.map((r, i) => {
       const messages = (r.inputs as { messages?: Msg[] }).messages ?? [];
       // The system block is the assembled prefix and the runtime envelope (each opens with a `# ` heading); a mail or
@@ -109,7 +108,7 @@ export class P8Tier1World extends P14Tier1World implements P8World {
     });
   }
 
-  calls(): string[] {
+  toolCalls(): string[] {
     const out: string[] = [];
     for (const r of this.w.fake.requests) {
       for (const m of (r.inputs as { messages?: Msg[] }).messages ?? []) {
