@@ -49,7 +49,7 @@ lease row says `staging` and never expires. The code is `scripts/preview-staging
 | `pnpm preview down --slot 1 --force` | (Kyle's login) Unstages and releases it as `down` releases a lease: placeholder, new secrets, bucket and index emptied. Its data is gone. The inventory mark stays, so no branch takes it until a PR removes the mark. |
 | `pnpm preview list` | `staging (main, deployed on merge; serving …)`, or `staging, not converted yet: …` before the conversion. |
 | `pnpm preview staging status` | Its lease, what it serves and its `/health`. |
-| `pnpm preview staging deploy` | Redeploys main: refused unless the checkout is main with no change to a tracked file and the lease says staging (`PREVIEW_STAGING_NOT_CONVERTED`). It is one `wrangler deploy` of the agent: every secret, Durable Object, the bucket and the index stay. |
+| `pnpm preview staging deploy` | Redeploys main: refused unless the checkout is the `main` branch or detached at `origin/main`, with no change to a tracked file and the lease says staging (`PREVIEW_STAGING_NOT_CONVERTED`). It is one `wrangler deploy` of the agent: every secret, Durable Object, the bucket and the index stay. |
 
 The lease protects the slot from code that predates staging too: no claim takes a staging lease, its expiry (2100) is
 past any `gc`, and the slot's ops reset it only for `down --slot 1 --force`, which says `unstage`.
@@ -61,7 +61,10 @@ git switch main && git pull --ff-only && pnpm install
 env -u CLOUDFLARE_API_TOKEN pnpm preview staging convert
 ```
 
-It is refused on a token, off main, or with a changed tracked file. It deploys main's agent to slot 1 over what is there
+`convert` and `deploy` run from the `main` branch, or from a detached HEAD at the commit of `origin/main` (a worktree or
+cloud session, after `git fetch origin +refs/heads/main:refs/remotes/origin/main`); `convert` also needs Kyle's login.
+Another branch, a detached HEAD at any other commit, or a changed tracked file is refused (`PREVIEW_STAGING_NOT_MAIN`,
+`PREVIEW_STAGING_DIRTY`), and `convert` on a token too. It deploys main's agent to slot 1 over what is there
 (the Worker running there predates the staging op), waits until the slot serves it, sets a key of its own in a secrets
 write holding that key alone, marks the lease staging over the tag it read (taking over a branch's lease, merged or
 not), and deletes every `PREVIEW_KEY_*`. It never deploys the placeholder, never resets the bucket or the index, and

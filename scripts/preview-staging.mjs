@@ -16,9 +16,17 @@ export function stagingSlot(inv) {
   return marked[0];
 }
 
-/** Staging serves committed main: a checkout of another branch, or with changes to tracked files, is refused. */
+/**
+ * Staging serves committed main: the `main` branch, or a detached HEAD at the commit of refs/remotes/origin/main (a
+ * worktree or cloud session sitting at origin/main after `git fetch origin +refs/heads/main:refs/remotes/origin/main`).
+ * Another branch, a detached HEAD at any other commit, or changes to tracked files are refused.
+ */
 function fromMain(ctx, what) {
-  if (ctx.branch !== 'main') throw refusal('PREVIEW_STAGING_NOT_MAIN', `${what} deploys main; this checkout is on ${ctx.branch}`);
+  if (ctx.branch === 'HEAD') {
+    const head = ctx.headCommit();
+    const originMain = ctx.originMainCommit();
+    if (!head || !originMain || head !== originMain) throw refusal('PREVIEW_STAGING_NOT_MAIN', `${what} deploys main; this checkout is detached at ${head ?? 'no commit'}, not at origin/main (${originMain ?? 'not fetched'}); run \`git fetch origin +refs/heads/main:refs/remotes/origin/main\` and check out that commit`);
+  } else if (ctx.branch !== 'main') throw refusal('PREVIEW_STAGING_NOT_MAIN', `${what} deploys main; this checkout is on ${ctx.branch}`);
   if (!ctx.treeClean()) throw refusal('PREVIEW_STAGING_DIRTY', `${what} deploys committed main; this checkout has changes to tracked files`);
 }
 

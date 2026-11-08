@@ -400,6 +400,8 @@ async function main(argv) {
     root,
     mode,
     treeClean: () => git(root, ['status', '--porcelain', '--untracked-files=no']) === '',
+    headCommit: () => git(root, ['rev-parse', '--verify', '-q', 'HEAD']),
+    originMainCommit: () => git(root, ['rev-parse', '--verify', '-q', 'refs/remotes/origin/main']),
     env: process.env,
     accountId,
     dir: path.join(common, 'fletch-previews'),

@@ -174,6 +174,25 @@ describe('staging: the deploy on merge', () => {
     assert.equal(acct.deployed.at(-1).config.vars.PREVIEW_SERVING, 'app');
   });
 
+  it('takes a detached HEAD at origin/main (a worktree or cloud session), and refuses one at any other commit or unfetched', async () => {
+    const AT = 'c'.repeat(40);
+    const detached = (head, originMain, extra = {}) => main({ branch: 'HEAD', headCommit: () => head, originMainCommit: () => originMain, ...extra });
+    await heldByMergedBranch();
+    await rejectsWith(convert(detached('d'.repeat(40), AT)), 'PREVIEW_STAGING_NOT_MAIN');
+    await rejectsWith(convert(detached(AT, null)), 'PREVIEW_STAGING_NOT_MAIN');
+    await assert.rejects(convert(detached('d'.repeat(40), AT)), /detached at d+, not at origin\/main/);
+    await rejectsWith(convert(detached(AT, AT, { treeClean: () => false })), 'PREVIEW_STAGING_DIRTY');
+    assert.equal((await lease(main(), 1)).staging, undefined, 'nothing was converted');
+    await convert(detached(AT, AT));
+    assert.equal((await lease(main(), 1)).staging, true);
+    const before = deploys().length;
+    await rejectsWith(deployStaging(detached('d'.repeat(40), AT, { mode: 'token' })), 'PREVIEW_STAGING_NOT_MAIN');
+    assert.equal(deploys().length, before);
+    await deployStaging(detached(AT, AT, { mode: 'token' }));
+    assert.equal(deploys().length, before + 1);
+    assert.ok(intact());
+  });
+
   it('refuses a branch other than main and a checkout with changes', async () => {
     await heldByMergedBranch();
     await convert(main());
