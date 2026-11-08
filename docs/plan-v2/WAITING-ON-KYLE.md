@@ -9,6 +9,22 @@ Kyle's own lines go under `## Steering`.
 
 ## Open
 
+- [ ] 2026-11-08 decide: **D-0026, pick or pass on P13 (voice, audio, podcasts), and if picked, which doors open.** P13 was
+  interrogated tonight (Queue 9): Muse reads a reply aloud by running a TTS tool and attaching an mp3, a generated audio
+  piece has no row and no source, a voice note's transcript column has no rows in your account, a temporary public link
+  costs one card per upload and cannot be revoked, a feed episode is public with no unpublish line; web Settings has a
+  Voice and avatar tab (100 voices, a live-avatar switch) and the Library a Podcasts section that Muse's docs do not name.
+  The contract (15 clauses, 14 tasks, nothing built) assumes: transcription and speech through Workers AI, an artifact
+  record with a source for every generated piece, no public feed, transcript kept and audio not, no live calls. What
+  "pass" changes: D-0026 is rejected, P13 stays at level 0, nothing else moves. What "pick" changes: you open door 1 (an
+  agent-local refusal code, or `speech` as a published `HostFeature`) and door 2 (the two models and a monthly cap on
+  their spend), and the orchestrator writes P13's tier-1 parts. Left in your Muse: the side chat (25 items), a `p13
+  probe` audio item, its trashed mp3 (expires 2026-12-08) and a media artifact Muse's speech service holds that neither
+  it nor the agent can remove. Also for your eye: P14's slice moved (`avatar.wear` gone, `ui.sidebar` new); no P14
+  clause cites it. [D-0026](../decisions/0026-speech-on-fletch.md),
+  [Q42](QUESTIONS.md#q42-p13-2026-11-08-d-0026-speech-on-fletch-is-p13-picked-and-which-of-its-five-doors-open),
+  [the contract](contracts/P13-voice-audio.md).
+
 - [ ] 2026-11-08 decide: **D-0025, may your agent ever speak in a room with outsiders, and if so as whom, over what, stored how.** P8
   was interrogated tonight (Queue 9): Muse has no group table, no room fence and no wake-on-mention rule, your account has no
   group and no messaging service linked, so the contract is a mapping of prompt and doc lines, with 11 clauses and 10 tasks
