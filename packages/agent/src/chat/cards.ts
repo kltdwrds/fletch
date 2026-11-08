@@ -236,7 +236,8 @@ export function grantFor(c: CardRow, choice: Exclude<Choice, "deny">, tenant: st
  * decision and has not run, said by code by the card's call id, every time. Whether a card waits is a fact of the card
  * store, never of the model's words, so this never reads them: the model's words beside the call stay the reply (F45)
  * and this sentence follows them, before the card; a step that also delivered (`send_to_user`, a tool's own words)
- * still gets it. A projected card never paused.
+ * still gets it. The chat queues each sentence just before its card, so a live page draws it where a reload does. A
+ * projected card never paused.
  */
 export function pauseWords(effects: readonly Effect[], label: (tool: string) => string): Effect[] {
   return effects.flatMap((e) => (e.kind === "card" && !e.simulated ? [{ kind: "deliver" as const, id: `${e.id}:announce`, text: `Waiting for your decision: ${label(e.tool)}. It has not run yet.` }] : []));

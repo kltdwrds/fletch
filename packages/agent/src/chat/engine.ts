@@ -538,7 +538,6 @@ export class ChatEngine {
             for (const r of step.toolResults) this.store.appendMessage(turnId, r);
             const tokens = step.message.usage.input + step.message.usage.output;
             // Once the person asked to stop, what this step proposed is not committed; the transcript says so.
-            // Each real card's waiting sentence (F48) is queued just before its card, so a live page draws it where a reload does.
             const owed = step.paused ? pauseWords(step.effects, (tool) => tool.replaceAll("_", " ")) : [];
             const queued = step.effects.flatMap((e) => [...owed.filter((o) => e.kind === "card" && o.id === `${e.id}:announce`), e]);
             if (!step.stopped) for (const e of queued) this.store.queue(turnId, e.kind === "deliver" || e.kind === "link" || e.kind === "react" ? e : { ...e, tokens });
