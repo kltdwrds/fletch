@@ -183,6 +183,16 @@ describe("[F32] P5 on a slot: the probe page, the prompts, the child's reads and
     expect(await run(oneTask, () => ({ script: [load("browse", "files"), read(PROBE, "r1"), write("w1", "Title: The p5 probe page\nLink count: 2\n"), { text: REPLY }] }))).toMatchObject({ status: "fail", code: "GRADER_FAILED", rule: "the reply's link count equals the file's and the page's" });
   });
 
+  it("T-P5-15 reads a reply's count in parentheses as Muse Spark wrote it (sweep B, 2026-11-08), and a parenthesised count that disagrees still fails", async () => {
+    // Oracle correction: the reply the old grader refused, verbatim, from trial 1 of the declared run on tree 77effb9.
+    const refused = "Done: saved title and link count (1) to p5-probe.md.";
+    expect([count(refused), count("Done: saved title and link count (2) to p5-probe.md."), count("link count ( 3 )")]).toEqual(["1", "2", "3"]);
+    const file = "# The p5 probe page\n\nSource: https://example.com/p5-probe\nLink count: 1";
+    expect(await run(oneTask, () => ({ script: [load("browse", "files"), read(PROBE, "r1"), write("w1", file), { text: refused }] }))).toMatchObject({ status: "pass" });
+    // Planted: the same words with another count over a page and a file with one link.
+    expect(await run(oneTask, () => ({ script: [load("browse", "files"), read(PROBE, "r1"), write("w1", file), { text: "Done: saved title and link count (2) to p5-probe.md." }] }))).toMatchObject({ status: "fail", code: "GRADER_FAILED", rule: "the reply's link count equals the file's and the page's" });
+  });
+
   it("the trial's own chat only: an earlier chat's task is left out of the list, and a task still running is waited for until the deadline", async () => {
     const w = new P5Tier1World(runs["T-P5-15"]!());
     await w.open();

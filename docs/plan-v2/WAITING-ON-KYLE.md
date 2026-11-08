@@ -9,6 +9,22 @@ Kyle's own lines go under `## Steering`.
 
 ## Open
 
+- [ ] 2026-11-08 decide: **D-0027, shopping and bookings: purchase or flag-only per vertical (O5), and provider APIs on egress.**
+  P16 was interrogated tonight (Queue 9): Muse's shopping is a research widget plus a hand-over to the live page, its
+  commitments go through connectors and a wallet provider fletch does not have, your memory line of 2026-09-19 already
+  makes tickets flag-only, and every seller refused dates a year out (Duffel 0 offers, Google Flights "too far in the
+  future", a 360-day hotel picker, 0 Ticketmaster events against 113 near term), so no flight, hotel or ticket offer
+  card exists as evidence. The contract (13 clauses, 12 tasks, nothing built) assumes: find, compare, cite, hand over;
+  no purchase, booking, hold or cart by the agent; no provider API on the allowlist; the person pays in the live page
+  (D-0017, still proposed). What "accept" changes: the orchestrator writes P16's six tier-1 must-have parts from the
+  contract. What "purchase for a vertical" changes: that vertical needs D-0017 reversed or a provider path, an egress
+  entry and a `commerce` `HostFeature`, each proposed then. Three smaller rulings sit in Q43 (remembering a reported
+  booking, the ticket rule's reach, a re-interrogation inside the sale window). Left in your Muse: side chat
+  `ad785849…` (33 items, 3 browser tasks, 1 results card), three completed research sub-agents, one `shopping_results`
+  widget, nine scratch files under `/tmp` and `/var/tmp`; nothing bought, saved, granted or changed.
+  [D-0027](../decisions/0027-shopping-is-find-and-hand-over.md),
+  [Q43](QUESTIONS.md#q43-p16-2026-11-08-d-0027-shopping-and-bookings-purchase-or-flag-only-per-vertical-provider-apis-and-three-smaller-rulings),
+  [the P16 contract](contracts/P16-shopping-bookings.md), [design O5](2026-10-29-parity-framework-design.md).
 - [ ] 2026-11-08 decide: **D-0026, pick or pass on P13 (voice, audio, podcasts), and if picked, which doors open.** P13 was
   interrogated tonight (Queue 9): Muse reads a reply aloud by running a TTS tool and attaching an mp3, a generated audio
   piece has no row and no source, a voice note's transcript column has no rows in your account, a temporary public link

@@ -12,9 +12,12 @@ const sam = people.people.find((p) => p.id === "sam-solo")!;
 
 const detail = async (w: P5World) => w.task("c1", (await newest(w))!.id);
 const WORDS: Record<string, string> = { one: "1", two: "2", three: "3" };
-/** The link count `s` states, as "1 link", "link count 1" or "Link count: 1" (a file's field, F32), or null when it states none. */
+/**
+ * The link count `s` states, as "1 link", "link count 1", "Link count: 1" (a file's field, F32) or "link count (1)" (Muse
+ * Spark's reply, sweep B 2026-11-08), or null when it states none.
+ */
 export const count = (s: string) => {
-  const n = (/\b(\d+|one|two|three)\s+links?\b/i.exec(s) ?? /\b(?:link count\s*[:=]?|links?\s*[:=])\s*(\d+|one|two|three)\b/i.exec(s))?.[1]?.toLowerCase();
+  const n = (/\b(\d+|one|two|three)\s+links?\b/i.exec(s) ?? /\b(?:link count\s*[:=(]?|links?\s*[:=])\s*(\d+|one|two|three)\b/i.exec(s))?.[1]?.toLowerCase();
   return n === undefined ? null : (WORDS[n] ?? n);
 };
 const file = async (w: P5World) => work(await detail(w)).find((s) => s.tool === "file_write")?.detail.files[0]?.preview ?? "";

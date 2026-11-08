@@ -33,6 +33,37 @@
         }
       ],
       "status": "fail"
+    },
+    {
+      "run_at": "2026-11-08T06:21:41.794Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the dialog shows the badge in words, the time, the collapsed run history and the fixed actions",
+          "started_at": "2026-11-08T06:21:41.794Z",
+          "finished_at": "2026-11-08T06:21:50.150Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the dialog shows the badge in words, the time, the collapsed run history and the fixed actions",
+          "started_at": "2026-11-08T06:21:50.150Z",
+          "finished_at": "2026-11-08T06:21:58.336Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the dialog shows the badge in words, the time, the collapsed run history and the fixed actions",
+          "started_at": "2026-11-08T06:21:58.336Z",
+          "finished_at": "2026-11-08T06:22:06.274Z"
+        }
+      ],
+      "status": "fail"
     }
   ]
 }
