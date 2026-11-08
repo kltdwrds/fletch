@@ -1563,3 +1563,98 @@ the row is BLOCKED on the D-0028 decide item and the orchestrator merges it as F
 
 **Not in scope:** accepting or editing D-0028; R2 bucket versioning; versions of working-tree files (`work/`); a
 version diff view; any change to a clause.
+
+## F90 Search and the browser as they are: the P10 contract check, fifteen task files, the stale status word and tier 1
+
+**Read:** `docs/plan-v2/contracts/P10-search-browser-media.md` (every clause, the Tasks, the Properties, the
+Translation's deltas 1, 5, 6, 7 and 8, the Fresh-session check, the Build notes), the P5 world and tasks under
+`test/evals/p5-activity/` as the pattern (`world.ts`, `harness.ts`, `planted.test.ts`), the P7 world under
+`test/evals/p7-scheduling/` for T-P10-14, `packages/agent/src/browse/` (`tools.ts`, `read.ts`, `urls.ts`,
+`classify.ts`, `memory.ts`, `hook.ts`, `meter.ts`, `binding.ts`), `packages/agent/src/context/fence.ts`,
+`packages/agent/src/chat/turn.ts`, `chat/gate.ts`, `chat/cards.ts`, `chat/activity-steps.ts`,
+`packages/agent/src/vault/browser-state.ts`, `packages/agent/src/jobs/job-tools.ts` (`page_read`),
+`packages/agent/src/http/app/thread-work.ts` (`STATUS_WORDS`), `test/workers/m9-browse.test.ts`, `m9-fill.test.ts`,
+`m24-3-browser-logins.test.ts`, `test/workers/support/browse-world.ts` and `fake-cdp-browser.ts`,
+`docs/plan-v2/QUESTIONS.md` Q18 (a reply's required words are instruction lines, not harness sentences). No one-way
+door: D-0029 (search, places and image generation) stays proposed and nothing here builds on it; the part adds tests
+and deletes one stale word.
+
+**Scope:** (1) `test/m0/f90-contract.test.ts` holds the P10 contract as `f31-contract.test.ts` holds P5: seventeen
+clauses, fifteen tasks, each task's file under `test/evals/p10-search/`, every `version_hash` filled (the contract's
+"filled by F90" replaced by each file's hash). (2) The fifteen `.task.ts` files under `test/evals/p10-search/` with a
+`world.ts` (a Chat DO over the browse world serving `https://example.com/p10-probe` with one link,
+`https://example.com/p10-orders` with a page instruction, a forged closing marker and an address written only in
+prose, `walled.test` and `busy.test`; the fake CDP browser for the live lane; Sam Solo's and Pat Solo's chats; a Job DO
+over the P7 world serving `https://example.com/p10-news` for T-P10-14) and a `harness.ts`; tier 1 (T-P10-01, 02, 04,
+06, 07, 08, 14, 15) runs under vitest with an `[F90]` describe, every minefield planted in a `planted.test.ts` (each
+guard removed or moved on the production path fails its test: the verbatim table, the fence's defang, the gate's
+`AFTER_EXTERNAL_INPUT` flag, the code-classified stop, the remembered stop, the per-chat session cell, the Ledger
+meter, the restore grant). (3) The `web_search` row of `STATUS_WORDS` deleted (delta 1: a word for a tool that does
+not exist), with the thread-work test that names it updated. (4) Where a task names a Muse observable fletch does not
+have (a link card, a browser card, a window list), the file grades the fletch form and says so in a comment.
+
+**Acceptance:** the eight tier-1 tasks pass under vitest and each planted minefield fails without its guard;
+`test/m0/f90-contract.test.ts` passes; `pnpm check` and the hermetic suite green; `ACCEPT F90: PASS`;
+`VERIFIER: no blocking findings`.
+
+**Not in scope:** a web search, places, image generation or social tool, a provider on the egress allowlist or a new
+`HostFeature` (D-0029, proposed); an instruction line (F91); a link, browser, map or image card in the thread (F92's
+specimens first); named browser profiles or a window list (delta 5); tier 2 (F91); a change to a clause.
+
+## F91 Search and media say what this deploy cannot reach: one instruction line, the slot's probe pages and P10's tier 2
+
+**Read:** `docs/plan-v2/contracts/P10-search-browser-media.md` (B-P10-01, B-P10-02, B-P10-05, B-P10-06, B-P10-10,
+B-P10-11, B-P10-13 to B-P10-15, the tier-2 tasks, delta 1, the Build notes), the F90 world and tasks under
+`test/evals/p10-search/`, `packages/agent/src/chat/instructions.ts` (`WORK_WORDS`, the bot-check and rate-limit lines),
+`scripts/preview-slot/test-host.mjs`, `test-host-sites.mjs` and `test-host-p5.mjs` as the pattern for a probe page,
+`docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q18, `docs/decisions/0029-search-places-images-are-owner-connected.md`
+(proposed: the line says what is missing in words and names no code until it is accepted). No one-way door. A live
+step: `pnpm evals` runs on this worktree's slot (`pnpm preview up`); if no slot can be leased, that is a question, not
+a reason to skip.
+
+**Scope:** (1) One instruction line in `WORK_WORDS` (delta 1): this deploy has no web search, places search, image or
+video generation and reads no social network; asked for one, say so in plain words, give no address, place, figure
+as current, handle or file that no tool returned, write no stand-in, and offer to read a page the person names. Its
+wording is tuned only against T-P10-09 to T-P10-13 and named in the PR body with each task it serves. (2) The slot's
+test host serves `https://<slot>/fixtures/p10-orders` (the page instructions of T-P10-03 and one real link) and
+`https://<slot>/fixtures/p10-probe` from `scripts/preview-slot/test-host-p10.mjs`, recording every request, beside
+the existing `walled.test`. (3) Tier 2 on the slot: T-P10-03, T-P10-09, T-P10-10 and T-P10-11 (must-have), T-P10-05,
+T-P10-12 and T-P10-13 (nice-to-have), three trials each, the results files committed, the table in the PR body.
+(4) Every P10 hash in the contract matches its file.
+
+**Acceptance:** `pnpm evals T-P10-03`, `T-P10-09`, `T-P10-10` and `T-P10-11` `pass` (three of three); T-P10-05,
+T-P10-12 and T-P10-13 run and their results recorded whatever the verdict; `ACCEPT F91: PASS`;
+`VERIFIER: no blocking findings`.
+
+**Not in scope:** a search, places, image or social capability or its code (D-0029); a code-written reply line (Q18);
+new instruction lines beyond the one, unless a failing must-have needs a second, named in the PR body with its task;
+the live lane on a slot (the test host has no live browser); a change to a clause.
+
+## F92 The surfaces of search and media as specimens: the source link card, the browser card, the places map and the image card
+
+**Read:** `docs/plan-v2/contracts/P10-search-browser-media.md` (B-P10-02, B-P10-08, B-P10-11, B-P10-12, B-P10-13,
+B-P10-17, delta 8, the Properties' "browser as a separate machine" row, open for the card), the captures it cites
+(`step-1-dom.md`, `step-1.png`, `step-1-phone.png`, `step-2-dom.md`, `step-4-browser-panel.png`,
+`step-4-browser-panel-phone.png`, `step-6-dom.md`, `step-6.png`, `step-6-phone.png`, `step-7-dom.md`,
+`step-7-library.png`, `step-11-reload-search-phone.png`, `step-11-reload-places.png`, on Kyle's Mac under
+`docs/plan-v2/evidence/p10-search/`), the design §4.5, the existing specimens in
+`packages/agent/src/design/fletch/ds/specimens/` (`loop-status.html`, `task-drawer.html`) and the bundle's tokens. No
+one-way door: specimens draw nothing live.
+
+**Scope:** (1) One specimen file `packages/agent/src/design/fletch/ds/specimens/search-media.html`, built from the
+bundle's CSS and tokens alone, reproducing muse.ai's layout, order and states in fletch's own tokens and words, at
+desktop and phone width and in both themes: the source link card under an answer (the page's name, its host, a
+language tile or a preview image, with the reply's inline link beside it; B-P10-02); the browser card in the thread
+(a globe tile, "Browser", the state word from P5's one words table and the task's title, a page thumbnail, an open
+control; B-P10-08) and its panel with the take-over control; the places list and map card (each place's name, rating,
+price, category and an open state with the time it was read, never a bare "Open"; B-P10-11, B-P10-12); the generated
+image card (a square thumbnail as its own bubble with its name, the Library's Images tile beside it; B-P10-13). Each
+state the captures show, and the state the contract adds (the open state's time). (2) A `[F92]` test that the
+specimen file exists, names each of the four blocks by a heading and uses only the bundle's classes and tokens.
+(3) One `look` item per block in `docs/plan-v2/WAITING-ON-KYLE.md`, each with its capture and the clause it serves.
+
+**Acceptance:** the specimen renders at 1280 and 390 px in both themes with no class outside the bundle; the `[F92]`
+test passes; `pnpm check` green; `ACCEPT F92: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** drawing any of the four in the live thread or Library (a later part after Kyle's look, and for the
+map and the image card after D-0029); a capability behind them; a change to a clause.

@@ -66,6 +66,10 @@ test counts, the verifier's result, the duration and `model: <model>` for parts 
 | F102 | TODO | | 2026-11-08 | Files say what happened: `FILE_WORDS` in `instructions.ts` and P11's tier 2 on a slot (T-P11-16 and 17 must-have, T-P11-18). |
 | F103 | TODO | | 2026-11-08 | Versions and a trash on the default under D-0028 (proposed), built deletable as F55 was; tier 1 on T-P11-05. |
 
+| F90 | TODO | | 2026-11-08 | Search and the browser as they are: the P10 contract check, fifteen task files under `test/evals/p10-search/`, the stale `web_search` status word deleted and tier 1 (`contracts/P10-search-browser-media.md`). |
+| F91 | TODO | | 2026-11-08 | Search and media say what this deploy cannot reach: one `WORK_WORDS` line, the slot's probe pages and P10's tier 2 (T-P10-03, 09, 10, 11 must-have); D-0029 stays proposed. |
+| F92 | TODO | | 2026-11-08 | The surfaces of search and media as specimens (the source link card, the browser card, the places map, the image card), each a `look` item for Kyle. |
+
 ## The first plan (closed 2026-10-29)
 
 F0 to F17 were worked under the first plan (`git show 34c6b0a:docs/plan/parts.md`). F0 and F1 predate the protocol:
