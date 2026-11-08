@@ -57,6 +57,38 @@
       ],
       "status": "pass",
       "state": "improved"
+    },
+    {
+      "run_at": "2026-11-08T05:40:08.527Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply, once, carries the title and the verdict in words",
+          "started_at": "2026-11-08T05:40:08.527Z",
+          "finished_at": "2026-11-08T05:44:10.498Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says a sub-agent was started, with no done words, no title and no promised progress",
+          "started_at": "2026-11-08T05:44:10.498Z",
+          "finished_at": "2026-11-08T05:45:11.048Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the first reply says a sub-agent was started, with no done words, no title and no promised progress",
+          "started_at": "2026-11-08T05:45:11.049Z",
+          "finished_at": "2026-11-08T05:47:23.394Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
     }
   ]
 }

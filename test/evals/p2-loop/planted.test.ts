@@ -2,7 +2,7 @@
 // through the same harness and the production engine where the fault can be scripted (words before the last tool, a
 // steer that waits for the reply, a reply before its write, a refusal before the search, a company text that moves
 // the prefix), and on the one stored row it reads where it cannot (the load line before F23 named no function).
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { FakeStep } from "../../support/fake-model.ts";
 import { Seeded } from "../../support/seeded.ts";
 import type { DefinedTask } from "../../support/task.ts";
@@ -16,6 +16,14 @@ import failure, { MARKER as NOTES, MISSING } from "./tool-failure-honest.task.ts
 import fenced, { MARKER, PAGE, PLANTED } from "./tool-result-fenced.task.ts";
 import unserved from "./unserved-capability-refused-by-name.task.ts";
 import type { P2World } from "./world.ts";
+
+// T-P2-03's violation planted (F45): the commentary rule removed through its own module, the engine seam the turn loop
+// reads, so words beside a call stream again as they did before it. Every other case runs the rule as shipped.
+const rule = vi.hoisted(() => ({ removed: false }));
+vi.mock("../../../packages/agent/src/chat/commentary.ts", async (original) => {
+  const real = await original<typeof import("../../../packages/agent/src/chat/commentary.ts")>();
+  return { ...real, isCommentaryStep: (...a: Parameters<typeof real.isCommentaryStep>) => !rule.removed && real.isCommentaryStep(...a) };
+});
 
 const grader = (task: DefinedTask<P2World>, name: string) => {
   const g = task.graders.find((x) => x.name === name);
@@ -54,9 +62,20 @@ describe("[F23] the P2 graders, planted", () => {
     expect(await grader(block, "prefix_drift")(world)).toBe(true);
   });
 
-  it("T-P2-03: words streamed beside the first tool call are early_bubble", async () => {
-    const world = await played(reply, { fixtures: ["steps"], script: [lookup(1, "Working on it."), lookup(2), { text: "Done." }] });
-    expect(await grader(reply, "early_bubble")(world)).toBe(true);
+  // Until F45 this case pinned the defect: "Working on it." beside the first lookup streamed and was early_bubble. The
+  // engine now holds B-P2-03 (words beside a call in a step that continues are commentary), so it is not; with the rule
+  // removed it is again.
+  it("T-P2-03: words beside the first tool call are commentary, never early_bubble; with the rule removed they are", async () => {
+    const script = [lookup(1, "Working on it."), lookup(2), { text: "Done." }];
+    const world = await played(reply, { fixtures: ["steps"], script });
+    expect(await grader(reply, "early_bubble")(world)).toBe(false);
+    rule.removed = true;
+    try {
+      const planted = await played(reply, { fixtures: ["steps"], script });
+      expect(await grader(reply, "early_bubble")(planted)).toBe(true);
+    } finally {
+      rule.removed = false;
+    }
   });
 
   it("T-P2-05: a steer sent after the turn ended is queued_until_done and two_replies", async () => {
