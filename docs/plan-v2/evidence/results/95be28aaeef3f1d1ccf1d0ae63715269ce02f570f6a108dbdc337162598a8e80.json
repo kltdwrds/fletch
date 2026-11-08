@@ -156,6 +156,34 @@
         }
       ],
       "status": "pass"
+    },
+    {
+      "run_at": "2026-11-08T06:09:47.827Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-08T06:09:47.827Z",
+          "finished_at": "2026-11-08T06:12:10.421Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-08T06:12:10.421Z",
+          "finished_at": "2026-11-08T06:13:27.017Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply's count equals the child's handoff",
+          "started_at": "2026-11-08T06:13:27.017Z",
+          "finished_at": "2026-11-08T06:14:16.536Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
     }
   ]
 }
