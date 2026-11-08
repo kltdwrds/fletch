@@ -116,6 +116,37 @@
         }
       ],
       "status": "fail"
+    },
+    {
+      "run_at": "2026-11-08T06:40:09.484Z",
+      "preview_slot": "fletch-pv-1",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says the sub-agent was ended and a new one started, or that it had already finished",
+          "started_at": "2026-11-08T06:40:09.484Z",
+          "finished_at": "2026-11-08T06:41:34.031Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says the sub-agent was ended and a new one started, or that it had already finished",
+          "started_at": "2026-11-08T06:41:34.032Z",
+          "finished_at": "2026-11-08T06:43:09.090Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says the sub-agent was ended and a new one started, or that it had already finished",
+          "started_at": "2026-11-08T06:43:09.090Z",
+          "finished_at": "2026-11-08T06:44:38.542Z"
+        }
+      ],
+      "status": "fail"
     }
   ]
 }
