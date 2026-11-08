@@ -11,6 +11,12 @@ Defaults of `ORCHESTRATOR-OVERNIGHT.md` and moved to `## Answered by default`; K
 
 ## Open, not blocking
 
+### Q44 (P3), 2026-11-08: T-P3-15's steer lands after the child has finished
+
+**Blocks nothing; a nice-to-have.** The Muse Spark sweep (PR #113, tree 77effb9f8bd7, `docs/plan-v2/evidence/results/31987f8a759e007f2827f7fd736ceeac5361a6105a7e39075c37218cabb3f6c4.json`) ran T-P3-15 0 of 3: after "skip the second page and finish", all three replies said the sub-agent had already finished, and the task's graders called each a failure. The slot's test host serves the slow second page at about 45 s and the runner's steer went in at about 60 s, so the child may really have finished, which the end_state allows ("or that it had already finished") when the rows show one settled row. Recommended answer: read the three trials' grader names; if the failing grader is the judge or the rows while the reply matches the end_state's second branch and the row is settled, it is an oracle correction under KICKOFF's rule; if the child had not finished, the test host's slow page should be served slower than the runner's steer (a setup change in the task file, two-way, with the hash moving), so the steer lands mid-run as the task intends. Either way a line part is not needed: no reply was wrong under B-P3-04.
+
+Orchestrator, 2026-11-08: not taken by default (the results file alone does not say which grader failed; a builder reads it with the slot's chats in a later P3 part).
+
 ### Q43 (P16), 2026-11-08: D-0027, shopping and bookings: purchase or flag-only per vertical, provider APIs, and three smaller rulings
 
 **Blocks:** nothing in progress; every P16 part beyond the read-only research and hand-over tasks, since design O5 holds
