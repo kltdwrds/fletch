@@ -80,6 +80,8 @@ function directory(env: Env): Directory {
         revokeNaming: async (ref, person) => (await getAgentByName(env.PERSON, person)).revokeGrantsNaming(person, ref),
         dismissCapture: (ref, writer, setup) => vault().dismissCapture(ref, writer, setup),
         captureState: (person, ref, setup) => vault().captureState(person, ref, setup),
+        oauthBegin: (input, writer, origin) => vault().oauthBegin(input, writer, origin),
+        oauthCallback: (input, writer) => vault().oauthCallback(input, writer),
         issueGrant: (input, writer) => vault().issueGrant(input, writer),
         revokeGrant: (nonce, writer) => vault().revokeGrant(nonce, writer),
         approveOneTimeCode: (input, writer) => vault().approveOneTimeCode(input, writer),

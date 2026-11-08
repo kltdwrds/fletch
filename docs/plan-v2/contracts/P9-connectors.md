@@ -672,7 +672,7 @@ person enters on the capture form (B-P9-01), and an ask for an OAuth-only provid
 
 ### Not in scope
 
-OAuth consent flows (D-0016, proposed); device pairing, a session list and device removal (no such surface in the
+OAuth consent flows (D-0016, proposed; built on the default by F55 as a deletable route, state table and kind, no clause until the record is accepted); device pairing, a session list and device removal (no such surface in the
 agent; a reply says what exists, T-P9-12); a background health check of a connection (delta 5's rejection); the
 company's shared connectors' admin surface (M28, in place) beyond `removeCompany`'s event row; payments (P12); the
 browse lane's card words and the approval words (P2, P15); the Activity row's title and summary (P5); a per-connector

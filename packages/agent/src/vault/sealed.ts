@@ -4,7 +4,9 @@
 // reference as additional data. `core.ts` builds the credentials, grants and egress on top; nothing
 // here returns a value except `open`, which only the core calls after its checks.
 import type { KeyService } from "@qyvr/host";
+import type { AuditRow } from "../egress/module.ts";
 import type { EgressCode } from "../egress/policy.ts";
+import type { HostEntry } from "./hosts.ts";
 
 export interface VaultCtx {
   storage: { sql: { exec(query: string, ...bindings: unknown[]): { toArray(): Record<string, unknown>[]; rowsWritten?: number } }; transactionSync<R>(fn: () => R): R };
@@ -49,6 +51,17 @@ export abstract class SealedVault {
 
   protected event(owner: string, ref: string, event: string, by: string, detail = "") {
     this.sql("INSERT INTO vault_events (at, owner, ref, event, by, detail) VALUES (?, ?, ?, ?, ?, ?)", this.deps.now(), owner, ref, event, by, detail);
+  }
+
+  protected writeEntry(owner: string, e: HostEntry, by: string, via: string, card?: { id: string; at: number }) {
+    this.sql(
+      "INSERT OR REPLACE INTO credential_hosts (owner, ref, host, methods, header, prefix, fills, writer, via, created_at, card, approved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      owner, e.ref, e.host, JSON.stringify(e.methods), e.header, e.prefix, e.fills ? 1 : 0, by, via, this.deps.now(), card?.id ?? null, card?.at ?? null,
+    );
+  }
+
+  protected writeAudit(r: AuditRow) {
+    this.sql("INSERT INTO egress_audit (at, ref, host, method, path, person, purpose, outcome, grant_nonce) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", r.at, r.ref, r.host, r.method, r.path, r.person, r.purpose, r.outcome, r.grant ?? null);
   }
 
   // --- keys -------------------------------------------------------------------------------------
@@ -110,10 +123,15 @@ export abstract class SealedVault {
   protected async open(owner: string, ref: string): Promise<{ ok: true; value: string } | { ok: false; code: EgressCode; reason: string }> {
     const row = this.sql("SELECT iv, ct FROM secrets WHERE owner = ? AND ref = ?", owner, ref)[0];
     if (!row) return { ok: false, code: "EGRESS_CRED_UNKNOWN", reason: `${ref} is not in the vault` };
+    return this.openSealed(owner, ref, row.iv as Uint8Array, row.ct as Uint8Array);
+  }
+
+  /** Opens a sealed blob under the owner and the name it was sealed with; `open` and the OAuth state (F55) use it. */
+  protected async openSealed(owner: string, ref: string, iv: Uint8Array, ct: Uint8Array): Promise<{ ok: true; value: string } | { ok: false; code: EgressCode; reason: string }> {
     const k = await this.dataKey();
     if (!k.ok) return { ok: false, code: "EGRESS_VAULT_LOCKED", reason: `${k.code}: ${k.reason}` };
     try {
-      const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: row.iv as Uint8Array, additionalData: this.aad(owner, ref) }, k.keys.key, row.ct as Uint8Array);
+      const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv, additionalData: this.aad(owner, ref) }, k.keys.key, ct);
       return { ok: true, value: dec.decode(pt) };
     } catch {
       return { ok: false, code: "EGRESS_VAULT_LOCKED", reason: `${ref} does not open under this tenant's key` };

@@ -33,7 +33,9 @@ export type EgressCode =
   | "EGRESS_GRANT_SPENT"
   | "EGRESS_GRANT_SCOPE"
   | "EGRESS_FILL_FIELD"
-  | "EGRESS_SURROGATE_UNKNOWN";
+  | "EGRESS_SURROGATE_UNKNOWN"
+  // An OAuth connection whose provider refused to refresh its access token (F55, D-0016 proposed): nothing is sent.
+  | "EGRESS_OAUTH_REFRESH_FAILED";
 
 /** `ref` names the credential a refused plan carried, when it carried one (F35: the refusal's audit row). */
 export type EgressFailure = { ok: false; code: EgressCode; reason: string; host?: string; ref?: string };

@@ -141,6 +141,8 @@ CREATE TABLE IF NOT EXISTS surrogates (hash TEXT PRIMARY KEY, person TEXT NOT NU
   addColumns("vault.credential-hosts-card", "m25.1", "credential_hosts", { card: "TEXT", approved_at: "INTEGER" }),
   schema("vault.vapid", B, "CREATE TABLE IF NOT EXISTS vapid_key (id INTEGER PRIMARY KEY CHECK (id = 1), public TEXT NOT NULL, iv BLOB NOT NULL, ct BLOB NOT NULL, created_at INTEGER NOT NULL)"),
   schema("vault.browser-states", B, "CREATE TABLE IF NOT EXISTS browser_states (owner TEXT NOT NULL, site TEXT NOT NULL, ref TEXT NOT NULL, saved_at INTEGER NOT NULL, PRIMARY KEY (owner, site))"),
+  // F55 (D-0016 proposed, built on the default): one row per OAuth consent attempt, spent by its callback or swept.
+  schema("vault.oauth-states", "f55", "CREATE TABLE IF NOT EXISTS oauth_states (state TEXT PRIMARY KEY, owner TEXT NOT NULL, ref TEXT NOT NULL, label TEXT NOT NULL, hosts TEXT NOT NULL, permission TEXT NOT NULL, authorize_url TEXT NOT NULL, token_url TEXT NOT NULL, revoke_url TEXT, scope TEXT NOT NULL, redirect_uri TEXT NOT NULL, iv BLOB NOT NULL, ct BLOB NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, spent_at INTEGER)"),
 ];
 
 export const LEDGER_MIGRATIONS: readonly Migration[] = [
