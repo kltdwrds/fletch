@@ -3,11 +3,11 @@
 // scripted runs pass; each later part's task fails, on the grader that names what that part adds, so a part that lands
 // it flips its row here and moves the task to its own `[F<n>]` describe.
 import { describe, expect, it } from "vitest";
-import { executeTask } from "../../support/task.ts";
+import { type DefinedTask, executeTask } from "../../support/task.ts";
 import cards from "./cards-current-state.task.ts";
 import deck from "./deck-from-document.task.ts";
 import del from "./delete-said.task.ts";
-import { p11Harness } from "./harness.ts";
+import { type P11Tier1, p11Harness } from "./harness.ts";
 import memoEdit from "./memo-and-edit.task.ts";
 import { later } from "./runs.ts";
 import shareRevoke from "./share-and-revoke.task.ts";
@@ -15,8 +15,10 @@ import list from "./share-list-revoke.task.ts";
 import sheetLive from "./sheet-total-live.task.ts";
 import versions from "./versions-and-trash.task.ts";
 
-const outcome = (task: Parameters<typeof executeTask>[0]) =>
-  executeTask(task as never, p11Harness(later[task.id]!()) as never).then(
+import type { P11World } from "./world.ts";
+
+const outcome = (task: DefinedTask<P11World>) =>
+  executeTask(task as unknown as DefinedTask<P11Tier1>, p11Harness(later[task.id]!())).then(
     () => "pass",
     (e: Error) => /TASK_GRADER_FAILED: \w+ "([^"]+)"/.exec(e.message)?.[1] ?? e.message.split("\n")[0],
   );
