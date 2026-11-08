@@ -335,3 +335,8 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   The extra message is pinned in the tier-1 P15 tasks' journal collateral (T-P15-01, -03, -04, -05, -07, -12, hashes
   retaken), and T-P15-01's `card_words_from_model` leaves out code's own sentence, which repeats the card's status.
   Rejected: staying silent when another delivery came, which leaves a card's wait to whatever the model chose to say.
+- 2026-11-08 `pnpm accept` can run on a GitHub runner: `.github/workflows/accept.yml`, dispatched by hand for one branch and
+  one part, prints the same ACCEPT and TREE lines and keeps the log as its artifact; it deploys and writes nothing. Added
+  when a laptop carrying four builder sessions timed the browser tests out in every full run while each failing file
+  passed alone. Rejected: a lower `maxWorkers` in `vitest.config.ts` (six workers still failed eight files on that
+  machine) and a longer `testTimeout` (it would hide a slow test in CI too).
