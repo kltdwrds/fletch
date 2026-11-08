@@ -71,7 +71,7 @@ PR opens as a draft: review, `gh pr ready`, gate with `gh pr checks <n> --repo k
    Q15, Q14, Q12, Q11, Q6, Q2 (reads and reversible choices: taken as written), Q33 and Q32 (D-0018 and D-0017 built
    on as their recommended option, which is nothing new), Q27 (D-0016 per Defaults, Queue 10). Q10 stays blocked
    (D-0015 spends money on CI). Mirror each in its WAITING item.
-2. **F24 and F26 DONE.** For each, a fresh Opus verifier on the merged code with the default under Q16 or Q18 stated
+2. **F24 and F26 DONE** *(done: F26 in the Queue 1 PR, F24 in the F45 PR; both rows DONE, P2 and P15 at level 2)*. For each, a fresh Opus verifier on the merged code with the default under Q16 or Q18 stated
    as Kyle's; on `VERIFIER: no blocking findings`, the PROGRESS row DONE, then P2 and P15 to level 2 quoting the
    accept lines in PR #36 and PR #42, the verifier lines and the must-have results files.
 3. **F34 close-out (slot).** One cloud builder: one declared run each of T-P3-14 and T-P3-16 on current main, the

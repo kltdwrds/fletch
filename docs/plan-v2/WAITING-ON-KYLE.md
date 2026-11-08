@@ -223,7 +223,7 @@ Kyle's own lines go under `## Steering`.
   [PR #36](https://github.com/kltdwrds/fletch/pull/36), `test/evals/p2-loop/reply-after-last-tool.task.ts`,
   `test/evals/p2-loop/real-model-failure-honest.task.ts` and its `.test.ts`, the three T-P2-13 results files under
   `evidence/results/` (`bc83…` 0 of 3, `55e8…` 1 of 3, `5c68…` 3 of 3).
-  Default taken (for Kyle, 2026-11-07), Q16: keep both; a fresh Opus verifier on the merged code on 2026-11-07 cleared both grader changes under KICKOFF's oracle-correction rule and blocked only on the accept output's missing per-step counts; `pnpm accept F24` was rerun on main and its full output recorded, and F24 goes DONE and P2 to level 2 on the second pass (PROGRESS.md, SCORECARD.md).
+  Default taken (for Kyle, 2026-11-07), Q16: keep both; a fresh Opus verifier on the merged code on 2026-11-07 cleared both grader changes under KICKOFF's oracle-correction rule and blocked only on the accept output's missing per-step counts; `pnpm accept F24` was rerun on main and its full output recorded, and the second pass came back `VERIFIER: no blocking findings`: F24 is DONE and P2 at level 2 (PROGRESS.md, SCORECARD.md). Its one non-blocking note worth your eye: T-P2-13's grader regexes changed again in 288ad12 and the task hash did not move, so the hash is blind to grader constants.
 
 - [ ] 2026-10-29 uat: **F24, the thread shows the work: the status line, the file card, a job's result wakes the
   agent.** On main since [PR #36](https://github.com/kltdwrds/fletch/pull/36), deployed on
