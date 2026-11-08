@@ -9,6 +9,23 @@ Kyle's own lines go under `## Steering`.
 
 ## Open
 
+- [ ] 2026-11-08 decide: **Q46, F48's scope widened mid-part, after the first verifier pass, for the tier-1 re-pins its own
+  sentence forces.** F48 makes the engine say, beside every real card, "Waiting for your decision: <label>. It has not
+  run yet." whatever the model wrote; one more agent message per paused step. Six tier-1 P15 tasks pin the count of
+  agent messages (T-P15-01, -03, -04, -05, -07, -12) and T-P15-01's `card_words_from_model` minefield reads the reply
+  for the card's status words, so the rule cannot land without re-pinning those counts and excluding code's one
+  sentence from that minefield. F48's scope (4) as written said "no clause, task or hash changes" and its Not in scope
+  "any grader"; the first verifier pass blocked on that, the orchestrator amended the section (commit c774858 on
+  `claude/f48-local`), and the second pass held that widening a part's scope mid-part is your ruling. Both passes found
+  the substance sound: the re-pins tighten, the minefield skips code's sentence only, a planted model echo of the
+  card's words still fires it. What your answer changes: whether the amendment stands (F48 and F47 DONE on PR #126) or
+  the re-pins come out and the sentence waits for a part that makes it a frame the journal does not count.
+  Recommended: the amendment stands; a scope line that forbids what the part's own rule makes necessary is a drafting
+  error in the part. [Q46](QUESTIONS.md#q46-f48-2026-11-08-f48s-scope-widened-mid-part-after-the-first-verifier-pass-for-the-tier-1-re-pins-the-engines-sentence-forces);
+  [F48 in parts.md](parts.md#f48-the-cards-wait-is-codes-sentence-beside-every-real-card-the-engine-says-it-waits-and-has-not-run-whatever-the-model-wrote);
+  [PR #126](https://github.com/kltdwrds/fletch/pull/126).
+  Default taken (for Kyle, 2026-11-08), Q46: the amendment stands, as recommended; the verifier's later passes read the corrected section. Reverse it by a line under Steering and F48's and F47's rows go back to IN PROGRESS.
+
 - [ ] 2026-11-08 decide: **D-0027, shopping and bookings: purchase or flag-only per vertical (O5), and provider APIs on egress.**
   P16 was interrogated tonight (Queue 9): Muse's shopping is a research widget plus a hand-over to the live page, its
   commitments go through connectors and a wallet provider fletch does not have, your memory line of 2026-09-19 already
