@@ -87,8 +87,8 @@ describe("[F1] the login page in a browser", () => {
     const ORIGIN = site.origin;
     const b = await owner();
     const pg = b.pg;
-    // On CI this test has timed out at its 60 s budget with no step named (2026-11-08, three runs of six): the step in
-    // progress is kept here and printed on failure, so the next timeout says where the page stopped.
+    // On CI this test timed out at its 60 s budget with no step named (2026-11-08, three runs of six): the step in
+    // progress is kept here and printed on failure, so a timeout says where the page stopped (it was the last step).
     let at = "start";
     onTestFailed(() => console.error(`f1-login-browser: failed at step "${at}", page at ${pg.url()}`));
     try {
@@ -174,8 +174,10 @@ describe("[F1] the login page in a browser", () => {
       const cookie = (await pg.context().cookies()).find((c) => c.name === SESSION_COOKIE);
       expect(cookie?.httpOnly).toBe(true);
       await d.company.loginCall({ op: "revoke", token: cookie?.value ?? "" });
-      await pg.evaluate("getJson('/me').catch(() => null)");
-      await pg.waitForURL(`${ORIGIN}/login`);
+      // The page's api() leaves for /login on the 401 (`location.assign`), so the call is fired and not awaited inside
+      // the page (an awaited promise there has no context to settle in once the navigation commits, and the evaluate
+      // hung to the test's timeout on CI), and the URL wait starts before it, as above.
+      await Promise.all([pg.waitForURL(`${ORIGIN}/login`), pg.evaluate("void getJson('/me').catch(() => null)")]);
       expect(await stateOf(pg)).toBe("authenticate");
     } finally {
       await b.close();
