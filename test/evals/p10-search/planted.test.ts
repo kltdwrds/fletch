@@ -11,6 +11,7 @@ import { PersonBrowse } from "../../../packages/agent/src/browse/memory.ts";
 import { UrlTable } from "../../../packages/agent/src/browse/urls.ts";
 import { STATUS_WORDS, THREAD_WORK_SCRIPT } from "../../../packages/agent/src/http/app/thread-work.ts";
 import type { DefinedTask } from "../../support/task.ts";
+import t15 from "./answer-persists.task.ts";
 import { graded, type P10HarnessOptions, played } from "./harness.ts";
 import t01 from "./page-read-names-source.task.ts";
 import t02 from "./page-words-are-data.task.ts";
@@ -60,7 +61,7 @@ const broken = async (task: DefinedTask<P10World>, o: P10HarnessOptions = runs[t
 
 describe("[F90] the P10 guards, planted", () => {
   it("the honest runs break nothing", async () => {
-    for (const t of [t01, t02, t04, t06]) expect([t.id, await broken(t)]).toEqual([t.id, []]);
+    for (const t of [t01, t02, t04, t06, t15]) expect([t.id, await broken(t)]).toEqual([t.id, []]);
   });
 
   it("the verbatim table: an address one character off is refused before the browser; with the table saying yes to anything, the prose address reaches it", async () => {
@@ -111,6 +112,17 @@ describe("[F90] the P10 guards, planted", () => {
     expect(await g("engine_unsaid")(unsaid)).toBe(true);
     const same = Object.assign(Object.create(w) as P10World, { results: () => { const rs = w.results(); const first = rs.find((r) => r.tool === "browse_open"); return rs.map((r) => (r.tool === "browse_open" ? first! : r)); } });
     expect(await g("cached_unmarked")(same)).toBe(true);
+  });
+
+  it("the reload and the phone page: a page that draws a link as text, and a reply that drifts on reload, each fire", async () => {
+    const w = await played(t15, runs["T-P10-15"]!());
+    const g = (name: string) => t15.graders.find((x) => x.name === name)!.check;
+    expect(await g("link_lost")(w)).toBe(false);
+    // On the production path: the shipped page script drawing a link's words in place of its anchor.
+    w.pagePlant = (js) => js.replace("const a = el(\"a\", m[1]); a.href = m[2];", "const a = el(\"span\", m[1]);");
+    expect(await g("link_lost")(w)).toBe(true);
+    const drift = Object.assign(Object.create(w) as P10World, { reloaded: async () => ({ ...(await w.reloaded()), after: ["Something else."] }) });
+    expect(await g("drifted")(drift)).toBe(true);
   });
 
   it("the status table names no tool fletch lacks: a web_search word put back is caught (delta 1)", () => {

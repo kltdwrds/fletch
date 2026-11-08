@@ -46,8 +46,9 @@ export interface P10World extends P5World {
   jobRuns(): Promise<Array<{ slot: number; outcome: string; message: string | null }>>;
   /** The job model's requests, serialized whole. */
   jobRequests(): string[];
-  /** `c1`'s history as a reload reads it (`GET /app/chats/<id>` and its messages): the agent replies' text. */
-  reloaded(): Promise<string[]>;
+  /** `c1`'s agent replies as they stood before the reload, and as the chat's history frame gives them after the chat's
+   * object is evicted and read afresh (what a reload of the page reads). */
+  reloaded(): Promise<{ before: string[]; after: string[] }>;
   /** The anchors a phone-width page (390 px) draws in `c1`'s replies, by href. */
   phoneAnchors(): Promise<string[]>;
 }

@@ -6,14 +6,16 @@
 // (reads, live sessions, navigations), Sam's browse memory rows, the gate's cards with their flags, the newest task's
 // steps and the chat model's tool calls.
 //
+// T-P10-15's reload is the `open` turn: the chat's object evicted and its history read afresh; its phone page is the
+// shipped page script drawing that history at the page harness's default (phone) layout, as P2's reload world draws it.
 // T-P10-07 (the live lane over the fake CDP browser, two chats' sessions and their Ledger rows), T-P10-08 (the Vault's
-// kept sign-in and its restore grant), T-P10-14 (a Job DO over the P7 world) and T-P10-15 (the reload and the phone
-// page) need reads this harness does not yet give; each such read refuses with `P10_READ_NOT_IN_HARNESS` and its
+// kept sign-in and its restore grant) and T-P10-14 (a Job DO over the P7 world) need reads this harness does not yet give; each such read refuses with `P10_READ_NOT_IN_HARNESS` and its
 // name, so a grader over it fails loudly rather than passing on an empty answer.
 import type { FakeSite } from "../../support/browser/fake-browser.ts";
 import type { FakeStep } from "../../support/fake-model.ts";
 import { Seeded } from "../../support/seeded.ts";
 import type { DefinedTask, TaskHarness, Turn } from "../../support/task.ts";
+import { anchorsOf, drawn } from "../p2-loop/harness.ts";
 import { P5Tier1World, sam } from "../p5-activity/harness.ts";
 import { newest } from "../p5-activity/world.ts";
 import type { CardView, P10World, StepView } from "./world.ts";
@@ -32,10 +34,16 @@ export interface P10HarnessOptions {
   page?: string;
 }
 
+const settledReads = async () => {
+  for (let i = 0; i < 60; i++) await new Promise((r) => setImmediate(r));
+};
 const NOT_YET = (read: string) => new Error(`P10_READ_NOT_IN_HARNESS: ${read}`);
 
 export class P10Tier1World extends P5Tier1World implements P10World {
   readonly site: FakeSite;
+  private beforeReload: string[] | null = null;
+  /** Rewrites the shipped page script before it draws (planted.test.ts). */
+  pagePlant: ((js: string) => string) | undefined;
 
   constructor(o: P10HarnessOptions) {
     const site: FakeSite = { markdown: o.page ?? probePage() };
@@ -46,6 +54,12 @@ export class P10Tier1World extends P5Tier1World implements P10World {
   override async play(t: Turn): Promise<void> {
     if (t.kind === "event" && t.name === "change") {
       this.site.markdown = probePage(PROBE_HEADING_2);
+      return;
+    }
+    if (t.kind === "event" && t.name === "open") {
+      // A reload: the chat's object is evicted and read afresh.
+      this.beforeReload = this.replies();
+      this.w.chats.harness(this.chatId("c1")).evict();
       return;
     }
     return super.play(t);
@@ -91,9 +105,6 @@ export class P10Tier1World extends P5Tier1World implements P10World {
   async browserTime(): Promise<Array<{ runId: string; chat: string }>> {
     throw NOT_YET("browserTime");
   }
-  async elsewhere(): Promise<string> {
-    throw NOT_YET("elsewhere");
-  }
   async kept(): Promise<Array<{ site: string; cookies: number; sealed: boolean }>> {
     throw NOT_YET("kept");
   }
@@ -106,11 +117,21 @@ export class P10Tier1World extends P5Tier1World implements P10World {
   jobRequests(): string[] {
     throw NOT_YET("jobRequests");
   }
-  async reloaded(): Promise<string[]> {
-    throw NOT_YET("reloaded");
+  async reloaded(): Promise<{ before: string[]; after: string[] }> {
+    if (!this.beforeReload) throw NOT_YET("reloaded before the open turn");
+    return { before: this.beforeReload, after: this.replies() };
   }
   async phoneAnchors(): Promise<string[]> {
-    throw NOT_YET("phoneAnchors");
+    const p = await drawn({ ...this.engine("c1").history() }, undefined, this.pagePlant);
+    await settledReads();
+    return anchorsOf(p).map((a) => a.href);
+  }
+  async elsewhere(chat: "c1" | "c2"): Promise<string> {
+    const other = chat === "c1" ? "c2" : "c1";
+    const rows = this.w.chats.harness(this.chatId(other)).rows("SELECT body FROM messages ORDER BY seq");
+    const files = await this.files();
+    const texts = await Promise.all(files.map(async (path) => JSON.stringify(await this.w.filesOf(sam.email).fileRead({ path }, sam.email).catch(() => null))));
+    return [JSON.stringify(rows), ...texts, JSON.stringify(await this.ledgerRows())].join("\n");
   }
 }
 

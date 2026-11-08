@@ -488,7 +488,7 @@ T-P10-15  must-have  tier 1
   collateral: none
   graders: code (the route's JSON; the browser test's anchors at 390 px)
   reference: Muse's persisted answer, card and links after reload (B-P10-17)
-  version_hash: 957d3123aee8
+  version_hash: 8999b91bcf04
   file: test/evals/p10-search/answer-persists.task.ts
 
 ## Properties

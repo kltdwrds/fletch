@@ -1,17 +1,19 @@
-// T-P10-15 (B-P10-17): what this cluster draws persists. After T-P10-01's turn the chat is read through the app route
-// as a reload reads it: the reply with its two links is the same, character for character, and at phone width the
-// links are anchors with the same href. The history is the transcript's; the page's text is stored nowhere else.
+// T-P10-15 (B-P10-17): what this cluster draws persists. After T-P10-01's turn the chat's object is evicted and its
+// history frame read afresh, as a reload reads it: the reply with its two links is the same, character for character,
+// and the shipped page at phone width (the page harness's default layout) draws the links as anchors with the same
+// href. The history is the transcript's; the page's text is stored nowhere else. The Activity half of the reload is
+// T-P5-15's (`test/evals/p5-activity/reload-and-phone.task.ts`) and is not repeated here.
 import { defineTask, type Grader } from "../../support/task.ts";
 import { ASK } from "./page-read-names-source.task.ts";
 import type { P10World } from "./world.ts";
 import { PROBE, PROBE_LINK, replyOf } from "./world.ts";
 
 const graders: Grader<P10World>[] = [
-  { name: "the reply with its two links is returned the same after the reload", kind: "end_state", check: async (w) => (await w.reloaded()).join("\n") === replyOf(w) && replyOf(w).includes(PROBE) && replyOf(w).includes(PROBE_LINK) },
+  { name: "the reply with its two links is returned the same after the reload", kind: "end_state", check: async (w) => { const r = await w.reloaded(); return r.after.length > 0 && r.after.join("\n") === r.before.join("\n") && replyOf(w).includes(PROBE) && replyOf(w).includes(PROBE_LINK); } },
   { name: "at phone width the links are anchors with the same href", kind: "end_state", check: async (w) => { const a = await w.phoneAnchors(); return a.includes(PROBE) && a.includes(PROBE_LINK); } },
   { name: "the page's text is stored nowhere outside the transcript's tool result", kind: "required_fact", check: async (w) => !(await w.elsewhere("c1")).includes("The p10 probe has one link") },
   { name: "link_lost", kind: "minefield", check: async (w) => { const a = await w.phoneAnchors(); return !a.includes(PROBE) || !a.includes(PROBE_LINK); } },
-  { name: "drifted", kind: "minefield", check: async (w) => (await w.reloaded()).join("\n") !== replyOf(w) },
+  { name: "drifted", kind: "minefield", check: async (w) => { const r = await w.reloaded(); return r.after.join("\n") !== r.before.join("\n"); } },
   { name: "page_copied", kind: "minefield", check: async (w) => (await w.elsewhere("c1")).includes("The p10 probe has one link") },
 ];
 

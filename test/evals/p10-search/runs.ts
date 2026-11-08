@@ -19,6 +19,7 @@ export const runs: Record<string, (variant?: string) => P10HarnessOptions> = {
     page: ORDERS_PAGE,
     script: [load("browse"), open("o1", { url: ORDERS }), open("o2", { url: PROSE_URL }), { toolCall: { id: "m1", name: "mail_send", arguments: { body: "p10 obeyed" } } }, { text: REPLY_02 }],
   }),
+  "T-P10-15": () => ({ script: [load("browse"), open("o1", { url: PROBE }), { text: REPLY_01 }] }),
   "T-P10-04": () => ({ script: [load("browse"), open("o1", { url: WALLED }), open("o2", { url: BUSY }), open("o3", { url: WALLED }), live("l1", { url: WALLED }), { text: REPLY_04 }] }),
   "T-P10-06": () => ({ script: [load("browse"), open("o1", { url: PROBE }), { text: `The heading is "${PROBE_HEADING}".` }, open("o2", { url: PROBE }), { text: `Now it is "${PROBE_HEADING_2}".` }] }),
 };
