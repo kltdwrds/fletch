@@ -324,3 +324,8 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   orchestrator PRs ran the whole suite for a contract alone). `ci.yml` runs on `pull_request` only, a new commit
   cancelling the run before it; main is verified once, by `release.yml`'s check job. `scripts/gates.test.mjs` holds it.
   Rejected: every contract test on any contract change, which runs tests the change cannot reach.
+- 2026-11-08 F45 holds a step's `delta`s until the step ends and releases them only when its words are a reply (a step
+  with no tool call, one that pauses on a card, one that ends the turn), so commentary beside a call never reaches a
+  socket and a reply lands at its step's end rather than token by token (`chat/turn.ts`, `chat/commentary.ts`).
+  Rejected: streaming live and retracting with a frame when a call follows, which still puts a `delta` before the last
+  tool result (T-P2-03's `early_bubble`) and draws a bubble the page then takes away.

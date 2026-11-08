@@ -158,14 +158,15 @@ describe("[M19.1] the page reconciles while it says working (QYVR-169, QYVR-170)
     expect(shown.filter((v) => !v.busy && !v.agents.includes("4"))).toEqual([]);
   });
 
-  it("a working state never clears without a turn end: checks while the model runs leave the streamed reply as drawn", async () => {
+  it("a working state never clears without a turn end: checks while the model runs leave the thread as drawn", async () => {
     const w = world([{ checkpoint: "slow-model", step: { text: "Your Tuesday is free." } }]);
     const { p, s0 } = await adaPage(w);
     await p.type("Is my Tuesday free?");
     await w.fake.reached("slow-model");
     await settle();
     const during = p.bubbles();
-    expect(during.at(-1)?.[0]).toBe("m agent");
+    // The step's words are held until it ends (F45), so while the model runs the page draws Ada's message alone.
+    expect(during).toEqual([["m you", "Is my Tuesday free?"]]);
     for (let i = 1; i <= 3; i++) {
       p.t.fire(TURN_CHECK_MS);
       await settle();
