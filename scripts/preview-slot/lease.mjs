@@ -2,7 +2,7 @@
 // ./lease-rules.mjs. Both of the slot's entries export it and it is never tombstoned, so a release that wipes the
 // agent's objects keeps the lease that decides who may release.
 import { DurableObject } from 'cloudflare:workers';
-import { decideClaim, mayEnd } from './lease-rules.mjs';
+import { decideClaim, decideStage, mayEnd } from './lease-rules.mjs';
 
 export class PreviewLease extends DurableObject {
   read() {
@@ -20,6 +20,13 @@ export class PreviewLease extends DurableObject {
     if (!mayEnd(this.read(), req, now)) return false;
     this.ctx.storage.kv.delete('lease');
     return true;
+  }
+
+  stage(req, now) {
+    const d = decideStage(this.read(), req, now);
+    if (!d.next) return d;
+    this.ctx.storage.kv.put('lease', d.next);
+    return { lease: d.next };
   }
 }
 

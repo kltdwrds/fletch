@@ -23,8 +23,8 @@ Run `pnpm install` first, then `pnpm preview doctor` once in a new environment.
 | `pnpm preview status` | This worktree's lease, what the slot serves, its `/health`, and the setup link again. |
 | `pnpm preview tail` | `wrangler tail` on the slot's Worker. |
 | `pnpm preview down` | Releases the slot: the placeholder deployed (which deletes every agent Durable Object and its storage), new secrets, the bucket and the index emptied, every session key deleted, the lease ended. |
-| `pnpm preview gc` | Releases every slot whose lease expired or whose branch's PR merged (`--dry-run` says which). On Kyle's login, `--slot n --force` releases one live lease: a slot whose holder lost its key. |
-| `pnpm preview list` | Every slot and its lease. |
+| `pnpm preview gc` | Releases every slot whose lease expired or whose branch's PR merged (`--dry-run` says which), never the staging slot. On Kyle's login, `--slot n --force` releases one live lease: a slot whose holder lost its key. |
+| `pnpm preview list` | Every slot and its lease; the staging slot says `staging`. |
 | `pnpm preview doctor` | Which credential is in use, whether the network accepts it, whether each slot answers, and the hosts to allow. |
 
 Slot `n` answers at `https://fletch-pv-<n>.<subdomain>.workers.dev`. Its tenant is `fletch-pv-<n>` and its owner the
@@ -32,6 +32,52 @@ fixture person, `sam@solo-sam.example`. Open the setup link `up` printed to regi
 answers 503.
 
 `pnpm preview down` before your branch's PR merges. `gc` is the backstop, and an unrenewed lease expires after a day.
+
+Slot 1 is the staging slot (next section): `up` never takes it and a branch gets slot 2 or 3.
+
+## Staging: slot 1, main on every merge
+
+Slot 1 (`fletch-pv-1`) is staging: main, deployed on every push to main, holding Kyle's passkey and workspace for UAT
+(his and Muse's). The inventory marks it (`"staging": true` in `scripts/preview-pool.json`), and once converted its
+lease row says `staging` and never expires. The code is `scripts/preview-staging.mjs`.
+
+| What | Does to slot 1 |
+|---|---|
+| `pnpm preview up` | Never takes it: `--slot 1` is refused with `PREVIEW_SLOT_STAGING`; without `--slot` it takes slot 2 or 3. A worktree whose lease file still names slot 1 lets that file go and takes another. |
+| `pnpm preview gc` | Never releases it, whatever its lease says: no expiry, no merged-branch check. `gc --slot 1 --force` is refused with `PREVIEW_SLOT_STAGING`. |
+| `pnpm preview down` | From a worktree whose lease file names slot 1: refused with `PREVIEW_SLOT_STAGING`, the stale file dropped, the slot untouched. `down --slot 1` is refused unless `--force` on Kyle's login (next row). |
+| `pnpm preview down --slot 1 --force` | (Kyle's login) Unstages and releases it as `down` releases a lease: placeholder, new secrets, bucket and index emptied. Its data is gone. The inventory mark stays, so no branch takes it until a PR removes the mark. |
+| `pnpm preview list` | `staging (main, deployed on merge; serving …)`, or `staging, not converted yet: …` before the conversion. |
+| `pnpm preview staging status` | Its lease, what it serves and its `/health`. |
+| `pnpm preview staging deploy` | Redeploys main: refused unless the checkout is main with no change to a tracked file and the lease says staging (`PREVIEW_STAGING_NOT_CONVERTED`). It is one `wrangler deploy` of the agent: every secret, Durable Object, the bucket and the index stay. |
+
+The lease protects the slot from code that predates staging too: no claim takes a staging lease, its expiry (2100) is
+past any `gc`, and the slot's ops reset it only for `down --slot 1 --force`, which says `unstage`.
+
+### The one-time conversion (Kyle's Mac, a clean main checkout)
+
+```bash
+git switch main && git pull --ff-only && pnpm install
+env -u CLOUDFLARE_API_TOKEN pnpm preview staging convert
+```
+
+It is refused on a token, off main, or with a changed tracked file. It deploys main's agent to slot 1 over what is there
+(the Worker running there predates the staging op), waits until the slot serves it, sets a key of its own in a secrets
+write holding that key alone, marks the lease staging over the tag it read (taking over a branch's lease, merged or
+not), and deletes every `PREVIEW_KEY_*`. It never deploys the placeholder, never resets the bucket or the index, and
+never writes `MASTER_KEY` or `SETUP_TOKEN`: the Durable Objects, R2, Vectorize, the passkey and the workspace stay.
+Only a slot that was free (its secrets rotated by a release, so its setup token is unknown) gets a new `SETUP_TOKEN`,
+printed as a setup link. A second run says it is staging already and changes nothing.
+
+### The workflow
+
+`.github/workflows/deploy-staging.yml` runs on every push to main, and by hand:
+`gh workflow run deploy-staging.yml --ref main`. It installs, runs `pnpm check`, then `pnpm preview staging deploy`
+on the scoped token (`FLETCH_PREVIEW_AUTH=token`). Two merges queue and the newest waiting one wins; a deploy running
+is never cancelled. A failure fails the job; it never deploys another slot. It reads three repository secrets:
+`CLOUDFLARE_API_TOKEN` (the `fletch-preview-slots` token), `CLOUDFLARE_ACCOUNT_ID` and `FLETCH_PREVIEW_SUBDOMAIN`.
+No lease key: the token already deploys every slot Worker, so a key would prove nothing more, and the deploy does no
+keyed op. Until the conversion has run, each run fails with `PREVIEW_STAGING_NOT_CONVERTED`.
 
 ## Credentials
 

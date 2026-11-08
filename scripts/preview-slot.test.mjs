@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { beforeEach, describe, it } from 'node:test';
 import { sha256Hex } from './preview-plan.mjs';
 import { fakeSlot } from './preview-fakes.mjs';
-import { decideClaim, MAX_TTL_SECONDS, mayEnd } from './preview-slot/lease-rules.mjs';
+import { decideClaim, MAX_TTL_SECONDS, mayEnd, STAGING_EXPIRES_AT, STAGING_TAG } from './preview-slot/lease-rules.mjs';
 import { MAX_BODY, ops, RESET_BUDGET } from './preview-slot/ops.mjs';
 import { CHALLENGE, NO_LIVE_BROWSER, SITES, testHostBinding } from './preview-slot/test-host-sites.mjs';
 
@@ -140,6 +140,48 @@ describe('preview slot ops: the reset', () => {
     assert.equal(slot.AGENT_BUCKET.map.size, 1);
     assert.deepEqual((await call('POST', 'reset', { ...B, body: { force: true, expectTag: 'aaaaaa' } })).body, { done: true });
     assert.equal((await call('GET', 'lease')).body.expiresAt, null);
+  });
+});
+
+// The staging lease (scripts/preview-staging.mjs): marked once over the lease read, never claimed, reset or ended but by `unstage`.
+describe('preview slot ops: the staging lease', () => {
+  const stage = (who, expectTag) => call('POST', 'staging', { ...who, body: { expectTag } });
+
+  it('marks the lease staging only over the tag read, keeps the data, and says so in the public lease', async () => {
+    await claim(A);
+    slot.AGENT_BUCKET.map.set('o', 'x');
+    assert.equal((await call('POST', 'staging', { body: { expectTag: 'aaaaaa' } })).status, 401, 'a key is needed');
+    assert.equal((await stage(B, 'zzzzzz')).status, 409, 'a lease that changed since it was read is not taken over');
+    assert.equal((await stage(B, 7)).status, 400);
+    const r = await stage(B, 'aaaaaa');
+    assert.equal(r.status, 200);
+    assert.deepEqual([r.body.tag, r.body.staging, r.body.already], [STAGING_TAG, true, false]);
+    assert.deepEqual((await call('GET', 'lease')).body, { leased: true, expiresAt: STAGING_EXPIRES_AT, branchHash: null, staging: true, serving: 'placeholder', deploy: null });
+    assert.equal((await stage(A, null)).body.already, true);
+    assert.equal(slot.AGENT_BUCKET.map.size, 1);
+  });
+
+  it('no claim takes it, not even its last holder, nor any tag after any expiry', async () => {
+    await claim(A);
+    await stage(A, 'aaaaaa');
+    assert.equal((await claim(A)).status, 409);
+    now = STAGING_EXPIRES_AT + 1;
+    assert.equal((await claim(B)).status, 409);
+    assert.deepEqual(decideClaim({ tag: STAGING_TAG, staging: true, expiresAt: 0 }, { tag: STAGING_TAG, ttlSeconds: 5 }, 10), { conflict: true });
+  });
+
+  it("no reset touches it: not a key holder's, not gc's force naming its tag (code that predates staging), only force with unstage", async () => {
+    await stage(A, null);
+    slot.AGENT_BUCKET.map.set('o', 'x');
+    const secrets = { PREVIEW_KEY_aaaaaa: KEY_A, PREVIEW_KEY_staging: KEY_B };
+    assert.equal((await call('POST', 'reset', { ...A, body: {} })).status, 409);
+    assert.equal((await call('POST', 'reset', { tag: STAGING_TAG, key: KEY_B, secrets, body: {} })).status, 409, 'a key set for the staging tag holds nothing');
+    assert.equal((await call('POST', 'reset', { ...A, body: { force: true, expectTag: STAGING_TAG } })).status, 409);
+    assert.equal((await call('POST', 'test-host', { tag: STAGING_TAG, key: KEY_B, secrets, body: { op: 'state' }, testHost: async () => ({ status: 200, body: {} }) })).status, 409);
+    assert.equal(slot.AGENT_BUCKET.map.size, 1);
+    assert.equal(mayEnd({ tag: STAGING_TAG, staging: true, expiresAt: 1 }, { force: true, expectTag: STAGING_TAG }, 10), false);
+    assert.deepEqual((await call('POST', 'reset', { ...A, body: { force: true, expectTag: STAGING_TAG, unstage: true } })).body, { done: true });
+    assert.deepEqual((await call('GET', 'lease')).body, { leased: false, expiresAt: null, branchHash: null, serving: 'placeholder', deploy: null });
   });
 });
 
