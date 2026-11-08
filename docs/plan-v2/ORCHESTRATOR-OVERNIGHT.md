@@ -106,6 +106,30 @@ PR opens as a draft: review, `gh pr ready`, gate with `gh pr checks <n> --repo k
     main (lease it for 48 h and name it once at the top); the decision log shortened under its cap, no line deleted;
     the handoff note kept current.
 
+## One-hour run (2026-11-08)
+
+Run from the Fletch Cloud environment by the cloud orchestrator session, 23:10Z to about 00:30Z, under Kyle's ruling
+of 2026-11-08: "answer all of these with defaults and best effort to unblock, then continue work for the next hour in as
+much fan-out and parallel work as possible; no blockers, just move; we can always go back later and reconcile." The
+Defaults above still hold except where the ruling goes past them (a record's acceptance, a BLOCKED question's answer):
+each such ruling is one line under `## Reconcile (2026-11-08 one-hour run)` in `WAITING-ON-KYLE.md`.
+
+1. **The unblocking pass** *(PR #141)*: Q48, Q49, Q50 answered as Kyle's; F42, F47, F48, F54, F55 DONE; D-0016, D-0017,
+   D-0018, D-0025, D-0026, D-0027 accepted with `decider: Kyle`; every decide item ticked with its ruling.
+2. **Translate P8, P13, P16** under the accepted doors: three Opus sub-agents, one per cluster, branches
+   `claude/translate-p8`, `-p13`, `-p16`, parts F60+, F70+, F80+ (ranges reserved per cluster to avoid clashes).
+3. **Translate P10 and P11** from the evidence this container still holds (S-P10-01 and S-P11-01 of 2026-11-01, 114 and
+   121 files; Kyle's Mac gets them from the session's tarball): two Opus sub-agents writing the contracts, Translation
+   and parts F90+ and F100+, branches `claude/translate-p10` and `-p11`.
+4. **Plain parts**: F56 the renderer behind the paid bindings (`claude/f56-render`, tier 2 on a `--paid` slot if the token
+   allows); F59 the refused host's sentence as code's, Q50's answer (`claude/f59-refusal-words`, tier 2 on a slot);
+   `pnpm preview staging convert` waiting for the new deploy (`claude/staging-convert-waits`, a plain PR); `pnpm preview
+   staging secrets` (`claude/staging-secrets`, a plain PR, tests over fakes). Slots 2 and 3 are the tier-2 slots; slot 1
+   is staging and untouched.
+5. **Ledgers**: this section, the PROGRESS, SCORECARD and WAITING lines as each PR merges; builder branches start before
+   PR #141 merges, so parts.md, PROGRESS.md and QUESTIONS.md conflicts are resolved at merge (main's file, the branch's
+   blocks inserted, question ids renumbered).
+
 ## What is not for tonight
 
 Level 3 (Locked) needs Kyle's UAT; D-0015 (tier-2 evals in CI) spends money; D-0011 needs Kyle's own commit; a Muse
