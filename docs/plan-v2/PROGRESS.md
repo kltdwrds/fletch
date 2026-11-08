@@ -61,6 +61,11 @@ test counts, the verifier's result, the duration and `model: <model>` for parts 
 | F72 | TODO | | 2026-11-08 | Audio the person can see, after specimens: the chat audio item, the Library Audio section, Settings > Voice, the episode with its feed refused `PODCAST_FEED_UNAVAILABLE`. |
 | F73 | TODO | | 2026-11-08 | Speech says what happened: T-P13-14 on a slot, three trials, under F71's cap. |
 
+| F100 | TODO | | 2026-11-08 | Files as they are: `test/m0/f100-contract.test.ts` holds P11 (`contracts/P11-files-documents.md`, seventeen clauses, eighteen tasks), the task files under `test/evals/p11-files/`, `file_write`'s replaced-and-not-kept words, `file_list`'s last change, and tier 1 on T-P11-01, 02, 03, 04, 06, 08, 09, 10, 13 and 14. |
+| F101 | TODO | | 2026-11-08 | Shares and deletes say what happened: the `files.html` specimen first, `share_list` and `share_revoke`, a journaled delete that ends its shares, `pptx`, cards drawn from the store; tier 1 on T-P11-07, 11, 12 and 15. |
+| F102 | TODO | | 2026-11-08 | Files say what happened: `FILE_WORDS` in `instructions.ts` and P11's tier 2 on a slot (T-P11-16 and 17 must-have, T-P11-18). |
+| F103 | TODO | | 2026-11-08 | Versions and a trash on the default under D-0028 (proposed), built deletable as F55 was; tier 1 on T-P11-05. |
+
 ## The first plan (closed 2026-10-29)
 
 F0 to F17 were worked under the first plan (`git show 34c6b0a:docs/plan/parts.md`). F0 and F1 predate the protocol:
