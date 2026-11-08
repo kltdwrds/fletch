@@ -589,6 +589,7 @@ Kyle's own lines go under `## Steering`.
   [PR #64](https://github.com/kltdwrds/fletch/pull/64).
   Default taken (for Kyle, 2026-11-07), Q29: (1) one run declared before it starts on the final tree counts, earlier runs staying as evidence (KICKOFF's rule since PR #73); (2) both widenings stay. A cloud builder runs the declared run of T-P3-14 and T-P3-16 on current main tonight; F34 goes DONE and P3 to level 2 on its pass.
   2026-11-08: the run was made (PR #107, tree dfd25a51): T-P3-16 3 of 3; T-P3-14 0 of 3 on Muse Spark's launch words (future tense, three acknowledgements, "keep you posted"), so F46, a line part, is written in parts.md and builds after F45; F34 and P3 level 2 close on its pass.
+  2026-11-08, later: F46 built and merged (PR #115: `ACCEPT F46: PASS`, `VERIFIER: no blocking findings`, T-P3-14 3 of 3 on Muse Spark at declared tree 67ec581c); F34 and F46 are DONE and P3 is at level 2. Nothing left here but your read of the default.
 - [ ] 2026-10-30 uat: **delegation on a slot after F33 and F34** (https://fletch-pv-3.edwards-ky1.workers.dev while
   F34's lease holds, to 2026-10-31T13:27Z; after that `pnpm preview up` on main). Hand the agent a two-source question
   and watch: the launch reply says what started and ends its turn (no polling, nothing said aside); the task drawer's
