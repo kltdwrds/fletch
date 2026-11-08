@@ -285,7 +285,8 @@ describe("[M18.1] the page draws what the chat answered, never more (QYVR-164, Q
     expect(p.busy()).toBe(true);
 
     // A reload while the model call runs: a new page draws the message and says the turn is running.
-    // It joined after the reply began streaming, so when the turn ends it asks once for the whole of it.
+    // A step's words reach the sockets when the step ends (F45, held so a lead-in beside a call never streams), so the
+    // page that joined while the model ran is sent the whole reply and asks for nothing when the turn ends.
     const rchat = {
       p: undefined as Awaited<ReturnType<typeof page>> | undefined,
       onSend(data: string, s: ScriptedSocket) {
@@ -304,7 +305,7 @@ describe("[M18.1] the page draws what the chat answered, never more (QYVR-164, Q
     w.fake.release("slow-model");
     await turn;
     for (let i = 0; i < 5; i++) await new Promise((r) => setImmediate(r));
-    expect(r0.sent.map((d) => JSON.parse(d).type)).toEqual(["sync"]);
+    expect(r0.sent.map((d) => JSON.parse(d).type)).toEqual([]);
     for (const x of [p, reload]) {
       expect(x.busy()).toBe(false);
       expect(x.bubbles().at(-1)).toEqual(["m agent", "Your Tuesday is free."]);

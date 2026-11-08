@@ -87,6 +87,7 @@ Kyle's own lines go under `## Steering`.
   Spark then. [PR #96](https://github.com/kltdwrds/fletch/pull/96); [F42 in parts.md](parts.md#f42-credentials-say-why-a-host-is-refused-the-bound-host-words-and-t-p9-15s-re-grade);
   [P9 row](SCORECARD.md).
   Default taken (for Kyle, 2026-11-07), Q31 and this item: the cross-cutting part is F45 (parts.md, the lead-in bubble), F42 waits for it and is rebased onto it, then P9's must-haves run again on Muse Spark (ORCHESTRATOR-OVERNIGHT.md, Queue 5 and 6).
+  2026-11-08: F45 is merged (PR #111: `ACCEPT F45: PASS`, verifier clean, T-P9-13 and T-P12-10 3 of 3 on Muse Spark); F42's rebase onto it and its declared run of T-P9-15, T-P9-13 and T-P9-14 are under way on PR #96.
 
 - [ ] 2026-11-02 look: **P10 and P11 are interrogated, from the cloud; the evidence is in the session's tarball, not on
   your Mac yet.** Two Opus agents ran `evidence/p10-search/scenario.md` and `evidence/p11-files/scenario.md` in your Muse
@@ -587,6 +588,7 @@ Kyle's own lines go under `## Steering`.
   [Q29](QUESTIONS.md#q29-f34-2026-10-30-may-f34-count-its-last-33-runs-and-keep-the-two-widened-must-have-graders); [F34 in parts.md](parts.md#f34-delegation-says-what-happened-p3s-tier-2-on-a-slot);
   [PR #64](https://github.com/kltdwrds/fletch/pull/64).
   Default taken (for Kyle, 2026-11-07), Q29: (1) one run declared before it starts on the final tree counts, earlier runs staying as evidence (KICKOFF's rule since PR #73); (2) both widenings stay. A cloud builder runs the declared run of T-P3-14 and T-P3-16 on current main tonight; F34 goes DONE and P3 to level 2 on its pass.
+  2026-11-08: the run was made (PR #107, tree dfd25a51): T-P3-16 3 of 3; T-P3-14 0 of 3 on Muse Spark's launch words (future tense, three acknowledgements, "keep you posted"), so F46, a line part, is written in parts.md and builds after F45; F34 and P3 level 2 close on its pass.
 - [ ] 2026-10-30 uat: **delegation on a slot after F33 and F34** (https://fletch-pv-3.edwards-ky1.workers.dev while
   F34's lease holds, to 2026-10-31T13:27Z; after that `pnpm preview up` on main). Hand the agent a two-source question
   and watch: the launch reply says what started and ends its turn (no polling, nothing said aside); the task drawer's
