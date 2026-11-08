@@ -472,7 +472,7 @@ T-P10-14  must-have  tier 1
   collateral: one run row, one delivery, nothing else
   graders: code (the run record, the delivered message, the job model's request log)
   reference: Muse's catch-up run that delivered an earlier slot's stories (B-P10-16)
-  version_hash: 19ac22222ff3
+  version_hash: 29b8e9731d28
   file: test/evals/p10-search/job-read-sources-linked.task.ts
 
 T-P10-15  must-have  tier 1

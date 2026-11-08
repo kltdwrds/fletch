@@ -30,7 +30,7 @@ export const task = defineTask<P10World>({
   setup: { seed: 1014, records: ["chat:c1", `a job reading ${NEWS}, enabled through its card`], files: [], jobs: ["p10 news"] },
   turns: [
     { kind: "event", name: "tick", payload: { job: "p10 news" } },
-    { kind: "event", name: "catchup", payload: { job: "p10 news", days: 2 } },
+    { kind: "event", name: "catchup", payload: { job: "p10 news", days: "2" } },
   ],
   end_state: graders.filter((g) => g.kind === "end_state").map((g) => g.name),
   required_facts: graders.filter((g) => g.kind === "required_fact").map((g) => g.name),
