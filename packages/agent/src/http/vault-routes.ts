@@ -100,7 +100,7 @@ export function captureForm(f: Fields, message?: { code: string; reason: string 
 ${oauthFields(f)}
 <label for="permission">Use</label><select id="permission" name="permission">${opt("permission", "standing", "My agent may use it at this host")}${opt("permission", "grant", "Only under a grant I give each time")}</select>
 <label for="value">${f.kind === "oauth" ? "Client secret" : "Value"}</label><input id="value" name="value" type="password" required autocomplete="off" spellcheck="false">
-${f.setup ? `<input type="hidden" name="setup" value="${esc(f.setup)}">` : ""}<button type="submit">Save</button></form></body></html>`;
+${f.setup ? `<input type="hidden" name="setup" value="${esc(f.setup)}">` : ""}${f.kind === "oauth" ? '<input type="hidden" name="scheme" value="oauth">' : ""}<button type="submit">Save</button></form></body></html>`;
 }
 
 /** A dismissed setup's link: it says so, and opens no form. */
@@ -109,11 +109,14 @@ const voidPage = (ref: string) =>
 
 const page = (html: string, status = 200) => new Response(html, { status, headers: { ...SECURE_HEADERS, "content-type": "text/html; charset=utf-8" } });
 /**
- * The capture form's own page (F55, deleted with D-0016): `https:` beside 'self' in its form-action, since a browser holds
- * a form's redirect to that list and the `oauth` submit's 303 goes to the provider. Every other vault page keeps 'self'.
+ * The capture form drawn for the `oauth` scheme (F55, deleted with D-0016): `https:` beside 'self' in its form-action,
+ * since a browser holds a form's redirect to that list and the submit's 303 goes to the provider. A key or login form,
+ * and every other vault page, keeps 'self'.
  */
-const formPage = (html: string, status = 200) =>
+const oauthPage = (html: string, status = 200) =>
   new Response(html, { status, headers: { ...SECURE_HEADERS, "content-security-policy": SECURE_HEADERS["content-security-policy"].replace("form-action 'self';", "form-action 'self' https:;"), "content-type": "text/html; charset=utf-8" } });
+/** The capture form's page: the `oauth` scheme's when the form is drawn for it. */
+const formPage = (html: string, f: Fields, status = 200) => (f.kind === "oauth" ? oauthPage(html, status) : page(html, status));
 
 function fieldsOf(form: FormData | URLSearchParams): Fields {
   const get = (k: string) => String(form.get(k) ?? "");
@@ -145,7 +148,8 @@ export async function vaultRoutes(request: Request, url: URL, person: string, di
     // whose setup the person dismissed in the chat is void: it opens no form.
     const ref = url.searchParams.get("ref");
     if (ref && (await dir.captureState(person, ref, url.searchParams.get("setup") ?? "")).state === "dismissed") return page(voidPage(ref), 410);
-    return formPage(captureForm({ ...EMPTY, ...fieldsOf(url.searchParams), fills: url.searchParams.get("fills") === "on" }));
+    const f = { ...EMPTY, ...fieldsOf(url.searchParams), fills: url.searchParams.get("fills") === "on" };
+    return formPage(captureForm(f), f);
   }
   if (url.pathname === OAUTH_CALLBACK && request.method === "GET") {
     if (!dir.oauthCallback) return json({ code: "VAULT_UNAVAILABLE" }, 503);
@@ -157,15 +161,21 @@ export async function vaultRoutes(request: Request, url: URL, person: string, di
     return json({ ok: true, ...(await dir.captureState(person, url.searchParams.get("ref") ?? "", url.searchParams.get("setup") ?? "")) });
   }
   if (url.pathname === "/vault/capture" && request.method === "POST") {
-    if (!sameOrigin(request, url)) return formPage(captureForm(EMPTY, { code: "VAULT_FORM_ORIGIN", reason: "the form is submitted from this site's own page" }), 403);
+    if (!sameOrigin(request, url)) return page(captureForm(EMPTY, { code: "VAULT_FORM_ORIGIN", reason: "the form is submitted from this site's own page" }), 403);
     const form = await request.formData().catch(() => null);
-    if (!form) return formPage(captureForm(EMPTY, { code: "VAULT_FORM_INVALID", reason: "the form did not arrive" }), 400);
+    if (!form) return page(captureForm(EMPTY, { code: "VAULT_FORM_INVALID", reason: "the form did not arrive" }), 400);
     const f = fieldsOf(form);
     const value = String(form.get("value") ?? "");
     const methods = f.methods.split(/[\s,]+/).filter(Boolean);
     if (f.kind === "oauth") {
       // The person's own browser goes to the consent page (F55): nothing is stored until the provider sends them back.
       if (!dir.oauthBegin) return json({ code: "VAULT_UNAVAILABLE" }, 503);
+      // A form drawn for a key or a login keeps form-action 'self', so a browser would hold its redirect: the OAuth
+      // fields come back on their own page to submit from there, and no state is minted.
+      if (form.get("scheme") !== "oauth") {
+        const again = captureForm(f, { code: "VAULT_FORM_INVALID", reason: "an OAuth connection is submitted from its own form; check the fields and submit again" });
+        return oauthPage(value ? redact(again, [{ ref: "value", value }]) : again, 400);
+      }
       const o = await dir.oauthBegin(
         {
           ref: f.ref, ...(f.setup ? { setup: f.setup } : {}), label: f.label, permission: f.permission === "grant" ? "grant" : "standing", hosts: f.host.split(/[\s,]+/).filter(Boolean), methods,
@@ -176,7 +186,7 @@ export async function vaultRoutes(request: Request, url: URL, person: string, di
       );
       if (o.ok) return new Response(null, { status: 303, headers: { ...SECURE_HEADERS, location: o.location } });
       const html = captureForm(f, { code: o.code, reason: o.reason });
-      return formPage(value ? redact(html, [{ ref: "value", value }]) : html, 400);
+      return oauthPage(value ? redact(html, [{ ref: "value", value }]) : html, 400);
     }
     const r = await dir.capture(
       { ref: f.ref, ...(f.setup ? { setup: f.setup } : {}), value, label: f.label, kind: f.kind === "login" ? "login" : "secret", permission: f.permission === "grant" ? "grant" : "standing", hosts: [{ host: f.host, methods, header: f.header, prefix: f.prefix, fills: f.fills }] },
@@ -184,7 +194,7 @@ export async function vaultRoutes(request: Request, url: URL, person: string, di
     );
     const html = r.ok ? captureForm({ ...EMPTY }, { saved: r.ref, hosts: f.host }) : captureForm(f, { code: r.code, reason: r.reason });
     // Whatever was typed where, the value does not come back.
-    return formPage(value ? redact(html, [{ ref: "value", value }]) : html, r.ok ? 201 : 400);
+    return page(value ? redact(html, [{ ref: "value", value }]) : html, r.ok ? 201 : 400);
   }
   if (url.pathname === "/vault" && request.method === "GET") {
     return json({ credentials: await dir.list(person), grants: await dir.grants(person) });

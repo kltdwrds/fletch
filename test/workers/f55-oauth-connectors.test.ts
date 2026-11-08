@@ -39,7 +39,7 @@ function oauthWorld(name: string) {
   });
   const rows = (q: string, ...b: unknown[]) => (w.vault() as unknown as { sql(q: string, ...b: unknown[]): Array<Record<string, unknown>> }).sql(q, ...b);
   const form = (o: Record<string, string> = {}) => ({
-    ref: REF, label: "Provider", kind: "oauth", host: API, methods: "GET POST", permission: "standing", client_id: "fletch-client",
+    ref: REF, label: "Provider", kind: "oauth", scheme: "oauth", host: API, methods: "GET POST", permission: "standing", client_id: "fletch-client",
     authorize_url: `https://${AUTH}/oauth/authorize?access_type=offline`, token_url: `https://${AUTH}/oauth/token`, revoke_url: `https://${AUTH}/oauth/revoke`, scope: "read write", value: CLIENT_SECRET, ...o,
   });
   const begin = (as = ada.email, o: Record<string, string> = {}) => w.http(as, "POST", "/vault/capture", { form: form(o) });
@@ -92,11 +92,12 @@ describe("[F55] OAuth connectors: the consent redirect and the one-shot state", 
     expect(w.vault().audit()).toMatchObject([{ ref: REF, host: AUTH, method: "POST", path: "/oauth/token", person: ada.email, purpose: "oauth code exchange", outcome: "resolved" }]);
     expect(w.vault().events(ada.email)).toMatchObject([{ event: "captured", ref: REF, by: ada.email, detail: `capture-form; oauth; ${API}` }]);
     expect(w.vault().captureState(ada.email, REF)).toMatchObject({ state: "entered" });
-    // The capture form's page alone lets its form redirect to an https provider; the callback page and the JSON keep 'self'.
+    // Only the form drawn for the oauth scheme lets its form redirect to an https provider; a key's or a login's form,
+    // the callback page and the JSON keep 'self'.
     const csp = (r: { headers: Headers }) => /form-action [^;]*;/.exec(r.headers.get("content-security-policy") ?? "")?.[0];
     expect(csp(await w.http(ada.email, "GET", "/vault/capture?kind=oauth"))).toBe("form-action 'self' https:;");
+    for (const path of ["/vault/capture", "/vault/capture?kind=login", "/vault"]) expect({ path, csp: csp(await w.http(ada.email, "GET", path)) }).toEqual({ path, csp: "form-action 'self';" });
     expect(csp(cb)).toBe("form-action 'self';");
-    expect(csp(await w.http(ada.email, "GET", "/vault"))).toBe("form-action 'self';");
     // The spent state keeps no sealed client.
     expect(w.rows("SELECT spent_at, length(ct) AS n FROM oauth_states WHERE state = ?", state)).toEqual([{ spent_at: w.clock.now, n: 0 }]);
     // It is a connection: the Yours row draws it as it draws a key.
@@ -177,6 +178,10 @@ describe("[F55] OAuth connectors: the consent redirect and the one-shot state", 
       const r = await w.begin(ada.email, o);
       expect({ o, status: r.status, code: r.text.includes(code), echoed: r.text.includes(CLIENT_SECRET) }).toEqual({ o, status: 400, code: true, echoed: false });
     }
+    // Kind switched to oauth on a key's form (no oauth scheme field): the fields come back on the oauth form, no state.
+    const switched = await w.begin(ada.email, { scheme: "" });
+    expect({ status: switched.status, code: switched.text.includes("VAULT_FORM_INVALID"), scheme: switched.text.includes('name="scheme" value="oauth"'), echoed: switched.text.includes(CLIENT_SECRET) }).toEqual({ status: 400, code: true, scheme: true, echoed: false });
+    expect(switched.headers.get("content-security-policy")).toContain("form-action 'self' https:;");
     const cross = await w.http(ada.email, "POST", "/vault/capture", { form: { ref: REF, kind: "oauth", host: API, value: CLIENT_SECRET } }, "https://attacker.example");
     expect(cross.status).toBe(403);
     expect(w.rows("SELECT state FROM oauth_states")).toEqual([]);

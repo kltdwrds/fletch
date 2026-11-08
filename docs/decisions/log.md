@@ -342,6 +342,7 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   machine) and a longer `testTimeout` (it would hide a slow test in CI too).
 - 2026-11-08 F55 (D-0016 proposed, built on the default): the person's own browser goes to the provider's consent page
   by a 303 from the capture form's submit, so the consent click is theirs; the Vault never fetches the authorize URL.
-  The capture form's page alone gains `https:` beside 'self' in its `form-action`, since browsers hold a form's
-  redirect to that list. Rejected: a page with a link the person clicks (a second click for nothing) and a Vault-side
+  The form drawn for the `oauth` scheme alone gains `https:` beside 'self' in its `form-action`, since browsers hold a
+  form's redirect to that list; a key's or a login's form keeps 'self', and OAuth fields submitted from one come back
+  on the OAuth form. Rejected: a page with a link the person clicks (a second click for nothing) and a Vault-side
   fetch of the consent page.
