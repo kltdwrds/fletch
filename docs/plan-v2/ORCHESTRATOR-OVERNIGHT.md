@@ -74,16 +74,16 @@ PR opens as a draft: review, `gh pr ready`, gate with `gh pr checks <n> --repo k
 2. **F24 and F26 DONE** *(done: F26 in the Queue 1 PR, F24 in the F45 PR; both rows DONE, P2 and P15 at level 2)*. For each, a fresh Opus verifier on the merged code with the default under Q16 or Q18 stated
    as Kyle's; on `VERIFIER: no blocking findings`, the PROGRESS row DONE, then P2 and P15 to level 2 quoting the
    accept lines in PR #36 and PR #42, the verifier lines and the must-have results files.
-3. **F34 close-out (slot).** One cloud builder: one declared run each of T-P3-14 and T-P3-16 on current main, the
+3. **F34 close-out (slot).** *(in progress: the cloud session asked at 2026-11-08T02:00Z showed no branch and no lease after three hours; a local Opus agent runs it in its own worktree, draft PR #107, slot 1)* One cloud builder: one declared run each of T-P3-14 and T-P3-16 on current main, the
    results files committed, verifier, F34 DONE, P3 to level 2. Target part F34 with the default under Q29 in the brief.
 4. **F44 DONE** *(done in the Queue 1 PR: the row DONE on Q40's default, P6's row notes it)* on the Q40 default (T-P6-09 at 2 of 3 accepted for a nice-to-have); P6's row notes it.
-5. **F45, the lead-in bubble (write the part, then a slot).** Muse Spark opens most turns with a lead-in bubble
+5. **F45, the lead-in bubble (write the part, then a slot).** *(part written, PR #104; the cloud builder asked at 04:30Z showed no branch after an hour, so a local Opus agent builds it in its own worktree)* Muse Spark opens most turns with a lead-in bubble
    beside its first tool call; graders that read the first bubble or count replies take it for the reply (F42's
    finding, PR #96; F43 and F44 met it). Write F45 in `parts.md` from the P2 contract (the reply clause) as one
    cross-cutting part: one `WORK_WORDS` or engine rule that keeps the lead-in out of the graded reply, or one shared
    grader helper every task uses, whichever the contract's wording supports; its tier 2 is T-P9-13 and T-P12-10 on a
    slot. Then rebase F42 (PR #96) onto it, drop the out-of-scope clause the verifier named, run T-P9-15, merge.
-6. **The Muse Spark sweep (three slots).** Every cluster at level 2 earned its tier 2 on GLM or on a mixed tree. Three
+6. **The Muse Spark sweep (three slots).** *(in progress: sweep A, P1 P2 P15 P6, runs as a local Opus agent after its cloud session showed no branch; B and C start as slots free)* Every cluster at level 2 earned its tier 2 on GLM or on a mixed tree. Three
    cloud builders, clusters split by slot, each one declared run of every tier-2 task of its clusters on current main
    (`pnpm evals P<n>`), results committed, a table per cluster in the scorecard row. A must-have that fails is an
    oracle correction under KICKOFF's rule when the reply is right in other words, else a line part F46+ written from
