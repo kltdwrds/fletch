@@ -2,7 +2,8 @@
 // apart from the slot client so a hermetic test reads them without its socket, passkey or browser. Sam's chat `c1` is
 // the trial's; its thread is the history the page draws, read again from a fresh socket after a reload; her standing
 // files, memory, the objects' table counts, the Ledger's chat model calls, her mail journal rows and the chat's model
-// requests (every system message, and the first one's tool lines with the production guard's answer) are the test
+// requests (every system message, the runtime envelope as the model received it, and the first one's tool lines with
+// the production guard's answer) are the test
 // host's `p14` op (`scripts/preview-slot/test-host-p14.mjs`); the drawn name, the reloads and `/settings` are Sam's
 // page in a real browser (`scripts/evals/p14-page.ts`). The writers of the standing files are read from the sources.
 //
@@ -34,6 +35,8 @@ export interface P14State {
   calls: Array<{ id: number; model: string }>;
   mail: Array<{ id: string; outcome: string; counterpart: string }>;
   systems: string[];
+  /** Each request's runtime envelope as the model received it, a system or (for Meta) a user message (F53); "" for none. */
+  envelopes: string[];
   tools: Array<ToolLine & { guard: string | null }>;
 }
 
@@ -63,7 +66,7 @@ export interface P14Slot {
   event(name: string, payload: Record<string, string>): Promise<boolean>;
 }
 
-const EMPTY: P14State = { standing: [], seeded: {}, daily: [], memory: "", memoryWriter: "", counts: {}, calls: [], mail: [], systems: [], tools: [] };
+const EMPTY: P14State = { standing: [], seeded: {}, daily: [], memory: "", memoryWriter: "", counts: {}, calls: [], mail: [], systems: [], envelopes: [], tools: [] };
 
 const unread = (name: string) => () => {
   throw new Error(`SLOT_P14_UNREAD: ${name} is not read on a slot`);
@@ -123,7 +126,9 @@ export function p14Slot(c1: () => string, entries: () => SlotEntry[], fresh: () 
     holding: unread("holding"),
     drawn,
     profile: null,
-    asked: (): Sent[] => state.systems.map((text) => ({ surface: "chat" as const, text })),
+    // What the chat's model was sent: every system message, and the envelope wherever it rode (F53: for Meta a user
+    // message, so the system messages alone never hold its `model:` line).
+    asked: (): Sent[] => [...state.systems, ...(state.envelopes ?? []).filter(Boolean)].map((text) => ({ surface: "chat" as const, text })),
     prefix: () => state.systems.at(-1) ?? "",
     modelIds: async () => [...new Set(state.calls.filter((c) => c.id > before.call).map((c) => c.model))],
     readAs: unread("readAs"),

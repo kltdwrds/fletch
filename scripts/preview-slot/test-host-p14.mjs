@@ -10,9 +10,11 @@
 //   with it), so Settings > Security lists two and T-P14-11's "two passkeys for Sam" holds.
 // - `read`: the standing files with their writers and the seed's text, the daily lines and MEMORY.md, every table's row count in the
 //   chat, the person, the Ledger and the Vault, the Ledger's chat model calls for the person, the person's mail
-//   journal rows, and the chat's model requests: every system message of each, and the tool lines of the first with
-//   each line's `identityReach`, the production guard, run here.
+//   journal rows, and the chat's model requests: every system message of each, the runtime envelope each carried (as a
+//   system message or, for Meta, a user message: `envelopeAs` in `toWire`), and the tool lines of the first with each
+//   line's `identityReach`, the production guard, run here.
 import { onboardingNamespace } from '../../packages/agent/src/company/onboarding-tools.ts';
+import { ENVELOPE_HEADING } from '../../packages/agent/src/context/assemble.ts';
 import { defaultStanding, HomeBucket, STANDING_FILES } from '../../packages/agent/src/memory/home.ts';
 import { identityReach } from '../../packages/agent/src/tools/registry.ts';
 
@@ -30,6 +32,22 @@ export function systemsText(body) {
     .filter((m) => m?.role === 'system')
     .map((m) => textOf(m?.content))
     .join('\n');
+}
+
+/**
+ * The runtime envelope a model request carried, wherever it sits in the request's messages (F53): a system message, or
+ * for Meta a user message (`envelopeAs: "user"`, packages/agent/src/model/wire.ts). The envelope is the message that
+ * opens with the envelope's heading and holds a `model:` line; null when no message does (an embedding, or a request
+ * with no envelope).
+ */
+export function envelopeText(body) {
+  const messages = body?.messages ?? body?.query?.messages;
+  if (!Array.isArray(messages)) return null;
+  const found = messages
+    .filter((m) => m?.role === 'system' || m?.role === 'user')
+    .map((m) => textOf(m?.content))
+    .filter((t) => t.startsWith(ENVELOPE_HEADING) && /^model: \S/m.test(t));
+  return found.length ? found.join('\n') : null;
 }
 
 /** Every table's row count in a Durable Object's SQLite, the runtime's own tables aside. */
@@ -94,7 +112,7 @@ export const p14Mail = (rows) => rows.filter((r) => String(r.actionKind).startsW
 
 /**
  * The `read` answer from what each object gave: the person's `p14Memory` with its table counts (`mem`), the chat's
- * system messages and counts (`chat`), the Ledger's chat calls and counts (`ledger`), the Vault's counts and the
+ * system messages, envelopes and counts (`chat`), the Ledger's chat calls and counts (`ledger`), the Vault's counts and the
  * person's journal rows.
  */
 export function p14Read({ mem, chat, ledger, vault, journal }) {
@@ -105,6 +123,7 @@ export function p14Read({ mem, chat, ledger, vault, journal }) {
     calls: ledger.calls,
     mail: p14Mail(journal),
     systems: chat.systems,
+    envelopes: chat.envelopes,
     tools: p14Tools(chat.systems[0]),
   };
 }
