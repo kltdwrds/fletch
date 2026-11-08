@@ -1114,3 +1114,105 @@ P9 sentence takes the run.
 **Not in scope:** any grader of T-P9-15 (the first-reply grader stands: a turn whose only words are code's waiting
 sentence does not say the host is unbound); T-P9-13 and T-P9-14 (3 of 3 on this tree); F48's sentence; the
 `credential_host_propose` tool or its card; D-0016.
+
+## F55 OAuth connectors on the default: the consent redirect, the one-shot state and the refresh-token kind, each deletable (D-0016, built on the default)
+
+**Read:** `docs/decisions/0016-oauth-connectors.md` (proposed, one-way, `decider: agent`: a redirect route on the
+agent's own origin, a per-attempt `state` the person's click mints and the callback spends once, a refresh token held
+in the Vault as its own kind with the provider's scopes and lifetime, refreshed only by the egress module at use; the
+rejected broker; Consequences: tests that plant a replayed state and a refresh outside the egress module),
+`docs/plan-v2/ORCHESTRATOR-OVERNIGHT.md` (Defaults, Kyle, 2026-11-07: a proposed one-way record stays proposed and the
+loop may build on its recommended option only when undoing the build is deleting code and rows the build itself added,
+D-0016 named as such; Queue 10), Q27 and its default in `QUESTIONS.md`, the D-0016 decide item in
+`WAITING-ON-KYLE.md` ("built on the default; reject the record and it comes out"), `docs/plan-v2/contracts/P9-connectors.md`
+(B-P9-01: a credential enters through its own entry surface, never the chat, and the reply that carries the link ends
+its turn; B-P9-02: the store holds no row for an unsubmitted setup; B-P9-05: a host the credential is not bound to is
+refused by code before anything leaves, with a stable code and an audit row; B-P9-07: every use writes its audit row
+and an echoed credential is scrubbed; B-P9-08: a provider's rejection is a stored `rejected` event; B-P9-09: a disconnect
+is the person's card, what stays is the fixed list; One-way doors; Not in scope), `packages/agent/src/vault/core.ts`
+(`Kind`, `capture`, `store`, `revealFor`, `revoke`, `status`, the `rejected` event on a 401 or 403),
+`packages/agent/src/http/vault-routes.ts` (the capture form and its `setup` id), `packages/agent/src/vault/tools.ts`
+(`credential_request`'s link), `packages/agent/src/egress/module.ts` and `policy.ts` (the only path that turns a
+reference into a header value; `EgressCode`), `packages/agent/src/migrations/catalog.ts` (`VAULT_MIGRATIONS`),
+`packages/agent/src/http/app/connection-words.ts` (`CONNECTION_KINDS`, `KIND_WORDS`), `packages/agent/src/vault/hosts.ts`
+(`checkHost`: https names only, no IP literal, private or platform host), `test/workers/support/vault-world.ts` and
+`test/workers/m13-vault.test.ts` (the world and the shape of a Vault test). **The door is Kyle's and stays proposed:**
+this part changes no record's status, writes no `decider: Kyle`, and adds no clause, task or hash to the contract; it
+builds the record's recommended option as the Defaults allow, so that every file, row kind, table, route, code and
+form field it adds is deleted outright if Kyle rejects D-0016 (AGENTS.md: no backwards compatibility). A verifier
+finding that the diff takes a one-way decision no accepted record holds is expected under `VERIFIER-PROMPT.md`'s
+wording; the orchestrator then merges the part BLOCKED on the D-0016 decide item, as F44 and F48 were merged, and the
+row goes DONE only on Kyle's acceptance of the record. No tier-2 task and no slot: the part is tier 1 under vitest.
+
+**Why this shape:** a provider that issues no token the person can copy cannot be connected today, and the agent must
+say so (D-0001); Muse's provider connectors are all OAuth grants. The record's option keeps every boundary fletch
+already draws: the value (here the provider's client secret, then its tokens) enters on the agent's own form and never
+the chat (B-P9-01), nothing is stored until the person completes the consent (B-P9-02: the state row holds the sealed
+client configuration for ten minutes and is spent or swept, the credential row is written by the callback), the token
+is bound to hosts the person named (B-P9-05), every use and every refresh writes its audit row and an echoed token is
+scrubbed (B-P9-07), and the refresh happens only where a value is already revealed, inside the Vault's egress path.
+Rejected: a hosted broker (the record's Options); a token the agent fetches from a provider without the person's own
+consent click; a state carried in a cookie or the chat.
+
+**Scope:** (1) The capture form takes a third scheme, `oauth`, from the link's `kind=oauth` and a field the person can
+switch to: client id, client secret (the value field), authorize URL, token URL, optional revoke URL, scopes, and the
+https host or hosts the token is bound to (each through `checkHost`; the authorize, token and revoke hosts too). On
+submit the Vault mints one `state` (16 random bytes, hex) in a new table `oauth_states` (owner, state, ref, label, the
+hosts, the three URLs and scopes, the client id and secret sealed as the `secrets` rows are, `created_at`,
+`expires_at` ten minutes on, `spent_at`), writes no `secrets` row, and answers a 303 to the authorize URL with
+`response_type=code`, `client_id`, `redirect_uri` (`<the agent's origin>/connect/oauth/callback`, the origin of the
+request that submitted the form), `scope` and `state`; no secret is in that URL. A dismissed setup (`setup` id) opens no
+form and mints no state, as today. (2) `GET /connect/oauth/callback?code&state`, a signed-in route beside the vault
+routes: the Vault spends the state once (`spent_at` set in the same transaction that reads it; a state unknown, spent,
+expired or another person's is refused `VAULT_OAUTH_STATE_INVALID` and nothing is fetched or stored), exchanges the code
+at the token URL from inside the Vault with `grant_type=authorization_code`, the client id and secret in the request
+body and `redirect_uri` repeated, through the egress module's fetch with an audit row (ref, the token host, `POST`,
+outcome `resolved`, or `rejected` with the HTTP status on a 4xx or 5xx and nothing stored), then writes one `secrets`
+row of kind `oauth` whose sealed value is a JSON object (`client_id`, `client_secret`, `token_url`, `revoke_url`,
+`scope`, `refresh_token`, `access_token`, `access_expires_at`), its `credential_hosts` entries (`authorization`,
+`Bearer `, the methods the person chose, `fills` false), a `captured` event, and shows a page naming the reference and
+the hosts with no value, as the capture form's saved page does. A callback carrying the provider's `error` parameter
+spends the state, stores nothing and shows the error's code by name. Expired states are swept on the next mint or
+callback. (3) Use: `revealFor` for a row of kind `oauth` reveals the access token; when `access_expires_at` is within
+sixty seconds or past, it first refreshes at the token URL (`grant_type=refresh_token`, inside the same path, the
+refreshed tokens sealed back into the row, an audit row with outcome `refreshed`), and a refresh the provider refuses
+with 400, 401 or 403 writes a `rejected` event, refuses the use `EGRESS_OAUTH_REFRESH_FAILED` (a new `EgressCode`) and
+sends nothing to the bound host; a token echoed in a response is redacted to the reference as any value is. The
+refresh is a method of the Vault's egress path and nowhere else: a test plants a refresh attempted from outside it and
+fails. (4) `revoke` on an `oauth` row revokes locally as today and, when the row holds a revoke URL, posts the refresh
+token there once from inside the Vault (an audit row; a failure is a `rejected` event and the local revoke stands);
+`WHAT_REMAINS` is unchanged. (5) `credential_request` takes `oauth: true` (the link carries `kind=oauth`) and its
+description gains one sentence naming when to use it (a provider that grants access through its own consent page and
+hands out no key the person can copy); no `WORK_WORDS` line changes. (6) `CONNECTION_KINDS` gains `oauth` and
+`KIND_WORDS` the words "OAuth connection", so the Yours row, the connection's page and Permissions draw it as they draw
+a key, its status word from `status` as today. (7) `test/workers/f55-oauth-connectors.test.ts`, tagged `[F55]`, over
+`vaultWorld` with two members from `test/fixtures/people.json` and a recording provider (authorize, token and revoke
+endpoints, an API host that echoes the bearer it was sent): the submit mints a state and redirects to the authorize URL
+with the agent's callback and no secret in the URL, and writes no `secrets` row; the callback spends the state,
+exchanges the code with the client secret in the body and never the URL, stores the `oauth` row and lists it as a
+connection with no value; a replayed state is refused `VAULT_OAUTH_STATE_INVALID` with no second exchange; another
+member's state is refused; an expired state is refused and swept; a callback with `error` stores nothing; a use on a
+bound host sends `Bearer <access token>` and writes its audit row; a use on an unbound host is `EGRESS_CRED_HOST_DENIED`
+with its audit row and nothing sent; an expired access token is refreshed before the use, the audit row says
+`refreshed` and the API host sees the new token; a refused refresh writes `rejected`, refuses the use with
+`EGRESS_OAUTH_REFRESH_FAILED` and sends nothing; a refresh attempted outside the egress path is refused (planted); an
+echoed token comes back as the reference; a revoke ends the row, calls the revoke URL once and refuses the next use
+`EGRESS_CRED_REVOKED`. Each guard is planted: the test fails with the state check, the spend, the owner check, the
+expiry, the refresh's placement or the scrub removed. (8) `VAULT_MIGRATIONS` gains `vault.oauth-states`; the
+`oauth_states` table, the `oauth` kind, the callback route, the form's scheme, the tool parameter and the two codes are
+the whole of what Kyle's rejection deletes, listed in the PR body under "To revert D-0016" and in one line added to
+D-0016's Context (no status, Ruling or decider change). (9) `contracts/P9-connectors.md`'s Not in scope line for OAuth
+gains the words "built on the default by F55 as a deletable route, state table and kind, no clause until the record is
+accepted"; no clause, task or hash changes. (10) A two-way choice the builder logs in `docs/decisions/log.md` (shortened
+under its cap, never a line deleted) or, if the cap refuses it, in the PR body: whether the person's own browser or the
+Vault sends the person to the authorize URL (recommended: the 303 from the form submit, so the consent click is theirs).
+
+**Acceptance:** `pnpm exec vitest run test/workers/f55-oauth-connectors.test.ts` green with every planted guard;
+`ACCEPT F55: PASS`; `VERIFIER: no blocking findings`, or `VERIFIER: blocking findings` whose only finding is the
+one-way door D-0016 itself, in which case the row is BLOCKED on the D-0016 decide item and the orchestrator merges the
+PR as F44's and F48's were.
+
+**Not in scope:** accepting, rejecting or editing D-0016's Ruling or status; a clause, task or hash in the P9 contract;
+a `WORK_WORDS` line; a provider-specific connector or catalogue row; PKCE and device-code flows (a later record if Kyle
+accepts D-0016); the company's shared connectors (M28); a tier-2 task; the capture form's look beyond the added fields
+(no specimen: the form is the existing capture page); D-0017 and D-0018.
