@@ -6,9 +6,12 @@
 // no tool that writes. Writes must come from the page's own origin. From F36 (P9 deltas 1 and 6) the chat's capture
 // item reads a setup's state here and its Dismiss voids the link, and a revoke (the Connected row's Disconnect) also
 // ends the person's grants that name the credential, in their `Person`; a part of that which fails is said by code.
+// From F55 (D-0016 proposed, built on the default and deleted with it) the form takes a third scheme, `oauth`: its
+// submit answers a 303 to the provider's consent page, and the provider's redirect back lands on `OAUTH_CALLBACK`.
 import { redact } from "../egress/policy.ts";
 import type { CredentialInfo, GrantInfo, PutResult, Refused } from "../vault/core.ts";
 import type { HostEntry, Writer } from "../vault/hosts.ts";
+import { OAUTH_CALLBACK, type OAuthSetup } from "../vault/oauth.ts";
 
 export interface VaultDirectory {
   capture(input: { ref: string; value: string; label?: string; permission?: "standing" | "grant"; kind?: "secret" | "login"; hosts: unknown[] }, writer: Writer): Promise<PutResult>;
@@ -24,6 +27,10 @@ export interface VaultDirectory {
   approveOneTimeCode(input: { ref: string; host: string }, writer: Writer): Promise<{ ok: true; grant: GrantInfo } | Refused>;
   list(person: string): Promise<CredentialInfo[]>;
   grants(person: string): Promise<GrantInfo[]>;
+  /** The `oauth` scheme's submit (F55): a state minted, where the person's browser goes next. */
+  oauthBegin?(input: OAuthSetup, writer: Writer, origin: string): Promise<{ ok: true; location: string } | Refused>;
+  /** The provider's redirect back (F55): the state spent, the code exchanged, the connection stored. */
+  oauthCallback?(input: { state?: string; code?: string; error?: string }, writer: Writer): Promise<{ ok: true; ref: string; hosts: string[] } | Refused>;
 }
 
 const SECURE_HEADERS = {
@@ -49,9 +56,26 @@ interface Fields {
   kind: string;
   /** The link's setup id (`credential_request`), carried to the submit so a dismissed setup saves nothing. */
   setup: string;
+  /** The `oauth` scheme's fields (F55); the value field is the client secret. */
+  client_id?: string;
+  authorize_url?: string;
+  token_url?: string;
+  revoke_url?: string;
+  scope?: string;
 }
 
-const EMPTY: Fields = { ref: "", label: "", host: "", methods: "GET", header: "authorization", prefix: "Bearer ", fills: false, permission: "standing", kind: "secret", setup: "" };
+const EMPTY: Fields = { ref: "", label: "", host: "", methods: "GET", header: "authorization", prefix: "Bearer ", fills: false, permission: "standing", kind: "secret", setup: "", client_id: "", authorize_url: "", token_url: "", revoke_url: "", scope: "" };
+const OAUTH_FIELDS = ["client_id", "authorize_url", "token_url", "revoke_url", "scope"] as const;
+
+/** The `oauth` scheme's fields, open when the link or the submit named that kind; the Kind select switches to it. */
+function oauthFields(f: Fields): string {
+  const open = f.kind === "oauth";
+  const input = (name: (typeof OAUTH_FIELDS)[number], label: string, need: boolean, hint = "") =>
+    `<label for="${name}">${label}</label><input id="${name}" name="${name}"${need && open ? " required" : ""}${hint ? ` placeholder="${esc(hint)}"` : ""} value="${esc(f[name] ?? "")}">`;
+  return `<details${open ? " open" : ""}><summary>OAuth connection: the provider's consent page (choose that Kind)</summary>
+<p>Hosts above are where the token is sent, separated by spaces. The value below is the client secret.</p>
+${input("client_id", "Client id", true)}${input("authorize_url", "Authorize URL", true, "https://provider.example/oauth/authorize")}${input("token_url", "Token URL", true, "https://provider.example/oauth/token")}${input("revoke_url", "Revoke URL (optional)", false)}${input("scope", "Scopes", false, "read write")}</details>`;
+}
 
 export function captureForm(f: Fields, message?: { code: string; reason: string } | { saved: string; hosts: string }): string {
   const note = !message
@@ -72,10 +96,11 @@ export function captureForm(f: Fields, message?: { code: string; reason: string 
 <label for="header">Header</label><input id="header" name="header" value="${esc(f.header)}">
 <label for="prefix">Before the value</label><input id="prefix" name="prefix" value="${esc(f.prefix)}">
 <label><input type="checkbox" name="fills" value="on"${f.fills ? " checked" : ""} style="width:auto"> May be typed into a login page on this host</label>
-<label for="kind">Kind</label><select id="kind" name="kind">${opt("kind", "secret", "API key or token")}${opt("kind", "login", "Login password")}</select>
+<label for="kind">Kind</label><select id="kind" name="kind">${opt("kind", "secret", "API key or token")}${opt("kind", "login", "Login password")}${opt("kind", "oauth", "OAuth connection")}</select>
+${oauthFields(f)}
 <label for="permission">Use</label><select id="permission" name="permission">${opt("permission", "standing", "My agent may use it at this host")}${opt("permission", "grant", "Only under a grant I give each time")}</select>
-<label for="value">Value</label><input id="value" name="value" type="password" required autocomplete="off" spellcheck="false">
-${f.setup ? `<input type="hidden" name="setup" value="${esc(f.setup)}">` : ""}<button type="submit">Save</button></form></body></html>`;
+<label for="value">${f.kind === "oauth" ? "Client secret" : "Value"}</label><input id="value" name="value" type="password" required autocomplete="off" spellcheck="false">
+${f.setup ? `<input type="hidden" name="setup" value="${esc(f.setup)}">` : ""}${f.kind === "oauth" ? '<input type="hidden" name="scheme" value="oauth">' : ""}<button type="submit">Save</button></form></body></html>`;
 }
 
 /** A dismissed setup's link: it says so, and opens no form. */
@@ -83,21 +108,38 @@ const voidPage = (ref: string) =>
   `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Link no longer open</title></head><body><h1>Link no longer open</h1><p role="alert"><strong>VAULT_REF_INVALID</strong>: the setup for <code>${esc(ref)}</code> was dismissed in the chat. Nothing was saved; ask your agent for a new link.</p></body></html>`;
 
 const page = (html: string, status = 200) => new Response(html, { status, headers: { ...SECURE_HEADERS, "content-type": "text/html; charset=utf-8" } });
+/**
+ * The capture form drawn for the `oauth` scheme (F55, deleted with D-0016): `https:` beside 'self' in its form-action,
+ * since a browser holds a form's redirect to that list and the submit's 303 goes to the provider. A key or login form,
+ * and every other vault page, keeps 'self'.
+ */
+const oauthPage = (html: string, status = 200) =>
+  new Response(html, { status, headers: { ...SECURE_HEADERS, "content-security-policy": SECURE_HEADERS["content-security-policy"].replace("form-action 'self';", "form-action 'self' https:;"), "content-type": "text/html; charset=utf-8" } });
+/** The capture form's page: the `oauth` scheme's when the form is drawn for it. */
+const formPage = (html: string, f: Fields, status = 200) => (f.kind === "oauth" ? oauthPage(html, status) : page(html, status));
 
 function fieldsOf(form: FormData | URLSearchParams): Fields {
   const get = (k: string) => String(form.get(k) ?? "");
   return {
     ref: get("ref").trim(), label: get("label").trim(), host: get("host").trim(), methods: get("methods") || EMPTY.methods, header: get("header") || EMPTY.header,
     prefix: form.has("prefix") ? get("prefix") : EMPTY.prefix, fills: get("fills") === "on", permission: get("permission") || EMPTY.permission, kind: get("kind") || EMPTY.kind,
-    setup: get("setup").trim(),
+    setup: get("setup").trim(), ...Object.fromEntries(OAUTH_FIELDS.map((k) => [k, get(k).trim()])),
   };
 }
+
+/** What the provider's redirect back shows: the connection saved, named with its hosts, or the refusal by code; never a value. */
+const callbackPage = (r: { ok: true; ref: string; hosts: string[] } | Refused) =>
+  `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${r.ok ? "Connected" : "Not connected"}</title></head><body><h1>${r.ok ? "Connected" : "Not connected"}</h1>${
+    r.ok
+      ? `<p role="status">Saved <code>${esc(r.ref)}</code> for ${esc(r.hosts.join(", "))}. The token is sealed in your vault and will not be shown again.</p>`
+      : `<p role="alert"><strong>${esc(r.code)}</strong>: ${esc(r.reason)}.</p>`
+  }</body></html>`;
 
 /** A write must come from the tenant's own page: a cross-site form or script carries another origin. */
 const sameOrigin = (request: Request, url: URL) => request.headers.get("origin") === url.origin;
 
 export async function vaultRoutes(request: Request, url: URL, person: string, dir: VaultDirectory | undefined): Promise<Response | null> {
-  if (!url.pathname.startsWith("/vault")) return null;
+  if (!url.pathname.startsWith("/vault") && url.pathname !== OAUTH_CALLBACK) return null;
   if (!dir) return json({ code: "VAULT_UNAVAILABLE" }, 503);
   const writer = (via: Writer["via"]): Writer => ({ kind: "person", person, via });
 
@@ -106,7 +148,14 @@ export async function vaultRoutes(request: Request, url: URL, person: string, di
     // whose setup the person dismissed in the chat is void: it opens no form.
     const ref = url.searchParams.get("ref");
     if (ref && (await dir.captureState(person, ref, url.searchParams.get("setup") ?? "")).state === "dismissed") return page(voidPage(ref), 410);
-    return page(captureForm({ ...EMPTY, ...fieldsOf(url.searchParams), fills: url.searchParams.get("fills") === "on" }));
+    const f = { ...EMPTY, ...fieldsOf(url.searchParams), fills: url.searchParams.get("fills") === "on" };
+    return formPage(captureForm(f), f);
+  }
+  if (url.pathname === OAUTH_CALLBACK && request.method === "GET") {
+    if (!dir.oauthCallback) return json({ code: "VAULT_UNAVAILABLE" }, 503);
+    const q = (k: string) => url.searchParams.get(k) ?? undefined;
+    const r = await dir.oauthCallback({ state: q("state"), code: q("code"), error: q("error") }, writer("capture-form"));
+    return page(callbackPage(r), r.ok ? 201 : 400);
   }
   if (url.pathname === "/vault/capture/state" && request.method === "GET") {
     return json({ ok: true, ...(await dir.captureState(person, url.searchParams.get("ref") ?? "", url.searchParams.get("setup") ?? "")) });
@@ -118,6 +167,27 @@ export async function vaultRoutes(request: Request, url: URL, person: string, di
     const f = fieldsOf(form);
     const value = String(form.get("value") ?? "");
     const methods = f.methods.split(/[\s,]+/).filter(Boolean);
+    if (f.kind === "oauth") {
+      // The person's own browser goes to the consent page (F55): nothing is stored until the provider sends them back.
+      if (!dir.oauthBegin) return json({ code: "VAULT_UNAVAILABLE" }, 503);
+      // A form drawn for a key or a login keeps form-action 'self', so a browser would hold its redirect: the OAuth
+      // fields come back on their own page to submit from there, and no state is minted.
+      if (form.get("scheme") !== "oauth") {
+        const again = captureForm(f, { code: "VAULT_FORM_INVALID", reason: "an OAuth connection is submitted from its own form; check the fields and submit again" });
+        return oauthPage(value ? redact(again, [{ ref: "value", value }]) : again, 400);
+      }
+      const o = await dir.oauthBegin(
+        {
+          ref: f.ref, ...(f.setup ? { setup: f.setup } : {}), label: f.label, permission: f.permission === "grant" ? "grant" : "standing", hosts: f.host.split(/[\s,]+/).filter(Boolean), methods,
+          clientId: f.client_id ?? "", clientSecret: value, authorizeUrl: f.authorize_url ?? "", tokenUrl: f.token_url ?? "", ...(f.revoke_url ? { revokeUrl: f.revoke_url } : {}), scope: f.scope ?? "",
+        },
+        writer("capture-form"),
+        url.origin,
+      );
+      if (o.ok) return new Response(null, { status: 303, headers: { ...SECURE_HEADERS, location: o.location } });
+      const html = captureForm(f, { code: o.code, reason: o.reason });
+      return oauthPage(value ? redact(html, [{ ref: "value", value }]) : html, 400);
+    }
     const r = await dir.capture(
       { ref: f.ref, ...(f.setup ? { setup: f.setup } : {}), value, label: f.label, kind: f.kind === "login" ? "login" : "secret", permission: f.permission === "grant" ? "grant" : "standing", hosts: [{ host: f.host, methods, header: f.header, prefix: f.prefix, fills: f.fills }] },
       writer("capture-form"),

@@ -79,6 +79,7 @@ const RequestParams = Type.Object({
   host: Type.String({ description: "The host the credential is for, e.g. login.example.com." }),
   name: Type.String({ description: "A short name for the reference, lower-case letters, digits and dashes, e.g. example-login." }),
   login: Type.Optional(Type.Boolean({ description: "True for a login typed into a page; false for an API key sent in a header." })),
+  oauth: Type.Optional(Type.Boolean({ description: "True for a provider that grants access through its own consent page; the person connects it from the form." })),
 });
 
 const ProposeParams = Type.Object({
@@ -118,7 +119,7 @@ export function credentialsNamespace(api: CredentialsApi, approvals?: ProposalDe
     kind: "observation",
     label: "Ask the person to save a credential",
     description:
-      "Ask the person to save a credential for a host through the secure form. Returns a link to give them; you never receive the value and nothing is saved until they submit it. Hosts are https names only; IP addresses, private names and platform hosts are refused.",
+      "Ask the person to save a credential for a host through the secure form. Returns a link to give them; you never receive the value and nothing is saved until they submit it. Hosts are https names only; IP addresses, private names and platform hosts are refused. Set oauth when the provider grants access through its own consent page and hands out no key the person can copy.",
     parameters: RequestParams,
     execute: async (_id, p) => {
       const host = checkHost(p.host);
@@ -126,7 +127,7 @@ export function credentialsNamespace(api: CredentialsApi, approvals?: ProposalDe
       if (!NAME.test(p.name)) throw new Error("VAULT_REF_INVALID: a name is lower-case letters, digits and dashes");
       // Each link is its own setup: a Dismiss in the chat voids this one, never the link a later ask gives.
       const setup = [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16).padStart(2, "0")).join("");
-      const q = new URLSearchParams({ ref: `cred://${p.name}`, host: host.value, ...(p.login ? { fills: "on", kind: "login", header: "authorization", prefix: "" } : {}), setup });
+      const q = new URLSearchParams({ ref: `cred://${p.name}`, host: host.value, ...(p.login ? { fills: "on", kind: "login", header: "authorization", prefix: "" } : p.oauth ? { kind: "oauth" } : {}), setup });
       return text(`CAPTURE_REQUESTED: nothing is saved yet. Ask the person to open /vault/capture?${q} and enter the value themselves; never ask them to type it in this chat.`, { host: host.value });
     },
   };

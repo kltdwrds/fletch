@@ -50,6 +50,15 @@ export class Vault extends DurableObject<Env> {
     return this.core.capture(input, writer);
   }
 
+  /** The capture form's `oauth` submit and the provider's redirect back (F55, D-0016 proposed): the routes alone call these. */
+  async oauthBegin(input: Parameters<VaultCore["oauthBegin"]>[0], writer: Writer, origin: string) {
+    return this.core.oauthBegin(input, writer, origin);
+  }
+
+  async oauthCallback(input: { state?: string; code?: string; error?: string }, writer: Writer) {
+    return this.core.oauthCallback(input, writer);
+  }
+
   async registerHost(input: unknown, writer: Writer) {
     return this.core.registerHost(input, writer);
   }

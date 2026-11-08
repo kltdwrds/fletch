@@ -41,6 +41,9 @@ export const CONNECTION_TEXT = {
 /** What a use came to, in words: sent, the provider's rejection, or why it was refused before anything left. */
 export function outcomeWords(outcome: string): string {
   if (outcome === "resolved") return "sent";
+  // An OAuth connection's calls to its provider (F55): a refresh, or the provider's refusal of one.
+  if (outcome === "refreshed") return "refreshed at the provider";
+  if (outcome === "rejected") return "rejected by the provider";
   if (outcome.startsWith("rejected by the provider")) return outcome;
   if (outcome === "VAULT_CRED_INACTIVE") return "refused: the key has expired";
   if (outcome === "EGRESS_CRED_REVOKED") return "refused: the key was revoked";
@@ -51,8 +54,8 @@ export function outcomeWords(outcome: string): string {
 /** A pill's tone for a row: done while it works, wait when it lapsed, fail when the provider refused it. */
 const toneOf = (status: string, outcome: string | null) => (outcome?.startsWith("rejected") ? "fail" : status === "active" ? "done" : "wait");
 
-/** The kinds a person connects (a key, a login); a held code, a typed secret and a saved browser login are not connections. */
-export const CONNECTION_KINDS = new Set(["secret", "login"]);
+/** The kinds a person connects (a key, a login, an OAuth grant, F55); a held code, a typed secret and a saved browser login are not connections. */
+export const CONNECTION_KINDS = new Set(["secret", "login", "oauth"]);
 
 /** The person's own credentials that are connections now: not the company's, not revoked, a key or a login. */
 export const connectionsOf = (creds: readonly CredentialInfo[]) => creds.filter((c) => !c.company && c.status !== "revoked" && CONNECTION_KINDS.has(c.kind));
@@ -72,7 +75,7 @@ export interface YoursItem {
   outcome: string | null;
 }
 
-const KIND_WORDS: Record<string, string> = { secret: "API key or token", login: "Login password" };
+const KIND_WORDS: Record<string, string> = { secret: "API key or token", login: "Login password", oauth: "OAuth connection" };
 
 /** One "Yours" row per host the person's connections are bound to, each with its status word and its last use. */
 export function yoursRows(creds: readonly CredentialInfo[], uses: Record<string, LastUse>): YoursItem[] {

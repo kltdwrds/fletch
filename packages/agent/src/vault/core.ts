@@ -24,7 +24,8 @@ import { checkCardWriter, checkEntry, checkHost, checkWriter, type HostEntry, pu
 import { OTP_FIELD, OTP_TTL_MS } from "./otp.ts";
 import { CARD_GRANT_MS, TYPED_TTL_MS } from "./typed.ts";
 import { VapidKeys } from "./vapid.ts";
-import { type Refused, type Row, SealedVault, type Status } from "./sealed.ts";
+import { OAuthVault } from "./oauth.ts";
+import type { Refused, Row, Status } from "./sealed.ts";
 
 export type { VaultCtx, VaultDeps } from "./sealed.ts";
 export type { Refused, Status } from "./sealed.ts";
@@ -47,7 +48,7 @@ export type VaultCode =
   | string;
 export type PutResult = { ok: true; ref: string } | Refused;
 /** `browser-state` (M24.3): a site's saved browser login, sealed and restored only by `vault/browser-state.ts`. */
-export type Kind = "secret" | "login" | "one-time-code" | "typed" | "browser-state";
+export type Kind = "secret" | "login" | "one-time-code" | "typed" | "browser-state" | "oauth"; // `oauth`: F55, D-0016 proposed
 export type Permission = "standing" | "grant";
 
 export interface CredentialInfo {
@@ -82,7 +83,7 @@ const refuse = (code: VaultCode, reason: string): Refused => ({ ok: false, code,
 
 type GrantInput = { ref: string; hosts: string[]; methods?: string[]; fill?: boolean; oneShot?: boolean; expiresInMs?: number };
 
-export class VaultCore extends SealedVault {
+export class VaultCore extends OAuthVault {
   private readonly reads = (q: string, ...b: unknown[]) => this.sql(q, ...b);
   private vapidInstance?: VapidKeys;
   /** The tenant's VAPID key pair (M14.1), sealed under the same data key; it signs and never reveals. */
@@ -92,13 +93,6 @@ export class VaultCore extends SealedVault {
   }
 
   // --- capture and the registry -------------------------------------------------------------------
-
-  private writeEntry(owner: string, e: HostEntry, by: string, via: string, card?: { id: string; at: number }) {
-    this.sql(
-      "INSERT OR REPLACE INTO credential_hosts (owner, ref, host, methods, header, prefix, fills, writer, via, created_at, card, approved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      owner, e.ref, e.host, JSON.stringify(e.methods), e.header, e.prefix, e.fills ? 1 : 0, by, via, this.deps.now(), card?.id ?? null, card?.at ?? null,
-    );
-  }
 
   /**
    * The capture form's write (and settings'): a person stores a value under a reference of their own,
@@ -224,14 +218,17 @@ export class VaultCore extends SealedVault {
   }
 
   /** The person revokes their own credential, on settings or a card (F36): sealed for redaction, never resolved again, its grants ended, its audit kept. */
-  revoke(ref: string, writer: unknown): { ok: true } | Refused {
+  async revoke(ref: string, writer: unknown): Promise<{ ok: true } | Refused> {
     const w = checkWriter(writer).ok ? checkWriter(writer) : checkCardWriter(writer);
     if (!w.ok) return w;
     const owner = w.value.person;
-    if (!this.sql("SELECT ref FROM secrets WHERE owner = ? AND ref = ?", owner, ref).length) return refuse("VAULT_CRED_UNKNOWN", `${ref} is not one of your credentials`);
+    const row = this.sql("SELECT kind, revoked_at FROM secrets WHERE owner = ? AND ref = ?", owner, ref)[0];
+    if (!row) return refuse("VAULT_CRED_UNKNOWN", `${ref} is not one of your credentials`);
     this.sql("UPDATE secrets SET revoked_at = ? WHERE owner = ? AND ref = ? AND revoked_at IS NULL", this.deps.now(), owner, ref);
     revokeGrantsOf(this.reads, owner, ref, this.deps.now());
     this.event(owner, ref, "revoked", owner, "card" in w.value ? `card ${w.value.card}` : w.value.via);
+    // An OAuth connection's token is revoked at its provider too, once (F55); a failure there leaves this revoke standing.
+    if (row.kind === "oauth" && row.revoked_at === null) await this.oauthRevoke(owner, ref);
     return { ok: true };
   }
 
@@ -485,7 +482,7 @@ export class VaultCore extends SealedVault {
    * company grant to the connector, asked on every call; a personal reference resolves only for its
    * owner, while active, and under a covering signed grant when its permission asks for one.
    */
-  private revealFor(ctx: EgressContext, used: Set<string>) {
+  private revealFor(ctx: EgressContext, used: Set<string>, path: object | null = null) {
     return async (ref: string, host: string, method: string): Promise<Revealed> => {
       const connector = this.connectorOf(ref);
       const owner = connector !== null ? COMPANY : ctx.person;
@@ -508,13 +505,11 @@ export class VaultCore extends SealedVault {
       }
       // A typed secret is used once: spent before it is revealed, so no second grant reaches it.
       if (row.kind === "typed") this.sql("UPDATE secrets SET used_at = ? WHERE owner = ? AND ref = ? AND used_at IS NULL", this.deps.now(), owner, ref);
+      // An OAuth connection reveals its access token, refreshed first on this egress path when it is ending (F55).
+      if (row.kind === "oauth") return this.oauthToken(owner, ref, path, ctx).then((t) => (t.ok && grant ? { ...t, grant } : t));
       const opened = await this.open(owner, ref);
       return opened.ok ? { ok: true, value: opened.value, ...(grant ? { grant } : {}) } : opened;
     };
-  }
-
-  private writeAudit(r: AuditRow) {
-    this.sql("INSERT INTO egress_audit (at, ref, host, method, path, person, purpose, outcome, grant_nonce) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", r.at, r.ref, r.host, r.method, r.path, r.person, r.purpose, r.outcome, r.grant ?? null);
   }
 
   /** A registry entry the policy cap now refuses is refused by name, not passed over as unknown. */
@@ -543,7 +538,7 @@ export class VaultCore extends SealedVault {
       this.writeAudit(r);
       if (r.outcome === "resolved") sent.push(r.ref);
     };
-    const result = await egressFetch({ fetch: this.deps.fetch, reveal: this.revealFor(who, used), hosts: this.hostRules(who.person), audit, now: this.deps.now, publicHost: publicHostFor(who.purpose) }, req, who);
+    const result = await this.onEgressPath((path) => egressFetch({ fetch: this.deps.fetch, reveal: this.revealFor(who, used, path), hosts: this.hostRules(who.person), audit, now: this.deps.now, publicHost: publicHostFor(who.purpose) }, req, who));
     // The provider refused the key it was sent (F36, P9 delta 5): the Connected row says so at the use that found it.
     if (result.ok && (result.status === 401 || result.status === 403)) for (const ref of sent) this.event(this.connectorOf(ref) !== null ? COMPANY : who.person, ref, "rejected", "provider", `HTTP ${result.status}`);
     const connector = [...used][0];

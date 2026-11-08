@@ -30,7 +30,8 @@ export interface AuditRow {
   path: string;
   person: string;
   purpose: string;
-  outcome: "resolved" | EgressCode;
+  /** `refreshed` and `rejected` are an OAuth connection's calls to its provider's token or revoke URL (F55, D-0016 proposed). */
+  outcome: "resolved" | "refreshed" | "rejected" | EgressCode;
   /** The credential grant that covered the resolution (M13), by nonce. */
   grant?: string;
 }

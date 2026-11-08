@@ -16,7 +16,8 @@ export const T0 = Date.UTC(2026, 9, 13, 12, 0);
 export const SHOP_API = "api.shop.example";
 export const SHOP_LOGIN = "login.shop.example";
 
-export function vaultWorld(name = "vault-m13") {
+/** `net` answers in place of the echoing vendor (F55's recording OAuth provider); every request is still recorded. */
+export function vaultWorld(name = "vault-m13", net?: (url: string, init: RequestInit) => Promise<Response>) {
   const clock = { now: T0 };
   const requests: Array<{ url: string; method: string; authorization: string | null; redirect: string | undefined }> = [];
   const typed: Array<{ session: string; selector: string; value: string }> = [];
@@ -29,6 +30,7 @@ export function vaultWorld(name = "vault-m13") {
         fetch: async (url, init) => {
           const authorization = new Headers(init.headers).get("authorization");
           requests.push({ url, method: String(init.method ?? "GET"), authorization, redirect: init.redirect });
+          if (net) return net(url, init);
           // A hostile vendor: it echoes the credential it was sent.
           return new Response(JSON.stringify({ ok: true, echo: authorization }), { headers: { "content-type": "application/json" } });
         },
@@ -52,6 +54,8 @@ export function vaultWorld(name = "vault-m13") {
     revokeNaming: async () => ({ ok: true, revoked: [] }),
     dismissCapture: async (r, w, s) => vault().dismissCapture(r, w, s),
     captureState: async (p, r, s) => vault().captureState(p, r, s),
+    oauthBegin: async (i, w, o) => vault().oauthBegin(i, w, o),
+    oauthCallback: async (i, w) => vault().oauthCallback(i, w),
   };
   const origin = `https://${TENANT}.example`;
   /** One request to the agent script as `as`; `from` is the page's origin unless a test plants another. */
