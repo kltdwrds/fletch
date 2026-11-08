@@ -53,6 +53,23 @@ test counts, the verifier's result, the duration and `model: <model>` for parts 
 | F80 | TODO | | 2026-11-08 | Shopping as it is: the P16 contract check, twelve task files, the research, hand-over and remembering lines (deltas 1, 2, 4), the no-click and no-provider guards planted (deltas 3, 6), tier 1 (six must-have, three nice-to-have) under D-0027. |
 | F81 | TODO | | 2026-11-08 | Shopping says what happened: P16's tier 2 on a slot (T-P16-03 and T-P16-05 must-have, T-P16-12), every hash matching. |
 
+| F60 | TODO | | 2026-11-08 | Rooms refused by name as they are (P8 under D-0025): the contract check, fifteen task files (nine held by D-0025 door 1), `TOOL_ROOM_REFUSED` in the registry, `CHAT_ROOM_REFUSED` on `POST /app/chats`, one room line in `WORK_WORDS`, tier 1 on T-P8-10, 11, 12, 14 and 15. |
+| F61 | TODO | | 2026-11-08 | Rooms said as not made: P8 tier 2 on a slot, T-P8-13 must-have. |
+
+| F70 | TODO | | 2026-11-08 | Voice and audio as they are (P13, D-0026 under Kyle's ruling of 2026-11-08): the contract check, sixteen task files, the audio class and transcript column, `SPEECH_UNAVAILABLE` and `VOICE_CALL_UNAVAILABLE` by name, tier 1 on T-P13-01, 04, 11, 13. |
+| F71 | TODO | | 2026-11-08 | Speech behind the AI binding: whisper-large-v3-turbo and aura-2-en under `SPEECH_PRICES` and a $5 monthly cap (`SPEECH_BUDGET_EXHAUSTED`), transcript kept and audio not, `speak` and the audio record, the voice record, share revoke, removal with restore. |
+| F72 | TODO | | 2026-11-08 | Audio the person can see, after specimens: the chat audio item, the Library Audio section, Settings > Voice, the episode with its feed refused `PODCAST_FEED_UNAVAILABLE`. |
+| F73 | TODO | | 2026-11-08 | Speech says what happened: T-P13-14 on a slot, three trials, under F71's cap. |
+
+| F100 | TODO | | 2026-11-08 | Files as they are: `test/m0/f100-contract.test.ts` holds P11 (`contracts/P11-files-documents.md`, seventeen clauses, eighteen tasks), the task files under `test/evals/p11-files/`, `file_write`'s replaced-and-not-kept words, `file_list`'s last change, and tier 1 on T-P11-01, 02, 03, 04, 06, 08, 09, 10, 13 and 14. |
+| F101 | TODO | | 2026-11-08 | Shares and deletes say what happened: the `files.html` specimen first, `share_list` and `share_revoke`, a journaled delete that ends its shares, `pptx`, cards drawn from the store; tier 1 on T-P11-07, 11, 12 and 15. |
+| F102 | TODO | | 2026-11-08 | Files say what happened: `FILE_WORDS` in `instructions.ts` and P11's tier 2 on a slot (T-P11-16 and 17 must-have, T-P11-18). |
+| F103 | TODO | | 2026-11-08 | Versions and a trash on the default under D-0028 (proposed), built deletable as F55 was; tier 1 on T-P11-05. |
+
+| F90 | TODO | | 2026-11-08 | Search and the browser as they are: the P10 contract check, fifteen task files under `test/evals/p10-search/`, the stale `web_search` status word deleted and tier 1 (`contracts/P10-search-browser-media.md`). |
+| F91 | TODO | | 2026-11-08 | Search and media say what this deploy cannot reach: one `WORK_WORDS` line, the slot's probe pages and P10's tier 2 (T-P10-03, 09, 10, 11 must-have); D-0029 stays proposed. |
+| F92 | TODO | | 2026-11-08 | The surfaces of search and media as specimens (the source link card, the browser card, the places map, the image card), each a `look` item for Kyle. |
+
 ## The first plan (closed 2026-10-29)
 
 F0 to F17 were worked under the first plan (`git show 34c6b0a:docs/plan/parts.md`). F0 and F1 predate the protocol:
