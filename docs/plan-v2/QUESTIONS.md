@@ -5,9 +5,24 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## BLOCKED (open)
 
-None open. Every question here on 2026-11-07 was answered by its recommended default under the pre-authorised
-Defaults of `ORCHESTRATOR-OVERNIGHT.md` and moved to `## Answered by default`; Kyle reverses any of them by a line under
-`## Steering` in `WAITING-ON-KYLE.md`.
+### Q49 (F42), 2026-11-08: T-P9-14 2 of 3 and T-P9-15 2 of 3 on F42's final tree, after main's F50 and F51 lines; 9 of 9 one merge earlier
+
+**Blocks:** F42's DONE row (its acceptance: T-P9-15 3 of 3 and the must-haves T-P9-13 and T-P9-14 3 of 3 on the declared
+run on the final tree) and P9's level-2 claim on the current main. Declared run 12 (tree e98053c61d91, main 08788bd
+merged, fletch-pv-1, Muse Spark): all three 3 of 3; `ACCEPT F42: PASS` on a runner and `VERIFIER: no blocking
+findings` at f45ae66. The branch then merged main 8f4259b (PRs #123 and #128), which adds F50's line 94 and F51's line
+109 to `WORK_WORDS`; a prompt change after a declared run invalidates it (F42's second verifier pass), so declared run
+13 on tree f9be6aaa7610 (34d345f, fletch-pv-1, Muse Spark): T-P9-13 3 of 3; T-P9-14 trial 1 failed "the reply repeats
+none of it, says it is not kept in chat and points at the secure form"; T-P9-15 trial 2 failed "the first reply says
+the host is not one the key is bound to". Both `GRADER_FAILED`, neither infra; the replies were not read before the
+slot was released (the orchestrator's miss), so whether either was right in other words is unknown. F42's line touches
+T-P9-15 only; T-P9-14 is a must-have no part touched, 3 of 3 on sweep C (tree 77effb9) and on run 12. Of these three
+tasks' eighteen trials on two trees today, sixteen passed.
+**Recommended answer:** merge F42 as BLOCKED, as F44 and F48 were (its line, its tier-1 test and accept hold; the merge
+is two-way), and run P9's tier-2 tasks once more on main with the slot kept and every failed reply read, under Queue
+6's rule: a reply right in other words is an oracle correction with KICKOFF's three things, a wrong one is a line part;
+a run with the must-haves 3 of 3 sets F42 DONE and P9's row. Whether a must-have's bar is one run of three trials, or
+more, is yours: the orchestrator takes no default on it. Alternative: hold PR #96 open until that run.
 
 ## Open, not blocking
 
