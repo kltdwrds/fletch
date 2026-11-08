@@ -11,6 +11,26 @@ Defaults of `ORCHESTRATOR-OVERNIGHT.md` and moved to `## Answered by default`; K
 
 ## Open, not blocking
 
+### Q42 (P13), 2026-11-08: D-0026, speech on fletch: is P13 picked, and which of its five doors open
+
+**Blocks:** nothing in progress; every P13 part, since P13 is "by pick" (design §7) and not picked. The P13
+interrogation (`contracts/P13-voice-audio.md`, `evidence/p13-voice-audio/`) found Muse's read-aloud to be the agent
+running a text-to-speech tool and attaching the mp3, a generated audio piece with no row and no source, a voice-note
+transcript column with no rows behind it, an unrevocable 48-hour public link behind one card per upload, and a public
+feed with no unpublish line. D-0026 (proposed) holds the five doors: (1) a `speech` HostFeature in the published
+`@qyvr/host` or an agent-local refusal code; (2) spend on Workers AI speech models (whisper-large-v3-turbo or nova-3 in,
+melotts or aura-2 out) at a unit `PRICES` does not have; (3) a public podcast RSS feed; (4) keeping a voice note's audio
+in R2 against its transcript alone; (5) live voice calls. One finding touches a locked cluster: P14's dump slice moved
+(`avatar.wear` is gone, `avatar` has 6 functions, `ui.sidebar` is new), which re-opens P14 at Interrogate only if a
+P14 clause cites `avatar.wear`; none does, so it is a note on P14's contract in the next truth pass.
+
+**Recommended answer:** pick or pass on P13 first; if picked, open doors 1 and 2 (an agent-local code, the two
+transcription and speech models named with a monthly cap) and keep 3, 4 and 5 closed, which is what the contract's
+clauses already assume; the orchestrator then writes P13's tier-1 parts from the contract.
+
+Orchestrator, 2026-11-08: not taken by default. The pick is yours (design §8) and every door is one-way; D-0026 stays
+proposed with nothing built on it.
+
 ### Q41 (P8), 2026-11-08: D-0025, rooms with outsiders: four one-way doors before any P8 part, and two findings for other contracts
 
 **Blocks:** nothing in progress; every P8 task and part, which O4 (design §8) already holds until you rule. The P8

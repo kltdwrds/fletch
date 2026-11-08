@@ -94,7 +94,7 @@ PR opens as a draft: review, `gh pr ready`, gate with `gh pr checks <n> --repo k
    parts written (tier 1, then tier 2 on a slot); a specimen for any owner-visible surface; builders dispatched.
 8. **Nice-to-have line parts** still open after the sweep: Q37 (T-P14-13 the lost-device reply, T-P14-14 the pronoun
    line), Q22's remainder after F44, Q31 if F42 did not close it. One part per cluster, built by a cloud builder.
-9. **Interrogate P8, P13 and P16** *(in progress: P8 interrogated and its contract drafted, mapped only under O4, D-0025 proposed, Q41, WAITING decide item; P13 and P16 running)* (if the built-in browser is signed in to Muse, Queue note 1): a scenario each,
+9. **Interrogate P8, P13 and P16** *(in progress: P8 interrogated and its contract drafted, mapped only under O4, D-0025 proposed, Q41; P13 interrogated and drafted, by pick and not picked, D-0026 proposed, Q42; each with a WAITING decide item; P16 running)* (if the built-in browser is signed in to Muse, Queue note 1): a scenario each,
    one Opus `Agent` per cluster with the browser tools under `INTERROGATE.md` and the ground rules (fixtures only,
    nothing pressed on a card, no credential, probes tagged and removed), evidence through `pnpm redact`; then
    Translate as in 7. P4 is its own track and is not interrogated here.
