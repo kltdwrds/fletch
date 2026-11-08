@@ -72,6 +72,12 @@ never writes `MASTER_KEY` or `SETUP_TOKEN`: the Durable Objects, R2, Vectorize, 
 Only a slot that was free (its secrets rotated by a release, so its setup token is unknown) gets a new `SETUP_TOKEN`,
 printed as a setup link. A second run says it is staging already and changes nothing.
 
+After the deploy, `convert` also waits until slot 1's lease Durable Object runs the new deploy's code (the lease read's
+`leaseDeploy` names the deploy id wrangler made), reading every 5 s up to 24 times, before it sets a key or marks the
+lease: an object still on the old code answers the staging op with Cloudflare's 500. If it never does, `convert` is
+refused with `PREVIEW_DEPLOY_NOT_SERVING`, naming the deploy id and the last answer, with no key set and the lease
+unmarked; run it again. `staging deploy` makes no lease op after its deploy, so it does not wait.
+
 ### The workflow
 
 `.github/workflows/deploy-staging.yml` runs on every push to main, and by hand:

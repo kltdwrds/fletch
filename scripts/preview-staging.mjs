@@ -9,6 +9,10 @@ import { origin, ownerTag, refusal, stagingSlots } from './preview-plan.mjs';
 import { account, deploySlot, needInventory } from './preview-pool.mjs';
 import { dropKeys, keyAccepted, must, op, planOf, release, waitReady } from './preview.mjs';
 
+/** How many times `convert` reads the lease before refusing, and the wait between reads: two minutes. */
+export const LEASE_CODE_READS = 24;
+export const LEASE_CODE_WAIT_MS = 5000;
+
 /** The staging slot's number: the inventory must mark exactly one. */
 export function stagingSlot(inv) {
   const marked = stagingSlots(inv);
@@ -33,9 +37,30 @@ function fromMain(ctx, what) {
 const publicLease = async (ctx, plan) => must(await op(ctx, plan, 'GET', 'lease'), `reading slot ${plan.n}'s lease`);
 
 /**
+ * Waits until the slot's lease object runs deploy `id`'s code. `wrangler deploy` returning, and the Worker serving the
+ * deploy (`waitReady`), do not mean the Durable Object has restarted on it: the first live conversion called `stage` on
+ * an object still running code without it and got Cloudflare's 500. Refuses with PREVIEW_DEPLOY_NOT_SERVING after
+ * LEASE_CODE_READS reads; returns how many reads it took.
+ */
+export async function waitLeaseCode(ctx, plan, id) {
+  let last = '';
+  for (let i = 1; i <= LEASE_CODE_READS; i++) {
+    const r = await op(ctx, plan, 'GET', 'lease').catch((e) => ({ status: 0, body: { error: { message: e.message } } }));
+    if (r.status === 200 && r.body?.leaseDeploy === id) {
+      ctx.log(`preview: slot ${plan.n}: its lease object runs deploy ${id} (read ${i} of at most ${LEASE_CODE_READS})`);
+      return i;
+    }
+    last = r.status === 200 ? `its lease object runs ${r.body?.leaseDeploy ? `deploy ${r.body.leaseDeploy}` : 'code that names no deploy (older than this check)'}` : `the lease read answered ${r.status}: ${r.body?.error?.message ?? JSON.stringify(r.body).slice(0, 120)}`;
+    ctx.log(`preview: slot ${plan.n}: waiting for its lease object to run deploy ${id} (read ${i} of ${LEASE_CODE_READS}: ${last})`);
+    if (i < LEASE_CODE_READS) await ctx.sleep(LEASE_CODE_WAIT_MS);
+  }
+  throw refusal('PREVIEW_DEPLOY_NOT_SERVING', `slot ${plan.n}'s lease object did not run deploy ${id} after ${LEASE_CODE_READS} reads ${LEASE_CODE_WAIT_MS / 1000} s apart; last: ${last}. The deploy is in place, but no key was set and the lease is not marked staging; run \`pnpm preview staging convert\` again`);
+}
+
+/**
  * Makes the inventory's staging slot staging, once, on Kyle's login from a clean main checkout, keeping what it holds:
  * 1. deploys main's agent to it (the Worker running there may predate the staging op): a deploy keeps every secret,
- *    every Durable Object, the bucket and the index;
+ *    every Durable Object, the bucket and the index; then waits until the slot serves it and its lease object runs it;
  * 2. sets a key of this checkout's, alone in its secrets write, so MASTER_KEY and SETUP_TOKEN are not touched;
  * 3. marks the lease staging, a compare-and-set on the tag it read, so a lease taken meanwhile is never taken over;
  * 4. deletes every PREVIEW_KEY_* (the last holder's and this one): nobody holds the staging lease.
@@ -56,6 +81,7 @@ export async function convert(ctx, { paid = false, vars = {} } = {}) {
   ctx.log(`preview: slot ${n}: deploying main over what it holds (its secrets, objects, bucket and index stay)`);
   const d = deploySlot(ctx, inv, n, { paid, vars });
   await waitReady(ctx, plan, d.deploy);
+  await waitLeaseCode(ctx, plan, d.deploy);
   const auth = { key: randomBytes(32).toString('hex'), tag: ownerTag(ctx.root) };
   const acc = account(ctx.run);
   const setupToken = before.expiresAt === null ? randomBytes(32).toString('base64url') : null;
