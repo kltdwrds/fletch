@@ -11,6 +11,28 @@ Defaults of `ORCHESTRATOR-OVERNIGHT.md` and moved to `## Answered by default`; K
 
 ## Open, not blocking
 
+### Q41 (P8), 2026-11-08: D-0025, rooms with outsiders: four one-way doors before any P8 part, and two findings for other contracts
+
+**Blocks:** nothing in progress; every P8 task and part, which O4 (design §8) already holds until you rule. The P8
+interrogation (`contracts/P8-group-chats.md`, `evidence/p8-group-chats/`) found Muse's rooms to be prompt and doc lines
+with no table, no fence and no wake rule, so the contract is a mapping. D-0025 (proposed) states the four doors in order:
+whether the agent speaks in a room at all; under whose name (only as your agent, or also as you through a connected
+account); the transport (which service, its egress host, its Ingress path, how a sender is bound to the channel); the
+storage (a `room` ChatKind, a per-room rule store, a room audience on memory). The contract's four deltas (fence room
+text, an Activity row per refusal, one agent with an audience rather than a worker per room, no writing under your name
+until door 2) are proposed, none accepted. Two findings touch locked clauses: B-P15-09's `worker.update_discretion`
+now takes `rules` and `everything` and dropped "It works only on the user's own turn" (the discretion layers can now be
+tested); B-P1-04's `muse.nothing_to_do` no longer names a group or channel message. Neither re-opens a cluster tonight:
+both are changes in Muse's slice, not in a behaviour a fletch task grades.
+
+**Recommended answer:** rule door 1 first; if "no", D-0025 is rejected and P8 stays mapped (a line in the scorecard
+and nothing else); if "yes", name the transport and the agent's name rule, and the orchestrator writes the tier-1 parts
+from the contract. Accept the two findings as notes on the P15 and P1 contracts in the next truth pass, or re-open
+B-P15-09 at Interrogate if the layers should be graded.
+
+Orchestrator, 2026-11-08: not taken by default. Door 1 is O4, which the design reserves for you, and the Defaults list no
+one-way door; D-0025 stays proposed with nothing built on it.
+
 ### Q10 (F19), 2026-10-29: Accept D-0015, tier-2 evals in CI with the slot token and a spend cap
 
 **Blocks:** nothing. The runner (`pnpm evals`, `docs/runbooks/evals.md`) runs from Kyle's Mac against the worktree's

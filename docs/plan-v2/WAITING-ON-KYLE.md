@@ -9,6 +9,20 @@ Kyle's own lines go under `## Steering`.
 
 ## Open
 
+- [ ] 2026-11-08 decide: **D-0025, may your agent ever speak in a room with outsiders, and if so as whom, over what, stored how.** P8
+  was interrogated tonight (Queue 9): Muse has no group table, no room fence and no wake-on-mention rule, your account has no
+  group and no messaging service linked, so the contract is a mapping of prompt and doc lines, with 11 clauses and 10 tasks
+  written and nothing built. D-0025 (proposed) puts the four doors in order: (1) whether at all (O4); (2) only as your agent,
+  or also as you through a connected account; (3) the transport, its egress host and Ingress path, identity bound to the
+  channel; (4) a `room` ChatKind, a per-room rule store, a room audience on memory. What "no" to door 1 changes: D-0025 is
+  rejected, P8 stays at level 0 for good, nothing else moves. What "yes" changes: you name the transport and the name rule,
+  the orchestrator writes P8's tier-1 parts from the contract. Also for your eye: two Muse-side changes the dump diff found,
+  B-P15-09's `worker.update_discretion` (now `rules` and `everything`, no own-turn limit) and B-P1-04's `muse.nothing_to_do`
+  (no longer names a group message); neither re-opens a cluster tonight. The side chat the agent used (thread A) is left in
+  your Muse chat list, unarchived; archive it if you like.
+  [D-0025](../decisions/0025-rooms-with-outsiders.md), [Q41](QUESTIONS.md#q41-p8-2026-11-08-d-0025-rooms-with-outsiders-four-one-way-doors-before-any-p8-part-and-two-findings-for-other-contracts),
+  [the contract](contracts/P8-group-chats.md), [design O4](2026-10-29-parity-framework-design.md).
+
 - [ ] 2026-11-07 question: **defaults taken for you tonight on the read-only questions, one line each, reversible under Steering.**
   The overnight run (`ORCHESTRATOR-OVERNIGHT.md`, Defaults, your words of 2026-11-07) answered every open question by its
   recommended answer and moved it to `## Answered by default` in `QUESTIONS.md`; the ones with an item of their own carry
