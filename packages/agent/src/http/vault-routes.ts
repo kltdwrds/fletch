@@ -38,8 +38,7 @@ const SECURE_HEADERS = {
   "referrer-policy": "no-referrer",
   "x-content-type-options": "nosniff",
   "x-frame-options": "DENY",
-  // `https:` beside 'self' (F55): a browser holds a form's redirect to the form-action list, and the `oauth` submit's 303 goes to the provider.
-  "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https:; frame-ancestors 'none'; base-uri 'none'",
+  "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
 };
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: SECURE_HEADERS });
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -109,6 +108,12 @@ const voidPage = (ref: string) =>
   `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Link no longer open</title></head><body><h1>Link no longer open</h1><p role="alert"><strong>VAULT_REF_INVALID</strong>: the setup for <code>${esc(ref)}</code> was dismissed in the chat. Nothing was saved; ask your agent for a new link.</p></body></html>`;
 
 const page = (html: string, status = 200) => new Response(html, { status, headers: { ...SECURE_HEADERS, "content-type": "text/html; charset=utf-8" } });
+/**
+ * The capture form's own page (F55, deleted with D-0016): `https:` beside 'self' in its form-action, since a browser holds
+ * a form's redirect to that list and the `oauth` submit's 303 goes to the provider. Every other vault page keeps 'self'.
+ */
+const formPage = (html: string, status = 200) =>
+  new Response(html, { status, headers: { ...SECURE_HEADERS, "content-security-policy": SECURE_HEADERS["content-security-policy"].replace("form-action 'self';", "form-action 'self' https:;"), "content-type": "text/html; charset=utf-8" } });
 
 function fieldsOf(form: FormData | URLSearchParams): Fields {
   const get = (k: string) => String(form.get(k) ?? "");
@@ -140,7 +145,7 @@ export async function vaultRoutes(request: Request, url: URL, person: string, di
     // whose setup the person dismissed in the chat is void: it opens no form.
     const ref = url.searchParams.get("ref");
     if (ref && (await dir.captureState(person, ref, url.searchParams.get("setup") ?? "")).state === "dismissed") return page(voidPage(ref), 410);
-    return page(captureForm({ ...EMPTY, ...fieldsOf(url.searchParams), fills: url.searchParams.get("fills") === "on" }));
+    return formPage(captureForm({ ...EMPTY, ...fieldsOf(url.searchParams), fills: url.searchParams.get("fills") === "on" }));
   }
   if (url.pathname === OAUTH_CALLBACK && request.method === "GET") {
     if (!dir.oauthCallback) return json({ code: "VAULT_UNAVAILABLE" }, 503);
@@ -152,9 +157,9 @@ export async function vaultRoutes(request: Request, url: URL, person: string, di
     return json({ ok: true, ...(await dir.captureState(person, url.searchParams.get("ref") ?? "", url.searchParams.get("setup") ?? "")) });
   }
   if (url.pathname === "/vault/capture" && request.method === "POST") {
-    if (!sameOrigin(request, url)) return page(captureForm(EMPTY, { code: "VAULT_FORM_ORIGIN", reason: "the form is submitted from this site's own page" }), 403);
+    if (!sameOrigin(request, url)) return formPage(captureForm(EMPTY, { code: "VAULT_FORM_ORIGIN", reason: "the form is submitted from this site's own page" }), 403);
     const form = await request.formData().catch(() => null);
-    if (!form) return page(captureForm(EMPTY, { code: "VAULT_FORM_INVALID", reason: "the form did not arrive" }), 400);
+    if (!form) return formPage(captureForm(EMPTY, { code: "VAULT_FORM_INVALID", reason: "the form did not arrive" }), 400);
     const f = fieldsOf(form);
     const value = String(form.get("value") ?? "");
     const methods = f.methods.split(/[\s,]+/).filter(Boolean);
@@ -171,7 +176,7 @@ export async function vaultRoutes(request: Request, url: URL, person: string, di
       );
       if (o.ok) return new Response(null, { status: 303, headers: { ...SECURE_HEADERS, location: o.location } });
       const html = captureForm(f, { code: o.code, reason: o.reason });
-      return page(value ? redact(html, [{ ref: "value", value }]) : html, 400);
+      return formPage(value ? redact(html, [{ ref: "value", value }]) : html, 400);
     }
     const r = await dir.capture(
       { ref: f.ref, ...(f.setup ? { setup: f.setup } : {}), value, label: f.label, kind: f.kind === "login" ? "login" : "secret", permission: f.permission === "grant" ? "grant" : "standing", hosts: [{ host: f.host, methods, header: f.header, prefix: f.prefix, fills: f.fills }] },
@@ -179,7 +184,7 @@ export async function vaultRoutes(request: Request, url: URL, person: string, di
     );
     const html = r.ok ? captureForm({ ...EMPTY }, { saved: r.ref, hosts: f.host }) : captureForm(f, { code: r.code, reason: r.reason });
     // Whatever was typed where, the value does not come back.
-    return page(value ? redact(html, [{ ref: "value", value }]) : html, r.ok ? 201 : 400);
+    return formPage(value ? redact(html, [{ ref: "value", value }]) : html, r.ok ? 201 : 400);
   }
   if (url.pathname === "/vault" && request.method === "GET") {
     return json({ credentials: await dir.list(person), grants: await dir.grants(person) });

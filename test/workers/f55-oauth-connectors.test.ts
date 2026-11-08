@@ -92,6 +92,11 @@ describe("[F55] OAuth connectors: the consent redirect and the one-shot state", 
     expect(w.vault().audit()).toMatchObject([{ ref: REF, host: AUTH, method: "POST", path: "/oauth/token", person: ada.email, purpose: "oauth code exchange", outcome: "resolved" }]);
     expect(w.vault().events(ada.email)).toMatchObject([{ event: "captured", ref: REF, by: ada.email, detail: `capture-form; oauth; ${API}` }]);
     expect(w.vault().captureState(ada.email, REF)).toMatchObject({ state: "entered" });
+    // The capture form's page alone lets its form redirect to an https provider; the callback page and the JSON keep 'self'.
+    const csp = (r: { headers: Headers }) => /form-action [^;]*;/.exec(r.headers.get("content-security-policy") ?? "")?.[0];
+    expect(csp(await w.http(ada.email, "GET", "/vault/capture?kind=oauth"))).toBe("form-action 'self' https:;");
+    expect(csp(cb)).toBe("form-action 'self';");
+    expect(csp(await w.http(ada.email, "GET", "/vault"))).toBe("form-action 'self';");
     // The spent state keeps no sealed client.
     expect(w.rows("SELECT spent_at, length(ct) AS n FROM oauth_states WHERE state = ?", state)).toEqual([{ spent_at: w.clock.now, n: 0 }]);
     // It is a connection: the Yours row draws it as it draws a key.

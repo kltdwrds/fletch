@@ -26,9 +26,9 @@ its connections obtained through the provider's consent page, their expiry surfa
 and a reconnect card.
 
 Built on the default by F55 (2026-11-08, `docs/plan-v2/parts.md`), the record still proposed: `vault/oauth.ts`, the
-`oauth_states` table, the `oauth` kind, `/connect/oauth/callback`, the form's `oauth` scheme, `credential_request`'s
-`oauth` and the codes `VAULT_OAUTH_STATE_INVALID`, `VAULT_OAUTH_REJECTED` and `EGRESS_OAUTH_REFRESH_FAILED`; rejecting
-the record deletes them (the PR's "To revert D-0016").
+`oauth_states` table, the `oauth` kind, `/connect/oauth/callback`, the form's `oauth` scheme and `https:` in its
+page's `form-action`, `credential_request`'s `oauth` and the codes `VAULT_OAUTH_STATE_INVALID`, `VAULT_OAUTH_REJECTED`
+and `EGRESS_OAUTH_REFRESH_FAILED`; rejecting the record deletes them (the PR's "To revert D-0016").
 
 ## Options
 
