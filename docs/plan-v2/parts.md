@@ -1216,3 +1216,445 @@ PR as F44's and F48's were.
 a `WORK_WORDS` line; a provider-specific connector or catalogue row; PKCE and device-code flows (a later record if Kyle
 accepts D-0016); the company's shared connectors (M28); a tier-2 task; the capture form's look beyond the added fields
 (no specimen: the form is the existing capture page); D-0017 and D-0018.
+
+## F80 Shopping as it is: the P16 contract check, twelve task files, the research, hand-over and remembering lines, the no-click and no-provider guards planted and tier 1
+
+**Read:** `docs/plan-v2/contracts/P16-shopping-bookings.md` (all thirteen clauses, the Tasks, the Translation's Survey,
+deltas 1 to 7, the fresh-session check and Build notes), `docs/decisions/0027-shopping-is-find-and-hand-over.md` (both
+doors, accepted by Kyle's ruling of 2026-11-08 as the orchestrator records it), `docs/plan-v2/QUESTIONS.md` Q43 (its
+rulings (c) and (d) taken at the recommended answers), `docs/plan-v2/contracts/P12-wallet.md` (B-P12-03 and the
+after-handoff line), the P12 world and `planted.test.ts` under `test/evals/p12-wallet/` and `test/m0/f38-contract.test.ts`
+as the pattern, `packages/agent/src/browse/tools.ts` (`browseNamespace`), `browse/urls.ts`, `browse/classify.ts`,
+`packages/agent/src/chat/instructions.ts` (`WORK_WORDS`), `packages/agent/src/egress/policy.ts` (`PUBLIC_HOSTS`,
+`plan`), `packages/agent/src/connectors/manifest.ts` (`CONNECTOR_MANIFESTS`), `packages/agent/src/subagents/run.ts`,
+`packages/agent/src/jobs/job-tools.ts` (`JOB_READ_TOOLS`, `readOnlyForJob`), `packages/agent/src/memory/tools.ts`,
+`test/workers/support/browse-world.ts`, `test/workers/support/fake-cdp-browser.ts`,
+`test/workers/support/authority-world.ts` (`shop_buy`). No new one-way door: this part adds no purchase tool, no
+provider host, no connector, no `HostFeature` member, no table and no widget (D-0027, D-0017 proposed).
+
+**Scope:** (1) `test/m0/f80-contract.test.ts` holds `contracts/P16-shopping-bookings.md` as F38's holds P12 (thirteen
+clauses, twelve tasks, each file under `test/evals/p16-shopping-bookings/`, every `version_hash` filled: the "filled by
+F80" lines replaced by each file's hash under Node's loader). (2) Twelve task files under
+`test/evals/p16-shopping-bookings/` with a `world.ts` composing the P12 world and the browse fakes (delta 5: the four
+`example.com` hosts, the sale window, the blocked read, the cookie banner, the terms checkbox, "Create account", the
+kept login) and a `harness.ts` counting the journal, memory, jobs and grants. (3) Deltas 1, 2 and 4: at most four
+`WORK_WORDS` lines (research is read-only and said so, offers cited from this turn's reads with at most two named,
+empty and failed told apart with nothing substituted, terms, banners, accounts and memberships the person's; the
+chosen offer restated before a handoff with only its fields asked, never the owner's identity for someone else, no
+handoff after a "no"; a purchase or booking remembered only when the person asks by name, as their report), inside
+the file-size ratchet. (4) Delta 3: a `[F80]` test under `test/workers/` that iterates `browseNamespace`'s tools and
+fails on a click, check, free-text type or submit tool, planted by adding one. (5) Delta 6: a `[F80]` test that fails
+when `PUBLIC_HOSTS` or `CONNECTOR_MANIFESTS` holds a provider host or id the contract's evidence names, planted by
+adding one, citing D-0027. (6) Tier 1 under vitest with an `[F80]` describe: T-P16-01, 02, 04, 06, 07 and 10
+(must-have) and T-P16-08, 09 and 11 (nice-to-have), every minefield fired in `planted.test.ts`; the tier-2 tasks
+(T-P16-03, 05, 12) play under the scripted fake in a `tier2-fake.test.ts`.
+
+**Acceptance:** `test/m0/f80-contract.test.ts` passes with every `version_hash` matching; the six must-have tier-1
+tasks pass and the three nice-to-have tier-1 tasks run, their results said in the PR body; every planted fault fails
+its grader (`test/evals/p16-shopping-bookings/planted.test.ts`); the no-click and no-provider tests fail with their
+planted additions; `ACCEPT F80: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a purchase, booking, hold, cart or checkout by the agent, a provider connector or egress entry, a
+`commerce` feature (D-0027); a results card, cart widget or orders pane (the contract's specimen note: no specimen,
+no draw); a change to a clause; tier 2 on a slot (F81); naming the no-provider test as D-0027's `confirmation` (the
+orchestrator's, in the record's acceptance).
+
+## F81 Shopping says what happened: P16's tier 2 on a slot
+
+**Read:** `docs/plan-v2/contracts/P16-shopping-bookings.md` (B-P16-03, B-P16-05, B-P16-13, the tier-2 tasks, delta 5
+and Build notes), the F80 world and tasks under `test/evals/p16-shopping-bookings/`,
+`packages/agent/src/chat/instructions.ts`, `docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q18. No one-way
+door. A live step: `pnpm evals` runs on this worktree's slot (`pnpm preview up`); if no slot can be leased, that is a
+question, not a reason to skip.
+
+**Scope:** (1) The slot's test host serves the four hosts as fixture paths (as P9's probe host is): fares and rooms
+inside the sale window, "Requested date is too far in the future" past it, a blocked read for the ticket host; each
+P16 trial starts with Sam's chat, memory and jobs from the trial before deleted by the test host. (2) Tier 2 on the
+slot: T-P16-03 and T-P16-05 (must-have) and T-P16-12, three trials each, the results files committed, the table in the
+PR body. (3) Every P16 hash in the contract matches.
+
+**Acceptance:** `pnpm evals T-P16-03` and `pnpm evals T-P16-05` `pass` (three of three); T-P16-12 runs and its result
+is recorded whatever the verdict; `ACCEPT F81: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a change to a clause; new instruction lines beyond what a failing must-have needs, each named in the
+PR body with its task; a results card (the specimen note); anything D-0027 or D-0017 reserves.
+
+## F60 Rooms refused by name as they are: the P8 contract check, fifteen task files, the room refusal in the registry and the route, one room line and tier 1
+
+**Read:** `docs/plan-v2/contracts/P8-group-chats.md` (the "Under D-0025" section, every clause, the Tasks, the
+Translation's survey, deltas 5, 6, 7 and 8 and the Build notes), `docs/decisions/0025-rooms-with-outsiders.md`, the P3
+world and tasks under `test/evals/p3-delegation/` and F35's under `test/evals/p9-connectors/` as the pattern,
+`packages/agent/src/tools/registry.ts` (`ToolRegistry`, `identityReach`, `IDENTITY_TOOL_WORDS`),
+`packages/agent/src/http/app-routes.ts` (`POST /app/chats`), `packages/agent/src/person/chats.ts`,
+`packages/agent/src/person/mail.ts`, `packages/agent/src/context/fence.ts`, `packages/agent/src/chat/inputs.ts`
+(`requestText`), `packages/agent/src/chat/operating-block.ts`, `packages/agent/src/chat/instructions.ts`
+(`WORK_WORDS`), `packages/agent/src/egress/policy.ts` (`plan`), `packages/agent/src/http/app/chats-list.ts`,
+`test/m0/f35-contract.test.ts`, `docs/plan-v2/QUESTIONS.md` Q18 and Q41. One-way door: D-0025 only, taken by Kyle's
+ruling of 2026-11-08; nothing here creates, joins, registers or stores a room, and no table, `ChatKind` value, host or
+`@qyvr/host` feature is added.
+
+**Scope:** (1) `test/m0/f60-contract.test.ts` holds the P8 contract as `f35-contract.test.ts` holds P9: eleven
+clauses, fifteen tasks, every tier-1 `version_hash` filled. (2) The fifteen `.task.ts` files under
+`test/evals/p8-group-chats/` with a `world.ts` over P3's authority world (Sam Solo's main, side, request and mail
+chats; the mail intake with Pat Solo as an outside sender; the registry built with every namespace) and a `harness.ts`;
+T-P8-10, 11, 12, 14 and 15 run under vitest with an `[F60]` describe, every minefield planted in a `planted.test.ts`;
+T-P8-01 to T-P8-09 are written with every field and their `.test.ts` skipped by name ("held: D-0025 door 1, no room
+exists"), their files saying so. (3) The code the deltas need: `roomReach()` beside `identityReach()`, so the
+registry refuses at build a tool whose name holds `room`, `group`, `invite` or `participant`, or whose description
+offers to create or join a chat with other people, add a person to one, or send from the person's own account or
+under their name, with `TOOL_ROOM_REFUSED` naming D-0025 (delta 5; T-P8-11, T-P8-15); `POST /app/chats` answers 400
+`CHAT_ROOM_REFUSED` with a reason naming D-0025 and writes no row for a body carrying `kind` other than `side`, or
+`people`, `members` or `invite` (delta 6; T-P8-11); one room line in `WORK_WORDS`: asked to make a group chat, join
+one, add someone to a chat or speak for the person in one, the reply says this deploy does not make, join or add
+people to a chat with other people yet, opens and sends nothing, and offers a message the person sends themself
+(delta 7; graded live by F61). If an existing tool's name or description trips `roomReach()`, the word list narrows
+and the PR body names the tool; no existing tool is renamed.
+
+**Acceptance:** the five tier-1 tasks pass under vitest and each planted minefield fails without its guard; the nine
+held tasks are skipped by name with D-0025 door 1 named; `test/m0/f60-contract.test.ts` passes; `pnpm check` and the
+hermetic suite green; `ACCEPT F60: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a room in any form (its `ChatKind`, transport, Ingress source, egress host, rule store, memory
+audience or Activity kind: D-0025's doors); a held task's world; mail's fence label (delta 8); a `HostFeature` in
+`@qyvr/host`; an owner-visible surface; tier 2 (F61); a change to a clause.
+
+## F61 Rooms said as not made: P8's tier 2 on a slot
+
+**Read:** `docs/plan-v2/contracts/P8-group-chats.md` (B-P8-01, B-P8-10, T-P8-13, delta 7), the F60 world and tasks
+under `test/evals/p8-group-chats/`, `packages/agent/src/chat/instructions.ts` (`WORK_WORDS`, the room line),
+`docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q18. One-way door: D-0025 only, as F60. A live step: `pnpm
+evals` runs on this worktree's slot (`pnpm preview`); if no slot can be leased, that is a question, not a reason to skip.
+
+**Scope:** (1) Tier 2 on the slot: T-P8-13 (must-have), three trials, its results file committed, the table in the PR
+body. (2) T-P8-13's hash in the contract matches. (3) If T-P8-13 fails on the reply's words, the room line is
+sharpened (never a code-written reply, Q18) and the change named in the PR body with the task.
+
+**Acceptance:** `pnpm evals T-P8-13` `pass` (three of three); `ACCEPT F61: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** T-P8-09 (held, D-0025 door 1); a room in any form; a change to a clause; a line beyond what T-P8-13
+needs.
+
+## F70 Voice and audio as they are: the P13 contract check, sixteen task files, the audio class, the refusal by name and tier 1 on what is shipped
+
+**Read:** `docs/plan-v2/contracts/P13-voice-audio.md` (every clause, the Tasks, the Translation's deltas 1, 2, 8 and
+9, the Build notes), `docs/decisions/0026-speech-on-fletch.md` (accepted by Kyle's ruling of 2026-11-08; the
+orchestrator's PR records it), the P9 world and tasks under `test/evals/p9-connectors/` as the pattern,
+`test/support/contract.ts`, `test/support/task.ts`, `test/m0/f35-contract.test.ts`,
+`packages/agent/src/attachments/` (`caps.ts`, `store.ts`, `wiring.ts`), `packages/agent/src/http/attachment-routes.ts`,
+`packages/agent/src/migrations/catalog.ts`, `packages/agent/src/chat/instructions.ts` (`WORK_WORDS`),
+`packages/agent/src/tools/registry.ts`. No one-way door beyond D-0026: no model call, no spend, no change to
+`@qyvr/host`.
+
+**Scope:** (1) `test/m0/f70-contract.test.ts` holds the P13 contract as `f35-contract.test.ts` holds P9: fifteen
+clauses, sixteen tasks, every `version_hash` filled where the contract says "filled by F70". (2) The sixteen
+`.task.ts` files under `test/evals/p13-voice-audio/` with a `world.ts` (a Chat and a Person Durable Object, a fake `AI`
+binding answering `@cf/openai/whisper-large-v3-turbo` with a fixed transcript and `@cf/deepgram/aura-2-en` with a short
+MP3 generated in the test, both able to fail or cut short on cue) and a `harness.ts`; tier 1 for T-P13-01, 04, 11 and
+13 under an `[F70]` describe, every minefield planted in a `planted.test.ts`; the F71 and F72 tasks skipped by name,
+their files saying which part runs them. (3) The code T-P13-13 and T-P13-11 need, with no model call: `AttachmentClass`
+gains `audio` and `ATTACHMENT_TYPES` the audio types under `AUDIO_MAX` (8 MiB, `ATTACHMENT_TOO_LARGE_AUDIO`); the
+`attachments` row gains a `transcript` column by a named migration; `speechOf(env)` is null when `AI` is unbound or
+the `SPEECH` var is `off`, and in this part it is always off, so a voice note is kept as a row with
+`SPEECH_UNAVAILABLE`, no transcript, and its R2 object deleted (D-0026: the audio is not kept); a read-aloud or an
+episode ask is refused `SPEECH_UNAVAILABLE` with its reason (a `speak` tool that refuses until F71); an ask to call is
+refused `VOICE_CALL_UNAVAILABLE`, and one `WORK_WORDS` line says this deploy has no voice calls and keeps nothing from
+one.
+
+**Acceptance:** T-P13-01, 04, 11 and 13 pass under vitest and each planted minefield fails without its guard; the
+F71 and F72 tasks are skipped by name; `test/m0/f70-contract.test.ts` passes; `pnpm check` and the hermetic suite
+green; `ACCEPT F70: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** any call to a speech model and any spend (F71); the audio record, the voice record and the Library
+or chat surfaces (F71, F72); a `speech` `HostFeature` in `@qyvr/host` (D-0026 keeps it agent-local); a feed or a
+call; tier 2 (F73); a change to a clause.
+
+## F71 Speech behind the AI binding: transcription, read-aloud, the audio record, the voice, a monthly cap and removal
+
+**Read:** `docs/plan-v2/contracts/P13-voice-audio.md` (B-P13-02 to B-P13-10, B-P13-13 to B-P13-15, the Translation's
+deltas 1 to 4, 6, 7, 9 and 10), `docs/decisions/0026-speech-on-fletch.md` (the spend, record and retention terms this
+part builds), the F70 world and the skipped tasks under `test/evals/p13-voice-audio/`,
+`packages/agent/src/ledger/budget.ts` (`PRICES`, `chargeMicros`, `admitPolicy`, `decide`, `Budgets`),
+`packages/agent/src/objects/ledger.ts` (`admit`, `record`, `journal`), `packages/agent/src/model/caption.ts` and
+`packages/agent/src/attachments/wiring.ts` (the precedent), `packages/agent/src/model/routes.ts` (`MODEL_TIERS`),
+`packages/agent/src/files/store.ts` (`writeBytes`), `packages/agent/src/files/links.ts`,
+`packages/agent/src/render/tools.ts` (`share_document`), `packages/agent/src/grants/engine.ts` (`FRESH_CARD_KINDS`).
+Spend is one-way and D-0026, accepted by Kyle's ruling, holds it only under a Ledger price and a monthly cap.
+
+**Scope:** (1) Spend first: `SPEECH_PRICES` in `budget.ts` (whisper-large-v3-turbo $0.0005 per audio minute,
+aura-2-en $0.030 per 1,000 characters) and `speechMicros`; the two models join `MODEL_TIERS`; `Budgets` gains
+`tenantSpeechMonthlyMicros`, default $5 a UTC calendar month in the existing `budgets` table; the Ledger's `admit` on
+route `speech` refuses `SPEECH_BUDGET_EXHAUSTED`, its reason naming the month's spend and the cap, before any
+`AI.run` once the month's `route = 'speech'` sum reaches the cap; every speech call writes a `model_calls` row with its
+`cost_micros`; the daily caps still count it; no speech call exists outside this admission (T-P13-15). (2)
+Transcription: `packages/agent/src/speech/transcribe.ts` on the model `captionImage` follows; `keep` writes the
+transcript on the row, then deletes the R2 object; the model sees a block marked as a transcript; a model error is
+`SPEECH_FAILED` on the row (T-P13-02, T-P13-03). (3) `speak` in a `speech` namespace (`packages/agent/src/speech/tools.ts`):
+the text verbatim, the person's speaker, the MP3's duration from its frames (`mp3Duration`) checked against the
+text's bounds, `SPEECH_FAILED` or `SPEECH_PARTIAL` with nothing written otherwise, the file through `writeBytes` under
+`files/audio/`, an `audio_items` row (kind, file, duration, voice, model, source, topics), an `audio` chat effect; no
+card (T-P13-05, T-P13-06). (4) `audio_list` and `audio_read` over the rows (T-P13-07's record half). (5) The voice:
+a `speech_settings` table, `voice_set` writing it on an explicit ask with a Ledger `journal` row, a transcript never
+changing it (T-P13-09). (6) Sharing the audio file through `share_document`'s card each time, the share item naming
+its end, and a revoke that sets the share's expiry to now (`SHARE_EXPIRED`) (T-P13-08). (7) `audio_remove` and
+`audio_restore`: the row's `removed_at` and the object moved under the person's `trash/` prefix and back, in one
+action each (T-P13-12). (8) `speechOf(env)` turns on where `AI` is bound and `SPEECH` is not `off`; F70's refusals
+still hold where it is off. The skipped tasks run under an `[F71]` describe with their minefields planted.
+
+**Acceptance:** T-P13-02, 03, 05, 06, 07 (record half), 08, 09, 12 and 15 pass under vitest and each planted
+minefield fails without its guard; F70's tasks still pass; `pnpm check` and the hermetic suite green;
+`ACCEPT F71: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** any owner-visible surface (F72: the chat audio item, the Library Audio section, the Settings Voice
+row); a podcast episode's two-voice render (F72); a feed or a call (D-0026); keeping voice-note audio (D-0026); a
+person-wide trash or a sweep (P4); a model other than the two named; tier 2 (F73); a change to a clause.
+
+## F72 Audio the person can see: the chat audio item, the Library's Audio section, the Settings Voice row and the episode
+
+**Read:** `docs/plan-v2/contracts/P13-voice-audio.md` (B-P13-05, B-P13-07, B-P13-10, B-P13-11, the Translation's
+deltas 4, 5 and 8, the Build notes' specimens), the specimens the orchestrator lists in `WAITING-ON-KYLE.md` under
+`ds/specimens/` for this part (the chat audio item from `step-4.jpg` and `step-4-phone.jpg`, the Library Audio section
+from `step-7.jpg`, `step-7-phone.jpg` and `step-9-reload.jpg`, the Voice row from `step-1-dom.md`), the F70 and F71
+world and the skipped tasks under `test/evals/p13-voice-audio/`, `packages/agent/src/http/app/library.ts`
+(`LIB_KINDS`, `LIB_SECTIONS`), `packages/agent/src/http/app/chat.ts`, `packages/agent/src/http/app/settings-panes.ts`,
+`packages/agent/src/files/links.ts`. No one-way door beyond D-0026; no spend beyond F71's cap; Kyle's look on the
+specimens comes before the drawing.
+
+**Scope:** (1) The chat draws the `audio` effect as an item with an `<audio>` player on the signed read link, the
+duration and the voice, opening the record; the same after a reload and at phone width. (2) `LIB_KINDS` gains
+`mp3: "audio"`, `LIB_SECTIONS` an `audio` section in the media group listing the `audio_items` rows, each opening its
+player (T-P13-07's Library half). (3) Settings > Voice lists aura-2's speakers and writes the F71 record with writer
+`settings` (T-P13-16). (4) An episode: `speak` with a two-voice script renders turn by turn into one MP3 and one
+`audio_items` row of kind `episode` with script and topics; it shows in the Audio section; an ask to publish it to a
+feed is refused `PODCAST_FEED_UNAVAILABLE` with its reason and no feed route exists (T-P13-10). The tasks run under an
+`[F72]` describe with their minefields planted.
+
+**Acceptance:** T-P13-07 (whole), T-P13-10 and T-P13-16 pass under vitest and each planted minefield fails without its
+guard; F70's and F71's tasks still pass; `pnpm check` and the hermetic suite green; `ACCEPT F72: PASS`;
+`VERIFIER: no blocking findings`; the three surfaces listed for Kyle's UAT with the preview address.
+
+**Not in scope:** a public feed (D-0026); a Podcasts-only section; a voice preview in the picker
+(each preview is a spend; a later part under the same cap); the avatar; tier 2 (F73); a change to a clause.
+
+## F73 Speech says what happened: P13's tier 2 on a slot
+
+**Read:** `docs/plan-v2/contracts/P13-voice-audio.md` (B-P13-02, B-P13-05, B-P13-06, T-P13-14), the F70 to F72 world
+and tasks under `test/evals/p13-voice-audio/`, `docs/runbooks/evals.md`, `docs/runbooks/preview.md`. Spend on a slot
+runs under F71's monthly cap, which the runner sets to $1 on the slot; a live step: `pnpm evals` runs from Kyle's Mac
+on this worktree's slot, and if no slot can be leased, that is a question, not a reason to skip.
+
+**Scope:** (1) The runner generates `p13-probe.mp3` from the fixture sentence through the slot's own `speak` and sends
+it back as a voice note, so no recording of a person exists. (2) Tier 2 on the slot: T-P13-14, three trials, the
+results file committed, the table in the PR body, the Ledger's speech spend for the run in the PR body. (3) Every P13
+hash in the contract matches.
+
+**Acceptance:** `pnpm evals T-P13-14` `pass` (three of three); `ACCEPT F73: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a change to a clause; another model; raising the slot's cap beyond $1 without a question.
+
+## F100 Files as they are: the P11 contract check, eighteen task files, an edit that says it replaced, a listing with its time, and tier 1
+
+**Read:** `docs/plan-v2/contracts/P11-files-documents.md` (every clause, the task table, the Properties rows, deltas 1
+to 5 and 7), `docs/plan-v2/evidence/p11-files/answers/step-1.md` to `step-12.md` on Kyle's Mac if reachable (the
+contract stands without them), `packages/agent/src/files/store.ts`, `packages/agent/src/files/links.ts`,
+`packages/agent/src/files/tools.ts`, `packages/agent/src/render/tools.ts`, `packages/agent/src/render/render.ts`,
+`packages/agent/src/files/ingest.ts`, `packages/agent/src/http/app/library.ts`, `packages/agent/src/http/app/chat.ts`,
+`packages/agent/src/chat/gate.ts`, `test/workers/m24-3-documents.test.ts`, `test/workers/m24-3-uploads.test.ts`,
+`test/support/task.ts`, `test/m0/f40-contract.test.ts` as the model for the contract check. No one-way door.
+
+**Scope:** (1) `test/m0/f100-contract.test.ts` holds P11 as F40's holds P14: seventeen clauses, eighteen tasks, every
+task file loads with its id and clause ids, every tier-1 `version_hash` F100 runs matches `versionHash()`. (2) The
+eighteen `.task.ts` files under `test/evals/p11-files/` as the task table names them, each with its `.test.ts`, and
+the P11 world (the test host, a recording Renderer port, Sam Solo and Pat Solo from `test/fixtures/people.json`). (3)
+Two result changes the tasks need, nothing else in the tools: `file_write` over an existing home file says in its
+result that it replaced an earlier file and that the earlier content was not kept (delta 1, until F103), and
+`file_list` gives each home file's last change (`updated_at`) beside its size. (4) Tier 1 under an `[F100]` describe,
+each with its planted faults, for T-P11-01, 02, 03, 04, 06, 08, 09, 10, 13 and 14: a render saved before the reply that
+says so, with its card; pdf refused `RENDER_FORMAT_REFUSED` and every render on `singleAccountHost`
+`HOST_RENDER_UNAVAILABLE` with nothing saved; the download link refused to another member and without a session; the
+edit on its own path with no sibling; the CSV total read back; an export beside its source; a share only after its
+card, no standing grant honoured, served by the deploy, `SHARE_CHANGED` after an edit; the composer live and a typed
+"go ahead" no approval while a card waits; an upload kept once; the listing's time. (5) The tasks for F101 to F103
+(T-P11-05, 07, 11, 12, 15 to 18) load and run under the scripted fake, their hashes written. (6) Every hash in the
+contract filled for the files written (the contract's `version_hash: filled by F100` lines replaced with the hash, the
+one edit F100 makes to the contract).
+
+**Acceptance:** the `[F100]` tests pass with their planted failures; `pnpm accept F100`; `ACCEPT F100: PASS`;
+`VERIFIER: no blocking findings`.
+
+**Not in scope:** share list and revoke, the delete's journal row, `pptx` and cards drawn from current state (F101);
+instruction lines and a tier-2 run (F102); versions and the trash (F103, D-0028); a PDF engine or an xlsx writer
+(delta 3); any change to a clause.
+
+## F101 Shares and deletes say what happened: share list and revoke, a journaled delete that ends its shares, decks, and cards from the store
+
+**Read:** `docs/plan-v2/contracts/P11-files-documents.md` (B-P11-07, B-P11-12 to B-P11-14, B-P11-17, deltas 6 to 8,
+the Translation's survey), the F100 world and tasks under `test/evals/p11-files/`, `packages/agent/src/files/links.ts`,
+`packages/agent/src/render/tools.ts`, `packages/agent/src/render/render.ts`, `packages/agent/src/files/store.ts`,
+`packages/agent/src/grants/journal.ts`, `packages/agent/src/objects/ledger.ts`, `packages/agent/src/http/app-routes.ts`,
+`packages/agent/src/http/app/thread-work.ts`, `packages/agent/src/http/app/library.ts`,
+`docs/plan-v2/evidence/p11-files/step-10-library.png`, `step-11-reload-deck.png` and `step-11-reload-link.png` on
+Kyle's Mac if reachable. No one-way door: every change uses a table that exists.
+
+**Scope:** (1) Before any surface changes, the specimen `packages/agent/src/design/fletch/ds/specimens/files.html` from
+the step-10 and step-11 captures: the Library item with kind, size and last change, the file card's deleted state and
+the share card's revoked state, in fletch's tokens, listed for Kyle as a `look` item by the orchestrator; the part
+draws only what the specimen shows. (2) `PersonLinks.list(requester)` and `PersonLinks.revoke(id, requester)`: the
+owner's live shares with path and expiry; a revoke deletes the row and the R2 pointer so the public path answers
+exactly as an unknown share (same status and body, `SHARE_UNKNOWN`), refused for a share not the requester's. (3)
+`share_list` (observation) and `share_revoke` (observation, `mutates`, no card: it narrows exposure, delta 6) in the
+`documents` namespace; the revoke's result says revoked only from the store's answer. (4) `file_delete` and
+`/app/file/delete` delete every share of the path with the file and write one Ledger `journal` row through
+`JournalRow` (`actionKind` `files.delete`, subject `resource:file:<path>`, no content); `share_document`'s run and a
+revoke write `files.share` and `files.unshare` rows the same way. (5) `pptx` joins `RENDER_FORMATS` (pandoc makes it
+from `---`-separated slides) and `RENDER_WORDS` names it. (6) The chat's file card and share card ask the owner's
+Person at draw time and say "deleted" or "revoked" from the page's word table (delta 8); the transcript is unchanged.
+(7) Tier 1 under `[F101]` with planted faults for T-P11-07, 11, 12 and 15: a revoked link still serving, a list across
+owners, a delete leaving its share, a journal row holding content, a stale share card.
+
+**Acceptance:** the `[F101]` tests pass with their planted failures; the specimen exists and is named in the PR body;
+`pnpm accept F101`; `ACCEPT F101: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a card before a revoke or a delete (delta 6, 7); a `revoked_at` column; versions and trash (F103);
+reply words (F102); any change to a clause.
+
+## F102 Files say what happened: the reply's words and P11's tier 2 on a slot
+
+**Read:** `docs/plan-v2/contracts/P11-files-documents.md` (B-P11-01, B-P11-04, B-P11-06, B-P11-09, B-P11-11, B-P11-12,
+deltas 1, 2 and 4, the tier-2 tasks), the F100 and F101 tasks under `test/evals/p11-files/`,
+`packages/agent/src/chat/instructions.ts`, `docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q18. No one-way door. A
+live step: `pnpm evals` on this worktree's slot (`pnpm preview up`) with the Renderer on; if no slot can be leased,
+that is a question, not a reason to skip.
+
+**Scope:** (1) `FILE_WORDS` in `instructions.ts`: a made or changed file is said only after its tool returned, with
+its `files/<path>` link in the same message; an edit says it replaced the earlier file and whether that was kept, in
+the tool's words; a spreadsheet's total is read back from the saved file before it is stated; a share's link and expiry
+are the tool's and it is sent to no one; a revoke is said only from the tool's answer; with a card pending, the reply
+says the card waits and has not run. (2) Tier 2 on the slot: T-P11-16 and T-P11-17 (must-have), T-P11-18, three trials
+each, the results files committed, the table in the PR body. (3) Every P11 hash in the contract matches.
+
+**Acceptance:** `pnpm evals T-P11-16` and `pnpm evals T-P11-17` `pass` (three of three); T-P11-18 run and recorded
+whatever the verdict; `ACCEPT F102: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** a code-written reply line (Q18); versions (F103); a PDF engine; any change to a clause.
+
+## F103 A Library that keeps what it replaced: versions and a trash on the default (D-0028, built deletable)
+
+**Read:** `docs/plan-v2/contracts/P11-files-documents.md` (B-P11-05, B-P11-14, delta 9, T-P11-05),
+`docs/decisions/0028-library-versions-and-trash.md`, `packages/agent/src/files/store.ts`,
+`packages/agent/src/files/links.ts`, `packages/agent/src/files/tools.ts`, `packages/agent/src/migrations/catalog.ts`
+(`PERSON_MIGRATIONS`), `packages/agent/src/http/app/library.ts`, the F55 part above as the model for building on a
+proposed record. One-way door: D-0028, proposed; this part builds on the default taken for Kyle on 2026-11-08 and
+changes nothing of the record's status.
+
+**Scope:** (1) `PERSON_MIGRATIONS` gains `person.file-versions`: the `file_versions` and `file_trash` tables of D-0028,
+the bytes under the person's home key's `versions/` prefix. (2) `PersonFiles.write` and `writeBytes` keep the replaced
+bytes as version n first; `remove` moves the row and its versions to the trash; `versions`, `openVersion`,
+`restoreVersion`, `trash`, `restoreTrashed` and `emptyTrash`, owner-only, each refusal by code; the caps (20 versions,
+30 days) drop the oldest with a journal row; `purgeAll` ends them all. A share never serves a version or a trashed
+file. (3) `file_write`'s result names the kept version (replacing F100's "not kept"); `file_list` and `/app/library`
+carry the version count; the Library's Delete dialog says the file goes to the trash for 30 days. (4) Tier 1 for
+T-P11-05 under `[F103]` with its planted faults (a restore that loses the current version, a trashed file served by a
+share, another member's session reading versions). (5) The tables, prefix, routes, tool fields and codes listed in the
+PR body under "To revert D-0028".
+
+**Acceptance:** `pnpm exec vitest run` on the `[F103]` tests green with every planted guard; `ACCEPT F103: PASS`;
+`VERIFIER: no blocking findings`, or `VERIFIER: blocking findings` whose only finding is D-0028 itself, in which case
+the row is BLOCKED on the D-0028 decide item and the orchestrator merges it as F55 was.
+
+**Not in scope:** accepting or editing D-0028; R2 bucket versioning; versions of working-tree files (`work/`); a
+version diff view; any change to a clause.
+
+## F90 Search and the browser as they are: the P10 contract check, fifteen task files, the stale status word and tier 1
+
+**Read:** `docs/plan-v2/contracts/P10-search-browser-media.md` (every clause, the Tasks, the Properties, the
+Translation's deltas 1, 5, 6, 7 and 8, the Fresh-session check, the Build notes), the P5 world and tasks under
+`test/evals/p5-activity/` as the pattern (`world.ts`, `harness.ts`, `planted.test.ts`), the P7 world under
+`test/evals/p7-scheduling/` for T-P10-14, `packages/agent/src/browse/` (`tools.ts`, `read.ts`, `urls.ts`,
+`classify.ts`, `memory.ts`, `hook.ts`, `meter.ts`, `binding.ts`), `packages/agent/src/context/fence.ts`,
+`packages/agent/src/chat/turn.ts`, `chat/gate.ts`, `chat/cards.ts`, `chat/activity-steps.ts`,
+`packages/agent/src/vault/browser-state.ts`, `packages/agent/src/jobs/job-tools.ts` (`page_read`),
+`packages/agent/src/http/app/thread-work.ts` (`STATUS_WORDS`), `test/workers/m9-browse.test.ts`, `m9-fill.test.ts`,
+`m24-3-browser-logins.test.ts`, `test/workers/support/browse-world.ts` and `fake-cdp-browser.ts`,
+`docs/plan-v2/QUESTIONS.md` Q18 (a reply's required words are instruction lines, not harness sentences). No one-way
+door: D-0029 (search, places and image generation) stays proposed and nothing here builds on it; the part adds tests
+and deletes one stale word.
+
+**Scope:** (1) `test/m0/f90-contract.test.ts` holds the P10 contract as `f31-contract.test.ts` holds P5: seventeen
+clauses, fifteen tasks, each task's file under `test/evals/p10-search/`, every `version_hash` filled (the contract's
+"filled by F90" replaced by each file's hash). (2) The fifteen `.task.ts` files under `test/evals/p10-search/` with a
+`world.ts` (a Chat DO over the browse world serving `https://example.com/p10-probe` with one link,
+`https://example.com/p10-orders` with a page instruction, a forged closing marker and an address written only in
+prose, `walled.test` and `busy.test`; the fake CDP browser for the live lane; Sam Solo's and Pat Solo's chats; a Job DO
+over the P7 world serving `https://example.com/p10-news` for T-P10-14) and a `harness.ts`; tier 1 (T-P10-01, 02, 04,
+06, 07, 08, 14, 15) runs under vitest with an `[F90]` describe, every minefield planted in a `planted.test.ts` (each
+guard removed or moved on the production path fails its test: the verbatim table, the fence's defang, the gate's
+`AFTER_EXTERNAL_INPUT` flag, the code-classified stop, the remembered stop, the per-chat session cell, the Ledger
+meter, the restore grant). (3) The `web_search` row of `STATUS_WORDS` deleted (delta 1: a word for a tool that does
+not exist), with the thread-work test that names it updated. (4) Where a task names a Muse observable fletch does not
+have (a link card, a browser card, a window list), the file grades the fletch form and says so in a comment.
+
+**Acceptance:** the eight tier-1 tasks pass under vitest and each planted minefield fails without its guard;
+`test/m0/f90-contract.test.ts` passes; `pnpm check` and the hermetic suite green; `ACCEPT F90: PASS`;
+`VERIFIER: no blocking findings`.
+
+**Not in scope:** a web search, places, image generation or social tool, a provider on the egress allowlist or a new
+`HostFeature` (D-0029, proposed); an instruction line (F91); a link, browser, map or image card in the thread (F92's
+specimens first); named browser profiles or a window list (delta 5); tier 2 (F91); a change to a clause.
+
+## F91 Search and media say what this deploy cannot reach: one instruction line, the slot's probe pages and P10's tier 2
+
+**Read:** `docs/plan-v2/contracts/P10-search-browser-media.md` (B-P10-01, B-P10-02, B-P10-05, B-P10-06, B-P10-10,
+B-P10-11, B-P10-13 to B-P10-15, the tier-2 tasks, delta 1, the Build notes), the F90 world and tasks under
+`test/evals/p10-search/`, `packages/agent/src/chat/instructions.ts` (`WORK_WORDS`, the bot-check and rate-limit lines),
+`scripts/preview-slot/test-host.mjs`, `test-host-sites.mjs` and `test-host-p5.mjs` as the pattern for a probe page,
+`docs/runbooks/evals.md`, `docs/plan-v2/QUESTIONS.md` Q18, `docs/decisions/0029-search-places-images-are-owner-connected.md`
+(proposed: the line says what is missing in words and names no code until it is accepted). No one-way door. A live
+step: `pnpm evals` runs on this worktree's slot (`pnpm preview up`); if no slot can be leased, that is a question, not
+a reason to skip.
+
+**Scope:** (1) One instruction line in `WORK_WORDS` (delta 1): this deploy has no web search, places search, image or
+video generation and reads no social network; asked for one, say so in plain words, give no address, place, figure
+as current, handle or file that no tool returned, write no stand-in, and offer to read a page the person names. Its
+wording is tuned only against T-P10-09 to T-P10-13 and named in the PR body with each task it serves. (2) The slot's
+test host serves `https://<slot>/fixtures/p10-orders` (the page instructions of T-P10-03 and one real link) and
+`https://<slot>/fixtures/p10-probe` from `scripts/preview-slot/test-host-p10.mjs`, recording every request, beside
+the existing `walled.test`. (3) Tier 2 on the slot: T-P10-03, T-P10-09, T-P10-10 and T-P10-11 (must-have), T-P10-05,
+T-P10-12 and T-P10-13 (nice-to-have), three trials each, the results files committed, the table in the PR body.
+(4) Every P10 hash in the contract matches its file.
+
+**Acceptance:** `pnpm evals T-P10-03`, `T-P10-09`, `T-P10-10` and `T-P10-11` `pass` (three of three); T-P10-05,
+T-P10-12 and T-P10-13 run and their results recorded whatever the verdict; `ACCEPT F91: PASS`;
+`VERIFIER: no blocking findings`.
+
+**Not in scope:** a search, places, image or social capability or its code (D-0029); a code-written reply line (Q18);
+new instruction lines beyond the one, unless a failing must-have needs a second, named in the PR body with its task;
+the live lane on a slot (the test host has no live browser); a change to a clause.
+
+## F92 The surfaces of search and media as specimens: the source link card, the browser card, the places map and the image card
+
+**Read:** `docs/plan-v2/contracts/P10-search-browser-media.md` (B-P10-02, B-P10-08, B-P10-11, B-P10-12, B-P10-13,
+B-P10-17, delta 8, the Properties' "browser as a separate machine" row, open for the card), the captures it cites
+(`step-1-dom.md`, `step-1.png`, `step-1-phone.png`, `step-2-dom.md`, `step-4-browser-panel.png`,
+`step-4-browser-panel-phone.png`, `step-6-dom.md`, `step-6.png`, `step-6-phone.png`, `step-7-dom.md`,
+`step-7-library.png`, `step-11-reload-search-phone.png`, `step-11-reload-places.png`, on Kyle's Mac under
+`docs/plan-v2/evidence/p10-search/`), the design §4.5, the existing specimens in
+`packages/agent/src/design/fletch/ds/specimens/` (`loop-status.html`, `task-drawer.html`) and the bundle's tokens. No
+one-way door: specimens draw nothing live.
+
+**Scope:** (1) One specimen file `packages/agent/src/design/fletch/ds/specimens/search-media.html`, built from the
+bundle's CSS and tokens alone, reproducing muse.ai's layout, order and states in fletch's own tokens and words, at
+desktop and phone width and in both themes: the source link card under an answer (the page's name, its host, a
+language tile or a preview image, with the reply's inline link beside it; B-P10-02); the browser card in the thread
+(a globe tile, "Browser", the state word from P5's one words table and the task's title, a page thumbnail, an open
+control; B-P10-08) and its panel with the take-over control; the places list and map card (each place's name, rating,
+price, category and an open state with the time it was read, never a bare "Open"; B-P10-11, B-P10-12); the generated
+image card (a square thumbnail as its own bubble with its name, the Library's Images tile beside it; B-P10-13). Each
+state the captures show, and the state the contract adds (the open state's time). (2) A `[F92]` test that the
+specimen file exists, names each of the four blocks by a heading and uses only the bundle's classes and tokens.
+(3) One `look` item per block in `docs/plan-v2/WAITING-ON-KYLE.md`, each with its capture and the clause it serves.
+
+**Acceptance:** the specimen renders at 1280 and 390 px in both themes with no class outside the bundle; the `[F92]`
+test passes; `pnpm check` green; `ACCEPT F92: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** drawing any of the four in the live thread or Library (a later part after Kyle's look, and for the
+map and the image card after D-0029); a capability behind them; a change to a clause.

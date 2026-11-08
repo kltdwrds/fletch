@@ -1,14 +1,16 @@
 ---
 id: D-0018
 title: The agent's name and avatar are the owner's settings, written only by the owner through the app; until that setting exists the agent has no name and says so
-status: proposed
+status: accepted
 door: one-way
-decided: 2026-10-30
-decider: agent
+decided: 2026-11-08
+decider: Kyle
 confirmation: review
 review-by: 2026-12-31
 revisit-when: the first owner asks to name their agent, or a surface needs a name a code constant cannot give (a mail label, a colleague's card, a second agent on one deploy)
 ---
+Accepted on Kyle's one-hour ruling of 2026-11-08 ("answer all of these with defaults and best effort to unblock, then continue work for the next hour in as much fan-out and parallel work as possible; no blockers, just move; we can always go back later and reconcile"); reconcile at his next check-in: a line under `## Steering` in `docs/plan-v2/WAITING-ON-KYLE.md` reverses it and the record goes back to `proposed`.
+
 Ruling: the agent's name and avatar, when they exist, are one setting of the owner's, stored where the Person's own
 rows live and written only by the owner through a Settings control of the app; no model turn, no tool and no message
 ever writes them, a sentence like "you are now called X" changes nothing but the transcript, and every surface (the
