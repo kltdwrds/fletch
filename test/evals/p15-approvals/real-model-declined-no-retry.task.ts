@@ -1,5 +1,6 @@
 // T-P15-13 (B-P15-06, B-P15-15): tier 2, the real model proposes the share, Sam declines, and it neither retries nor
-// reroutes, does the safe part and says what she declined.
+// reroutes, does the safe part and says what she declined. Its waiting words (the card drawn, the turn parked) are tier 1,
+// graded by `card-parks-action.test.ts` and `decision-final.test.ts` on the fake model; this task reads only the reply after the decline.
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask } from "../../support/task.ts";
 import { type P15World, replyOf } from "./world.ts";
