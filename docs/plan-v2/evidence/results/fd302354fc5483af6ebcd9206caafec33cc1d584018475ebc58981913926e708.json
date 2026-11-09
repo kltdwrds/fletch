@@ -1,0 +1,32 @@
+{
+  "task_id": "T-P8-13",
+  "cluster": "P8",
+  "version_hash": "fd302354fc5483af6ebcd9206caafec33cc1d584018475ebc58981913926e708",
+  "runs": [
+    {
+      "run_at": "2026-11-09T01:47:24.084Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-09T01:47:24.084Z",
+          "finished_at": "2026-11-09T01:48:08.791Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-09T01:48:08.791Z",
+          "finished_at": "2026-11-09T01:48:38.733Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-09T01:48:38.733Z",
+          "finished_at": "2026-11-09T01:49:09.609Z"
+        }
+      ],
+      "status": "pass"
+    }
+  ]
+}
