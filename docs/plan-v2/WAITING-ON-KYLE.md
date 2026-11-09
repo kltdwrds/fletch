@@ -21,9 +21,35 @@ Rulings the orchestrator took for Kyle under Kyle's one-hour ruling of 2026-11-0
 - D-0017 accepted (no payment instrument): `docs/decisions/0017-no-payment-instrument.md`, this file.
 - D-0018 accepted (the agent's name is the owner's setting): `docs/decisions/0018-agent-name-is-the-owners-setting.md`, this file.
 - Every default taken on 2026-11-07 stands (Q12, Q13, Q16, Q18, Q19, Q29, Q30, Q31, Q39, Q40, the F1 fold): this file (the items ticked).
+- F60 merged BLOCKED on Q60 (its page test reads served markup, not Chromium; the default sends the Chromium run to F61): `PROGRESS.md`, `QUESTIONS.md` (Q60), PR #154.
+- F80 merged BLOCKED on the verifier's kept-login finding (the test world seeds no login for the shop host): `PROGRESS.md`, PR #152.
+- D-0028 (P11: Library versions and a trash), D-0029 (P10: search, places and images as owner-connected capabilities) and D-0030 (F56: the renderer's container on a paid deploy) are proposed, `decider: agent`, built on by nothing yet: `docs/decisions/`, PR #148, PR #150.
+- F56, F59, F70, F90 and F100 are built and BLOCKED at the run's stop, each a draft PR, each accept failed only on load timeouts (the machine ran seven suites at once) or, for F90, on three tier-1 runs not written; their accept runs were re-dispatched on the GitHub accept runner: `PROGRESS.md`, PRs #150, #147, #153, #156, #155.
 - Not taken, still yours: D-0011's own commit, the UAT looks, the Muse leftovers, the Muse sign-in, the tarball on your Mac.
 
 ## Open
+
+- [ ] 2026-11-09 decide: **D-0030 (proposed): the renderer's pandoc container runs on a paid deploy, and the preview pool's token
+  needs the Containers scope for tier 2.** F56 (PR #150, draft) wires `render` into the single-account host from a `RENDERER`
+  binding and refuses `HOST_RENDER_UNAVAILABLE` without it; the container is a spend on your account, so `RENDERER_ON_PAID`
+  stays `false` until you accept D-0030. `pnpm preview up --paid` was refused by the slots token (`Forbidden` on the
+  containers API), so "Make me an artifact: about you" never ran. What your answer changes: accept flips the flag and its
+  test; the token gets the Containers scope by `pnpm preview token` on your Mac after the policy gains it. Recommended:
+  accept, and widen the token once. The record sits on PR #150's branch until it merges.
+  [PR #150](https://github.com/kltdwrds/fletch/pull/150).
+
+- [ ] 2026-11-09 question: **Q51 (F90) and Q51 (F56) collide, and Q60 (F60) sits far from its neighbours: the branches
+  numbered their questions apart.** F90's Q51 (T-P10-01 and T-P10-02 differ from their contract blocks; three tier-1 runs
+  owed, a split F90.2 recommended) and F56's Q51 (D-0030) both exist on their branches; the next session renumbers one to
+  Q52 at merge. Nothing to decide; a read.
+
+- [ ] 2026-11-09 look: **the one-hour run's five blocked parts, for the next session to finish, not for you.** F56, F59,
+  F70, F90 and F100 each have a draft PR with a Reconcile section; their accept runs on the GitHub accept runner were
+  dispatched at the run's end and their results land in the Actions tab; a fresh Opus verifier is owed on each passing
+  tree. F59 also waits on your read of T-P9-05's graders (moved to read by turn, beyond its scope) and T-P9-14 at 2 of 3.
+  [PR #150](https://github.com/kltdwrds/fletch/pull/150), [#147](https://github.com/kltdwrds/fletch/pull/147),
+  [#153](https://github.com/kltdwrds/fletch/pull/153), [#156](https://github.com/kltdwrds/fletch/pull/156),
+  [#155](https://github.com/kltdwrds/fletch/pull/155).
 
 - [ ] 2026-11-08 look: **one live slot on main for every uat item below: https://fletch-pv-1.edwards-ky1.workers.dev,
   leased to 2026-11-10T12:15Z.** The overnight orchestrator deployed main at 3f57aee (every merged part through F52; F53, merged after it at 3ac3b02,
