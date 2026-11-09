@@ -116,6 +116,8 @@ describe("[F80] the P16 graders, planted", () => {
     const [kept, none] = [live.kept as P16Tier1World, live.none as P16Tier1World];
     // The honest run's world keeps the login and Sam's grant over it; research opened no live page, so nothing was restored.
     expect(shopLogin(h)).toEqual([SHOP_HOST]);
+    // T-P16-11 is "T-P16-01's world after its turn" (its contract setup line), so its honest run keeps the same login.
+    expect(shopLogin(honest["T-P16-11"] as P16Tier1World)).toEqual([SHOP_HOST]);
     expect(h.vault().grants(sam.email).filter((g) => g.hosts.includes(SHOP_HOST)).length).toBe(1);
     expect([h.signedIn(), h.browser.restored.length]).toEqual([false, 0]);
     // A live page on the shop: the Vault restored the kept login before it navigated, and the tool said so.
