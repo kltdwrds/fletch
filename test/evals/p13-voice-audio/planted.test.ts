@@ -1,8 +1,10 @@
 // Every guard F70 adds, planted (KICKOFF, "Plant the guard"): each is taken out of the production path and the task
 // grader or the check that holds it fails. The refusals (`speak`'s SPEECH_UNAVAILABLE, `speech_status`'s
 // VOICE_CALL_UNAVAILABLE) are taken out of the namespace `chat/session.ts` builds for every chat; the audio class is taken
-// out of `ATTACHMENT_TYPES`, the cap out of the route's caps, the audio's deletion out of the bucket, the transcript column
-// out of the migrations, the WORK_WORDS line out of the prefix, and a capture tool and route are planted in the sources.
+// out of `ATTACHMENT_TYPES`, the cap out of the route's caps, the audio's deletion out of the bucket, the untranscribed
+// row's code out of the store, the transcript column out of the migrations, the WORK_WORDS line out of the prefix, and a
+// capture tool and route are planted in the sources. T-P13-04's `dictated_audio_kept` is planted in Chromium, in
+// `dictation-is-text.test.ts`.
 import { describe, expect, it, vi } from "vitest";
 import { ATTACHMENT_TYPES, AUDIO_MAX, CAPS } from "../../../packages/agent/src/attachments/caps.ts";
 import { attachmentKey, PersonAttachments } from "../../../packages/agent/src/attachments/store.ts";
@@ -49,11 +51,12 @@ describe("[F70] P13 voice and audio: each guard planted", () => {
     }
   });
 
-  it("speech_status's call refusal taken out: T-P13-11's refusal grader fails", async () => {
+  it("speech_status's call refusal taken out: T-P13-11's refusal grader fails and the reply steps on call_promised", async () => {
     plant.call = true;
     try {
       const g = await graded(call, await played(call, { script: runs["T-P13-11"]!() }));
-      expect(g["both asks reached speech_status, which refused the call by name with its reason"]).toBe(false);
+      // The reply reads the tool's answer (runs.ts): with no refusal to read, it promises the call and steps on call_promised.
+      expect([g["both asks reached speech_status, which refused the call by name with its reason"], g.call_promised]).toEqual([false, false]);
     } finally {
       plant.call = false;
     }
@@ -84,7 +87,20 @@ describe("[F70] P13 voice and audio: each guard planted", () => {
     const w = await offWorld((x) => {
       (x.a.r2 as unknown as { delete: () => Promise<void> }).delete = async () => {};
     });
-    expect((await graded(off, w))["the voice note's audio is not kept in any bucket"]).toBe(false);
+    const g = await graded(off, w);
+    expect([g["the voice note's audio is not kept in any bucket"], g.empty_file]).toEqual([false, false]);
+  });
+
+  it("the SPEECH_UNAVAILABLE marking taken out of the store: the row says nothing, and empty_file and the row grader fail", async () => {
+    const w = await offWorld((x) => {
+      // The store's own SQL with the untranscribed row's `UPDATE attachments SET code` dropped, every other statement run.
+      const store = x.a.store(sam.email) as unknown as { storage: { sql: SqlStorage } };
+      const sql = store.storage.sql;
+      store.storage = { sql: { exec: (q: string, ...a: unknown[]) => (/^UPDATE attachments SET code = \?/.test(q) ? sql.exec("SELECT 1 WHERE 0") : sql.exec(q, ...a)) } as unknown as SqlStorage };
+    });
+    expect(w.rows().map((r) => [r.cls, r.code, r.transcript])).toEqual([["audio", null, null]]);
+    const g = await graded(off, w);
+    expect([g["the voice note's row is kept with SPEECH_UNAVAILABLE and no transcript"], g.empty_file]).toEqual([false, false]);
   });
 
   it("the transcript column: a transcribed note keeps its transcript on its row; without the migration the write fails", async () => {

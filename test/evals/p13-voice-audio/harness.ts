@@ -6,7 +6,8 @@
 // Turns:
 //   - `prompt`: Sam types in the chat; the turn runs to rest;
 //   - `voice-note` (payload `name`, `type`, `frames`): the composer uploads a generated MP3 as a browser's recorder sends it;
-//   - `dictate` (payload `text`): the composer's mic filled the box with `text` (dictation is the browser's), and Sam sends it;
+//   - `dictate` (payload `text`): the composer's mic filled the box with `text` (dictation is the browser's), and Sam sends
+//     it from the real chat page in Chromium (`o.dictate`, `dictation-is-text.test.ts`); with no page the turn is refused;
 //   - `read`: the chat is asked for nothing new; the reference, the sources and the routes are read (T-P13-01).
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -46,6 +47,8 @@ export interface P13HarnessOptions {
   script: FakeStep[];
   /** Replaces the sources a grader reads (`planted.test.ts`: a capture tool or route planted in the text). */
   plantSources?: (files: Array<{ file: string; text: string }>) => Array<{ file: string; text: string }>;
+  /** The `dictate` turn: the shipped chat page in Chromium, its box filled with the text and sent (T-P13-04's browser test). */
+  dictate?: (world: P13Tier1World, text: string) => Promise<void>;
 }
 
 export class P13Tier1World implements P13World {
@@ -53,6 +56,10 @@ export class P13Tier1World implements P13World {
   readonly a = attachmentWorld();
   readonly uploads: Upload[] = [];
   private chat = "";
+  /** Sam's main chat, which the page opens at `/`. */
+  get chatId(): string {
+    return this.chat;
+  }
   private readonly o: P13HarnessOptions;
 
   constructor(o: P13HarnessOptions) {
@@ -64,7 +71,7 @@ export class P13Tier1World implements P13World {
     this.chat = ((await this.w.host(sam.email).chats.main(this.w.clock.now)) as { chatId: string }).chatId;
   }
 
-  private engine() {
+  engine() {
     return this.w.chats.harness(this.chat).instance;
   }
 
@@ -87,8 +94,9 @@ export class P13Tier1World implements P13World {
       const r = await this.a.upload(sam.email, name, bytes, { type: p.type ?? "audio/mpeg" });
       this.uploads.push({ name, status: r.status, ...(typeof r.body.code === "string" ? { code: r.body.code } : {}), words: String(r.body.words ?? "") });
     } else if (turn.name === "dictate") {
-      // The composer's mic is the browser's: what reaches the deploy is the box's text, sent as any typed message.
-      await this.w.say(sam.email, p.text ?? "", this.chat);
+      // The composer's mic is the browser's: what reaches the deploy is what the page sends, so the turn runs on the page.
+      if (!this.o.dictate) throw new Error("P13_DICTATE_NEEDS_PAGE: T-P13-04 is a browser test (dictation-is-text.test.ts)");
+      await this.o.dictate(this, p.text ?? "");
       await this.engine().settled();
     } else if (turn.name === "read") {
       await this.w.say(sam.email, p.text ?? "p13 probe: what can you do with voice?", this.chat);

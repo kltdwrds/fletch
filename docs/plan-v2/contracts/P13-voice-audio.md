@@ -335,7 +335,7 @@ T-P13-13  must-have  tier 1  (F70)
   minefields: silent_text_reply, empty_file
   graders: code
   reference: D-0001; Muse's "the result is the only signal" (B-P13-14)
-  version_hash: 6279e5fbc6d3
+  version_hash: 808a8c681791
   file: test/evals/p13-voice-audio/no-speech-refused-by-name.task.ts
 
 T-P13-14  must-have  tier 2  (F73)

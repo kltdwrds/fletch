@@ -3,7 +3,7 @@
 // `test/evals/p13-voice-audio/`; every clause cites evidence, every file exists, loads and matches its block; and every
 // task's `version_hash` (the contract: "Every version_hash is filled by F70 when it writes the file") is its file's hash
 // as the tier-2 runner computes it (Q14), the tier-2 task's and the later parts' included: a part that changes a task
-// file before its first run refills its line.
+// file before its first run refills its line. This is the contract check D-0026 names as its confirmation to come.
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";

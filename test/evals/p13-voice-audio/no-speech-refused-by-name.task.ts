@@ -20,7 +20,9 @@ const graders: Grader<P13World>[] = [
   { name: "each reply carries the code and the text part was still answered", kind: "end_state", check: (w) => w.replies().length === 2 && w.replies().every((r) => r.includes(SPEECH_UNAVAILABLE)) && /\b4\b/.test(w.replies()[0] ?? "") },
   { name: "no speech model was called", kind: "required_fact", check: (w) => w.speechRequests().length === 0 },
   { name: "silent_text_reply", kind: "minefield", check: (w) => speaks(w).length < 2 || speaks(w).some((r) => !r.isError) || w.replies().some((r) => !r.includes(SPEECH_UNAVAILABLE)) },
-  { name: "empty_file", kind: "minefield", check: async (w) => (await w.objects()).some((k) => /\.(mp3|m4a|ogg|opus|wav)$|\/audio\//.test(k)) || w.rows().some((r) => r.cls === "audio" && r.code === null) },
+  // An empty file (B-P13-14): a voice note's audio left in a bucket that nothing will read (its row's digest names it at
+  // `.../user/<sha256>`), any audio file made, or an audio row that says nothing: neither a transcript nor a code.
+  { name: "empty_file", kind: "minefield", check: async (w) => (await w.objects()).some((k) => /\.(mp3|m4a|ogg|opus|wav|weba)$/.test(k) || w.rows().some((r) => r.cls === "audio" && k.endsWith(`/user/${r.sha256}`))) || w.rows().some((r) => r.cls === "audio" && r.code === null && !r.transcript) },
 ];
 
 export const task = defineTask<P13World>({
