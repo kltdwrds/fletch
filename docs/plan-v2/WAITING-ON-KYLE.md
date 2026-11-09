@@ -54,6 +54,34 @@ Rulings the orchestrator took for Kyle under Kyle's one-hour ruling of 2026-11-0
   [#155](https://github.com/kltdwrds/fletch/pull/155), [#158](https://github.com/kltdwrds/fletch/pull/158),
   [#159](https://github.com/kltdwrds/fletch/pull/159).
 
+- [ ] 2026-11-09 look: **the source link card (F92, B-P10-02, B-P10-17).** Under an answer that relied on a page, the
+  reply links the page by its own name and a card follows as its own bubble with the same address: the page's language
+  as a tile (Muse's "EN"), the page's name, its host; once a preview image is read, the image above the name (Muse's
+  card after the reload). A reply with no page read names none. Your call: fine, or notes; a later part draws it live.
+  Captures: `docs/plan-v2/evidence/p10-search/step-1-dom.md`, `step-1.png`, `step-1-phone.png`, `step-11-reload-search-phone.png`. Specimen: `packages/agent/src/design/fletch/ds/specimens/search-media.html` (light and dark, 1280 and a 390 stage), the bundle block "Search and media (chat), P10" in `packages/agent/src/design/fletch/ds/components/bundle.css`, `test/workers/f92-search-media-specimen.test.ts`; F92, drawn from fixture data under Kyle's one-hour ruling of 2026-11-08 ("no blockers, just move; we can always go back later and reconcile"), nothing live, no provider (D-0029 stays proposed).
+  [B-P10-02](contracts/P10-search-browser-media.md#clauses).
+
+- [ ] 2026-11-09 look: **the browser card and its panel (F92, B-P10-08, delta 8).** In the thread before the reply: a
+  globe tile, "Browser", the state in the Activity table's words ("Running", "Complete", not Muse's "Completed") and
+  the task's title, the page's thumbnail, "Open the browser" (Muse's "Open preview"). The panel beside the thread: the
+  title, the state and host, "Take control of the browser", the page under its address, and a line saying it is the
+  agent's own browser, this chat's, closed when idle, seen only by you. No window list (delta 5). Your call: fine, or
+  notes; a later part draws it after this look. Captures: `docs/plan-v2/evidence/p10-search/step-2-dom.md`, `step-4-browser-panel.png`,
+  `step-4-browser-panel-phone.png`. Specimen: `packages/agent/src/design/fletch/ds/specimens/search-media.html` (light and dark, 1280 and a 390 stage), the bundle block "Search and media (chat), P10" in `packages/agent/src/design/fletch/ds/components/bundle.css`, `test/workers/f92-search-media-specimen.test.ts`; F92, drawn from fixture data under Kyle's one-hour ruling of 2026-11-08 ("no blockers, just move; we can always go back later and reconcile"), nothing live, no provider (D-0029 stays proposed). [B-P10-08](contracts/P10-search-browser-media.md#clauses).
+
+- [ ] 2026-11-09 look: **the places list and map card (F92, B-P10-11, B-P10-12).** The reply names each place by its
+  exact address and the hours read; the card draws the map once with a pin per place and the list over its corner:
+  name, rating, price, category and an open state with the time it was read ("Open · checked 2:45 PM"), never Muse's
+  bare "Open"; after a reload, "Open when checked, 2:45 PM on 8 Nov". Your call: the wording of the two open states.
+  Drawn live only after D-0029. Captures: `docs/plan-v2/evidence/p10-search/step-6-dom.md`, `step-6.png`, `step-6-phone.png`,
+  `step-11-reload-places.png`. Specimen: `packages/agent/src/design/fletch/ds/specimens/search-media.html` (light and dark, 1280 and a 390 stage), the bundle block "Search and media (chat), P10" in `packages/agent/src/design/fletch/ds/components/bundle.css`, `test/workers/f92-search-media-specimen.test.ts`; F92, drawn from fixture data under Kyle's one-hour ruling of 2026-11-08 ("no blockers, just move; we can always go back later and reconcile"), nothing live, no provider (D-0029 stays proposed). [B-P10-11, B-P10-12](contracts/P10-search-browser-media.md#clauses).
+
+- [ ] 2026-11-09 look: **the image card and the Library's Images tile (F92, B-P10-13).** The reply says what was made,
+  that it was checked and where it is kept; the image follows as its own square bubble with its name, and the
+  Library's Images grid holds the same file once as a square tile. Muse's bubble shows no name; the part's scope asks
+  for one, drawn small under the square. Your call: keep the name or drop it. Drawn live only after D-0029. Captures:
+  `docs/plan-v2/evidence/p10-search/step-7-dom.md`, `step-7-library.png`. Specimen: `packages/agent/src/design/fletch/ds/specimens/search-media.html` (light and dark, 1280 and a 390 stage), the bundle block "Search and media (chat), P10" in `packages/agent/src/design/fletch/ds/components/bundle.css`, `test/workers/f92-search-media-specimen.test.ts`; F92, drawn from fixture data under Kyle's one-hour ruling of 2026-11-08 ("no blockers, just move; we can always go back later and reconcile"), nothing live, no provider (D-0029 stays proposed). [B-P10-13](contracts/P10-search-browser-media.md#clauses).
+
 - [ ] 2026-11-09 look: **F93 is the next part on P10, and the translations' remaining parts wait for a builder.** F93
   (T-P10-07, 08 and 14 under tier 1 with a per-chat browse hook) is written in `parts.md` with a TODO row; F61, F71 to
   F73, F81 onward, F91, F92 and F101 to F103 are translated and unbuilt. Nothing to decide; the next session's queue.
