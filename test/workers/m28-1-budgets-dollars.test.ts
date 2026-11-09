@@ -26,7 +26,8 @@ const storageOf = (o: object) => (o as unknown as { ctx: { storage: Storage } })
 
 describe("[M28.1] the defaults", () => {
   it("the default is $2 a person and $20 a tenant a day, and the amounts read as dollars", () => {
-    expect(DEFAULT_BUDGETS).toEqual({ personDailyMicros: 2_000_000, tenantDailyMicros: 20_000_000 });
+    // F71 adds the month's speech cap, $5 (D-0026).
+    expect(DEFAULT_BUDGETS).toEqual({ personDailyMicros: 2_000_000, tenantDailyMicros: 20_000_000, tenantSpeechMonthlyMicros: 5_000_000 });
     expect([dollars(2_000_000), dollars(2_000_400), dollars(150), dollars(0), dollars(4_010_000)]).toEqual(["$2.00", "$2.0004", "$0.00015", "$0.00", "$4.01"]);
   });
 });
@@ -79,7 +80,7 @@ describe("[M28.1] the Company stops overriding the environment", () => {
     expect(set.body).toMatchObject({ settings: { budgets: { personDailyMicros: 500_000, tenantDailyMicros: DEFAULT_BUDGETS.tenantDailyMicros }, budgetsSet: { personDailyMicros: 500_000 } } });
     expect(w.ledger().budgetsSet()).toEqual({ personDailyMicros: 500_000 });
     await w.http(ada.email, "PUT", "/admin/settings", { modelTier: "economy" });
-    expect(w.ledger().budgets()).toEqual({ personDailyMicros: 500_000, tenantDailyMicros: DEFAULT_BUDGETS.tenantDailyMicros });
+    expect(w.ledger().budgets()).toEqual({ personDailyMicros: 500_000, tenantDailyMicros: DEFAULT_BUDGETS.tenantDailyMicros, tenantSpeechMonthlyMicros: DEFAULT_BUDGETS.tenantSpeechMonthlyMicros });
     await w.ledger().record(call(other.email, 500_000));
     expect(await w.ledger().admit({ person: other.email, runId: "x" })).toMatchObject({ ok: false, code: "BUDGET_PERSON_EXHAUSTED", reason: expect.stringContaining("of $0.50 today") });
 
@@ -96,7 +97,7 @@ describe("[M28.1] the Company stops overriding the environment", () => {
     await expect(ledger.setBudgets({ tenantDailyMicros: -1 })).rejects.toThrow(/BUDGETS_INVALID/);
     await ledger.setBudgets({ personDailyMicros: 7, tenantDailyMicros: 9 });
     expect(await ledger.setCompanyPolicy({ budgets: { tenantDailyMicros: 11 }, modelTier: "standard", disabled: [] })).toMatchObject({ budgets: { tenantDailyMicros: 11 } });
-    expect(ledger.budgets()).toEqual({ personDailyMicros: DEFAULT_BUDGETS.personDailyMicros, tenantDailyMicros: 11 });
+    expect(ledger.budgets()).toEqual({ personDailyMicros: DEFAULT_BUDGETS.personDailyMicros, tenantDailyMicros: 11, tenantSpeechMonthlyMicros: DEFAULT_BUDGETS.tenantSpeechMonthlyMicros });
   });
 });
 
@@ -133,7 +134,7 @@ describe("[M28.1] the token budgets are migrated away", () => {
     const storage = storageOf(h.instance);
     expect(migrate(storage, LEDGER_MIGRATIONS)).toEqual({ applied: ["ledger.budgets-dollars"] });
     expect(h.rows("SELECT key, value FROM budgets ORDER BY key")).toEqual([{ key: "personDailyMicros", value: 3_000_000 }]);
-    expect(h.instance.budgets()).toEqual({ personDailyMicros: 3_000_000, tenantDailyMicros: DEFAULT_BUDGETS.tenantDailyMicros });
+    expect(h.instance.budgets()).toEqual({ personDailyMicros: 3_000_000, tenantDailyMicros: DEFAULT_BUDGETS.tenantDailyMicros, tenantSpeechMonthlyMicros: DEFAULT_BUDGETS.tenantSpeechMonthlyMicros });
     expect(migrate(storage, LEDGER_MIGRATIONS)).toEqual({ applied: [] });
     expect(h.rows("SELECT release FROM migrations WHERE name = 'ledger.budgets-dollars'")).toEqual([{ release: "m28.1" }]);
   });

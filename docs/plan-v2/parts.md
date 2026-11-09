@@ -1462,6 +1462,12 @@ minefield fails without its guard; F70's tasks still pass; `pnpm check` and the 
 row); a podcast episode's two-voice render (F72); a feed or a call (D-0026); keeping voice-note audio (D-0026); a
 person-wide trash or a sweep (P4); a model other than the two named; tier 2 (F73); a change to a clause.
 
+**Split (the builder, 2026-11-09, under Kyle's one-hour ruling of 2026-11-08):** scope item (6) and T-P13-08 move to
+F74. F101 owns `share_revoke` (a revoke that deletes the share's row and pointer, answering `SHARE_UNKNOWN`), while
+item (6) asks a revoke that sets the expiry to now (`SHARE_EXPIRED`); building either here would take F101's scope and
+settle that difference in passing. F71 runs T-P13-02, 03, 05, 06, 07's record half, 09, 12 and 15 under `[F71]`
+(`test/evals/p13-voice-audio/speech.test.ts`, its plants in `planted-f71.test.ts`); T-P13-08 stays skipped by name.
+
 ## F72 Audio the person can see: the chat audio item, the Library's Audio section, the Settings Voice row and the episode
 
 **Read:** `docs/plan-v2/contracts/P13-voice-audio.md` (B-P13-05, B-P13-07, B-P13-10, B-P13-11, the Translation's
@@ -1504,6 +1510,24 @@ hash in the contract matches.
 **Acceptance:** `pnpm evals T-P13-14` `pass` (three of three); `ACCEPT F73: PASS`; `VERIFIER: no blocking findings`.
 
 **Not in scope:** a change to a clause; another model; raising the slot's cap beyond $1 without a question.
+
+## F74 Audio shares: a card for each share of an audio file and the revoke, after F101
+
+**Read:** `docs/plan-v2/contracts/P13-voice-audio.md` (B-P13-08, B-P13-09, T-P13-08), F71's section and its split note, F101's section (`share_list`, `share_revoke`), the F70 and F71 world and
+harness under `test/evals/p13-voice-audio/`, `share-needs-a-card-and-can-be-revoked.task.ts`, `packages/agent/src/render/tools.ts`
+(`share_document`), `packages/agent/src/files/links.ts`. No one-way door beyond D-0026.
+
+**Scope:** (1) The P13 harness offers the `documents` namespace, a `press` turn that approves the pending card as Sam,
+and the world's `cards()` and `shares()` (each share's path, its end and what its public link answers). (2) An audio
+file under `audio/` is shared through `share_document`'s card each time, the share item naming its end. (3) The revoke
+is F101's `share_revoke`; T-P13-08's `SHARE_EXPIRED` and F101's `SHARE_UNKNOWN` are reconciled before the first run (a
+grader refined before any run is not an oracle correction), by a question if they differ. (4) T-P13-08 runs under an
+`[F74]` describe with its minefields planted.
+
+**Acceptance:** T-P13-08 passes under vitest and each planted minefield fails without its guard; F70's and F71's tasks
+still pass; `pnpm check` and the hermetic suite green; `ACCEPT F74: PASS`; `VERIFIER: no blocking findings`.
+
+**Not in scope:** `share_list` and `share_revoke` themselves (F101); any surface (F72); a change to a clause.
 
 ## F100 Files as they are: the P11 contract check, eighteen task files, an edit that says it replaced, a listing with its time, and tier 1
 

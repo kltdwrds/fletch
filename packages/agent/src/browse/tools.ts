@@ -199,6 +199,7 @@ export function browseNamespace(deps: BrowseDeps): Namespace {
     name: "browse_keep_site",
     kind: "observation",
     mutates: true,
+    asksAfterExternal: true,
     label: "Keep this site's login",
     description:
       "Keep the login of the live page's site, sealed in the person's vault, so a later live session can start signed in. It is restored only under the person's own grant for that site, which they give in settings; you never see it.",
@@ -210,7 +211,7 @@ export function browseNamespace(deps: BrowseDeps): Namespace {
       if (!g.ok) throw err(g.code, g.reason);
       const r = await deps.logins.save({ session, url: g.page.url });
       if (!r.ok) throw err(r.code, r.reason);
-      return text(`LOGIN_KEPT: the login for ${r.site} is sealed in the person's vault. A new live session restores it only once they grant its use for ${r.site} in settings.`, { site: r.site });
+      return text(`LOGIN_KEPT: the login for ${r.site} (${r.cookies} ${r.cookies === 1 ? "cookie" : "cookies"}) is sealed in the person's vault. A new live session restores it only once they grant its use for ${r.site} in settings.`, { site: r.site });
     },
   };
   return {

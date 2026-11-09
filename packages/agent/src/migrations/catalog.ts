@@ -3,6 +3,7 @@
 // only: a released name is never edited or reordered. Baselines carry the release they were folded in at (`m25.2`, the
 // last release with lazy schema); a later change carries its own.
 import { SCHEMA as ATTACHMENTS } from "../attachments/store.ts";
+import { SCHEMA as AUDIO } from "../speech/audio.ts";
 import { COLUMNS as DELIVERY_COLUMNS, SCHEMA as DELIVERY } from "../delivery/service.ts";
 import { SCHEMA as FILES } from "../files/store.ts";
 import { SCHEMA as LINKS } from "../files/links.ts";
@@ -76,6 +77,8 @@ export const PERSON_MIGRATIONS: readonly Migration[] = [
   schema("person.browse", B, "CREATE TABLE IF NOT EXISTS browse_domains (domain TEXT PRIMARY KEY, engine TEXT, state TEXT NOT NULL, code TEXT, at INTEGER NOT NULL)"),
   // A voice note's transcript on its attachment row (F70, P13 delta 2, D-0026): the transcript is kept, the audio is not.
   addColumns("person.attachments-transcript", "f70", "attachments", { transcript: "TEXT" }),
+  // The audio record and the voice (F71, D-0026): a piece read aloud is a row naming its file and source; the voice is the person's.
+  schema("person.audio", "f71", AUDIO),
 ];
 
 export const COMPANY_MIGRATIONS: readonly Migration[] = [

@@ -9,21 +9,20 @@ import t08 from "./kept-sign-in-on-ask.task.ts";
 import t01 from "./page-read-names-source.task.ts";
 import t02 from "./page-words-are-data.task.ts";
 import t06 from "./read-is-now.task.ts";
-import { runs } from "./runs.ts";
+import { f93Runs, runs } from "./runs.ts";
 import t04 from "./wall-stops-the-site.task.ts";
 
 describe("[F90] P10 search and the browser as they are: tier 1", () => {
   for (const t of [t01, t02, t04, t06, t15]) describe(t.id, () => runTask(t, p10Harness(runs[t.id]!())));
 });
 
-// T-P10-07, 08 and 14 run in F93 (parts.md, the split of 2026-11-09): their files load here, and each read they need
-// refuses by name rather than answering empty.
-describe("[F90] the reads F93's tasks need refuse until F93", () => {
-  it("the three task files load, and each read throws P10_READ_NOT_IN_HARNESS", async () => {
-    expect([t07.id, t08.id, t14.id]).toEqual(["T-P10-07", "T-P10-08", "T-P10-14"]);
-    for (const t of [t07, t08, t14]) expect(t.versionHash()).toMatch(/^[0-9a-f]{64}$/);
+// T-P10-07, 08 and 14 (F93, split from F90 on 2026-11-09): each runs over the per-chat browse hook its world wires.
+describe("[F93] P10 the per-chat session, the Ledger's browser time and the restore grant: tier 1", () => {
+  for (const t of [t07, t08, t14]) describe(t.id, () => runTask(t, p10Harness(f93Runs[t.id]!())));
+
+  it("a read the world does not wire still refuses by name, never answering empty", async () => {
     const w = await played(t01, runs["T-P10-01"]!());
-    for (const read of [() => w.liveSession(), () => w.browserTime(), () => w.kept(), () => w.jobRuns()]) await expect(read()).rejects.toThrow(/^P10_READ_NOT_IN_HARNESS: /);
+    for (const read of [() => w.kept(), () => w.jobRuns()]) await expect(read()).rejects.toThrow(/^P10_READ_NOT_IN_HARNESS: /);
     for (const read of [() => w.restoreResult(), () => w.jobRequests()]) expect(read).toThrow(/^P10_READ_NOT_IN_HARNESS: /);
   });
 });

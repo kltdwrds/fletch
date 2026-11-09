@@ -7,12 +7,14 @@ import type { Admission, AdmitResult } from "./types.ts";
 export interface Budgets {
   tenantDailyMicros: number;
   personDailyMicros: number;
+  /** The tenant's speech spend in a UTC calendar month (P13, D-0026): route `speech` alone counts against it. */
+  tenantSpeechMonthlyMicros: number;
 }
-export const BUDGET_KEYS = ["tenantDailyMicros", "personDailyMicros"] as const satisfies ReadonlyArray<keyof Budgets>;
+export const BUDGET_KEYS = ["tenantDailyMicros", "personDailyMicros", "tenantSpeechMonthlyMicros"] as const satisfies ReadonlyArray<keyof Budgets>;
 export const isBudgetKey = (k: string): k is keyof Budgets => (BUDGET_KEYS as readonly string[]).includes(k);
 
-/** The product's defaults: $2 a person and $20 a company a day (DECISIONS-LOG, M28.1). */
-export const DEFAULT_BUDGETS: Budgets = { tenantDailyMicros: 20_000_000, personDailyMicros: 2_000_000 };
+/** The product's defaults: $2 a person and $20 a company a day (DECISIONS-LOG, M28.1), and $5 of speech a month (F71, D-0026). */
+export const DEFAULT_BUDGETS: Budgets = { tenantDailyMicros: 20_000_000, personDailyMicros: 2_000_000, tenantSpeechMonthlyMicros: 5_000_000 };
 
 /** Dollars from micros for a reason or a page: whole cents as cents, anything finer to the micro-dollar. */
 export function dollars(micros: number): string {
@@ -57,7 +59,24 @@ export function chargeMicros(model: string, tokens: { input: number; output: num
   return Math.round(uncached * p.input + tokens.cached * p.cached + tokens.output * p.output);
 }
 
-export const isPriced = (model: string): boolean => Object.hasOwn(PRICES, model);
+/**
+ * Speech prices (F71, D-0026), from the Workers AI pricing page (2026-11-08): whisper-large-v3-turbo $0.0005 per audio
+ * minute in, aura-2-en $0.030 per 1,000 characters out. A speech call is priced by its units, not its tokens.
+ */
+export const SPEECH_PRICES: Record<string, { perMinute?: number; perThousandChars?: number }> = {
+  "@cf/openai/whisper-large-v3-turbo": { perMinute: 0.0005 },
+  "@cf/deepgram/aura-2-en": { perThousandChars: 0.03 },
+};
+
+/** What one speech call costs in micros: its audio minutes or its characters at the model's price; at least one micro when priced. */
+export function speechMicros(model: string, units: { ms?: number; chars?: number }): { micros: number; priced: boolean } {
+  const p = SPEECH_PRICES[model];
+  if (!p) return { micros: 0, priced: false };
+  const dollars = (p.perMinute ?? 0) * ((units.ms ?? 0) / 60_000) + (p.perThousandChars ?? 0) * ((units.chars ?? 0) / 1000);
+  return { micros: Math.max(1, Math.ceil(dollars * 1_000_000)), priced: true };
+}
+
+export const isPriced = (model: string): boolean => Object.hasOwn(PRICES, model) || Object.hasOwn(SPEECH_PRICES, model);
 /**
  * The model a Ledger row is priced by (D-0020): the one that answered when the table lists it, else the one
  * asked for, so a provider that names its answer by a dated id is charged its own price, not the fallback.
@@ -97,6 +116,18 @@ export function decide(spent: Spent, budgets: Budgets, ceiling: number | undefin
   if (spent.personMicros >= budgets.personDailyMicros) return { ok: false, code: "BUDGET_PERSON_EXHAUSTED", reason: `this person has spent ${dollars(spent.personMicros)} of ${dollars(budgets.personDailyMicros)} today` };
   if (spent.tenantMicros >= budgets.tenantDailyMicros) return { ok: false, code: "BUDGET_TENANT_EXHAUSTED", reason: `the tenant has spent ${dollars(spent.tenantMicros)} of ${dollars(budgets.tenantDailyMicros)} today` };
   return { ok: true };
+}
+
+/** The speech cap (F71, D-0026): the month's speech spend against the tenant's monthly cap, before any `AI.run`. */
+export function decideSpeech(monthMicros: number, budgets: Pick<Budgets, "tenantSpeechMonthlyMicros">): AdmitResult {
+  if (monthMicros >= budgets.tenantSpeechMonthlyMicros) return { ok: false, code: "SPEECH_BUDGET_EXHAUSTED", reason: `this deploy has spent ${dollars(monthMicros)} of its ${dollars(budgets.tenantSpeechMonthlyMicros)} speech budget this month` };
+  return { ok: true };
+}
+
+/** The first moment of the UTC calendar month a timestamp falls in, as the speech cap counts it. */
+export function monthStart(ms: number): number {
+  const d = new Date(ms);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1);
 }
 
 /** The UTC day a timestamp falls in, as budgets count it. */
