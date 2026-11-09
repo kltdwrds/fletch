@@ -25,6 +25,8 @@
 //   and the `p14` op resets a person's standing files to the seed, seeds a second passkey, and reads the standing
 //   files, memory, table counts, chat model calls, mail journal rows and a chat's requests with their tool lines (F41,
 //   ./test-host-p14.mjs).
+// - `Chat` reads its stored messages as the P11 world's entries, and `Person` writes the one P11 probe document a task's
+//   setup names, through the `p11` op (F102, ./test-host-p11.mjs).
 // - The browser serves P16's four hosts by address (fares, rooms and bottles, "too far in the future", a blocked ticket
 //   read), and the `p16` op resets a person's browse memory of them, memory, jobs and other chats before a trial, or
 //   reads a chat's stored messages (F81, ./test-host-p16.mjs).
@@ -45,6 +47,7 @@ import { recordingAi } from './test-host-p5.mjs';
 import { chatRows, p6Person } from './test-host-p6.mjs';
 import { clockedStorage, p7Op, probeGet, skewToNext } from './test-host-p7.mjs';
 import { p9ChatRows, p9Network, p9Reset, p9VaultRows } from './test-host-p9.mjs';
+import { p11Entries, p11Seed } from './test-host-p11.mjs';
 import { P12_DEAD, p12Cards, p12Grants, p12Journal, p12Reset } from './test-host-p12.mjs';
 import { counts, envelopeText, p14Memory, p14Read, p14ResetStanding, p14SeedPasskey, systemsText } from './test-host-p14.mjs';
 import { DEFAULT_SPEAKER, speechOf } from '../../packages/agent/src/speech/speech.ts';
@@ -155,6 +158,11 @@ export class Chat extends AgentChat {
     return tables(this.ctx.storage.sql);
   }
 
+  /** The chat's stored messages as the P11 world's entries (F102, ./test-host-p11.mjs). */
+  async testHostP11() {
+    return p11Entries(this.ctx.storage.sql);
+  }
+
   /** The chat's stored rows (F28, ./test-host-p6.mjs). */
   async testHostRows() {
     return chatRows(this.ctx.storage.sql);
@@ -238,6 +246,14 @@ export class Person extends AgentPerson {
   async testHostP14(call) {
     if (call === 'reset') return { reset: await p14ResetStanding(this.env.AGENT_BUCKET, this.name, Date.now()) };
     return { ...(await p14Memory(this.personMemory, this.name)), counts: counts(this.ctx.storage.sql) };
+  }
+
+  /** The P11 probe document a task's setup names, written as the person's own (F102, ./test-host-p11.mjs). */
+  async testHostP11Seed(input) {
+    const seed = p11Seed(input);
+    if (!seed.ok) return seed;
+    const r = await this.files.writeBytes({ path: seed.path, bytes: seed.bytes, mediaType: seed.mediaType }, { requester: this.name, writer: this.name });
+    return r.ok ? { ok: true, path: seed.path } : { ok: false, code: r.code, reason: r.reason };
   }
 
   /** This person's attachment rows with their transcripts, and their audio records (F73, ./test-host-p13.mjs). */
@@ -420,6 +436,12 @@ export async function testHost(body, env) {
     }
     const cards = await (await getAgentByName(env.CHAT, body.chat)).testHostP12();
     return { status: 200, body: { cards, grants: p12Grants(await person.listGrants(body.person)), journal: p12Journal(await ledger.journalRows({ principal: body.person })), jobs } };
+  }
+  if (body.op === 'p11') {
+    // F102: the P11 world (./test-host-p11.mjs): the one probe document seeded, or a chat's messages as entries.
+    if (body.call === 'seed') return { status: 200, body: await person.testHostP11Seed(body.seed ?? {}) };
+    if (typeof body.chat !== 'string' || !CHAT_ID.test(body.chat)) return { status: 400, body: { error: { code: 'invalid', message: 'name the chat' } } };
+    return { status: 200, body: { entries: await (await getAgentByName(env.CHAT, body.chat)).testHostP11() } };
   }
   if (body.op === 'p16') {
     // F81: the P16 world (./test-host-p16.mjs): a trial's start, keeping its chat, or that chat's stored messages.

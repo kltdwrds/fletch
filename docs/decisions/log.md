@@ -60,6 +60,14 @@ Entries from before November 2026 are in `log-2026-10.md` (moved whole on 2026-1
   page's say-so writing into the Vault (B-P10-09). (2) Its result names the cookie count, never a value. (3) A scheduled
   job run names its slot to the model step (`jobs/steps.ts`, B-P10-16). Rejected: softening T-P10-08's flag grader;
   pasting the slot onto the delivered text in code (it would break B17's content dedupe).
+- 2026-11-09 F102 (P11, under Kyle's ruling of 2026-11-08: "answer all of these with defaults and best effort to
+  unblock, then continue work for the next hour in as much fan-out and parallel work as possible; no blockers, just
+  move; we can always go back later and reconcile"): P11's tier 2 runs on a slot without the Renderer (D-0030
+  proposed), so a write-up with no format named is Markdown by `file_write` (`FILE_WORDS`); T-P11-17's memo is seeded
+  by the test host's `p11` op at `documents/p11-memo.docx`, the path its unchanged grader reads (the setup line's
+  `p11-eval-memo.docx` left that grader vacuous); a `send_to_user` call is the agent's words, never a send; `approve`
+  (P11 only) allows the pending card once. Rejected: the Renderer on (money, D-0030); `approve` renamed `decide` (a new
+  task hash). Reconcile list in PR #171.
 - 2026-11-09 (F72, under Kyle's one-hour ruling of 2026-11-08): the drawing built before Kyle's look at the specimens;
   the three surfaces are listed in PR #169 for his UAT. An episode is `speak` with `as: "episode"` and a script in
   exactly two aura-2 speakers, each turn its own admitted speech call joined into one MP3; a failed or cut-short turn
