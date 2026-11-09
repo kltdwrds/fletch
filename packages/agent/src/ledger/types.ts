@@ -29,6 +29,8 @@ export interface ModelCallRow {
   outputTokens: number;
   reasoningTokens: number;
   cachedTokens: number;
+  /** A speech call's units (F71): its audio's milliseconds in, or its characters out; the row is priced by `speechMicros`. */
+  units?: { ms?: number; chars?: number };
   at: number;
   /** When the request went to the model; null for a call that never ran (`refused`). */
   startedAt: number | null;
@@ -39,7 +41,7 @@ export interface ModelCallRow {
 }
 
 /** Why a call was not admitted; each is checked from the Ledger before the call is made. */
-export type BudgetCode = "RUN_CEILING_REACHED" | "BUDGET_PERSON_EXHAUSTED" | "BUDGET_TENANT_EXHAUSTED" | "BUDGET_STAGING_CAP" | "BUDGET_UNAVAILABLE" | "AGENT_DISABLED" | "MODEL_TIER_REFUSED" | "MODEL_UNPRICED";
+export type BudgetCode = "RUN_CEILING_REACHED" | "BUDGET_PERSON_EXHAUSTED" | "BUDGET_TENANT_EXHAUSTED" | "BUDGET_STAGING_CAP" | "BUDGET_UNAVAILABLE" | "AGENT_DISABLED" | "MODEL_TIER_REFUSED" | "MODEL_UNPRICED" | "SPEECH_BUDGET_EXHAUSTED";
 
 export interface Admission {
   person: string;
@@ -48,6 +50,8 @@ export interface Admission {
   ceiling?: number;
   /** The model the call is for, checked against the company's model tier (M10.2). */
   model?: string;
+  /** The call's route; `speech` is also held to the tenant's monthly speech cap (F71, D-0026). */
+  route?: string;
 }
 
 export type AdmitResult = { ok: true } | { ok: false; code: BudgetCode; reason: string };

@@ -238,8 +238,8 @@ export const later: Record<string, () => Run> = {
     },
   }),
   "T-P11-11": () => ({
-    // The revoke removes the memo's seeded share pointer by design (F101).
-    removes: [MEMO_DOCX],
+    // The revoke removes the memo's seeded share pointer by design (F101); the memo's bytes stay checked.
+    revokes: [MEMO_DOCX],
     // No Renderer answers here (`render: []`): the `documents` namespace is offered for its share tools, as on every deploy.
     spec: { script: [load(["documents"]), call("share_list", {}, "sl1"), { text: "Two links are live: the memo and the budget, each with its expiry above." }, revokeFrom(MEMO_DOCX), { text: "Revoked the link to the memo; it opens nothing now and the memo itself is unchanged." }], render: [] },
     seed: async (t) => {

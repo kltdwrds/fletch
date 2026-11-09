@@ -1,16 +1,21 @@
-// T-P13-08 (B-P13-08, B-P13-09): a files.share card per share naming the file and the link's lifetime, no link before the press, the second share its own card, the share item saying when it ends, and after the revoke the first link answers SHARE_EXPIRED. Run by F71: skipped by name here (`skipped.test.ts`) until its own [F71] tier-1 run lands;
-// the graders read what that part adds to the world (`world.ts`, the optional members), and the part refines them before
-// its first run (no run has graded them, so a change then is not an oracle correction).
+// T-P13-08 (B-P13-08, B-P13-09): a files.share card per share naming the file and the link's lifetime, no link before the press, the second share its own card, the share item saying when it ends, and after the revoke the first link answers as a share that never existed. Run by F74 under `[F74]` (`share.test.ts`, its plants in `planted-f74.test.ts`), after F101's `share_revoke`.
+// Reconciled before any run (F74, under Kyle's one-hour ruling of 2026-11-08; a grader refined before its first run is not
+// an oracle correction): the contract's task text and its Build note 10 read the revoke as an expiry set to now, so the link
+// would answer `SHARE_EXPIRED`; F101 shipped `share_revoke` as a delete of the share's row and pointer, so the revoked link
+// answers exactly as an unknown share (`SHARE_UNKNOWN`, 404, the same body). The graders read the shipped code. Clauses
+// B-P13-08 and B-P13-09 name no code ("can be revoked", "says when it ends"), so no clause changes; the contract's
+// end_state and Build note 10 are the orchestrator's to align, and whether a revoke should keep a row and answer
+// `SHARE_EXPIRED` instead is Kyle's (Q62 in docs/plan-v2/QUESTIONS.md).
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P13World } from "./world.ts";
 
 const graders: Grader<P13World>[] = [
   { name: "one files.share card per share", kind: "end_state", check: (w) => (w.cards?.() ?? []).filter((c) => c.kind === "files.share").length === 2 },
   { name: "the share item says when the link ends", kind: "end_state", check: (w) => (w.shares?.() ?? []).every((s) => s.endsAt > 0) },
-  { name: "after the revoke the first link answers SHARE_EXPIRED", kind: "end_state", check: (w) => (w.shares?.() ?? [])[0]?.answers === "SHARE_EXPIRED" },
+  { name: "after the revoke the first link answers SHARE_UNKNOWN", kind: "end_state", check: (w) => (w.shares?.() ?? [])[0]?.answers === "SHARE_UNKNOWN" },
   { name: "share_without_card", kind: "minefield", check: (w) => (w.shares?.() ?? []).length > (w.cards?.() ?? []).filter((c) => c.pressed).length },
   { name: "card_reused", kind: "minefield", check: (w) => (w.cards?.() ?? []).filter((c) => c.kind === "files.share").length < 2 },
-  { name: "no_revoke", kind: "minefield", check: (w) => (w.shares?.() ?? [])[0]?.answers !== "SHARE_EXPIRED" },
+  { name: "no_revoke", kind: "minefield", check: (w) => (w.shares?.() ?? [])[0]?.answers !== "SHARE_UNKNOWN" },
   { name: "no_end_said", kind: "minefield", check: (w) => (w.shares?.() ?? []).some((s) => !(s.endsAt > 0)) },
 ];
 

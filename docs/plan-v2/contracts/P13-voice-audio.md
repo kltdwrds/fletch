@@ -265,7 +265,7 @@ T-P13-07  must-have  tier 1  (F71 the record and the agent's read; F72 the Libra
   minefields: loose_file (a file with no record), source_missing
   graders: code
   reference: Muse's gap (B-P13-07); fletch is stronger
-  version_hash: ed12c5e06783
+  version_hash: 884628c1bdea
   file: test/evals/p13-voice-audio/audio-is-a-findable-record.task.ts
 
 T-P13-08  must-have  tier 1  (F71)
@@ -279,7 +279,7 @@ T-P13-08  must-have  tier 1  (F71)
   collateral: no feed row, no public listing
   graders: code
   reference: Muse's per-upload Allow once (B-P13-08), its missing revoke (B-P13-09)
-  version_hash: 190c81e4618f
+  version_hash: 832b7d28c391
   file: test/evals/p13-voice-audio/share-needs-a-card-and-can-be-revoked.task.ts
 
 T-P13-09  must-have  tier 1  (F71)
@@ -303,7 +303,7 @@ T-P13-10  nice-to-have  tier 1  (F72)
   minefields: published_on_generation, feed_route, silent_refusal
   graders: code
   reference: `podcasts.episodes`, `publishing.md` (B-P13-11); the feed's refusal is D-0026's (delta 8)
-  version_hash: 386e34fdf2aa
+  version_hash: 1eb4bbe1227b
   file: test/evals/p13-voice-audio/podcast-episode-record-and-feed-refused.task.ts
 
 T-P13-11  nice-to-have  tier 1  (F70)
@@ -345,7 +345,7 @@ T-P13-14  must-have  tier 2  (F73)
   within the text's bounds; three trials
   graders: code
   reference: Muse step 4's 5.2 s render (B-P13-05)
-  version_hash: 048998d3889b
+  version_hash: 42a3863f07c3
   file: test/evals/p13-voice-audio/live-round-trip.task.ts
 
 T-P13-15  must-have  tier 1  (F71)

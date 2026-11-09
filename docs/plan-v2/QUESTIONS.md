@@ -7,6 +7,16 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## Open, not blocking
 
+### Q61 (harness), 2026-11-09: should the pre-commit hook refuse a staged file holding a git conflict marker?
+
+Twice in the one-hour run a merge resolved by script was committed and pushed with `<<<<<<< `/`>>>>>>> ` markers left in a
+ledger (SCORECARD.md in the F93 merge af9ea89, fixed in 8e14da0; `docs/decisions/log.md` in the F71 merge 3d038c9, fixed
+in e82e5d0). No gate catches one: `check-plan` and `check-decisions` read the files and passed, and Biome does not lint
+Markdown. AGENTS.md's rule for the same defect twice is one proposed change. Proposed: a check in `scripts/pre-commit.ts`
+(or a `scripts/check-conflict-markers.mjs` under `pnpm harness`) that fails on a line starting with `<<<<<<< `, `=======`
+followed by a `>>>>>>> ` later in the file, or `>>>>>>> ` in any staged text file, with a planted test. Default until you
+answer: the orchestrator greps for the markers before every merge commit (`git grep -l -E '^(<<<<<<< |>>>>>>> )'`).
+
 ### Q52 (F90), 2026-11-08 (Q51 on this branch until 2026-11-09, renumbered past F56's Q51): P10's tier-1 blocks for T-P10-01 and T-P10-02 differ from shipped behaviour, and F90 splits
 
 **Blocks:** nothing under the one-hour ruling (F90's PR carries the readings under Reconcile); F90 is DONE-ready
@@ -152,6 +162,21 @@ costs nothing and leaves tier 2 to the orchestrator's sessions; it is the state 
 
 Orchestrator, 2026-11-07: not taken by default. D-0015 adds a credential to CI and spends money there, which the Defaults of
 `ORCHESTRATOR-OVERNIGHT.md` do not cover; it stays Kyle's, listed in `WAITING-ON-KYLE.md`.
+
+### Q62 (F74), 2026-11-09: T-P13-08's revoke answers `SHARE_UNKNOWN` as F101 shipped it, not the contract's `SHARE_EXPIRED`
+
+**Blocks:** nothing under Kyle's one-hour ruling of 2026-11-08; the verifier's one blocking finding on F74 (its scope
+line (3) asks a question when the two codes differ).
+The P13 contract's T-P13-08 end_state ("after the revoke the first link answers `SHARE_EXPIRED`") and its Build note 10
+("a revoke sets the share's expiry to now") read a revoke as an expiry. F101 shipped `share_revoke` as a delete of the
+share's row and its pointer, so the revoked link answers exactly as an unknown share (`SHARE_UNKNOWN`, 404, the same
+body), by design in F101's scope line (2). F74 grades the shipped code in
+`test/evals/p13-voice-audio/share-needs-a-card-and-can-be-revoked.task.ts`, a grader refined before any run, not an
+oracle correction; clauses B-P13-08 and B-P13-09 name no code.
+**Recommended answer (default taken):** the orchestrator amends T-P13-08's end_state and Build note 10 to `SHARE_UNKNOWN`
+(the task's `version_hash` already pins the file). The question for Kyle: should a revoked share instead keep a row and
+answer `SHARE_EXPIRED`, saying to whoever opens it that it was ended? That would change F101's revoke (and T-P11-11,
+T-P11-17), not F74.
 
 ## Answered by default
 

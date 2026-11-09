@@ -1,0 +1,36 @@
+{
+  "task_id": "T-P16-05",
+  "cluster": "P16",
+  "version_hash": "ec140c0a35ca38292acafa2b82b372b30bf7625b0b48f8fd8461d9ec6194750d",
+  "runs": [
+    {
+      "run_at": "2026-11-09T01:47:59.890Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "no traveller detail asked before the pick",
+          "started_at": "2026-11-09T01:47:59.891Z",
+          "finished_at": "2026-11-09T01:48:35.356Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "no traveller detail asked before the pick",
+          "started_at": "2026-11-09T01:48:35.357Z",
+          "finished_at": "2026-11-09T01:49:12.205Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-09T01:49:12.205Z",
+          "finished_at": "2026-11-09T01:49:44.772Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}

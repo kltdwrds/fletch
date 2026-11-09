@@ -25,6 +25,13 @@
 //   and the `p14` op resets a person's standing files to the seed, seeds a second passkey, and reads the standing
 //   files, memory, table counts, chat model calls, mail journal rows and a chat's requests with their tool lines (F41,
 //   ./test-host-p14.mjs).
+// - `Chat` reads its stored messages as the P11 world's entries, and `Person` writes the one P11 probe document a task's
+//   setup names, through the `p11` op (F102, ./test-host-p11.mjs).
+// - The browser serves P16's four hosts by address (fares, rooms and bottles, "too far in the future", a blocked ticket
+//   read), and the `p16` op resets a person's browse memory of them, memory, jobs and other chats before a trial, or
+//   reads a chat's stored messages (F81, ./test-host-p16.mjs).
+// - The `p13` op speaks the fixture sentence through the slot's own speech service for the runner's voice note, and
+//   reads a person's attachment rows, audio records and the Ledger's speech calls (F73, ./test-host-p13.mjs).
 import { getAgentByName } from 'agents';
 import { egressFor } from '../../packages/agent/src/connectors/egress.ts';
 import { Chat as AgentChat, Job as AgentJob, Ledger as AgentLedger, Person as AgentPerson, SubAgent as AgentSubAgent, Vault as AgentVault } from '../../packages/agent/src/index.ts';
@@ -40,9 +47,13 @@ import { recordingAi } from './test-host-p5.mjs';
 import { chatRows, p6Person } from './test-host-p6.mjs';
 import { clockedStorage, p7Op, probeGet, skewToNext } from './test-host-p7.mjs';
 import { p9ChatRows, p9Network, p9Reset, p9VaultRows } from './test-host-p9.mjs';
+import { p11Entries, p11Seed } from './test-host-p11.mjs';
 import { P12_DEAD, p12Cards, p12Grants, p12Journal, p12Reset } from './test-host-p12.mjs';
 import { counts, envelopeText, p14Memory, p14Read, p14ResetStanding, p14SeedPasskey, systemsText } from './test-host-p14.mjs';
-import { SITES, testHostBinding } from './test-host-sites.mjs';
+import { DEFAULT_SPEAKER, speechOf } from '../../packages/agent/src/speech/speech.ts';
+import { p13PersonRows, p13Probe, p13SpeechCalls } from './test-host-p13.mjs';
+import { P16_DOMAINS, p16Reset } from './test-host-p16.mjs';
+import { chatBrowserBinding, SITES, testHostBinding } from './test-host-sites.mjs';
 
 const LOG = 'test-host:log';
 const empty = () => ({ reads: [], egress: [] });
@@ -111,7 +122,8 @@ export class Chat extends AgentChat {
   }
 
   browserBinding() {
-    return testHostBinding((e) => this.#append('reads', e));
+    // F91: each read kept with its whole address, so a P10 grader counts reads by address.
+    return chatBrowserBinding((e) => this.#append('reads', e));
   }
 
   moreNamespaces() {
@@ -144,6 +156,11 @@ export class Chat extends AgentChat {
 
   async testHostDump() {
     return tables(this.ctx.storage.sql);
+  }
+
+  /** The chat's stored messages as the P11 world's entries (F102, ./test-host-p11.mjs). */
+  async testHostP11() {
+    return p11Entries(this.ctx.storage.sql);
   }
 
   /** The chat's stored rows (F28, ./test-host-p6.mjs). */
@@ -231,6 +248,19 @@ export class Person extends AgentPerson {
     return { ...(await p14Memory(this.personMemory, this.name)), counts: counts(this.ctx.storage.sql) };
   }
 
+  /** The P11 probe document a task's setup names, written as the person's own (F102, ./test-host-p11.mjs). */
+  async testHostP11Seed(input) {
+    const seed = p11Seed(input);
+    if (!seed.ok) return seed;
+    const r = await this.files.writeBytes({ path: seed.path, bytes: seed.bytes, mediaType: seed.mediaType }, { requester: this.name, writer: this.name });
+    return r.ok ? { ok: true, path: seed.path } : { ok: false, code: r.code, reason: r.reason };
+  }
+
+  /** This person's attachment rows with their transcripts, and their audio records (F73, ./test-host-p13.mjs). */
+  async testHostP13() {
+    return p13PersonRows(this.ctx.storage.sql);
+  }
+
   /** Every grant row of this person deleted, before a P12 trial (F39). */
   async testHostP12Reset() {
     p12Reset(this.ctx.storage.sql);
@@ -251,6 +281,11 @@ export class Ledger extends AgentLedger {
   /** The person's chat model calls (id, model) and every table's row count (F41). */
   async testHostP14(person) {
     return { calls: this.ctx.storage.sql.exec("SELECT id, model FROM model_calls WHERE person = ? AND route = 'chat' ORDER BY id", person).toArray(), counts: counts(this.ctx.storage.sql) };
+  }
+
+  /** Every speech call, with its status and price (F73, ./test-host-p13.mjs). */
+  async testHostP13() {
+    return p13SpeechCalls(this.ctx.storage.sql);
   }
 
   /** Every model call's person, run and route (F30: a job's model calls are its route's). */
@@ -328,7 +363,7 @@ export async function testHost(body, env) {
   if (typeof body.person !== 'string' || !EMAIL.test(body.person)) return { status: 400, body: { error: { code: 'invalid', message: 'name the person' } } };
   const person = await getAgentByName(env.PERSON, body.person);
   if (body.op === 'reset') {
-    for (const domain of [...Object.keys(SITES), ...P5_DOMAINS, ...P12_DOMAINS]) await person.browseRecord({ domain, engine: null, state: 'ok', code: null });
+    for (const domain of [...Object.keys(SITES), ...P5_DOMAINS, ...P12_DOMAINS, ...P16_DOMAINS]) await person.browseRecord({ domain, engine: null, state: 'ok', code: null });
     return { status: 200, body: { reset: Object.keys(SITES) } };
   }
   if (body.op === 'state') {
@@ -401,6 +436,25 @@ export async function testHost(body, env) {
     }
     const cards = await (await getAgentByName(env.CHAT, body.chat)).testHostP12();
     return { status: 200, body: { cards, grants: p12Grants(await person.listGrants(body.person)), journal: p12Journal(await ledger.journalRows({ principal: body.person })), jobs } };
+  }
+  if (body.op === 'p11') {
+    // F102: the P11 world (./test-host-p11.mjs): the one probe document seeded, or a chat's messages as entries.
+    if (body.call === 'seed') return { status: 200, body: await person.testHostP11Seed(body.seed ?? {}) };
+    if (typeof body.chat !== 'string' || !CHAT_ID.test(body.chat)) return { status: 400, body: { error: { code: 'invalid', message: 'name the chat' } } };
+    return { status: 200, body: { entries: await (await getAgentByName(env.CHAT, body.chat)).testHostP11() } };
+  }
+  if (body.op === 'p16') {
+    // F81: the P16 world (./test-host-p16.mjs): a trial's start, keeping its chat, or that chat's stored messages.
+    if (typeof body.chat !== 'string' || !CHAT_ID.test(body.chat)) return { status: 400, body: { error: { code: 'invalid', message: 'name the chat' } } };
+    if (body.call === 'reset') return { status: 200, body: await p16Reset(person, body.person, body.chat, (id) => env.JOB.get(env.JOB.idFromName(jobName(body.person, id)))) };
+    return { status: 200, body: { messages: (await (await getAgentByName(env.CHAT, body.chat)).testHostP9()).messages } };
+  }
+  if (body.op === 'p13') {
+    // F73: the P13 world (./test-host-p13.mjs): the probe spoken by the slot's own speech, or the person's rows and the
+    // Ledger's speech calls.
+    const ledger = env.LEDGER.get(env.LEDGER.idFromName(env.TENANT_ID));
+    if (body.call === 'probe') return { status: 200, body: await p13Probe(speechOf(env, { ledger, tenant: env.TENANT_ID, now: () => Date.now() }), body.person, DEFAULT_SPEAKER) };
+    return { status: 200, body: { ...(await person.testHostP13()), calls: await ledger.testHostP13() } };
   }
   if (body.op === 'p14') {
     // F41: the P14 world (./test-host-p14.mjs): the standing-file reset, the passkey seed, or a read with a chat's rows.

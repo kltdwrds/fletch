@@ -1,12 +1,23 @@
-// T-P13-14 (B-P13-05): on a preview slot with the real speech models, the transcript of p13-probe.mp3 holds Sam Solo, Pat Solo and picnic, and its read-back renders within the text's duration bounds; three trials. Run by F73: skipped by name here (`skipped.test.ts`) until the tier-2 runner on a preview slot lands;
-// the graders read what that part adds to the world (`world.ts`, the optional members), and the part refines them before
-// its first run (no run has graded them, so a change then is not an oracle correction).
+// T-P13-14 (B-P13-05): on a preview slot with the real speech models, the transcript of p13-probe.mp3 holds Sam Solo, Pat Solo and picnic, and its read-back renders within the text's duration bounds; three trials. Run by F73 on a slot (`pnpm evals T-P13-14`, scripts/evals/p13-slot.ts); tier 2, so vitest only loads it (`skipped.test.ts`).
+// F73 refined the graders before the first run (no run had graded them, so this is not an oracle correction): the
+// read-back is an audio record whose source text is the voice note's words (B-P13-05: the text read verbatim) and whose
+// duration lies in that text's own bounds (`spokenBounds`, the check `speak` makes), where the draft took any record of
+// 1 to 20 s. Each trial's world holds only the rows and records the trial made (the slot readers drop what was there).
 import { defineTask, type Grader } from "../../support/task.ts";
+import { spokenBounds } from "../../../packages/agent/src/speech/speech.ts";
 import type { P13World } from "./world.ts";
 
 const graders: Grader<P13World>[] = [
-  { name: "the transcript holds Sam Solo, Pat Solo and picnic", kind: "end_state", check: (w) => w.rows().some((r) => /Sam Solo/.test(r.transcript ?? "") && /Pat Solo/.test(r.transcript ?? "") && /picnic/.test(r.transcript ?? "")) },
-  { name: "the read-back renders within the text's bounds", kind: "end_state", check: (w) => (w.audio?.() ?? []).some((a) => a.durationMs > 1000 && a.durationMs < 20000) },
+  { name: "the transcript holds Sam Solo, Pat Solo and picnic", kind: "end_state", check: (w) => w.rows().some((r) => r.cls === "audio" && [/Sam Solo/, /Pat Solo/, /picnic/].every((x) => x.test(r.transcript ?? ""))) },
+  {
+    name: "the read-back of the note's words renders within the text's bounds",
+    kind: "end_state",
+    check: (w) =>
+      (w.audio?.() ?? []).some((a) => {
+        const b = spokenBounds(a.source);
+        return !a.removed && [/Sam Solo/, /Pat Solo/, /picnic/].every((x) => x.test(a.source)) && a.durationMs >= b.minMs && a.durationMs <= b.maxMs;
+      }),
+  },
 ];
 
 export const task = defineTask<P13World>({

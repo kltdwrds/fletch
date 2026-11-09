@@ -377,7 +377,7 @@ T-P10-08  must-have  tier 1
   graders: code (the Vault's rows, the fake model's request log, the restore result)
   reference: Muse's profiles and cookie jar listing, and its rule to delete a profile only on the person's ask
   (B-P10-09); fletch keeps per site under a grant (delta 5)
-  version_hash: 5c20f86c18fe
+  version_hash: 1382671fc014
   file: test/evals/p10-search/kept-sign-in-on-ask.task.ts
 
 T-P10-09  must-have  tier 2
@@ -426,7 +426,7 @@ T-P10-11  must-have  tier 2
   collateral: Sam's files and memory unchanged (diffed)
   graders: code (the files diff, the reply's deny-list)
   reference: Muse's generated, checked and kept image (B-P10-13); the contract requires the refusal until D-0029
-  version_hash: 81a7271528e6
+  version_hash: b10079375cc9
   file: test/evals/p10-search/no-image-said-real-model.task.ts
 
 T-P10-12  nice-to-have  tier 2
@@ -472,7 +472,7 @@ T-P10-14  must-have  tier 1
   collateral: one run row, one delivery, nothing else
   graders: code (the run record, the delivered message, the job model's request log)
   reference: Muse's catch-up run that delivered an earlier slot's stories (B-P10-16)
-  version_hash: 29b8e9731d28
+  version_hash: fc3d2755ceda
   file: test/evals/p10-search/job-read-sources-linked.task.ts
 
 T-P10-15  must-have  tier 1

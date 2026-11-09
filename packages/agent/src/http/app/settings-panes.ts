@@ -4,6 +4,7 @@
 // markup and the script read one table.
 import type { MemberSource } from "../../company/members.ts";
 import { APPS_LINK } from "../../workspace/surfaces.ts";
+import { VOICE_ROW } from "./audio.ts";
 import { type IconName, ic, type Tier } from "./icons.ts";
 
 /** Settings' own words, one table, so a test walks them for a code shown as words. */
@@ -139,6 +140,7 @@ export const GENERAL_PANE = `<div id="settings">
   <div class="qf-grp"><h3>${SETTINGS_TEXT.appearance}</h3><div class="qf-grpcard">
     <div id="set-appearance" class="qf-srow is-static"><span class="tx">${SETTINGS_TEXT.mode}</span><span class="seg2 set-mode" role="radiogroup" aria-label="${SETTINGS_TEXT.mode}">${MODES.map((k) => `<button id="mode-${k}" class="tab" role="radio" aria-checked="false" aria-label="${SETTINGS_TEXT.modes[k]}">${ic(MODE_GLYPH[k], "xs")}</button>`).join("")}</span></div>
   </div></div>
+  ${VOICE_ROW}
   <div class="qf-grpcard">
     ${setRow({ id: "set-devices", glyph: "monitor", title: SETTINGS_TEXT.devices, value: "set-devices-count" })}
     ${setRow({ id: "set-messaging", glyph: "chat", title: SETTINGS_TEXT.messaging, subId: "set-messaging-state" })}

@@ -19,7 +19,7 @@
 //   - `open`: nothing; every read of the world is fresh.
 // Two members are seeded, Sam and Pat (`test/fixtures/people.json`): a planted test reads Sam's task as Pat, and T-P5-09's
 // undelivered job reports to Pat's chat, which refuses Sam's notice.
-import { chatBrowse } from "../../../packages/agent/src/browse/hook.ts";
+import { type BrowseHook, chatBrowse } from "../../../packages/agent/src/browse/hook.ts";
 import { PersonBrowse } from "../../../packages/agent/src/browse/memory.ts";
 import { UrlTable } from "../../../packages/agent/src/browse/urls.ts";
 import { WORK_WORDS } from "../../../packages/agent/src/chat/instructions.ts";
@@ -83,6 +83,8 @@ export interface P5HarnessOptions {
   fill?: (person: string) => FillApi;
   /** The Vault's saved logins for the browse namespace, as `objects/chat.ts` wires them (P16's kept login, F80). */
   logins?: (person: string) => LoginsApi;
+  /** Each chat's own hook over the shared one, built from the chat's name as `objects/chat.ts` builds it (F93). */
+  perChat?: (hook: BrowseHook, chat: string) => BrowseHook;
 }
 
 export class P5Tier1World implements P5World {
@@ -116,7 +118,7 @@ export class P5Tier1World implements P5World {
       const ns = chatBrowse(hook, person, { urls, session: cell() }, now);
       return [{ ...ns, deferral: "eager" as const, tools: ns.tools.filter((t) => t.name === "browse_open") }, ...(o.childTools?.(person) ?? [])];
     };
-    this.w = authorityWorld({ seed: [sam, pat], stores: true, jobs: true, script: o.script, browse: hook, subagents: { reads: childReads }, jobFetch: async (url) => ((o.jobUrls ?? [PROBE]).includes(url) ? new Response(o.page ?? PAGE, { status: 200, headers: { "content-type": "text/plain" } }) : new Response("no", { status: 404 })), ...(o.world?.() ?? {}) });
+    this.w = authorityWorld({ seed: [sam, pat], stores: true, jobs: true, script: o.script, browse: o.perChat ? (name: string) => (o.perChat as NonNullable<P5HarnessOptions["perChat"]>)(hook, name) : hook, subagents: { reads: childReads }, jobFetch: async (url) => ((o.jobUrls ?? [PROBE]).includes(url) ? new Response(o.page ?? PAGE, { status: 200, headers: { "content-type": "text/plain" } }) : new Response("no", { status: 404 })), ...(o.world?.() ?? {}) });
   }
 
   async open(): Promise<void> {

@@ -208,7 +208,7 @@ async function call(route: Route, script: FakeStep[]) {
   const bounds = clock();
   const rows: ModelCallRow[] = [];
   const streamFn = createStreamFn({ ai: fake.binding as unknown as Ai, ledger: { record: async (r) => void rows.push(r) }, wait: async () => {}, now: () => T0, schedule: bounds.schedule }, { tenant: ada.company, person: ada.email, runId: `run-${route}`, route });
-  const stream = await streamFn(modelFor(route === "embedding" ? "chat" : route), normalizeContext({ messages: [{ role: "user", content: "hello", timestamp: T0 }] }), {});
+  const stream = await streamFn(modelFor(route === "embedding" || route === "speech" ? "chat" : route), normalizeContext({ messages: [{ role: "user", content: "hello", timestamp: T0 }] }), {});
   return { fake, bounds, rows, result: stream.result() };
 }
 

@@ -486,7 +486,7 @@ export class ChatEngine {
       reactTool(effects, () => this.history().entries),
     );
     const gateState = state ?? this.gateState("none");
-    const namespaces = [core, ...chatNamespaces({ store: this.store, hooks: this.hooks, chatId: this.chatId(), now: () => this.now(), schedule: this.schedule, owner: () => this.owner(), pending: () => this.cards.simulatedPending(), queryView: (i) => this.queryView(person, i), card: (id) => this.cards.get(id), models: modelConfig(this.env) }, person, effects, context, gateState)];
+    const namespaces = [core, ...chatNamespaces({ store: this.store, hooks: this.hooks, chatId: this.chatId(), now: () => this.now(), schedule: this.schedule, owner: () => this.owner(), pending: () => this.cards.simulatedPending(), queryView: (i) => this.queryView(person, i), card: (id) => this.cards.get(id), models: modelConfig(this.env), speechWire: { ledger: this.ledger(), tenant: this.env.TENANT_ID, now: () => this.now() }, journal: (row) => (this.ledger() as LedgerSink & { journal(r: JournalRow): Promise<unknown> }).journal(row) }, person, effects, context, gateState)];
     const gate = new ChatGate({ principal: person, context, ...(this.hooks.authority ? { authority: this.hooks.authority(person) } : {}), effects, state: gateState, now: () => this.now(), nameOf: (e) => this.nameOf(e) });
     session = new ToolSession(new ToolRegistry(namespaces), this.loadedNamespaces(), gate, treeSpill(this.hooks.tree?.(person), person));
     return session;
