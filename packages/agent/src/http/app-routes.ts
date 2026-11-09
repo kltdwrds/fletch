@@ -208,7 +208,7 @@ export async function appRoutes(request: Request, url: URL, person: string, dir:
   if (url.pathname === "/app/library" && request.method === "GET") {
     // The person's own files alone (M23.4): memory is the sheet's Profile and skills are the workshop's.
     // Their audio pieces beside them (F72): the Audio section lists the records, never a loose file.
-    return json({ ok: true, files: await part(() => dir.files(person)), audio: dir.audio ? await part(() => (dir.audio as NonNullable<AppDirectory["audio"]>)(person)) : { ok: true, items: [] } });
+    return json({ ok: true, files: await part(() => dir.files(person)), ...(dir.audio ? { audio: await part(() => (dir.audio as NonNullable<AppDirectory["audio"]>)(person)) } : {}) });
   }
   // Settings > Voice (F72, B-P13-10): the speakers to pick from and the person's own; a pick is their explicit ask.
   if (url.pathname === "/app/speaker" && request.method === "GET") {

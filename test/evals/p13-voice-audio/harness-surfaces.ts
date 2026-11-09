@@ -13,7 +13,7 @@ const settle = async () => {
 export const nodes = (n: El): El[] => n.children.flatMap((c) => [c, ...nodes(c)]);
 /** Waits, bounded, for every player under `n` to hold its signed link (WebCrypto on the thread pool), then settles. */
 async function players(n: () => El[]) {
-  for (let i = 0; i < 2000 && n().some((a) => a.tag === "audio" && !(a as El & { src?: string }).src && !a.dataset.code); i++) await new Promise((r) => setImmediate(r));
+  for (let i = 0; i < 20000 && n().some((a) => a.tag === "audio" && !(a as El & { src?: string }).src && !a.dataset.code); i++) await new Promise((r) => setImmediate(r));
   await settle();
 }
 export const isPlayer = (a: El) => a.tag === "audio" && /\/app\/file\/raw\?/.test(String((a as El & { src?: string }).src ?? ""));

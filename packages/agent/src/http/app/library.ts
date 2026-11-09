@@ -253,7 +253,7 @@ const libSay = async (node, r) => { const b = await r.json().catch(() => ({})); 
 const libLink = async (p, download) => (await getJson("/app/file/link?path=" + encodeURIComponent(p) + (download ? "&download=1" : ""))).url;
 // A link that could not be made leaves the node without one and answers its code, for the page to say.
 const libLinkInto = (node, attr, p, download) => libLink(p, download).then((u) => { node[attr] = u; return ""; }, (e) => { node.dataset.code = (e && e.code) || "LINK_UNAVAILABLE"; return node.dataset.code; });
-let libFiles = [], libAudio = [], libRead = false, libSection = "all", libSort = "date", libView = "grid", libPicked = null, libPop = null;
+let libFiles = [], libAudio = [], libAudioCode = "", libRead = false, libSection = "all", libSort = "date", libView = "grid", libPicked = null, libPop = null;
 let libOpened = null, libText = "", libSrc = false;
 function libAgo(at) {
   const s = (Date.now() - at) / 1000, d = new Date(at);
@@ -420,7 +420,7 @@ function libFill(host, list) {
   for (const f of list) host.append(grid ? libCard(f) : libRow(f));
 }
 function drawLib() {
-  closeMenu(); placeSections();
+  closeMenu(); placeSections(); if (libAudio === null && libSection !== "audio") coded($("lib-note"), "", "");
   const sect = LIB_SECT[libSection], d = device();
   $("lib-title").textContent = sect.label; $("lib-pick-label").textContent = sect.label;
   for (const [id, on] of [["lib-sort-date", libSort === "date"], ["lib-sort-name", libSort === "name"], ["lib-view-grid", libView === "grid"], ["lib-view-list", libView === "list"]]) $(id).setAttribute("aria-checked", String(on));
@@ -430,7 +430,7 @@ function drawLib() {
   $("lib-options-wrap").hidden = $("lib-create").hidden = !arts;
   $("lib-create").className = d === "desktop" ? "qf-btn qf-btn--primary qf-btn--icon-start" : "qf-ibtn lib-create-circle";
   $("lib-create-label").hidden = d !== "desktop";
-  const want = libSection === "audio" ? libAudio : libFiles.filter((f) => !sect.kinds || sect.kinds.includes(libKind(f)));
+  const want = libSection === "audio" ? libAudio || [] : libFiles.filter((f) => !sect.kinds || sect.kinds.includes(libKind(f)));
   for (const id of ["lib-list", "lib-all", "lib-files"]) $(id).replaceChildren();
   $("lib-empty").hidden = want.length > 0; $("lib-empty").textContent = LIB.empty[libSection];
   $("lib-recent-h").hidden = !arts; $("lib-list").hidden = files; $("lib-files").hidden = !files;
@@ -461,7 +461,7 @@ async function library() {
   try {
     const l = await getJson("/app/library");
     if (!l.files || l.files.ok === false) throw Object.assign(new Error("not read"), { code: l.files && l.files.code });
-    libFiles = l.files.files; libAudio = l.audio && l.audio.ok !== false ? l.audio.items : []; libRead = true; $("lib-note").textContent = ""; drawLib();
+    libFiles = l.files.files; libAudio = l.audio && l.audio.ok !== false ? l.audio.items : null; libAudioCode = (l.audio && l.audio.code) || "AUDIO_UNREAD"; libRead = true; $("lib-note").textContent = ""; drawLib();
   } catch (e) {
     libFiles = []; libRead = false; closeMenu();
     for (const id of ["lib-list", "lib-all", "lib-files"]) $(id).replaceChildren();

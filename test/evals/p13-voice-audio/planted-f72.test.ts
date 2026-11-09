@@ -5,7 +5,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { graded, played, sam } from "./harness.ts";
 import { episodeCall, F72_TASKS, optionsF72, SCRIPT, said } from "./runs-f72.ts";
-import { chatItemsAsDrawn } from "./harness-surfaces.ts";
+import { chatItemsAsDrawn, libraryAsDrawn } from "./harness-surfaces.ts";
 
 const plant = vi.hoisted(() => ({ feedCode: false, store: false }));
 vi.mock("../../../packages/agent/src/speech/speech.ts", async (original) => {
@@ -81,6 +81,18 @@ describe("[F72] P13 audio surfaces: each guard planted", () => {
     const one = SCRIPT.map((s) => ({ ...s, speaker: "luna" }));
     const w = await played(x.task, { script: [load, episodeCall(one), said, { text: "Not published." }], speech: {} });
     expect([w.refusals()[0], w.speechCalls().length, w.audio().length]).toEqual(["EPISODE_SCRIPT_INVALID", 0, 0]);
+  });
+
+  it("an Audio list that could not be read is said in words with its code, never drawn as empty", async () => {
+    const x = t("T-P13-07");
+    const w = await played(x.task, optionsF72(x));
+    const app = w.w.dir.app as { audio?: unknown };
+    const audio = app.audio;
+    app.audio = async () => ({ ok: false, code: "AUDIO_NOT_OWNER", reason: "planted" });
+    const { p, rows } = await libraryAsDrawn(w);
+    app.audio = audio;
+    expect([rows, p.byId("lib-empty").hidden, p.byId("lib-note").dataset.code]).toEqual([[], true, "AUDIO_NOT_OWNER"]);
+    expect(p.byId("lib-note").textContent).toMatch(/could not be read/);
   });
 
   it("a speaker outside aura-2's list is refused VOICE_UNKNOWN by the route, the record and the journal unchanged", async () => {

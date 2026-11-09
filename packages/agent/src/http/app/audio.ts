@@ -20,6 +20,7 @@ export const AUDIO_TEXT = {
   voiceNotSaved: "Not saved: that did not go through. Try again.",
   voiceUnread: "Your voice could not be read just now.",
   noPlayer: "This audio could not be played just now.",
+  unread: "Your audio could not be read just now. Try again in a moment.",
   inVoice: " · voice ",
 };
 
@@ -62,8 +63,10 @@ function audioItem(c, where) {
   drawOnce(d, where, "link", c.id);
 }
 // The Library's Audio section: one row per record, newest first, each with its player and Open.
+// A list that could not be read is said, never drawn as empty.
 function libAudioDraw(host, items) {
   host.className = "lib-audio"; host.replaceChildren();
+  if (libAudio === null) { $("lib-empty").hidden = true; coded($("lib-note"), AUD.unread, libAudioCode); return; }
   for (const a of items.slice().sort((x, y) => y.at - x.at)) {
     const row = el("div"); row.className = "lib-audio-row"; row.dataset.id = a.id; row.dataset.path = a.path; row.dataset.kind = a.kind;
     const note = el("p", ""); note.className = "mt";
