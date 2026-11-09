@@ -352,3 +352,10 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   key, since that token already deploys every slot Worker. Reversing: `pnpm preview down --slot 1 --force` on Kyle's
   login, then a PR that drops the mark and the workflow. Rejected: a lease key for the runner (it proves nothing the
   token does not), and a fresh lease per deploy (it would wipe the passkey and workspace).
+- 2026-11-08 F60 (D-0025 door 1): `roomReach()` refuses a tool whose name holds `room`, `group` or `participant` (and
+  their plurals), or whose description offers to make or join a chat with other people, add a person to one, invite to
+  one, or send from the person's own account or under their name. `invite` counts only in a description that invites to
+  a chat, group or room, because `onboarding_invite` invites a member to the company, which is not a room (the scope's
+  narrowing; the tool is not renamed). The nine held P8 tasks are skipped by name as vitest todos, since Biome refuses
+  `.skip`. The T-P8-10 control check reads the page as served (its markup is the same at both widths; no Chromium run).
+  Rejected: renaming `onboarding_invite`, and a Biome ignore comment per held test.
