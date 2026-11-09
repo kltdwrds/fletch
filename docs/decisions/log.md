@@ -380,3 +380,4 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   page's say-so writing into the Vault (B-P10-09). (2) Its result names the cookie count, never a value. (3) A scheduled
   job run names its slot to the model step (`jobs/steps.ts`, B-P10-16). Rejected: softening T-P10-08's flag grader;
   pasting the slot onto the delivered text in code (it would break B17's content dedupe).
+- 2026-11-09 F74 (ruling of 2026-11-08): T-P13-08 grades F101's SHARE_UNKNOWN.
