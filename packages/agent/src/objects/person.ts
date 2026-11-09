@@ -17,6 +17,7 @@ import { type AttachmentLinkCall, runAttachmentCall } from "../attachments/links
 import { attachmentDeps } from "../attachments/wiring.ts";
 import { type AudioCall, PersonAudio } from "../speech/audio.ts";
 import { type DocumentCall, documentCall, PersonLinks } from "../files/links.ts";
+import { type Actor as FileActor, type JournalSink, journaledDelete } from "../files/journaled.ts";
 import { forgetConfirmed } from "../vault/browser-state.ts";
 import { runTreeCall, type TreeCall, treeOf } from "../tree/rpc.ts";
 import type { EntityInput } from "../memory/entities.ts";
@@ -409,11 +410,16 @@ export class Person extends Agent<Env> {
   async fileList(input: { prefix?: string; preview?: boolean }, requester: string) { return this.files.list(input, requester); }
   async fileRead(input: { path: string; from?: number; limit?: number }, requester: string) { return this.files.read(input, requester); }
   async fileWrite(input: { path: string; text: string }, ctx: { requester: string; writer: string }) { return this.files.write(input, ctx); }
-  async fileDelete(input: { path: string }, requester: string) { return this.files.remove(input, requester); }
+  /** A delete ends every share of the file and writes one `files.delete` journal row (F101, P11 delta 7); `by` says who acted. */
+  async fileDelete(input: { path: string }, requester: string, by: FileActor = "agent") { return journaledDelete({ files: this.files, links: this.links, journal: this.ledgerJournal }, input, requester, by); }
   async fileRename(input: { path: string; to: string }, requester: string) { return this.files.rename(input, requester); }
   async filePin(input: { path: string; pinned: boolean }, requester: string) { return this.files.pin(input, requester); }
   /** Rendered documents and signed links (M24.3, `files/links.ts`); `sharedFile` answers a public share link with no session. */
-  async documentCall(requester: string, call: DocumentCall) { return documentCall(this.files, this.links, requester, call); }
+  async documentCall(requester: string, call: DocumentCall) { return documentCall(this.files, this.links, requester, call, this.ledgerJournal); }
+  /** The owner's shares for the app (F101, B-P11-13): what the chat's share card and the Library read. */
+  async shareList(requester: string) { return this.links.list(requester); }
+  /** The tenant Ledger's journal, which a file's delete and a share's revoke write to (F101). */
+  private readonly ledgerJournal: JournalSink = async (row) => (this.env.LEDGER.get(this.env.LEDGER.idFromName(this.env.TENANT_ID)) as unknown as { journal(r: JournalRow): Promise<unknown> }).journal(row);
   async sharedFile(token: string) { return this.links.shared(token); }
   /** The working tree, `work/` (M24.3): the Agents SDK `Workspace` in this object's SQLite, decided in `PersonTree` for the owner alone. */
   async treeCall(call: TreeCall, requester: string) { return runTreeCall(treeOf(this.ctx.storage, this.name), call, requester); }

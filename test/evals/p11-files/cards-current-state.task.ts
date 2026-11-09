@@ -29,7 +29,8 @@ export const task = defineTask<P11World>({
     { kind: "event", name: "reload" },
   ],
   ...named(graders),
-  collateral: { journal: [`files.share personal;connector:files;resource:file:${MEMO_DOCX} s1`, `files.share personal;connector:files;resource:file:${MEMO_DOCX} s1:decision`] },
+  // The share's two rows, and the delete's own row (F101: the delete is journaled, delta 7).
+  collateral: { journal: [`files.share personal;connector:files;resource:file:${MEMO_DOCX} s1`, `files.share personal;connector:files;resource:file:${MEMO_DOCX} s1:decision`, `files.delete personal;resource:file:${MEMO_DOCX}`] },
   graders,
   reference: "Muse's link card still read public link after the revoke (B-P11-17).",
 });

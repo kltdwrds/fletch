@@ -3,7 +3,7 @@
 // `RENDER_FORMATS`, and until then the render is refused `RENDER_FORMAT_REFUSED` and the task fails on its end state.
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
-import { DECK, MEMO_DOCX, MEMO_MD, named, newRows, type P11World, row, shaBefore } from "./world.ts";
+import { DECK, homeR2, MEMO_DOCX, MEMO_MD, named, newRows, type P11World, row, shaBefore } from "./world.ts";
 
 const sam = people.people.find((p) => p.id === "sam-solo")!;
 export const TEXT = "make a three-slide deck from the memo";
@@ -27,7 +27,8 @@ export const task = defineTask<P11World>({
   setup: { seed: 7, records: ["chat:c1", "a Renderer that answers pptx (F101 adds pptx to RENDER_FORMATS)"], files: ["documents/p11-memo.docx", "notes/p11-memo.md"], jobs: [] },
   turns: [{ kind: "prompt", by: sam.email, text: TEXT }],
   ...named(graders),
-  collateral: {},
+  // The deck's own bytes in the bucket are the task's end state, as T-P11-01's are (F101: corrected from `{}`).
+  collateral: { r2: [homeR2(DECK)] },
   graders,
   reference: "Muse built a new presentation with slide_count_target 3 (B-P11-07).",
 });
