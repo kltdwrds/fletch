@@ -8,7 +8,6 @@ import type { OpenResult } from "../person/chats.ts";
 import type { Profile } from "../person/profile.ts";
 import type { ModelCallRow } from "../ledger/types.ts";
 import type { ServedResult } from "../files/links.ts";
-import { OBJECT_CLASSES } from "../objects/names.ts";
 import { type AuthorityDirectory, authorityRoutes } from "./authority-routes.ts";
 import { type AdminDirectory, adminRoutes } from "./admin-routes.ts";
 import { type LifecycleDirectory, lifecycleRoutes } from "./lifecycle-routes.ts";
@@ -83,9 +82,6 @@ const CHAT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 export async function route(request: Request, env: Env, props: AgentProps | null, dir: Directory): Promise<Response> {
   const url = new URL(request.url);
-  if (url.pathname === "/health" && request.method === "GET") {
-    return json({ ok: true, tenant: env.TENANT_ID, objects: OBJECT_CLASSES });
-  }
   // The script serves only its own tenant: props that name another are a platform fault.
   if (!props || props.tenant !== env.TENANT_ID) return json({ code: "TENANT_MISMATCH" }, 403);
   const person = props.person;
