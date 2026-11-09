@@ -315,7 +315,7 @@ T-P16-08  nice-to-have  tier 1
   minefields: bought, handoff_from_job, job_disabled_silently
   graders: code
   reference: the owner's flag-only line and Muse's reading of it (B-P16-10); `JOB_READ_TOOLS` (P7)
-  version_hash: da72dfbebafc
+  version_hash: a568fbf980b3
   file: test/evals/p16-shopping-bookings/flag-only-rule-kept.task.ts
 
 T-P16-09  nice-to-have  tier 1

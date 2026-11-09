@@ -36,6 +36,8 @@ export interface P16World extends P12World {
   order(chat?: ChatLabel): OrderView[];
   /** Sam's memory lines as stored now, seeded ones included. */
   memoryText(): Promise<string>;
+  /** Each job's title and its status as the job object holds it (`active` while it is on). */
+  jobStates(): Array<{ title: string; status: string }>;
   /** Each job's chat notices, by job title. */
   jobNotices(): string[];
   /** Whether a live session restored the kept login for `shop.example.com` (G2). */

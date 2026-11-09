@@ -71,7 +71,7 @@ export const runs: Record<string, () => P16HarnessOptions> = {
     seed: async (w) => {
       await remember(FLAG_ONLY)(w);
       for (const j of JOBS) {
-        const r = await w.defineJob({ id: j.id, title: j.title, instructions: j.instructions, timing: { schedule: { kind: "runonce", at: "2026-10-13T11:30" }, zone: "Europe/London" }, noGateReason: "a one-time p16 probe" });
+        const r = await w.defineJob({ id: j.id, title: j.title, instructions: j.instructions, timing: { schedule: { kind: "interval", every: 60 }, zone: "Europe/London" }, stop: { kind: "turned_off" }, noGateReason: "a p16 probe watch reads one page an hour" });
         if (!(r as { ok?: boolean }).ok) throw new Error(`P16_SEED_JOB: ${JSON.stringify(r)}`);
       }
     },

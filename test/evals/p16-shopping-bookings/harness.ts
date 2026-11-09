@@ -98,6 +98,21 @@ export class P16Tier1World extends P12Tier1World implements P16World {
       this.first = REPRICED;
       return;
     }
+    if (turn.kind === "event" && turn.name === "watch") {
+      // One run of a recurring watch: its alarm fired once, then the chats it notifies settle (P5's `tick` loops to the end).
+      const title = (turn.payload ?? {}).job as string;
+      const id = this.w.jobIds(sam.email).find((j) => this.w.jobOf(sam.email, j).instance.status()?.def.title === title) as string;
+      const h = this.w.jobOf(sam.email, id);
+      // Its run, then the delivery steps it arms, until its notice reaches the chat (at most four alarms).
+      const seen = this.notices("c1").length;
+      for (let i = 0; i < 4 && this.notices("c1").length === seen; i++) {
+        if (h.alarmAt === null) throw new Error(`P16_JOB_IDLE: ${title}`);
+        this.w.clock.now = Math.max(this.w.clock.now, h.alarmAt);
+        await h.fireAlarm();
+        for (const c of ["c1", "c2"] as const) await this.engine(c).settled();
+      }
+      return;
+    }
     if (turn.kind === "event" && turn.name === "drop") {
       this.dropped = true;
       return;
@@ -129,6 +144,13 @@ export class P16Tier1World extends P12Tier1World implements P16World {
       .rows("SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE '%daily%'")
       .flatMap((t) => person.rows(`SELECT * FROM "${String(t.name)}"`).map((r) => JSON.stringify(r)))
       .join("\n");
+  }
+
+  jobStates() {
+    return this.w.jobIds(sam.email).map((id) => {
+      const st = this.w.jobOf(sam.email, id).instance.status();
+      return { title: st?.def.title ?? id, status: String(st?.status ?? "missing") };
+    });
   }
 
   jobNotices(): string[] {
