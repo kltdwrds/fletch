@@ -90,7 +90,13 @@ describe("[F1] the login page in a browser", () => {
     // On CI this test timed out at its 60 s budget with no step named (2026-11-08, three runs of six): the step in
     // progress is kept here and printed on failure, so a timeout says where the page stopped (it was the last step).
     let at = "start";
-    onTestFailed(() => console.error(`f1-login-browser: failed at step "${at}", page at ${pg.url()}`));
+    // The last requests the deploy answered name a 401 that arrived late (the flake of run 42548430932, below).
+    onTestFailed(() => console.error(`f1-login-browser: failed at step "${at}", page at ${pg.url()}; last requests ${JSON.stringify(d.seen.slice(-6))}`));
+    // Every navigation request to /login the browser issues: the page leaves for sign-in once, however many 401s land.
+    const leaves: string[] = [];
+    pg.on("request", (r) => {
+      if (r.isNavigationRequest() && new URL(r.url()).pathname === "/login") leaves.push(r.url());
+    });
     try {
       // Signed out, the app's own address sends the browser to sign-in; before any passkey that is the setup notice.
       at = "signed out: / sends to /login";
@@ -147,13 +153,21 @@ describe("[F1] the login page in a browser", () => {
       await Promise.all([pg.waitForURL(`${ORIGIN}/`), pg.click("#done")]);
       at = "app: logout button wired";
       await pg.waitForFunction('typeof document.getElementById("logout")?.onclick === "function"');
+      at = "app: boot settled (the open chat's address, the panel's /me drawn)";
+      // The boot's reads are still in flight when the button is wired (the chat list moves the address to the open
+      // chat, the panel reads /me into #handle). Log out clears the cookie, so a read answered after it is a 401, and
+      // a 401 leaves for /login too: wait for the boot to settle on state, never on time (CI run 42548430932 logged out
+      // at 1.2 s and the second leave aborted the first, `net::ERR_ABORTED` under waitForURL).
+      await pg.waitForURL(/\/chats\/[^/]+$/);
+      await pg.locator("#handle", { hasText: `${ada.email}/agent` }).waitFor({ state: "attached" });
       expect(d.seen.some((s) => s.path === "/me" && s.status === 200)).toBe(true);
 
       at = "log out: POST /logout, wait for /login";
-      // Log out: a same-origin POST to /logout, then sign-in.
-      await pg.evaluate('document.getElementById("logout").click()');
-      await pg.waitForURL(`${ORIGIN}/login`);
+      // Log out: a same-origin POST to /logout, then sign-in. The URL wait starts before the click (gotcha 5).
+      leaves.length = 0;
+      await Promise.all([pg.waitForURL(`${ORIGIN}/login`), pg.evaluate('document.getElementById("logout").click()')]);
       expect(d.seen).toContainEqual({ method: "POST", path: "/logout", status: 204 });
+      expect(leaves).toHaveLength(1);
       expect(await stateOf(pg)).toBe("authenticate");
       at = "signed out again: / sends to /login, /me is 401";
       // The session is gone: the app's address sends the browser back to sign-in, and an API call is a JSON 401.
@@ -174,11 +188,16 @@ describe("[F1] the login page in a browser", () => {
       const cookie = (await pg.context().cookies()).find((c) => c.name === SESSION_COOKIE);
       expect(cookie?.httpOnly).toBe(true);
       await d.company.loginCall({ op: "revoke", token: cookie?.value ?? "" });
-      // The page's api() leaves for /login on the 401 (`location.assign`), so the call is fired and not awaited inside
-      // the page (an awaited promise there has no context to settle in once the navigation commits, and the evaluate
-      // hung to the test's timeout on CI), and the URL wait starts before it, as above.
-      await Promise.all([pg.waitForURL(`${ORIGIN}/login`), pg.evaluate("void getJson('/me').catch(() => null)")]);
+      // The page's api() leaves for /login on the 401 (`toLogin`), so the calls are fired and not awaited inside the
+      // page (an awaited promise there has no context to settle in once the navigation commits, and the evaluate hung
+      // to the test's timeout on CI), and the URL wait starts before them, as above. Two reads answered 401 back to
+      // back are one leave: the page issues one navigation to /login, not a second that aborts the first.
+      leaves.length = 0;
+      const since = d.seen.length;
+      await Promise.all([pg.waitForURL(`${ORIGIN}/login`), pg.evaluate("void Promise.all([getJson('/me'), getJson('/app/chats')]).catch(() => null)")]);
       expect(await stateOf(pg)).toBe("authenticate");
+      expect(d.seen.slice(since).filter((s) => s.status === 401)).toHaveLength(2);
+      expect(leaves).toHaveLength(1);
     } finally {
       await b.close();
       await site.close();

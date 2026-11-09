@@ -289,8 +289,10 @@ const el = (tag, text) => { const e = document.createElement(tag); if (text !== 
 // the script draws, at the canvas's tier for its place.
 const icon = (name, tier) => { const s = $("glyph-" + name).cloneNode(true); s.removeAttribute("id"); s.setAttribute("class", "ico ico-" + tier); return s; };
 // Every route the page asks goes through api(): a 401 means the session is gone (it expired, or this browser signed
-// out in another tab), so the page goes to sign-in instead of drawing an empty or failed answer.
-const toLogin = () => location.assign("/login");
+// out in another tab), so the page goes to sign-in instead of drawing an empty or failed answer. The page leaves once:
+// a second leave (a late 401 after Log out, or two 401s from one boot) would abort the navigation already under way.
+let leaving = false;
+const toLogin = () => { if (leaving) return; leaving = true; location.assign("/login"); };
 const api = async (path, init) => { const r = await fetch(path, init); if (r.status === 401) toLogin(); return r; };
 const post = (path, body, method = "POST") => api(path, { method, headers: { "content-type": "application/json" }, body: JSON.stringify(body || {}) });
 // A read that failed throws its code on \`code\`; what the person reads is said where it is caught, in words.

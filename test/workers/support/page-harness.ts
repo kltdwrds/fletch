@@ -243,7 +243,10 @@ export async function page(
   // page's `popstate` listeners, as a browser does, while a push or a replace fires none.
   const ORIGIN = "https://solo-sam.example";
   const at = new URL(layout.path ?? `/${layout.search ?? ""}`, ORIGIN);
-  const location = { protocol: "https:", host: "solo-sam.example", pathname: at.pathname, search: at.search, hash: at.hash };
+  // `left` records each `location.assign` (the page's leave to sign-in on a 401 or after Log out); the address does not
+  // move, as a browser's does not before the new page commits.
+  const left: string[] = [];
+  const location = { protocol: "https:", host: "solo-sam.example", pathname: at.pathname, search: at.search, hash: at.hash, assign: (url: string) => void left.push(url) };
   const address = () => location.pathname + location.search + location.hash;
   const moveTo = (url: string) => {
     const u = new URL(url, ORIGIN + address());
@@ -325,6 +328,7 @@ export async function page(
     held,
     /** The address bar, the session history (`back()` fires `popstate`) and the document, whose `title` the page sets. */
     location,
+    left,
     history,
     document: document as typeof document & { title?: string },
     sockets,
