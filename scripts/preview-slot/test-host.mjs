@@ -49,7 +49,7 @@ import { p11Entries, p11Seed } from './test-host-p11.mjs';
 import { P12_DEAD, p12Cards, p12Grants, p12Journal, p12Reset } from './test-host-p12.mjs';
 import { counts, envelopeText, p14Memory, p14Read, p14ResetStanding, p14SeedPasskey, systemsText } from './test-host-p14.mjs';
 import { P16_DOMAINS, p16Reset } from './test-host-p16.mjs';
-import { SITES, testHostBinding } from './test-host-sites.mjs';
+import { chatBrowserBinding, SITES, testHostBinding } from './test-host-sites.mjs';
 
 const LOG = 'test-host:log';
 const empty = () => ({ reads: [], egress: [] });
@@ -118,7 +118,8 @@ export class Chat extends AgentChat {
   }
 
   browserBinding() {
-    return testHostBinding((e) => this.#append('reads', e));
+    // F91: each read kept with its whole address, so a P10 grader counts reads by address.
+    return chatBrowserBinding((e) => this.#append('reads', e));
   }
 
   moreNamespaces() {

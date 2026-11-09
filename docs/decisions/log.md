@@ -74,3 +74,5 @@ Entries from before November 2026 are in `log-2026-10.md` (moved whole on 2026-1
   writes nothing, a script not in two voices is `EPISODE_SCRIPT_INVALID`; `episode_publish` is refused
   `PODCAST_FEED_UNAVAILABLE` on every deploy. The Voice row is a select in Settings > General at `/app/speaker` (a
   `/voice` segment trips T-P13-01's capture-route grader). Rejected: a Voice pane of its own, a one-voice episode.
+- 2026-11-09 F74 (under Kyle's one-hour ruling of 2026-11-08): T-P13-08 grades F101's shipped `SHARE_UNKNOWN`, not the
+  contract's `SHARE_EXPIRED`, a grader refined before any run; the contract's end_state and Build note 10 wait on Q62.
