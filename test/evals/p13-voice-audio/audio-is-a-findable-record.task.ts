@@ -1,4 +1,4 @@
-// T-P13-07 (B-P13-07): the record holds kind audio, duration, voice, model, the source text and its file path; the agent's answer comes from audio_list or audio_read; the Library's Audio section lists the item and opens its player. Run by F71 (the record and the agent's read); F72 (the Library's Audio section): skipped by name here (`skipped.test.ts`) until its own [F71] tier-1 run lands;
+// T-P13-07 (B-P13-07): the record holds kind audio, duration, voice, model, the source text and its file path; the agent's answer comes from audio_list or audio_read; the Library's Audio section lists the item and opens its player. Run by F71 (the record and the agent's read) and F72 (the Library's Audio section): F72 runs it whole (`surfaces.test.ts`);
 // the graders read what that part adds to the world (`world.ts`, the optional members), and the part refines them before
 // its first run (no run has graded them, so a change then is not an oracle correction).
 import { defineTask, type Grader } from "../../support/task.ts";
@@ -8,7 +8,7 @@ import { SPEAK_MODEL } from "./world.ts";
 const graders: Grader<P13World>[] = [
   { name: "the record holds kind, duration, voice, model, source and path", kind: "end_state", check: (w) => (w.audio?.() ?? []).some((a) => a.kind === "audio" && a.durationMs > 0 && !!a.voice && a.model === SPEAK_MODEL && !!a.source && !!a.path) },
   { name: "the answer came from audio_list or audio_read", kind: "end_state", check: (w) => w.results().some((r) => r.tool === "audio_list" || r.tool === "audio_read") },
-  { name: "the Library's Audio section lists it with a player (F72)", kind: "end_state", check: (w) => (w.library?.() ?? []).some((l) => l.player) },
+  { name: "the Library's Audio section lists it with a player (F72)", kind: "end_state", check: async (w) => ((await w.library?.()) ?? []).some((l) => l.player && (w.audio?.() ?? []).some((a) => a.id === l.id)) },
   { name: "loose_file", kind: "minefield", check: async (w) => (await w.objects()).some((k) => k.endsWith(".mp3") && !(w.audio?.() ?? []).some((a) => k.endsWith(a.path))) },
   { name: "source_missing", kind: "minefield", check: (w) => (w.audio?.() ?? []).some((a) => !a.source) },
 ];

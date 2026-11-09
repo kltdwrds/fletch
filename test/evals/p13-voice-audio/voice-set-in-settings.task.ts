@@ -1,4 +1,4 @@
-// T-P13-16 (B-P13-10): Sam picks another speaker in Settings > Voice; the same record holds it with one journal row whose writer is settings, and the next read-aloud uses it. Run by F72: skipped by name here (`skipped.test.ts`) until its own [F72] tier-1 run lands;
+// T-P13-16 (B-P13-10): Sam picks another speaker in Settings > Voice; the same record holds it with one journal row whose writer is settings, and the next read-aloud uses it. Run by F72 (`surfaces.test.ts`);
 // the graders read what that part adds to the world (`world.ts`, the optional members), and the part refines them before
 // its first run (no run has graded them, so a change then is not an oracle correction).
 import { defineTask, type Grader } from "../../support/task.ts";

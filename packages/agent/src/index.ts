@@ -139,6 +139,10 @@ function directory(env: Env): Directory {
       fileLink: async (person, path, download) => (await getAgentByName(env.PERSON, person)).documentCall(person, { op: "link", path, download }) as never,
       fileLinked: async (person, link) => (await getAgentByName(env.PERSON, person)).documentCall(person, { op: "linked", ...link }) as never,
       loops: async (person) => (await getAgentByName(env.PERSON, person)).loopSettings(person),
+      // The person's audio pieces and voice (F72), decided by their own `Person` as the chat's speech namespace reaches them.
+      audio: async (person) => (await getAgentByName(env.PERSON, person)).audioCall(person, { op: "list" }) as never,
+      voice: async (person) => (await getAgentByName(env.PERSON, person)).audioCall(person, { op: "voice" }) as never,
+      voiceSet: async (person, speaker) => (await getAgentByName(env.PERSON, person)).voiceFromSettings(person, speaker) as never,
       setLoop: async (person, loop, patch) => (await getAgentByName(env.PERSON, person)).setLoop(person, loop, patch),
       homeFile: async (person, path) => (await getAgentByName(env.PERSON, person)).memoryGet({ path, limit: 200 }, person),
       credentials: (person) => env.VAULT.get(env.VAULT.idFromName(env.TENANT_ID)).list(person),

@@ -14,6 +14,7 @@ import { nextSlotAfter } from "../jobs/schedule.ts";
 import { runWord, statusWords } from "../jobs/status-words.ts";
 import type { JobStatus } from "../jobs/store.ts";
 import type { ChatEntry, ChatsCall } from "../person/chats.ts";
+import { SPEAKERS } from "../speech/speech.ts";
 import { type AttachmentDirectory, attachmentRoutes } from "./attachment-routes.ts";
 import { type ConnectorReads, connectorRoutes } from "./connector-routes.ts";
 import { servedResponse } from "./share-routes.ts";
@@ -48,6 +49,11 @@ export interface AppDirectory extends ConnectorReads {
   /** A signed link presented with the session: the `Person` checks signature, expiry and owner, then serves the bytes. */
   fileLinked(person: string, link: { path: string; exp: string; sig: string }): Promise<ServedResult>;
   loops(person: string): Promise<unknown>;
+  /** The person's audio pieces (F72): their `Person`'s `audio_items` rows, which the Library's Audio section lists. */
+  audio?(person: string): Promise<{ ok: true; items: unknown[] } | Refusal>;
+  /** The person's voice (F72): read for Settings > Voice, and set there with writer `settings` and a journal row. */
+  voice?(person: string): Promise<{ ok: true; speaker: string; set: boolean } | Refusal>;
+  voiceSet?(person: string, speaker: string): Promise<{ ok: true; speaker: string } | Refusal>;
   /** The person's uploads (M24.3): their `Person` keeps the rows and decides every read; the bytes are in the bucket. */
   attachments?: AttachmentDirectory;
   /** One chat's newest tasks (F12), answered by that `Chat` for its owner alone. */
@@ -105,7 +111,7 @@ export const FILE_PAGES = 100;
 export const FILE_TYPES: Record<string, string> = {
   md: "text/markdown; charset=utf-8", markdown: "text/markdown; charset=utf-8", txt: "text/plain; charset=utf-8", html: "text/plain; charset=utf-8",
   htm: "text/plain; charset=utf-8", csv: "text/plain; charset=utf-8", json: "text/plain; charset=utf-8", pdf: "application/pdf", svg: "image/svg+xml",
-  png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp",
+  png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", mp3: "audio/mpeg",
 };
 
 /** A file's lines read to the end or to the page bound, so the caller says whether it holds the whole file. */
@@ -201,7 +207,18 @@ export async function appRoutes(request: Request, url: URL, person: string, dir:
 
   if (url.pathname === "/app/library" && request.method === "GET") {
     // The person's own files alone (M23.4): memory is the sheet's Profile and skills are the workshop's.
-    return json({ ok: true, files: await part(() => dir.files(person)) });
+    // Their audio pieces beside them (F72): the Audio section lists the records, never a loose file.
+    return json({ ok: true, files: await part(() => dir.files(person)), audio: dir.audio ? await part(() => (dir.audio as NonNullable<AppDirectory["audio"]>)(person)) : { ok: true, items: [] } });
+  }
+  // Settings > Voice (F72, B-P13-10): the speakers to pick from and the person's own; a pick is their explicit ask.
+  if (url.pathname === "/app/speaker" && request.method === "GET") {
+    if (!dir.voice) return json({ ok: false, code: "VOICE_UNAVAILABLE", reason: "this deploy keeps no voice record" }, 400);
+    const r = await part(() => (dir.voice as NonNullable<AppDirectory["voice"]>)(person));
+    return failed(r) ? answer(r) : json({ ...(r as object), speakers: SPEAKERS });
+  }
+  if (url.pathname === "/app/speaker" && request.method === "POST") {
+    if (!dir.voiceSet) return json({ ok: false, code: "VOICE_UNAVAILABLE", reason: "this deploy keeps no voice record" }, 400);
+    return answer(await part(() => (dir.voiceSet as NonNullable<AppDirectory["voiceSet"]>)(person, String(body.speaker ?? ""))));
   }
 
   // One file of the person's home tree. The path is a query value or a body value, never an object id, and

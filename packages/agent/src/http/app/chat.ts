@@ -302,6 +302,7 @@ function drawOnce(d, where, key, id) {
 }
 // A link card (M16.2), on the system's Card: words and one link to where the person decides. No button posts anything.
 function linkCard(c, where) {
+  if (c.kind === "audio") return audioItem(c, where);
   const d = el("div"); d.className = "card link qf-prompt-card"; d.dataset.link = c.id;
   const t = el("h3", c.title);
   const p = el("p", c.text);

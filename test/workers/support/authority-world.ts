@@ -16,7 +16,7 @@ import type { ApprovalAdapter, CapabilityAdapter, WorkspaceAdapter } from "../..
 import { companyView } from "../../../packages/agent/src/company/authority.ts";
 import { displayNames } from "../../../packages/agent/src/company/members.ts";
 import { PersonFiles } from "../../../packages/agent/src/files/store.ts";
-import { PersonAudio } from "../../../packages/agent/src/speech/audio.ts";
+import { PersonAudio, settingsVoiceSet } from "../../../packages/agent/src/speech/audio.ts";
 import { documentCall, PersonLinks, routeShare } from "../../../packages/agent/src/files/links.ts";
 import { documentsApi } from "../../../packages/agent/src/render/tools.ts";
 import type { RenderResult } from "../../../packages/agent/src/render/render.ts";
@@ -470,6 +470,10 @@ export function authorityWorld(o: WorldOptions = {}) {
     // Signed links (M24.3), made and checked by the session's own `Person`, as `index.ts` wires them.
     fileLink: async (p, path, download) => host(p).links.link({ path, download }, p),
     fileLinked: async (p, link) => host(p).links.linked(link, p),
+    // The Library's Audio section and Settings > Voice (F72), as `index.ts` wires them to the person's `PersonAudio`.
+    audio: async (p) => host(p).audio.call({ op: "list" }, p) as never,
+    voice: async (p) => host(p).audio.call({ op: "voice" }, p) as never,
+    voiceSet: async (p, speaker) => settingsVoiceSet(host(p).audio, p, speaker, (row) => ledgerH.instance.journal(row), clock.now) as never,
     // The Connectors, Permissions and Search pages (M23.5): the Vault's listing, the Company's entitled connectors,
     // each person's own grants and memory, decided in the objects that own them.
     credentials: async (p) => (o.credentials ? o.credentials(p) : []),

@@ -1,4 +1,4 @@
-// T-P13-10 (B-P13-11): one audio record of kind episode with script, topics, duration and file, shown in the Library's Audio section; the publish ask refused PODCAST_FEED_UNAVAILABLE with its reason; no feed route answers. Run by F72: skipped by name here (`skipped.test.ts`) until its own [F72] tier-1 run lands;
+// T-P13-10 (B-P13-11): one audio record of kind episode with script, topics, duration and file, shown in the Library's Audio section; the publish ask refused PODCAST_FEED_UNAVAILABLE with its reason; no feed route answers. Run by F72 (`surfaces.test.ts`);
 // the graders read what that part adds to the world (`world.ts`, the optional members), and the part refines them before
 // its first run (no run has graded them, so a change then is not an oracle correction).
 import { defineTask, type Grader } from "../../support/task.ts";
@@ -6,6 +6,7 @@ import type { P13World } from "./world.ts";
 
 const graders: Grader<P13World>[] = [
   { name: "one episode record with script, topics, duration and file", kind: "end_state", check: (w) => (w.audio?.() ?? []).filter((a) => a.kind === "episode" && !!a.source && (a.topics ?? []).length > 0 && a.durationMs > 0 && !!a.path).length === 1 },
+  { name: "the Library's Audio section lists the episode with a player", kind: "end_state", check: async (w) => ((await w.library?.()) ?? []).some((l) => l.player && (w.audio?.() ?? []).some((a) => a.id === l.id && a.kind === "episode")) },
   { name: "the publish ask refused PODCAST_FEED_UNAVAILABLE", kind: "end_state", check: (w) => (w.refusals?.() ?? []).includes("PODCAST_FEED_UNAVAILABLE") },
   { name: "published_on_generation", kind: "minefield", check: (w) => (w.feedRoutes?.() ?? []).length > 0 },
   { name: "feed_route", kind: "minefield", check: (w) => (w.feedRoutes?.() ?? []).length > 0 },
