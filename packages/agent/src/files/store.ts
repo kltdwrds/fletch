@@ -33,7 +33,8 @@ export interface FileEntry {
 }
 export type ListResult = { ok: true; files: FileEntry[] } | FilesRefusal;
 export type ReadResult = { ok: true; path: string; sha256: string; size: number; spilled: boolean; total: number; lines: Array<{ n: number; text: string }>; next: number | null } | FilesRefusal;
-export type WriteResult = { ok: true; path: string; sha256: string; size: number; spilled: boolean } | FilesRefusal;
+/** `replaced`: an earlier file stood at this path and the write took its place; its bytes are not kept (F100, delta 1 of P11; F103 keeps versions under D-0028). */
+export type WriteResult = { ok: true; path: string; sha256: string; size: number; spilled: boolean; replaced: boolean } | FilesRefusal;
 export type DeleteResult = { ok: true; path: string } | FilesRefusal;
 export type RenameResult = { ok: true; path: string; to: string } | FilesRefusal;
 export type PinResult = { ok: true; path: string; pinned: boolean } | FilesRefusal;
@@ -147,7 +148,7 @@ export class PersonFiles {
     );
     // A file that shrank back inline leaves no stale copy behind.
     if (previous?.spilled === 1 && !spilled) await this.bucket.delete(this.key(path));
-    return { ok: true, path, sha256, size, spilled };
+    return { ok: true, path, sha256, size, spilled, replaced: previous !== undefined };
   }
 
   /**
@@ -161,13 +162,14 @@ export class PersonFiles {
     const size = input.bytes.byteLength;
     if (size > BINARY_MAX) return refuse("FILES_TOO_LARGE", `${size} bytes; the limit for a document is ${BINARY_MAX}`);
     const sha256 = await sha256Hex(input.bytes);
+    const replaced = this.row(path) !== undefined;
     const put = await this.bucket.put(this.key(path), input.bytes, { httpMetadata: { contentType: input.mediaType }, customMetadata: { sha256, writer: ctx.writer, updated_at: String(this.now()) } });
     if (!put) return refuse("FILES_UNAVAILABLE", `the store refused the write of ${path}`);
     this.storage.sql.exec(
       "INSERT INTO files (path, size, sha256, writer, updated_at, body, spilled, media_type) VALUES (?, ?, ?, ?, ?, NULL, 1, ?) ON CONFLICT(path) DO UPDATE SET size = excluded.size, sha256 = excluded.sha256, writer = excluded.writer, updated_at = excluded.updated_at, body = NULL, spilled = 1, media_type = excluded.media_type",
       path, size, sha256, ctx.writer, this.now(), input.mediaType,
     );
-    return { ok: true, path, sha256, size, spilled: true };
+    return { ok: true, path, sha256, size, spilled: true, replaced };
   }
 
   /** One file's bytes, text or binary, checked against its record; the owner alone. */

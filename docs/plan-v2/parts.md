@@ -1217,6 +1217,16 @@ a `WORK_WORDS` line; a provider-specific connector or catalogue row; PKCE and de
 accepts D-0016); the company's shared connectors (M28); a tier-2 task; the capture form's look beyond the added fields
 (no specimen: the form is the existing capture page); D-0017 and D-0018.
 
+## F56 The renderer the deploy has: the document renderer wired into the single-account host behind the paid bindings, refused by name where a deploy lacks them
+
+**Read:** `docs/plan-v2/contracts/P2-loop.md` (the file card, B-P2-10, the tool result a render becomes; P11's contract is being written in parallel and will take this part's citation when it lands), `packages/host-cloudflare/src/single-account.ts` (`render: unavailable("render", notInBuild("render"))`), `packages/agent/src/render/` (`render.ts`, `reverse.ts`, `tools.ts`: the pandoc container code), `packages/host/` (the Host seam, `HOST_<FEATURE>_UNAVAILABLE`, D-0001, and whether `render` is already a published `HostFeature`), `packages/agent/AGENTS.md`, `packages/host-cloudflare/AGENTS.md`, `docs/runbooks/preview.md` (the `--paid` deploy and the slots token's reach), `docs/runbooks/evals.md`, `docs/plan-v2/KICKOFF.md`. One-way door guard: if wiring render needs a new published `HostFeature` in `@qyvr/host` (a published package's contract), do not add it; propose the record under docs/decisions/ as `proposed`, `decider: agent`, and build behind an agent-local code until it is accepted; say so in the PR body under Reconcile.
+
+**Scope:** (1) The single-account host builds its `render` capability from the paid bindings (the container binding the pandoc code needs) when the deploy's config has them, and answers `HOST_RENDER_UNAVAILABLE` with a reason naming the missing binding where it lacks them (D-0001: refused by name, never faked); the agent's render tool reaches it and the result is a file in the Library drawn as a file card. (2) Tier 1: a hermetic test per claim, planting the violation on the production path: a deploy without the binding refuses by code (and a render that pretends is caught); with a fake container binding the tool renders a small document into the Library and the chat shows its card; the refusal reaches the person in words that name the code. (3) Tier 2: the task "Make me an artifact: about you" on this worktree's slot deployed with `pnpm preview up --paid` if the slots token allows containers (slot 2 or 3 only; slot 1 is staging and `--slot 1` is refused, never touch it); if `--paid` is refused by the token or the deploy fails for want of the binding, record the refusal verbatim in the PR body, run tier 1 alone, and say so under Reconcile. (4) `pnpm preview down` when done.
+
+**Acceptance:** `ACCEPT F56: PASS`; `VERIFIER: no blocking findings`; tier 2 as (3) says, or its refusal recorded.
+
+**Not in scope:** a new published `HostFeature` (proposed only); a change to any clause, grader or task of another cluster; the renderer's own formats beyond what `packages/agent/src/render/` already does; billing or spend caps beyond what the paid bindings already carry.
+
 ## F80 Shopping as it is: the P16 contract check, twelve task files, the research, hand-over and remembering lines, the no-click and no-provider guards planted and tier 1
 
 **Read:** `docs/plan-v2/contracts/P16-shopping-bookings.md` (all thirteen clauses, the Tasks, the Translation's Survey,

@@ -1,8 +1,9 @@
 // The host for one owner on one deploy (F1): keys from the `MASTER_KEY` secret, the owner from `OWNER_EMAIL`,
-// no cross-tenant budget, and every platform service refused with its code and a reason the UI shows.
+// no cross-tenant budget, the document renderer where the deploy binds it (F56), and every platform service refused with its code and a reason the UI shows.
 import { type Host, unavailable } from "@qyvr/host";
 import { normalizeEmail } from "./email.ts";
 import { secretKeyService } from "./keys.ts";
+import { containerRenderer, type RendererNamespace } from "./render.ts";
 import type { LoginCall, LoginResultOf } from "./passkeys/call.ts";
 import { passkeyIdentity } from "./passkeys/identity.ts";
 
@@ -16,6 +17,8 @@ export interface SingleAccountEnv {
   SETUP_TOKEN?: string;
   /** Where sessions and passkeys live: the sign-in calls the Company named by TENANT_ID (`loginCall`, R3). */
   COMPANY: DurableObjectNamespace;
+  /** The document renderer's container object (F56): a paid deploy's binding; without it `render` is refused by name. */
+  RENDERER?: RendererNamespace;
 }
 
 const notInBuild = (feature: string) => `${feature} is not part of the self-host build; see README`;
@@ -38,7 +41,7 @@ export function singleAccountHost(env: SingleAccountEnv): Host {
     provisioning: unavailable("provisioning", notInBuild("provisioning")),
     members: unavailable("members", notInBuild("members")),
     reporter: { report: (event, fields) => console.log(JSON.stringify({ event, ...fields })) },
-    render: unavailable("render", notInBuild("render")),
+    render: containerRenderer(env.RENDERER, env.TENANT_ID),
     memberSeed: JSON.stringify([{ email: normalizeEmail(env.OWNER_EMAIL), role: "owner" }]),
   };
 }

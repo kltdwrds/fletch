@@ -11,7 +11,7 @@ import type { DocumentCall, LinkResult, ShareResult } from "../files/links.ts";
 import { LINK_TTL_MS, lifeWords, SHARE_DEFAULT_MINUTES, SHARE_MAX_MINUTES } from "../files/links.ts";
 import type { EffectBuffer } from "../chat/tools.ts";
 import type { Namespace, ToolSpec } from "../tools/registry.ts";
-import type { HostFailure } from "@qyvr/host";
+import type { Host, HostFailure } from "@qyvr/host";
 import { RENDER_FORMATS, type RenderCode, type RenderFormat, type RenderResult } from "./render.ts";
 
 /** What the chat reaches: the host's renderer (`hostOf(env).render`, refused where the host has none), and the owner's files on their `Person` object, which decides. */
@@ -21,6 +21,18 @@ export interface DocumentsApi {
   save(input: { path: string; text?: string; base64?: string; mediaType: string }, requester: string): Promise<WriteResult>;
   link(input: { path: string; download?: boolean }, requester: string): Promise<LinkResult>;
   share(input: { path: string; minutes?: number }, requester: string): Promise<ShareResult>;
+}
+
+/**
+ * The render the chat and the routes reach (F56): the host's renderer where its deploy binds one, else the host's own
+ * refusal as it is (`HOST_RENDER_UNAVAILABLE` with the binding it lacks), never an empty success.
+ */
+export function hostRender(host: Pick<Host, "render">): DocumentsApi["render"] {
+  return async (input) => {
+    const r = host.render;
+    if ("ok" in r && r.ok === false) return r as HostFailure;
+    return (await (r as Exclude<Host["render"], HostFailure>).render(input)) as RenderResult | HostFailure;
+  };
 }
 
 /** The chat's `DocumentsApi` over the owner's `Person` (`documentCall`) and the Renderer. */
@@ -85,7 +97,8 @@ export function documentsNamespace(api: DocumentsApi, requester: string, effects
       if (!saved.ok) throw err(saved.code, `the document was rendered but not saved: ${saved.reason}`);
       const link = await api.link({ path, download: true }, requester);
       const download = link.ok ? ` Download link for the person only, valid ${Math.round(LINK_TTL_MS / 60_000)} minutes: ${link.url}` : ` No download link was made (${link.code}); it opens from the Library.`;
-      return text(`SAVED: ${path} (${r.to}, ${saved.size} bytes) is in the person's Library.${download}`, { path, to: r.to, bytes: saved.size });
+      // B-P2-10: the reply links the file as markdown to `files/<path>`, which the chat draws as a file card (`thread-work.ts`).
+      return text(`SAVED: ${path} (${r.to}, ${saved.size} bytes) is in the person's Library.${download} Link it in your reply as [${path.split("/").pop()}](files/${path}), which the chat shows as a file card.`, { path, to: r.to, bytes: saved.size });
     },
   };
   const share: ToolSpec<typeof ShareParams> = {
