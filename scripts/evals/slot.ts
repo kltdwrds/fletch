@@ -32,6 +32,7 @@ import { type P9State, p9Slot } from "./p9-slot.ts";
 import { p12Page } from "./p12-page.ts";
 import { type P12State, p12Slot } from "./p12-slot.ts";
 import { p14Page } from "./p14-page.ts";
+import { onSlot, p10Slot } from "./p10-slot.ts";
 import { type P14State, p14Slot } from "./p14-slot.ts";
 import { p16Page } from "./p16-page.ts";
 import { type P16Op, p16Slot } from "./p16-slot.ts";
@@ -570,6 +571,19 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
               OWNER,
             )
           : null;
+      // A search, browser or media task (F91): chat c1's tool calls and results and Sam's files through the `p9` op's read,
+      // the browser's reads by address from the `state` op's log; Sam's files counted from the trial's start.
+      const p10 =
+        task?.cluster === "P10"
+          ? p10Slot(
+              () => replies,
+              async () => {
+                const r = (await testHostOp(base, lease, { op: "p9", person: OWNER, chat: chatId, call: "read" })) as { chat?: { messages?: string[] }; files?: string[] } | null;
+                if (!r) throw new InfraError("SLOT_MISSING", "this slot serves no test host; `pnpm preview up` deploys one");
+                return { messages: r.chat?.messages ?? [], files: r.files ?? [], reads: (state as TestHostState | null)?.log.reads ?? [] };
+              },
+            )
+          : null;
       // A room-ask task (F61, scripts/evals/p8-slot.ts): the trial's chats by label, their tasks' tool calls and the chats
       // the list holds that the trial did not open, through the app's routes as Sam; the list read once before any turn.
       const p8 =
@@ -597,6 +611,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
         await p12?.refresh();
         await p16?.refresh();
         await p14?.refresh();
+        await p10?.refresh();
         await p6?.refresh(`prompt:${label}`);
         await p7?.refresh(turn.startsWith("prompt") ? "prompt" : turn);
       };
@@ -620,8 +635,10 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
           }
           prompted = true;
           const sent = Date.now();
-          const reply = await turn(base, chats.get(chat) as string, cookie, text, TURN_TIMEOUT_MS, p7 ? ZONE : "UTC");
+          const reply = await turn(base, chats.get(chat) as string, cookie, p10 ? onSlot(text, base) : text, TURN_TIMEOUT_MS, p7 ? ZONE : "UTC");
           replies.push(reply);
+          // F91: a P10 trial's reply is logged with its chat, so a failed trial's words are read from the run's log.
+          if (p10) log(`evals: ${task?.id ?? ""} reply in chat ${chats.get(chat)}: ${JSON.stringify(reply)}`);
           // A P5 request is over when its task is: the sub-agents it launched handed off and the turn they woke ended; a P3
           // one when nothing it started is out (F34). A `prompt` event with `wait` leaves its sub-agents running.
           if (!wait)
@@ -729,6 +746,10 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
       if (p14) {
         Object.defineProperties(world, Object.getOwnPropertyDescriptors(p14.readers));
         await p14.begin();
+      }
+      if (p10) {
+        Object.defineProperties(world, Object.getOwnPropertyDescriptors(p10.readers));
+        await p10.begin();
       }
       return world;
     },
