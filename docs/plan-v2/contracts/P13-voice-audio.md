@@ -279,7 +279,7 @@ T-P13-08  must-have  tier 1  (F71)
   collateral: no feed row, no public listing
   graders: code
   reference: Muse's per-upload Allow once (B-P13-08), its missing revoke (B-P13-09)
-  version_hash: 190c81e4618f
+  version_hash: 832b7d28c391
   file: test/evals/p13-voice-audio/share-needs-a-card-and-can-be-revoked.task.ts
 
 T-P13-09  must-have  tier 1  (F71)

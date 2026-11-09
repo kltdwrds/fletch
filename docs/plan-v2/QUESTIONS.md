@@ -153,6 +153,21 @@ costs nothing and leaves tier 2 to the orchestrator's sessions; it is the state 
 Orchestrator, 2026-11-07: not taken by default. D-0015 adds a credential to CI and spends money there, which the Defaults of
 `ORCHESTRATOR-OVERNIGHT.md` do not cover; it stays Kyle's, listed in `WAITING-ON-KYLE.md`.
 
+### Q62 (F74), 2026-11-09: T-P13-08's revoke answers `SHARE_UNKNOWN` as F101 shipped it, not the contract's `SHARE_EXPIRED`
+
+**Blocks:** nothing under Kyle's one-hour ruling of 2026-11-08; the verifier's one blocking finding on F74 (its scope
+line (3) asks a question when the two codes differ).
+The P13 contract's T-P13-08 end_state ("after the revoke the first link answers `SHARE_EXPIRED`") and its Build note 10
+("a revoke sets the share's expiry to now") read a revoke as an expiry. F101 shipped `share_revoke` as a delete of the
+share's row and its pointer, so the revoked link answers exactly as an unknown share (`SHARE_UNKNOWN`, 404, the same
+body), by design in F101's scope line (2). F74 grades the shipped code in
+`test/evals/p13-voice-audio/share-needs-a-card-and-can-be-revoked.task.ts`, a grader refined before any run, not an
+oracle correction; clauses B-P13-08 and B-P13-09 name no code.
+**Recommended answer (default taken):** the orchestrator amends T-P13-08's end_state and Build note 10 to `SHARE_UNKNOWN`
+(the task's `version_hash` already pins the file). The question for Kyle: should a revoked share instead keep a row and
+answer `SHARE_EXPIRED`, saying to whoever opens it that it was ended? That would change F101's revoke (and T-P11-11,
+T-P11-17), not F74.
+
 ## Answered by default
 
 ### Q46 (F51, after Q37), 2026-11-08: T-P14-14 is 0 of 3 on Muse Spark after line 109; two oracle faults, not the reply

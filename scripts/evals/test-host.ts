@@ -5,7 +5,7 @@ import type { SlotEntry, TestHostReaders } from "../../test/support/evals.ts";
 
 /** What the test host's `state` op answers for a chat (`scripts/preview-slot/test-host.mjs`). */
 export interface TestHostState {
-  log: { reads: Array<{ host: string }>; egress: Array<{ host: string; text: string }> };
+  log: { reads: Array<{ host: string; url?: string }>; egress: Array<{ host: string; text: string }> };
   audit: unknown[];
   grants: Array<{ nonce: string; hosts: string[]; oneShot: boolean; usedAt: number | null }>;
   sinks: Record<string, string>;
