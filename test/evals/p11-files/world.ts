@@ -90,7 +90,7 @@ export interface P11World extends ScenarioWorld {
   /** The chat page's `live` expression, as `packages/agent/src/http/app/chat.ts` writes it. */
   readonly liveExpr: string;
   /** The `file_list` tool's text and the Library route's JSON items. */
-  readonly listing: { tool: string; library: Array<{ path: string; size: number; updated_at: number; mediaType?: string }> };
+  readonly listing: { tool: string; library: Array<{ path: string; size: number; updated_at: number; mediaType?: string; versions?: number }> };
 }
 
 /** The probe files' names (every probe is `p11-*`). */
@@ -103,6 +103,10 @@ export const PROBE_TXT = "p11-probe.txt";
 /** `file_write`'s words over an existing home file (`REPLACED_WORDS`, P11 delta 1; the planted test holds them to the tool). */
 export const REPLACED = "REPLACED:";
 export const NOT_KEPT = "its earlier content was not kept";
+/** The same words when the store kept the replaced bytes as a version (F103, D-0028 proposed; `keptWords`). */
+export const KEPT = /its earlier content was kept as version (\d+)/;
+/** Whether a write's result says what became of the earlier content, either way, in the tool's words. */
+export const saysKept = (t: string): boolean => t.includes(NOT_KEPT) || KEPT.test(t);
 
 /** The agent's words after the `n`th message of Sam's (1-based). */
 export const replyTo = (w: P11World, n: number): string => {

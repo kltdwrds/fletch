@@ -34,7 +34,8 @@ export const LIBRARY_TEXT = {
   unpin: "Unpin",
   delete: "Delete",
   deleteTitle: "Delete this file?",
-  deleteBody: "It will be removed from your library and can’t be recovered.",
+  // F103 (D-0028 proposed): a deleted file goes to the trash for 30 days, its versions with it.
+  deleteBody: "It moves to the trash for 30 days, with its earlier versions, and can be restored from there until then.",
   save: "Save",
   nameLabel: "File name",
   copyLink: "Copy link",

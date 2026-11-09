@@ -16,7 +16,7 @@ import { type AttachmentCall, PersonAttachments } from "../attachments/store.ts"
 import { type AttachmentLinkCall, runAttachmentCall } from "../attachments/links.ts";
 import { attachmentDeps } from "../attachments/wiring.ts";
 import { type DocumentCall, documentCall, PersonLinks } from "../files/links.ts";
-import { type Actor as FileActor, type JournalSink, journaledDelete } from "../files/journaled.ts";
+import { type Actor as FileActor, type HistoryCall, historyCall, type JournalSink, journaledDelete } from "../files/journaled.ts";
 import { forgetConfirmed } from "../vault/browser-state.ts";
 import { runTreeCall, type TreeCall, treeOf } from "../tree/rpc.ts";
 import type { EntityInput } from "../memory/entities.ts";
@@ -196,7 +196,7 @@ export class Person extends Agent<Env> {
   }
 
   private get files(): PersonFiles {
-    this.filesInstance ??= new PersonFiles(this.ctx.storage, this.env.AGENT_BUCKET, this.name);
+    this.filesInstance ??= new PersonFiles(this.ctx.storage, this.env.AGENT_BUCKET, this.name, () => Date.now(), this.ledgerJournal);
     return this.filesInstance;
   }
 
@@ -414,6 +414,8 @@ export class Person extends Agent<Env> {
   async documentCall(requester: string, call: DocumentCall) { return documentCall(this.files, this.links, requester, call, this.ledgerJournal); }
   /** The owner's shares for the app (F101, B-P11-13): what the chat's share card and the Library read. */
   async shareList(requester: string) { return this.links.list(requester); }
+  /** The owner's versions and trash (F103, D-0028 proposed): list, open and restore a version; list, restore and empty the trash. */
+  async fileHistory(requester: string, call: HistoryCall, by: FileActor = "person") { return historyCall({ files: this.files, links: this.links, journal: this.ledgerJournal }, requester, call, by); }
   /** The tenant Ledger's journal, which a file's delete and a share's revoke write to (F101). */
   private readonly ledgerJournal: JournalSink = async (row) => (this.env.LEDGER.get(this.env.LEDGER.idFromName(this.env.TENANT_ID)) as unknown as { journal(r: JournalRow): Promise<unknown> }).journal(row);
   async sharedFile(token: string) { return this.links.shared(token); }

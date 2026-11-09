@@ -276,7 +276,7 @@ T-P11-04  must-have  tier 1
   collateral: no share or journal row
   graders: code over the rows, the result text by its leading code word and the texts
   reference: Muse overwrote in place and said nothing of the lost version (B-P11-04, `answers/step-3.md`)
-  version_hash: bf38391c5326
+  version_hash: e268c02c6aa6
   file: test/evals/p11-files/edit-in-place.task.ts
 
 T-P11-05  nice-to-have  tier 1
@@ -291,7 +291,7 @@ T-P11-05  nice-to-have  tier 1
   collateral: a journal row per delete and restore
   graders: code over the version rows, the R2 keys and the responses
   reference: the contract requires it; Muse kept no version and no trash (B-P11-05, B-P11-14)
-  version_hash: 3dd047a07406
+  version_hash: b29bf20c2a4b
   file: test/evals/p11-files/versions-and-trash.task.ts
 
 T-P11-06  must-have  tier 1
@@ -421,7 +421,7 @@ T-P11-14  nice-to-have  tier 1
   collateral: none
   graders: code over the tool result and the route's JSON
   reference: Muse's listing had no file-listing function and its Library showed no date or version (B-P11-16)
-  version_hash: 57309dac6cdb
+  version_hash: 854b97c179e2
   file: test/evals/p11-files/library-listing.task.ts
 
 T-P11-15  nice-to-have  tier 1
@@ -450,7 +450,7 @@ T-P11-16  must-have  tier 2
   collateral: no share
   graders: code over the slot's transcript and files
   reference: B-P11-01 and B-P11-04 (`answers/step-1.md`, `answers/step-3.md`)
-  version_hash: 5a3deb27eacb
+  version_hash: 3b19dd548fbe
   file: test/evals/p11-files/memo-and-edit.task.ts
 
 T-P11-17  must-have  tier 2

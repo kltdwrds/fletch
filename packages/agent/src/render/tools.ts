@@ -9,7 +9,7 @@ import { Type } from "@earendil-works/pi-ai";
 import type { WriteResult } from "../files/store.ts";
 import type { DocumentCall, LinkResult, ShareListResult, ShareResult } from "../files/links.ts";
 import type { JournaledRevoke } from "../files/journaled.ts";
-import { REPLACED_WORDS } from "../files/tools.ts";
+import { replacedWords } from "../files/tools.ts";
 import { LINK_TTL_MS, lifeWords, SHARE_DEFAULT_MINUTES, SHARE_MAX_MINUTES } from "../files/links.ts";
 import type { EffectBuffer } from "../chat/tools.ts";
 import type { Namespace, ToolSpec } from "../tools/registry.ts";
@@ -111,7 +111,7 @@ export function documentsNamespace(api: DocumentsApi, requester: string, effects
       const download = link.ok ? ` Download link for the person only, valid ${Math.round(LINK_TTL_MS / 60_000)} minutes: ${link.url}` : ` No download link was made (${link.code}); it opens from the Library.`;
       // B-P2-10: the reply links the file as markdown to `files/<path>`, which the chat draws as a file card (`thread-work.ts`).
       // F101 (F100's Reconcile 6, B-P11-04): a render over an existing document says it replaced it, as `file_write` does.
-      const head = saved.replaced ? `REPLACED: saved ${path} (${r.to}, ${saved.size} bytes) in the person's Library; ${REPLACED_WORDS}.` : `SAVED: ${path} (${r.to}, ${saved.size} bytes) is in the person's Library.`;
+      const head = saved.replaced ? `REPLACED: saved ${path} (${r.to}, ${saved.size} bytes) in the person's Library; ${replacedWords(saved)}.` : `SAVED: ${path} (${r.to}, ${saved.size} bytes) is in the person's Library.`;
       return text(`${head}${download} Link it in your reply as [${path.split("/").pop()}](files/${path}), which the chat shows as a file card.`, { path, to: r.to, bytes: saved.size });
     },
   };

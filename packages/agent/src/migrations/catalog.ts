@@ -6,6 +6,7 @@ import { SCHEMA as ATTACHMENTS } from "../attachments/store.ts";
 import { COLUMNS as DELIVERY_COLUMNS, SCHEMA as DELIVERY } from "../delivery/service.ts";
 import { SCHEMA as FILES } from "../files/store.ts";
 import { SCHEMA as LINKS } from "../files/links.ts";
+import { SCHEMA as FILE_VERSIONS } from "../files/versions.ts";
 import { SCHEMA as CARDS } from "../chat/cards.ts";
 import { SCHEMA as CHAT } from "../chat/schema.ts";
 import { SCHEMA as MAILBOX } from "../chat/mailbox.ts";
@@ -76,6 +77,9 @@ export const PERSON_MIGRATIONS: readonly Migration[] = [
   schema("person.browse", B, "CREATE TABLE IF NOT EXISTS browse_domains (domain TEXT PRIMARY KEY, engine TEXT, state TEXT NOT NULL, code TEXT, at INTEGER NOT NULL)"),
   // A voice note's transcript on its attachment row (F70, P13 delta 2, D-0026): the transcript is kept, the audio is not.
   addColumns("person.attachments-transcript", "f70", "attachments", { transcript: "TEXT" }),
+  // A Library that keeps what it replaced (F103, D-0028 PROPOSED, one-way): two new tables, nothing else touched, so a
+  // rejection deletes this line, `files/versions.ts` and the bytes under each home key's `versions/` prefix.
+  schema("person.file-versions", "f103", FILE_VERSIONS),
 ];
 
 export const COMPANY_MIGRATIONS: readonly Migration[] = [

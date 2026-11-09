@@ -17,7 +17,7 @@ import { companyView } from "../../../packages/agent/src/company/authority.ts";
 import { displayNames } from "../../../packages/agent/src/company/members.ts";
 import { PersonFiles } from "../../../packages/agent/src/files/store.ts";
 import { documentCall, PersonLinks, routeShare } from "../../../packages/agent/src/files/links.ts";
-import { journaledDelete } from "../../../packages/agent/src/files/journaled.ts";
+import { historyCall, journaledDelete } from "../../../packages/agent/src/files/journaled.ts";
 import { documentsApi } from "../../../packages/agent/src/render/tools.ts";
 import type { RenderResult } from "../../../packages/agent/src/render/render.ts";
 import type { FilesApi } from "../../../packages/agent/src/files/tools.ts";
@@ -162,7 +162,7 @@ export function authorityWorld(o: WorldOptions = {}) {
             return new MemoryService(mem, companyMemory, leg);
           })(),
           ...(() => {
-            const files = new PersonFiles(storage, asBucket(r2), email, () => clock.now);
+            const files = new PersonFiles(storage, asBucket(r2), email, () => clock.now, (row) => ledgerH.instance.journal(row));
             // Signed links and shares (M24.3) over the same files and storage, as `objects/person.ts` builds them.
             return { files, links: new PersonLinks(storage, files, asBucket(r2), () => clock.now) };
           })(),
@@ -466,6 +466,7 @@ export function authorityWorld(o: WorldOptions = {}) {
     filePin: async (p, path, pinned) => host(p).files.pin({ path, pinned }, p),
     fileDelete: async (p, path) => journaledDelete({ files: host(p).files, links: host(p).links, journal: (row) => ledgerH.instance.journal(row) }, { path }, p, "person"),
     shares: async (p) => host(p).links.list(p),
+    fileHistory: async (p, call) => historyCall({ files: host(p).files, links: host(p).links, journal: (row) => ledgerH.instance.journal(row) }, p, call, "person") as never,
     // Signed links (M24.3), made and checked by the session's own `Person`, as `index.ts` wires them.
     fileLink: async (p, path, download) => host(p).links.link({ path, download }, p),
     fileLinked: async (p, link) => host(p).links.linked(link, p),

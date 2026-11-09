@@ -25,7 +25,7 @@ const liveExpr = () => /const live = ([^;]+);/.exec(readFileSync(join(repoRoot, 
 const shared = (t: P11Tier1) => t.links().find((l) => l.kind === "share")?.href ?? "/hooks/share/none";
 
 export const script01: FakeStep[] = [load(["documents"]), render({ markdown: MEMO_MARKDOWN, to: "docx", name: "p11-memo" }), { text: `Saved: [p11 memo](files/${MEMO_DOCX}).` }];
-export const script04: FakeStep[] = [load(["files"]), read(MEMO_MD), write(MEMO_MD, MEMO_WITH_RISKS), { text: `Changed [the memo](files/${MEMO_MD}): a Risks section with two bullets. The earlier version was replaced and not kept.` }];
+export const script04: FakeStep[] = [load(["files"]), read(MEMO_MD), write(MEMO_MD, MEMO_WITH_RISKS), { text: `Changed [the memo](files/${MEMO_MD}): a Risks section with two bullets. The earlier text was kept as version 1.` }];
 export const script06: FakeStep[] = [
   load(["files"]), write(BUDGET_CSV, BUDGET_1), read(BUDGET_CSV), { text: `Saved [p11 budget](files/${BUDGET_CSV}); the total row reads 1750.` },
   write(BUDGET_CSV, BUDGET_2, "w2"), read(BUDGET_CSV, "f2"), { text: `Travel is now 500; the saved total reads 2000 ([p11 budget](files/${BUDGET_CSV})).` },
@@ -203,10 +203,24 @@ export const later: Record<string, () => Run> = {
       async (t) => {
         await ask("restore", "POST", "/app/file/restore", { path: MEMO_MD, n: 1 })(t);
         await ask("after-restore", "GET", `/app/file/versions?path=${encodeURIComponent(MEMO_MD)}`)(t);
+        // A share of the memo as it now stands, made at the store (no card in this world of routes): asked for while the
+        // memo is trashed and again once it is restored, the same bytes, so only an ended share keeps it from answering.
+        const s = await t.w.host(sam.email).links.share({ path: MEMO_MD }, sam.email);
+        if (!s.ok) throw new Error(`P11_SHARE: ${s.code}`);
+        (t as unknown as { url: string }).url = s.url;
       },
-      ask("delete", "POST", "/app/file/delete", { path: MEMO_MD }),
-      ask("trash", "GET", "/app/trash"),
-      ask("restore-trash", "POST", "/app/trash/restore", { path: MEMO_MD }),
+      async (t) => {
+        await ask("delete", "POST", "/app/file/delete", { path: MEMO_MD })(t);
+        await t.getAs("trash-share", "none", (t as unknown as { url: string }).url);
+      },
+      async (t) => {
+        await ask("trash", "GET", "/app/trash")(t);
+        await t.getAs("pat-versions", "pat", `/app/file/versions?path=${encodeURIComponent(MEMO_MD)}`);
+      },
+      async (t) => {
+        await ask("restore-trash", "POST", "/app/trash/restore", { path: MEMO_MD })(t);
+        await t.getAs("restored-share", "none", (t as unknown as { url: string }).url);
+      },
     ],
   }),
   "T-P11-07": () => ({
@@ -289,7 +303,7 @@ export const later: Record<string, () => Run> = {
     ],
   }),
   "T-P11-16": () => ({
-    spec: { script: [load(["files"]), write(MEMO_MD, MEMO_MARKDOWN), { text: `Saved [p11 eval memo](files/${MEMO_MD}).` }, read(MEMO_MD), write(MEMO_MD, MEMO_WITH_RISKS, "w2"), { text: `Changed [p11 eval memo](files/${MEMO_MD}): a Risks section. The earlier version was replaced and not kept.` }] },
+    spec: { script: [load(["files"]), write(MEMO_MD, MEMO_MARKDOWN), { text: `Saved [p11 eval memo](files/${MEMO_MD}).` }, read(MEMO_MD), write(MEMO_MD, MEMO_WITH_RISKS, "w2"), { text: `Changed [p11 eval memo](files/${MEMO_MD}): a Risks section. The earlier text was kept as version 1.` }] },
     turns: [prompt, prompt],
   }),
   "T-P11-17": () => ({
