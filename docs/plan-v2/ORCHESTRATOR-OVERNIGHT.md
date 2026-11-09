@@ -147,6 +147,16 @@ T-P2-04 findings), F70 (the three plants, T-P13-04 as a browser test), F60 (Q60'
 F80 (the kept login seeded, `claude/f80-done`), every accept on the GitHub runner, never locally. Lesson kept: with five
 builders on one 4-core box, local `pnpm accept` is noise; the runner is the score.
 
+**Outcome at 01:35Z.** Every part built in the run meets the bar on main: F56 (#150), F100 (#155), F70 (#153), F59
+(#147), F80's fix-up (#159), F60's fix-up (#158) and F90 (#156), each merged DONE on a runner accept of its merged head
+and a fresh Opus verifier. Verifier passes it took: F56 one, F100 one, F70 two, F59 one plus an evidence re-read (the
+declaration's time), F80 one, F60 two, F90 five (each of the first four found one plant gap: the unrun tasks, plants
+on fakes, `engine_unsaid`, `engine_hop`); every finding was fixed by a builder, none argued away. Scorecard: P8, P9, P10,
+P11, P13 and P16 rows name their parts; every cluster stays at level 1 until a tier-2 part runs. Next in the queue: F93,
+then the translations' remaining parts (F61, F71 to F73, F81 onward, F91, F92, F101 to F103). Lessons kept: a verifier
+pass per fix is cheap on the runner and catches what the builder's own reading misses; landing six PRs in sequence costs a
+main merge and a runner accept each, so land in the order the ledgers conflict least (code-only parts first).
+
 ## What is not for tonight
 
 Level 3 (Locked) needs Kyle's UAT; D-0015 (tier-2 evals in CI) spends money; D-0011 needs Kyle's own commit; a Muse
