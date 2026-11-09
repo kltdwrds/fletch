@@ -4,13 +4,14 @@
 // front of the script there are no props, and it serves its own tenant.
 import { getAgentByName } from "agents";
 import { singleAccountHost } from "@qyvr/host-cloudflare";
-import { available, hostOf, setHost } from "./host.ts";
+import { hostOf, setHost } from "./host.ts";
 import { propsOf } from "./http/identity.ts";
 import type { IngressStub } from "./http/ingress-routes.ts";
 import type { Directory } from "./http/routes.ts";
 import type { AppDirectory, AppJob } from "./http/app-routes.ts";
 import type { VaultDirectory } from "./http/vault-routes.ts";
 import { serve } from "./http/serve.ts";
+import { hostRender } from "./render/tools.ts";
 import { jobName } from "./objects/job.ts";
 import { dayRollup } from "./obs/dashboard.ts";
 import { appAttachments } from "./attachments/wiring.ts";
@@ -20,6 +21,7 @@ import { sweepTenant } from "./migrations/sweep.ts";
 export { Chat, Company, Ingress, Job, Ledger, Person, Vault } from "./objects/index.ts";
 /** Sub-agents are facets of their `Chat`, loaded from this export (M7.2); no binding names it. */
 export { SubAgent } from "./objects/subagent.ts";
+export { Renderer } from "./objects/renderer.ts";
 /** Code Mode's outbound (M25.5): every Dynamic Worker's `globalOutbound`, loaded with the tenant and person in props. */
 export { Egress } from "./code/egress.ts";
 
@@ -178,10 +180,7 @@ function directory(env: Env): Directory {
       }),
       now: () => Date.now(),
     },
-    render: async (input) => {
-      const render = hostOf(env).render;
-      return available(render) ? render.render(input) : render;
-    },
+    render: hostRender(hostOf(env)),
     share: (token) => routeShare(token, env.AGENT_BUCKET, async (person, t) => (await getAgentByName(env.PERSON, person)).sharedFile(t)),
     migrations: () => sweepTenant({
       members: memberEmails,

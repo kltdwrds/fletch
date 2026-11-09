@@ -142,6 +142,14 @@ describe('self-host: the deploy config', () => {
     assert.ok(!JSON.stringify(c).includes('LOADER') && !JSON.stringify(c).includes('IMAGES'));
   });
 
+  it('[F56] adds no Renderer binding or container, even with --paid, until D-0030 is accepted', () => {
+    const paid = selfHostConfig(BASE, { ...opts, paid: true });
+    assert.equal(paid.containers, undefined);
+    assert.deepEqual(paid.durable_objects, BASE.durable_objects);
+    assert.equal(c.containers, undefined);
+    assert.ok(!JSON.stringify(paid).includes('RENDERER'));
+  });
+
   it("names no key outside the agent's config but its name, account and workers.dev, and none of the base's resources", () => {
     const allowed = new Set([...Object.keys(BASE), 'name', 'account_id', 'workers_dev']);
     assert.deepEqual(Object.keys(selfHostConfig(BASE, { ...opts, accountId: ACCT })).filter((k) => !allowed.has(k)), []);
