@@ -367,9 +367,7 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   narrowing; the tool is not renamed). The nine held P8 tasks are skipped by name as vitest todos, since Biome refuses
   `.skip`. The T-P8-10 control check read the page as served until 2026-11-09, when PR #158 (Q60) made it a Chromium run at 1280 and 390 over the rendered DOM, drawn and listed chat kinds both graded.
   Rejected: renaming `onboarding_invite`, and a Biome ignore comment per held test.
-<<<<<<< HEAD
 - 2026-11-09 (F71, under Kyle's one-hour ruling of 2026-11-08): F71 split, its scope item (6) and T-P13-08 to F74, because F101 owns `share_revoke` and the two parts' revokes answer differently (`SHARE_EXPIRED` against `SHARE_UNKNOWN`). The two speech models join both `MODEL_TIERS` (a tier picks the text models; speech has its own monthly cap). A speech call that fails or is refused costs nothing in its Ledger row; a successful one at least one micro. A read-aloud's audio is accepted between 25 and 4 characters a second plus three seconds; shorter is `SPEECH_PARTIAL`, longer `SPEECH_FAILED`. The default speaker is aura-2-en's `luna`, from ten catalog speakers. An episode ask with speech on is refused `SPEECH_UNAVAILABLE` until F72's two-voice render. Rejected: building a second revoke beside F101's, and holding speech to the economy tier's text model alone.
-=======
 - 2026-11-09 F93 (P10, under Kyle's ruling of 2026-11-08, "answer all of these with defaults and best effort to unblock
   … we can always go back later and reconcile"): three two-way changes so T-P10-08 and T-P10-14 hold on the production
   path. (1) `browse_keep_site` is `asksAfterExternal`: on the person's ask it runs at once, but after outside content in
@@ -378,4 +376,3 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   value. (3) A scheduled job run names its slot to the model step (`jobs/steps.ts`), so a catch-up run's message can say
   which slot it ran for (B-P10-16). Rejected: softening T-P10-08's flag grader (the clause asks for it), and stamping the
   slot onto the delivered text in code (it would break B17's content dedupe).
->>>>>>> origin/main
