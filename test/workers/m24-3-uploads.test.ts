@@ -108,7 +108,7 @@ describe("[M24.3] caps by type, stated in words", () => {
   });
 
   it("a video over its cap is refused ATTACHMENT_TOO_LARGE_VIDEO in words, and is kept unread under it", async () => {
-    const w = attachmentWorld({ caps: { file: 40, video: 100, pasted: 8 } });
+    const w = attachmentWorld({ caps: { file: 40, video: 100, pasted: 8, audio: 8 } });
     expect(await w.upload(ada.email, "clip.mp4", new Uint8Array(101))).toMatchObject({ status: 413, body: { code: "ATTACHMENT_TOO_LARGE_VIDEO", words: expect.stringContaining("a video can be up to") } });
     const kept = await w.upload(ada.email, "clip.mp4", new Uint8Array(100).fill(7));
     expect(kept).toMatchObject({ status: 201, body: { attachment: { mime: "video/mp4", status: "unread", code: "ATTACHMENT_VIDEO_UNREAD" }, words: "clip.mp4 is attached, but your agent could not read it (ATTACHMENT_VIDEO_UNREAD)." } });

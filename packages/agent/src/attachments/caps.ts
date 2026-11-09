@@ -9,18 +9,26 @@ export const FILE_MAX = 25 * 1024 * 1024;
 export const VIDEO_MAX = 100 * 1024 * 1024;
 /** An image pasted into the composer: 8 MiB. */
 export const PASTED_IMAGE_MAX = 8 * 1024 * 1024;
+/**
+ * A voice note or an audio file: 8 MiB (P13 delta 1, Muse's voice-note figure, which one transcription request carries).
+ * Its transcript is kept on its row and its audio is not (D-0026); while speech is off it is kept untranscribed, said by
+ * `SPEECH_UNAVAILABLE` (F70).
+ */
+export const AUDIO_MAX = 8 * 1024 * 1024;
 /** Attachments on one message or one colleague's request. */
 export const MAX_PER_MESSAGE = 10;
 
-export type AttachmentClass = "image" | "video" | "file";
-export type Caps = { file: number; video: number; pasted: number };
-export const CAPS: Caps = { file: FILE_MAX, video: VIDEO_MAX, pasted: PASTED_IMAGE_MAX };
+export type AttachmentClass = "image" | "video" | "audio" | "file";
+export type Caps = { file: number; video: number; pasted: number; audio: number };
+export const CAPS: Caps = { file: FILE_MAX, video: VIDEO_MAX, pasted: PASTED_IMAGE_MAX, audio: AUDIO_MAX };
 
 /** The types an attachment is stored and served as, by extension, with its class. */
 export const ATTACHMENT_TYPES: Record<string, { mime: string; cls: AttachmentClass }> = {
   jpg: { mime: "image/jpeg", cls: "image" }, jpeg: { mime: "image/jpeg", cls: "image" }, png: { mime: "image/png", cls: "image" },
   gif: { mime: "image/gif", cls: "image" }, webp: { mime: "image/webp", cls: "image" },
   heic: { mime: "image/heic", cls: "image" }, heif: { mime: "image/heif", cls: "image" }, avif: { mime: "image/avif", cls: "image" },
+  mp3: { mime: "audio/mpeg", cls: "audio" }, m4a: { mime: "audio/mp4", cls: "audio" }, ogg: { mime: "audio/ogg", cls: "audio" },
+  opus: { mime: "audio/opus", cls: "audio" }, wav: { mime: "audio/wav", cls: "audio" }, weba: { mime: "audio/webm", cls: "audio" },
   mp4: { mime: "video/mp4", cls: "video" }, m4v: { mime: "video/mp4", cls: "video" }, mov: { mime: "video/quicktime", cls: "video" }, webm: { mime: "video/webm", cls: "video" },
   pdf: { mime: "application/pdf", cls: "file" },
   docx: { mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", cls: "file" },
@@ -70,6 +78,7 @@ export function checkAttachment(input: { name: string; mime?: string; size: numb
     return { ok: false, code: "ATTACHMENT_TOO_LARGE_PASTED", words: `That pasted image is ${over(input.size)}; a pasted image can be up to ${mb(caps.pasted)}. Attach it as a file instead.` };
   }
   if (t.cls === "video" && input.size > caps.video) return { ok: false, code: "ATTACHMENT_TOO_LARGE_VIDEO", words: `${name} is ${over(input.size)}; a video can be up to ${mb(caps.video)}.` };
+  if (t.cls === "audio" && input.size > caps.audio) return { ok: false, code: "ATTACHMENT_TOO_LARGE_AUDIO", words: `${name} is ${over(input.size)}; a voice note or audio file can be up to ${mb(caps.audio)}.` };
   if (t.cls !== "video" && input.size > caps.file) return { ok: false, code: "ATTACHMENT_TOO_LARGE_FILE", words: `${name} is ${over(input.size)}; a file can be up to ${mb(caps.file)}.` };
   return { ok: true, name, mime: t.mime, cls: t.cls, convert: CONVERTED_TO_JPEG.has(t.mime) };
 }

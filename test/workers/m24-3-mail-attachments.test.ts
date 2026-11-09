@@ -61,7 +61,7 @@ describe("[M24.3] the mail reader takes attachments out at any depth", () => {
 
 describe("[M24.3] mail's attachments land in the same table, and a dropped one is said in the mail chat", () => {
   it("a kept file is stored under Ada's key, read, and pointed at the mail's notice; each dropped one is in the sentence with its code", async () => {
-    const files = attachmentWorld({ caps: { file: 1024, video: 16, pasted: 8 } });
+    const files = attachmentWorld({ caps: { file: 1024, video: 16, pasted: 8, audio: 8 } });
     const w = mailWorld({ attachments: (email) => (m) => files.store(email).fromMail(m) });
     const body = multipart("m1", [
       part(["Content-Type: text/plain"], "Schedule, a tool, a clip and half a photo."),

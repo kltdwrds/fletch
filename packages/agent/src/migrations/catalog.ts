@@ -74,6 +74,8 @@ export const PERSON_MIGRATIONS: readonly Migration[] = [
   schema("person.grants", B, GRANTS),
   schema("person.skill-seen", "m25.3", SKILL_SEEN),
   schema("person.browse", B, "CREATE TABLE IF NOT EXISTS browse_domains (domain TEXT PRIMARY KEY, engine TEXT, state TEXT NOT NULL, code TEXT, at INTEGER NOT NULL)"),
+  // A voice note's transcript on its attachment row (F70, P13 delta 2, D-0026): the transcript is kept, the audio is not.
+  addColumns("person.attachments-transcript", "f70", "attachments", { transcript: "TEXT" }),
 ];
 
 export const COMPANY_MIGRATIONS: readonly Migration[] = [

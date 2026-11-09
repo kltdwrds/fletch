@@ -352,10 +352,18 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   key, since that token already deploys every slot Worker. Reversing: `pnpm preview down --slot 1 --force` on Kyle's
   login, then a PR that drops the mark and the workflow. Rejected: a lease key for the runner (it proves nothing the
   token does not), and a fresh lease per deploy (it would wipe the passkey and workspace).
+- 2026-11-08 F70 (P13, D-0026, accepted by Kyle's ruling of 2026-11-08, recorded on main by PR #141): the `attachments` row's `transcript` column is a two-way storage change under AGENTS.md's
+  no-users rule, since `attachments/store.ts` is the only reader of that table's rows; it lands by the named migration
+  `person.attachments-transcript`. The audio types are mp3, m4a, ogg, opus, wav and `weba` for `audio/webm` (`webm`
+  stays video, so a recorder's unnamed `audio/webm` blob is audio by its type). The call refusal is answered by an
+  observation, `speech_status`, beside `speak`, so no tool is named for starting a call (B-P13-01). Rejected: a
+  `voice_call` tool that only refuses (a name that reads as capture), and the refusal in the instruction line alone
+  (words with no code behind them). D-0026's "transcript kept, audio not" is the one-way door this column serves; the column
+  itself is reversible (a later migration drops it) while no other reader exists.
 - 2026-11-08 F60 (D-0025 door 1): `roomReach()` refuses a tool whose name holds `room`, `group` or `participant` (and
   their plurals), or whose description offers to make or join a chat with other people, add a person to one, invite to
   one, or send from the person's own account or under their name. `invite` counts only in a description that invites to
   a chat, group or room, because `onboarding_invite` invites a member to the company, which is not a room (the scope's
   narrowing; the tool is not renamed). The nine held P8 tasks are skipped by name as vitest todos, since Biome refuses
-  `.skip`. The T-P8-10 control check reads the page as served (its markup is the same at both widths; no Chromium run).
+  `.skip`. The T-P8-10 control check read the page as served until 2026-11-09, when PR #158 (Q60) made it a Chromium run at 1280 and 390 over the rendered DOM, drawn and listed chat kinds both graded.
   Rejected: renaming `onboarding_invite`, and a Biome ignore comment per held test.
