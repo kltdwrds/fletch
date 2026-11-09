@@ -40,7 +40,7 @@ export interface SpeechWire {
 export function speechOffReason(env: SpeechEnv): string {
   if (!env.AI) return "this deploy has no AI binding, so it cannot transcribe or speak";
   if (String(env.SPEECH ?? "").toLowerCase() === "off") return "speech is switched off on this deploy (its SPEECH setting is off), so it cannot transcribe or speak";
-  return "this deploy has no Ledger to count speech against, so it cannot transcribe or speak";
+  return "speech is not offered on this turn: it runs only in the owner's own chat, with a Ledger that counts it";
 }
 
 /** The speakers aura-2-en offers that a person may pick (a subset of its catalog); `luna` until they pick one. */
