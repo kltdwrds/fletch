@@ -321,7 +321,7 @@ T-P11-07  nice-to-have  tier 1
   collateral: none
   graders: code over the rows and the read-back
   reference: Muse built a new presentation with `slide_count_target` 3 (B-P11-07)
-  version_hash: 97702f898cde
+  version_hash: 9ecbd7ff66f9
   file: test/evals/p11-files/deck-from-document.task.ts
 
 T-P11-08  must-have  tier 1
@@ -381,7 +381,7 @@ T-P11-11  must-have  tier 1
   collateral: one journal row for the revoke
   graders: code over the rows, R2 pointers, the public responses and the reply order
   reference: Muse deleted the stored object and checked the 404 (B-P11-12, B-P11-13)
-  version_hash: ac497c66f8b1
+  version_hash: 05401dff603c
   file: test/evals/p11-files/share-list-revoke.task.ts
 
 T-P11-12  must-have  tier 1
@@ -434,7 +434,7 @@ T-P11-15  nice-to-have  tier 1
   collateral: the transcript rows unchanged
   graders: code over the drawn DOM and the transcript
   reference: Muse's link card still read "public link" after the revoke (B-P11-17)
-  version_hash: f828233e81bc
+  version_hash: 4846dc943fc0
   file: test/evals/p11-files/cards-current-state.task.ts
 
 T-P11-16  must-have  tier 2
@@ -465,7 +465,7 @@ T-P11-17  must-have  tier 2
   collateral: the memo unchanged
   graders: code over the slot's transcript, the share route and the effects
   reference: B-P11-09 and B-P11-12 (`answers/step-8.md`, `answers/step-12.md`)
-  version_hash: b80ddf0c3cea
+  version_hash: 19ab55282f76
   file: test/evals/p11-files/share-and-revoke.task.ts
 
 T-P11-18  nice-to-have  tier 2

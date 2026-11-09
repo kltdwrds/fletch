@@ -133,7 +133,8 @@ function directory(env: Env): Directory {
       fileRead: async (person, path, from) => (await getAgentByName(env.PERSON, person)).fileRead({ path, from }, person),
       fileRename: async (person, path, to) => (await getAgentByName(env.PERSON, person)).fileRename({ path, to }, person),
       filePin: async (person, path, pinned) => (await getAgentByName(env.PERSON, person)).filePin({ path, pinned }, person),
-      fileDelete: async (person, path) => (await getAgentByName(env.PERSON, person)).fileDelete({ path }, person),
+      fileDelete: async (person, path) => (await getAgentByName(env.PERSON, person)).fileDelete({ path }, person, "person"),
+      shares: async (person) => (await getAgentByName(env.PERSON, person)).shareList(person),
       // Uploads (M24.3): the bytes go to the bucket under the session's person; their `Person` keeps the row and decides reads.
       attachments: appAttachments(env),
       fileLink: async (person, path, download) => (await getAgentByName(env.PERSON, person)).documentCall(person, { op: "link", path, download }) as never,

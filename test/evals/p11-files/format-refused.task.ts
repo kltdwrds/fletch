@@ -9,7 +9,8 @@ const sam = people.people.find((p) => p.id === "sam-solo")!;
 export const TEXT = "make p11 memo as a PDF";
 const world = (w: P11World, name: string) => w.renders.find((r) => r.world === name);
 /** The refusals' words name the formats that can be made (`RENDER_WORDS`). */
-const FORMATS = "only docx, odt, html can be made";
+// F101 adds pptx to the Renderer's formats (delta 3), so the refusal names four.
+const FORMATS = "only docx, odt, html, pptx can be made";
 
 const graders: Grader<P11World>[] = [
   { name: "no file row in either world", kind: "end_state", check: (w) => w.renders.length === 2 && w.renders.every((r) => r.files.length === 0) },

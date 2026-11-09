@@ -18,6 +18,7 @@ import { displayNames } from "../../../packages/agent/src/company/members.ts";
 import { PersonFiles } from "../../../packages/agent/src/files/store.ts";
 import { PersonAudio, settingsVoiceSet } from "../../../packages/agent/src/speech/audio.ts";
 import { documentCall, PersonLinks, routeShare } from "../../../packages/agent/src/files/links.ts";
+import { journaledDelete } from "../../../packages/agent/src/files/journaled.ts";
 import { documentsApi } from "../../../packages/agent/src/render/tools.ts";
 import type { RenderResult } from "../../../packages/agent/src/render/render.ts";
 import type { FilesApi } from "../../../packages/agent/src/files/tools.ts";
@@ -310,7 +311,8 @@ export function authorityWorld(o: WorldOptions = {}) {
   /** The `Person`'s files as the chat reaches them, as `objects/person.ts` serves them. */
   const filesOf = (p: string): FilesApi => {
     const f = () => host(p).files;
-    return { fileList: async (i, r) => f().list(i, r), fileRead: async (i, r) => f().read(i, r), fileWrite: async (i, c) => f().write(i, c), fileDelete: async (i, r) => f().remove(i, r) };
+    // A delete ends the file's shares and journals `files.delete` on the Ledger, as `Person.fileDelete` does (F101).
+    return { fileList: async (i, r) => f().list(i, r), fileRead: async (i, r) => f().read(i, r), fileWrite: async (i, c) => f().write(i, c), fileDelete: async (i, r) => journaledDelete({ files: f(), links: host(p).links, journal: (row) => ledgerH.instance.journal(row) }, i, r, "agent") };
   };
 
   const nameOf = displayNames(env.HOST.memberSeed);
@@ -361,7 +363,7 @@ export function authorityWorld(o: WorldOptions = {}) {
           ...(o.stores ? { memory: (p: string) => host(p).memory, files: filesOf, tree: (p: string) => directTreeApi(host(p).tree) } : {}),
           ...(o.docs ? { skills: docsCatalog } : {}),
           ...(o.speech ? { speech: { AI: o.speech.ai }, audio: (p: string) => host(p).audio } : {}),
-          ...(o.render ? { documents: (p: string) => documentsApi(async (call, requester) => documentCall(host(p).files, host(p).links, requester, call), o.render as never) } : {}),
+          ...(o.render ? { documents: (p: string) => documentsApi(async (call, requester) => documentCall(host(p).files, host(p).links, requester, call, (row) => ledgerH.instance.journal(row)), o.render as never) } : {}),
           authority: (p) => ({
             decide: (d) => host(p).authority.decide(d),
             commit: async (d, effectId, a) => {
@@ -467,7 +469,8 @@ export function authorityWorld(o: WorldOptions = {}) {
     fileRead: async (p, path, from) => host(p).files.read({ path, from }, p),
     fileRename: async (p, path, to) => host(p).files.rename({ path, to }, p),
     filePin: async (p, path, pinned) => host(p).files.pin({ path, pinned }, p),
-    fileDelete: async (p, path) => host(p).files.remove({ path }, p),
+    fileDelete: async (p, path) => journaledDelete({ files: host(p).files, links: host(p).links, journal: (row) => ledgerH.instance.journal(row) }, { path }, p, "person"),
+    shares: async (p) => host(p).links.list(p),
     // Signed links (M24.3), made and checked by the session's own `Person`, as `index.ts` wires them.
     fileLink: async (p, path, download) => host(p).links.link({ path, download }, p),
     fileLinked: async (p, link) => host(p).links.linked(link, p),

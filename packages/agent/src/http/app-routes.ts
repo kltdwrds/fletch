@@ -43,7 +43,10 @@ export interface AppDirectory extends ConnectorReads {
   fileRead(person: string, path: string, from: number): Promise<{ ok: true; path: string; size: number; total: number; lines: Array<{ n: number; text: string }>; next: number | null } | Refusal>;
   fileRename(person: string, path: string, to: string): Promise<{ ok: true; path: string; to: string } | Refusal>;
   filePin(person: string, path: string, pinned: boolean): Promise<{ ok: true; path: string; pinned: boolean } | Refusal>;
+  /** Deletes the file, ends every share of it and journals `files.delete` with the person as actor (F101). */
   fileDelete(person: string, path: string): Promise<{ ok: true; path: string } | Refusal>;
+  /** The person's shares from their `Person` (F101, B-P11-13): each id, file and expiry, for the app and the chat's share card. */
+  shares(person: string): Promise<{ ok: true; shares: unknown[] } | Refusal>;
   /** A short-lived signed download or preview link to one of the person's files (M24.3), made by their `Person`. */
   fileLink(person: string, path: string, download: boolean): Promise<LinkResult>;
   /** A signed link presented with the session: the `Person` checks signature, expiry and owner, then serves the bytes. */
@@ -242,6 +245,7 @@ export async function appRoutes(request: Request, url: URL, person: string, dir:
   if (url.pathname === "/app/file/rename" && request.method === "POST") return answer(await part(() => dir.fileRename(person, String(body.path ?? ""), String(body.to ?? ""))));
   if (url.pathname === "/app/file/pin" && request.method === "POST") return answer(await part(() => dir.filePin(person, String(body.path ?? ""), body.pinned !== false)));
   if (url.pathname === "/app/file/delete" && request.method === "POST") return answer(await part(() => dir.fileDelete(person, String(body.path ?? ""))));
+  if (url.pathname === "/app/shares" && request.method === "GET") return answer(await part(() => dir.shares(person)));
 
   if (url.pathname === "/app/activity" && request.method === "GET") {
     // The person's tasks (F12): the Person says which chats are theirs, each Chat answers its own tasks for its owner,

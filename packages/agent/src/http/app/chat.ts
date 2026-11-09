@@ -311,6 +311,7 @@ function linkCard(c, where) {
   const a = el("a", "Open"); a.className = "qf-btn qf-btn--secondary"; a.href = c.href; a.target = "_blank"; a.rel = "noopener";
   act.append(a); d.append(act);
   drawOnce(d, where, "link", c.id);
+  shareState(c, d, act, t, p);
 }
 // The agent's reasoning (M18.2, M23.2): while it streams, the MessageBubble's streaming dots and one "Thinking…"
 // line; once the reply starts, or the turn ends, nothing. The reasoning's text is never drawn; the Ledger keeps it.

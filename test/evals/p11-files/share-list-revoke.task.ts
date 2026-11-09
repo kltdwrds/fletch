@@ -37,7 +37,8 @@ export const task = defineTask<P11World>({
     { kind: "prompt", by: sam.email, text: REVOKE },
   ],
   ...named(graders),
-  collateral: {},
+  // The contract's "one journal row for the revoke" (F101: corrected from `{}`).
+  collateral: { journal: [`files.unshare personal;connector:files;resource:file:${MEMO_DOCX}`] },
   graders,
   reference: "Muse deleted the stored object and checked the 404 (B-P11-12, B-P11-13).",
 });
