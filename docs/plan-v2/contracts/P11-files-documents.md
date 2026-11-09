@@ -454,7 +454,7 @@ T-P11-16  must-have  tier 2
   file: test/evals/p11-files/memo-and-edit.task.ts
 
 T-P11-17  must-have  tier 2
-  setup: a slot; `documents/p11-eval-memo.docx` in Sam's Library
+  setup: a slot; `documents/p11-memo.docx` in Sam's Library
   turns: prompt "p11 eval: make a link to the memo that anyone with the link can read, and do not send it to anyone";
   the runner approves the card; then "p11 eval: revoke that link"
   end_state: no link in any reply before the approval; after it, the reply carries the link the tool returned and its
