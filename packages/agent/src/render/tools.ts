@@ -7,7 +7,9 @@
 // card's approval runs it, and then the chat shows a share card with the link's expiry.
 import { Type } from "@earendil-works/pi-ai";
 import type { WriteResult } from "../files/store.ts";
-import type { DocumentCall, LinkResult, ShareResult } from "../files/links.ts";
+import type { DocumentCall, LinkResult, ShareListResult, ShareResult } from "../files/links.ts";
+import type { JournaledRevoke } from "../files/journaled.ts";
+import { REPLACED_WORDS } from "../files/tools.ts";
 import { LINK_TTL_MS, lifeWords, SHARE_DEFAULT_MINUTES, SHARE_MAX_MINUTES } from "../files/links.ts";
 import type { EffectBuffer } from "../chat/tools.ts";
 import type { Namespace, ToolSpec } from "../tools/registry.ts";
@@ -21,6 +23,10 @@ export interface DocumentsApi {
   save(input: { path: string; text?: string; base64?: string; mediaType: string }, requester: string): Promise<WriteResult>;
   link(input: { path: string; download?: boolean }, requester: string): Promise<LinkResult>;
   share(input: { path: string; minutes?: number }, requester: string): Promise<ShareResult>;
+  /** The owner's shares from the store (F101). */
+  shares(requester: string): Promise<ShareListResult>;
+  /** Ends one share by id, journaled `files.unshare` on the Person (F101). */
+  revoke(id: string, requester: string): Promise<JournaledRevoke>;
 }
 
 /**
@@ -42,6 +48,8 @@ export function documentsApi(call: (c: DocumentCall, requester: string) => Promi
     save: (input, requester) => call({ op: "save", ...input }, requester) as Promise<WriteResult>,
     link: (input, requester) => call({ op: "link", ...input }, requester) as Promise<LinkResult>,
     share: (input, requester) => call({ op: "share", ...input }, requester) as Promise<ShareResult>,
+    shares: (requester) => call({ op: "shares" }, requester) as Promise<ShareListResult>,
+    revoke: (id, requester) => call({ op: "revoke", id }, requester) as Promise<JournaledRevoke>,
   };
 }
 
@@ -70,9 +78,13 @@ export function documentPath(name: string, to: RenderFormat): string | null {
 const RenderParams = Type.Object({
   markdown: Type.String({ minLength: 1, description: "The whole document in Markdown." }),
   // A plain string, so a format the Renderer does not make is refused by the Renderer's own code, in words.
-  to: Type.String({ description: "The file type to make: docx (Word), odt (OpenDocument) or html." }),
+  to: Type.String({ description: "The file type to make: docx (Word), odt (OpenDocument), html, or pptx (a deck: one slide per part of the Markdown between --- lines)." }),
   name: Type.String({ minLength: 1, maxLength: 60, description: "The file name without folder, such as quarterly-brief; it is saved under documents/." }),
 });
+const ListParams = Type.Object({});
+const RevokeParams = Type.Object({ id: Type.String({ minLength: 1, description: "The share's id, as share_list gives it, or its whole /hooks/share/ link." }) });
+/** A share id from its id or its whole public link. */
+const idOf = (s: string) => /(?:^|\/hooks\/share\/)([0-9a-f]{32})(?:\.[0-9a-f]{64})?$/.exec(s.trim())?.[1] ?? s.trim();
 const ShareParams = Type.Object({
   path: Type.String({ minLength: 1, description: "The file to share, such as documents/quarterly-brief.docx." }),
   minutes: Type.Optional(Type.Integer({ minimum: 1, maximum: SHARE_MAX_MINUTES, description: `How long the link works, in minutes; ${SHARE_DEFAULT_MINUTES} (a day) when omitted, ${SHARE_MAX_MINUTES} (a week) at most.` })),
@@ -84,7 +96,7 @@ export function documentsNamespace(api: DocumentsApi, requester: string, effects
     kind: "observation",
     mutates: true,
     label: "Make a document",
-    description: "Render Markdown to a Word (docx), OpenDocument (odt) or html file and save it in the person's Library under documents/. Say it is saved only after this returns.",
+    description: "Render Markdown to a Word (docx), OpenDocument (odt), html or PowerPoint (pptx, one slide per part between --- lines) file and save it in the person's Library under documents/. Say it is saved only after this returns.",
     parameters: RenderParams,
     execute: async (_id, p) => {
       const to = p.to as RenderFormat;
@@ -98,7 +110,9 @@ export function documentsNamespace(api: DocumentsApi, requester: string, effects
       const link = await api.link({ path, download: true }, requester);
       const download = link.ok ? ` Download link for the person only, valid ${Math.round(LINK_TTL_MS / 60_000)} minutes: ${link.url}` : ` No download link was made (${link.code}); it opens from the Library.`;
       // B-P2-10: the reply links the file as markdown to `files/<path>`, which the chat draws as a file card (`thread-work.ts`).
-      return text(`SAVED: ${path} (${r.to}, ${saved.size} bytes) is in the person's Library.${download} Link it in your reply as [${path.split("/").pop()}](files/${path}), which the chat shows as a file card.`, { path, to: r.to, bytes: saved.size });
+      // F101 (F100's Reconcile 6, B-P11-04): a render over an existing document says it replaced it, as `file_write` does.
+      const head = saved.replaced ? `REPLACED: saved ${path} (${r.to}, ${saved.size} bytes) in the person's Library; ${REPLACED_WORDS}.` : `SAVED: ${path} (${r.to}, ${saved.size} bytes) is in the person's Library.`;
+      return text(`${head}${download} Link it in your reply as [${path.split("/").pop()}](files/${path}), which the chat shows as a file card.`, { path, to: r.to, bytes: saved.size });
     },
   };
   const share: ToolSpec<typeof ShareParams> = {
@@ -118,5 +132,36 @@ export function documentsNamespace(api: DocumentsApi, requester: string, effects
       return text(`SHARED: ${r.path} at ${r.url}, open to anyone with the link until ${when(r.expiresAt)}.`, { share: r.id, expiresAt: r.expiresAt });
     },
   };
-  return { name: "documents", description: "make Word, OpenDocument or html documents from Markdown; share a file by public link", deferral: "names", tools: [render, share] as ToolSpec[] };
+  // F101 (delta 6): the owner's shares read from the store, and one ended by id. A revoke narrows exposure, so it is an
+  // observation with no card; it says revoked only from the store's answer.
+  const list: ToolSpec<typeof ListParams> = {
+    name: "share_list",
+    kind: "observation",
+    label: "List my share links",
+    description: "List the person's public share links from the store: each one's id, file and expiry. A link's state is read here, never from a chat card.",
+    parameters: ListParams,
+    execute: async () => {
+      const r = await api.shares(requester);
+      if (!r.ok) throw err(r.code, r.reason);
+      const live = r.shares.filter((s) => !s.expired);
+      const lines = live.map((s) => `- ${s.id}: ${s.path}, expires ${when(s.expiresAt)}`);
+      const gone = r.shares.length - live.length;
+      const head = live.length ? `LIVE SHARES: ${live.length}` : "LIVE SHARES: none; no file of the person's is shared by a link that opens now";
+      return text([head, ...lines, ...(gone ? [`${gone} expired link${gone === 1 ? "" : "s"} no longer open${gone === 1 ? "s" : ""}.`] : [])].join("\n"), { shares: live.map((s) => ({ id: s.id, path: s.path, expiresAt: s.expiresAt })) });
+    },
+  };
+  const revoke: ToolSpec<typeof RevokeParams> = {
+    name: "share_revoke",
+    kind: "observation",
+    mutates: true,
+    label: "Revoke a share link",
+    description: "End one of the person's public share links by its id (from share_list): afterwards the link opens nothing. The file stays. Say it is revoked only after this returns REVOKED.",
+    parameters: RevokeParams,
+    execute: async (_id, p) => {
+      const r = await api.revoke(idOf(p.id), requester);
+      if (!r.ok) throw err(r.code, `nothing was revoked: ${r.reason}`);
+      return text(`REVOKED: the share link ${r.id} to ${r.path} is ended; it now opens nothing, as a link that never existed. ${r.path} itself is unchanged.${r.journaled ? "" : " No journal row was written for it."}`, { id: r.id, path: r.path });
+    },
+  };
+  return { name: "documents", description: "make Word, OpenDocument, html or PowerPoint documents from Markdown; share a file by public link, list the links and revoke one", deferral: "names", tools: [render, share, list, revoke] as ToolSpec[] };
 }

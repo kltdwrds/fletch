@@ -367,3 +367,16 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   narrowing; the tool is not renamed). The nine held P8 tasks are skipped by name as vitest todos, since Biome refuses
   `.skip`. The T-P8-10 control check read the page as served until 2026-11-09, when PR #158 (Q60) made it a Chromium run at 1280 and 390 over the rendered DOM, drawn and listed chat kinds both graded.
   Rejected: renaming `onboarding_invite`, and a Biome ignore comment per held test.
+- 2026-11-09 F101 (P11 deltas 6 to 8, under Kyle's ruling of 2026-11-08): a file's delete and a share's revoke are
+  journaled from the owner's turn (`packages/agent/src/files/journaled.ts`), one content-free row each (`files.delete`,
+  `files.unshare`); a row the Ledger does not take is said in the tool's words. The P11 collateral snapshot exempts
+  only what a run declares (`Run.removes`, `Run.revokes`) and stays exact for every other key (`planted-f101.test.ts`).
+  Four task files' collateral and T-P11-02's format sentence corrected before any tier-2 run, hashes refreshed.
+  Rejected: a card before a revoke, a `revoked_at` column (delta 6).
+- 2026-11-09 (F71, under Kyle's one-hour ruling of 2026-11-08): F71 split, its scope item (6) and T-P13-08 to F74, because F101 owns `share_revoke` and the two revokes answer differently (`SHARE_EXPIRED` against `SHARE_UNKNOWN`). The two speech models join both `MODEL_TIERS` (speech has its own monthly cap). A failed or refused speech call costs nothing in its Ledger row; a successful one at least one micro. A read-aloud's audio is accepted between 25 and 4 characters a second plus three seconds; shorter is `SPEECH_PARTIAL`, longer `SPEECH_FAILED`. The default speaker is aura-2-en's `luna`. An episode ask is refused `SPEECH_UNAVAILABLE` until F72's two-voice render. Rejected: a second revoke beside F101's; holding speech to the economy tier's text model.
+- 2026-11-09 F93 (P10, under Kyle's ruling of 2026-11-08): three two-way changes so T-P10-08 and T-P10-14 run on the
+  production path. (1) `browse_keep_site` is `asksAfterExternal`: on the person's ask it runs at once; after outside
+  content in the same turn it asks on a card flagged `AFTER_EXTERNAL_INPUT` (`chat/gate.ts`), the crossing being a
+  page's say-so writing into the Vault (B-P10-09). (2) Its result names the cookie count, never a value. (3) A scheduled
+  job run names its slot to the model step (`jobs/steps.ts`, B-P10-16). Rejected: softening T-P10-08's flag grader;
+  pasting the slot onto the delivered text in code (it would break B17's content dedupe).

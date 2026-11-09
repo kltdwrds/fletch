@@ -10,6 +10,7 @@
 // The signing key is 32 random bytes made on first use and kept in this object's SQLite: nothing in
 // the repository or the environment signs a link, and offboarding's purge of the object ends them all.
 import { type BytesResult, type FilesRefusal, type PersonFiles, parseFilePath } from "./store.ts";
+import { type JournalSink, journaledRevoke } from "./journaled.ts";
 
 /** How long a download or preview link lasts: long enough to open it, short enough not to keep. */
 export const LINK_TTL_MS = 5 * 60_000;
@@ -32,6 +33,12 @@ export type LinkRefusal = { ok: false; code: LinkCode; reason: string };
 export type LinkResult = { ok: true; path: string; url: string; expiresAt: number } | FilesRefusal;
 export type ShareResult = { ok: true; id: string; path: string; url: string; expiresAt: number } | FilesRefusal | LinkRefusal;
 export type ServedResult = Extract<BytesResult, { ok: true }> | FilesRefusal | LinkRefusal;
+/** One of the owner's shares as the store holds it (F101, B-P11-13): its id, file and expiry; `expired` when it no longer opens. */
+export interface ShareRow { id: string; path: string; createdAt: number; expiresAt: number; expired: boolean }
+export type ShareListResult = { ok: true; shares: ShareRow[] } | FilesRefusal;
+export type RevokeResult = { ok: true; id: string; path: string } | FilesRefusal | LinkRefusal;
+/** A share id as the store makes it: 32 hex characters. */
+export const SHARE_ID = /^[0-9a-f]{32}$/;
 
 export const SCHEMA = `CREATE TABLE IF NOT EXISTS link_key (id INTEGER PRIMARY KEY CHECK (id = 1), key BLOB NOT NULL, created_at INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS shares (id TEXT PRIMARY KEY, path TEXT NOT NULL, sha256 TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL)`;
@@ -62,6 +69,11 @@ export class PersonLinks {
 
   private get owner(): string {
     return this.files.owner;
+  }
+
+  /** This object's clock, which a journal row of a share's end is stamped with (F101). */
+  at(): number {
+    return this.now();
   }
 
   /** The person's signing key, made once and never leaving this object. */
@@ -154,6 +166,39 @@ export class PersonLinks {
     return { ok: true, id, path: file.path, url: `/hooks/share/${id}.${sig}`, expiresAt };
   }
 
+  /** The owner's shares, newest first, each with its file and expiry (F101, B-P11-13); refused to anyone but the owner. */
+  async list(requester: string): Promise<ShareListResult> {
+    if (requester !== this.owner) return { ok: false, code: "FILES_NOT_OWNER", reason: "only the owner lists their shares" };
+    const now = this.now();
+    const rows = this.sql.exec<{ id: string; path: string; created_at: number; expires_at: number }>("SELECT id, path, created_at, expires_at FROM shares ORDER BY created_at DESC, id").toArray();
+    return { ok: true, shares: rows.map((r) => ({ id: r.id, path: r.path, createdAt: r.created_at, expiresAt: r.expires_at, expired: r.expires_at <= now })) };
+  }
+
+  /**
+   * Ends one of the owner's shares (F101, B-P11-12, delta 6): the R2 pointer, then the row, so its public path answers
+   * exactly as a share that never existed (`SHARE_UNKNOWN`). The file is untouched. A share that is not the owner's,
+   * or no longer exists, is refused `SHARE_UNKNOWN`; only an answer of `ok` says it was revoked.
+   */
+  async revoke(id: string, requester: string): Promise<RevokeResult> {
+    if (requester !== this.owner) return { ok: false, code: "FILES_NOT_OWNER", reason: "only the owner revokes their shares" };
+    if (!SHARE_ID.test(id)) return refuse("SHARE_UNKNOWN", "no share of yours has that id");
+    const row = this.sql.exec<{ path: string }>("SELECT path FROM shares WHERE id = ?", id).toArray()[0];
+    if (!row) return refuse("SHARE_UNKNOWN", "no share of yours has that id");
+    await this.bucket.delete(`${SHARE_POINTER_PREFIX}${id}`);
+    this.sql.exec("DELETE FROM shares WHERE id = ?", id);
+    return { ok: true, id, path: row.path };
+  }
+
+  /** Ends every share of one path (F101, delta 7: a delete ends its shares); the ids it ended. */
+  async endSharesOf(path: string): Promise<string[]> {
+    const ids = this.sql.exec<{ id: string }>("SELECT id FROM shares WHERE path = ?", path).toArray().map((r) => r.id);
+    for (const id of ids) {
+      await this.bucket.delete(`${SHARE_POINTER_PREFIX}${id}`);
+      this.sql.exec("DELETE FROM shares WHERE id = ?", id);
+    }
+    return ids;
+  }
+
   /** A public request for a share, with no session: the token, the row, the expiry, then the content approved. */
   async shared(token: string): Promise<ServedResult> {
     const m = /^([0-9a-f]{32})\.([0-9a-f]{64})$/.exec(token);
@@ -174,9 +219,15 @@ export type DocumentCall =
   | { op: "save"; path: string; text?: string; base64?: string; mediaType: string }
   | { op: "link"; path: string; download?: boolean }
   | { op: "linked"; path: string; exp: string; sig: string }
-  | { op: "share"; path: string; minutes?: number };
+  | { op: "share"; path: string; minutes?: number }
+  | { op: "shares" }
+  | { op: "revoke"; id: string };
 
-export async function documentCall(files: PersonFiles, links: PersonLinks, requester: string, call: DocumentCall) {
+/**
+ * The calls the chat makes on the owner's Person. `journal` is the Ledger's (F101): a revoke writes one content-free
+ * `files.unshare` row through `journaledRevoke`, the agent acting.
+ */
+export async function documentCall(files: PersonFiles, links: PersonLinks, requester: string, call: DocumentCall, journal?: JournalSink) {
   const writer = `agent:${requester}`;
   switch (call?.op) {
     case "save":
@@ -188,6 +239,10 @@ export async function documentCall(files: PersonFiles, links: PersonLinks, reque
       return links.linked({ path: String(call.path ?? ""), exp: String(call.exp ?? ""), sig: String(call.sig ?? "") }, requester);
     case "share":
       return links.share({ path: call.path, ...(call.minutes !== undefined ? { minutes: call.minutes } : {}) }, requester);
+    case "shares":
+      return links.list(requester);
+    case "revoke":
+      return journaledRevoke({ links, journal }, String(call.id ?? ""), requester, "agent");
     default:
       return { ok: false as const, code: "FILES_PATH_INVALID" as const, reason: "no such document call" };
   }

@@ -36,7 +36,9 @@ export const task = defineTask<P11World>({
     { kind: "prompt", by: sam.email, text: REVOKE },
   ],
   ...named(graders),
-  collateral: {},
+  // The share's card and decision rows and the revoke's own row (F101: a share and a revoke are journaled; the memo's
+  // bytes are graded unchanged by the end state). Corrected from `{}` before any tier-2 run.
+  collateral: { journal: [`files.share personal;connector:files;resource:file:${MEMO_DOCX} s1`, `files.share personal;connector:files;resource:file:${MEMO_DOCX} s1:decision`, `files.unshare personal;connector:files;resource:file:${MEMO_DOCX}`] },
   graders,
   reference: `B-P11-09 and B-P11-12 (answers/step-8.md, answers/step-12.md); the memo is ${MEMO_DOCX} on tier 1.`,
 });

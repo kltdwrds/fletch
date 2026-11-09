@@ -16,7 +16,9 @@ import type { ApprovalAdapter, CapabilityAdapter, WorkspaceAdapter } from "../..
 import { companyView } from "../../../packages/agent/src/company/authority.ts";
 import { displayNames } from "../../../packages/agent/src/company/members.ts";
 import { PersonFiles } from "../../../packages/agent/src/files/store.ts";
+import { PersonAudio } from "../../../packages/agent/src/speech/audio.ts";
 import { documentCall, PersonLinks, routeShare } from "../../../packages/agent/src/files/links.ts";
+import { journaledDelete } from "../../../packages/agent/src/files/journaled.ts";
 import { documentsApi } from "../../../packages/agent/src/render/tools.ts";
 import type { RenderResult } from "../../../packages/agent/src/render/render.ts";
 import type { FilesApi } from "../../../packages/agent/src/files/tools.ts";
@@ -81,8 +83,9 @@ export interface WorldOptions {
   docs?: boolean;
   /** The company workspace the chats' `workspace` namespace reaches (M8.1). */
   workspace?: WorkspaceAdapter & CapabilityAdapter & ApprovalAdapter;
-  /** The browser the chats' `browse` namespace reaches (M9). */
-  browse?: EngineHooks["browse"];
+  /** The browser the chats' `browse` namespace reaches (M9); given per chat, each chat builds its own hook from its name,
+   * as `objects/chat.ts` meters each chat's browser time under that chat's run (F93). */
+  browse?: EngineHooks["browse"] | ((chat: string) => EngineHooks["browse"]);
   /** Bindings the `Company` sees beside the Ledger, the bucket and the model, e.g. VAULT or WORKSPACE (M10.2). */
   companyEnv?: Record<string, unknown>;
   /** The environment every object sees (`QYVR_ENV`); "test" unless a test needs staging's defaults (M28.1). */
@@ -118,6 +121,8 @@ export interface WorldOptions {
   ai?: { run: (model: string, inputs: unknown, options: unknown) => Promise<Response> };
   /** Each chat's sub-agents (F31), as `subagent-wiring.ts` wires them, with these tools for the sub-agents. */
   subagents?: { reads: (person: string) => Namespace[] };
+  /** Speech (F71): the chats' `speech` hook over this `AI` binding, and each person's audio record as `objects/person.ts` builds it. */
+  speech?: { ai: unknown };
   /** Each member's attachments as `objects/person.ts` and `objects/chat.ts` wire them (M24.3): the sender's store shares, the recipient's keeps. */
   attachments?: { share: NonNullable<import("../../../packages/agent/src/colleagues/tools.ts").ColleaguesApi["shareAttachments"]>; attach: (to: string) => NonNullable<import("../../../packages/agent/src/person/requests.ts").RequestDeps["attach"]> };
 }
@@ -145,7 +150,7 @@ export function authorityWorld(o: WorldOptions = {}) {
     get: (i, r) => company().memoryGet(i, r),
     append: (by, i) => company().memoryAppend(by, i),
   };
-  const persons = new Map<string, ObjectHarness<{ authority: PersonAuthority; chats: PersonChats; memory: MemoryService; files: PersonFiles; links: PersonLinks; tree: PersonTree; jobs: PersonJobIndex }>>();
+  const persons = new Map<string, ObjectHarness<{ authority: PersonAuthority; chats: PersonChats; memory: MemoryService; files: PersonFiles; links: PersonLinks; audio: PersonAudio; tree: PersonTree; jobs: PersonJobIndex }>>();
   const host = (email: string) => {
     let h = persons.get(email);
     if (!h) {
@@ -162,8 +167,8 @@ export function authorityWorld(o: WorldOptions = {}) {
           })(),
           ...(() => {
             const files = new PersonFiles(storage, asBucket(r2), email, () => clock.now);
-            // Signed links and shares (M24.3) over the same files and storage, as `objects/person.ts` builds them.
-            return { files, links: new PersonLinks(storage, files, asBucket(r2), () => clock.now) };
+            // Signed links and shares (M24.3) and the audio record (F71) over the same files and storage, as `objects/person.ts` builds them.
+            return { files, links: new PersonLinks(storage, files, asBucket(r2), () => clock.now), audio: new PersonAudio(storage, files, asBucket(r2) as never, email, () => clock.now) };
           })(),
           // The working tree (M24.3), as `objects/person.ts` builds it: the Workspace over this object's storage.
           tree: treeOf(storage, email),
@@ -306,7 +311,8 @@ export function authorityWorld(o: WorldOptions = {}) {
   /** The `Person`'s files as the chat reaches them, as `objects/person.ts` serves them. */
   const filesOf = (p: string): FilesApi => {
     const f = () => host(p).files;
-    return { fileList: async (i, r) => f().list(i, r), fileRead: async (i, r) => f().read(i, r), fileWrite: async (i, c) => f().write(i, c), fileDelete: async (i, r) => f().remove(i, r) };
+    // A delete ends the file's shares and journals `files.delete` on the Ledger, as `Person.fileDelete` does (F101).
+    return { fileList: async (i, r) => f().list(i, r), fileRead: async (i, r) => f().read(i, r), fileWrite: async (i, c) => f().write(i, c), fileDelete: async (i, r) => journaledDelete({ files: f(), links: host(p).links, journal: (row) => ledgerH.instance.journal(row) }, i, r, "agent") };
   };
 
   const nameOf = displayNames(env.HOST.memberSeed);
@@ -350,13 +356,14 @@ export function authorityWorld(o: WorldOptions = {}) {
           ...(wired ? { subagents: wired.hooks } : {}),
           namespaces: (view) => [...fixtures(view), ...(o.onboarding ? [onboardingNamespace(onboardingApi, () => view.owner() ?? "")] : []), ...(o.namespaces?.(() => view.owner() ?? "") ?? [])],
           ...(o.workspace ? { workspace: { tenant: TENANT, api: { workspaces: o.workspace, capabilities: o.workspace, approvals: o.workspace } } } : {}),
-          ...(o.browse ? { browse: o.browse } : {}),
+          ...(o.browse ? { browse: typeof o.browse === "function" ? o.browse(name) : o.browse } : {}),
           ...(o.vault ?? {}),
           ...(o.secrets ? { secrets: o.secrets } : {}),
           ...(o.jobs ? { jobs: jobsApi } : {}),
           ...(o.stores ? { memory: (p: string) => host(p).memory, files: filesOf, tree: (p: string) => directTreeApi(host(p).tree) } : {}),
           ...(o.docs ? { skills: docsCatalog } : {}),
-          ...(o.render ? { documents: (p: string) => documentsApi(async (call, requester) => documentCall(host(p).files, host(p).links, requester, call), o.render as never) } : {}),
+          ...(o.speech ? { speech: { AI: o.speech.ai }, audio: (p: string) => host(p).audio } : {}),
+          ...(o.render ? { documents: (p: string) => documentsApi(async (call, requester) => documentCall(host(p).files, host(p).links, requester, call, (row) => ledgerH.instance.journal(row)), o.render as never) } : {}),
           authority: (p) => ({
             decide: (d) => host(p).authority.decide(d),
             commit: async (d, effectId, a) => {
@@ -462,7 +469,8 @@ export function authorityWorld(o: WorldOptions = {}) {
     fileRead: async (p, path, from) => host(p).files.read({ path, from }, p),
     fileRename: async (p, path, to) => host(p).files.rename({ path, to }, p),
     filePin: async (p, path, pinned) => host(p).files.pin({ path, pinned }, p),
-    fileDelete: async (p, path) => host(p).files.remove({ path }, p),
+    fileDelete: async (p, path) => journaledDelete({ files: host(p).files, links: host(p).links, journal: (row) => ledgerH.instance.journal(row) }, { path }, p, "person"),
+    shares: async (p) => host(p).links.list(p),
     // Signed links (M24.3), made and checked by the session's own `Person`, as `index.ts` wires them.
     fileLink: async (p, path, download) => host(p).links.link({ path, download }, p),
     fileLinked: async (p, link) => host(p).links.linked(link, p),

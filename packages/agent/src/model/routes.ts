@@ -85,7 +85,12 @@ export const ROUTES = {
 } as const;
 /** A generation route; `Route` adds the embedding route, which has no chat model and no tier. */
 export type ChatRoute = keyof typeof ROUTES;
-export type Route = ChatRoute | "embedding";
+export type Route = ChatRoute | "embedding" | "speech";
+
+/** The speech models (F71, D-0026): Workers AI's whisper-large-v3-turbo transcribes, aura-2-en speaks. */
+export const TRANSCRIBE_MODEL = "@cf/openai/whisper-large-v3-turbo";
+export const SPEAK_MODEL = "@cf/deepgram/aura-2-en";
+export const SPEECH_MODELS = [TRANSCRIBE_MODEL, SPEAK_MODEL] as const;
 
 /** The model `route` calls under `config`: Muse Spark for chat on Meta, else the route's own. */
 export function routeModel(route: ChatRoute, config: ModelConfig = NO_VARS_MODELS): string {
@@ -109,11 +114,12 @@ export const piProvider = (model: string): string => (providerOf(model) === "wor
  * Model tiers a company policy picks from (M10.2): the models its members' agents may call. The
  * Ledger refuses a call to a model outside the tier before it is made. `standard` is every model a
  * route or the chat provider names today, so the default changes nothing; `economy` is D1's default
- * model alone, GLM 5.3 Flash on Workers AI.
+ * model alone, GLM 5.3 Flash on Workers AI. The two speech models (F71) are in both: a tier picks the text models,
+ * and speech has its own monthly cap.
  */
 export const MODEL_TIERS = {
-  economy: [GLM_WORKERS_AI],
-  standard: [...new Set<string>([...Object.values(ROUTES), MUSE_SPARK_CONTRIBUTOR])],
+  economy: [GLM_WORKERS_AI, ...SPEECH_MODELS],
+  standard: [...new Set<string>([...Object.values(ROUTES), MUSE_SPARK_CONTRIBUTOR, ...SPEECH_MODELS])],
 } as const satisfies Record<string, readonly string[]>;
 export type ModelTier = keyof typeof MODEL_TIERS;
 export const DEFAULT_TIER: ModelTier = "standard";

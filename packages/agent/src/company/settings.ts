@@ -92,7 +92,7 @@ export class CompanySettings {
       const b = (i.budgets ?? {}) as Record<string, unknown>;
       const next: Partial<Budgets> = { ...current.budgetsSet };
       for (const key of Object.keys(b)) {
-        if (!isBudgetKey(key)) return { ok: false, code: "SETTINGS_INVALID", reason: `unknown budget ${key}; the daily caps are personDailyMicros and tenantDailyMicros, in micro-dollars` };
+        if (!isBudgetKey(key)) return { ok: false, code: "SETTINGS_INVALID", reason: `unknown budget ${key}; the caps are personDailyMicros and tenantDailyMicros a day and tenantSpeechMonthlyMicros a month, in micro-dollars` };
         const v = b[key];
         // null clears an admin's cap back to the environment's default.
         if (v === null) {

@@ -4,11 +4,14 @@
 // request leaves the slot: an unknown host is a 404 here, not a fetch. The live lane has no machine behind it, so a
 // session is refused by name. Pure, so `scripts/preview-slot.test.mjs` runs it under plain Node. A page served by its
 // whole address (`PAGES`, F32's probe page, ./test-host-p5.mjs; F34's two, ./test-host-p3.mjs) is answered before its
-// host is looked up, a slow one (`SLOW`) after its delay. F91: the slot's own P10 probe pages (./test-host-p10.mjs) are
-// answered by path on a slot's host, and a chat's record carries the whole address read, so a P10 grader counts by address.
+// host is looked up, a slow one (`SLOW`) after its delay. P16's four hosts answer by their whole address too, a page
+// or a blocked read (F81, ./test-host-p16.mjs).
+// F91: the slot's own P10 probe pages (./test-host-p10.mjs) are answered by path on a slot's host, and a chat's record
+// carries the whole address read (`byAddress`), so a P10 grader counts by address.
 import { P3_PAGES, SLOW } from './test-host-p3.mjs';
 import { p10PageAt } from './test-host-p10.mjs';
 import { PAGES as P5_PAGES, pageAt } from './test-host-p5.mjs';
+import { p16Page } from './test-host-p16.mjs';
 
 /** The pages served by their whole address: P5's probe and P3's two. */
 export const PAGES = { ...P5_PAGES, ...P3_PAGES };
@@ -28,8 +31,8 @@ export const NO_LIVE_BROWSER = "BROWSE_SESSION_FAILED: the preview slot's test h
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** A Browser Run binding over PAGES, the P10 pages and SITES; `record({ kind, host })` (with `url`, the whole address, when `byAddress`, F91) is awaited before each answer, and a page in `slow` answers after `wait(ms)`. */
-export function testHostBinding(record, sites = SITES, pages = PAGES, slow = SLOW, wait = sleep, byAddress = false) {
+/** A Browser Run binding over PAGES, the P10 pages and SITES; `record({ kind, host })` (with `url`, the whole address, when `byAddress`, F91) is awaited before each answer, and a page in `slow` answers after `wait(ms)`; `byUrl` answers P16's hosts (F81). */
+export function testHostBinding(record, sites = SITES, pages = PAGES, slow = SLOW, wait = sleep, byUrl = p16Page, byAddress = false) {
   const refuse = async () => {
     throw new Error(NO_LIVE_BROWSER);
   };
@@ -42,6 +45,8 @@ export function testHostBinding(record, sites = SITES, pages = PAGES, slow = SLO
       const delay = slow[String(options?.url ?? '').replace(/\/$/, '')];
       if (page !== undefined && delay) await wait(delay);
       if (page !== undefined) return Response.json({ success: true, result: page });
+      const p16 = byUrl(options?.url);
+      if (p16 !== undefined) return p16.status === 200 ? Response.json({ success: true, result: p16.markdown }) : new Response(p16.markdown, { status: p16.status });
       const site = sites[host];
       if (!site) return new Response(`${host} is not a site the preview slot's test host serves`, { status: 404 });
       if (site.wall === 'bot') return Response.json({ success: true, result: CHALLENGE });
@@ -55,4 +60,9 @@ export function testHostBinding(record, sites = SITES, pages = PAGES, slow = SLO
     closeSession: async () => null,
     devtools: { listTargets: async () => [] },
   };
+}
+
+/** The binding a slot chat browses with (./test-host.mjs `Chat.browserBinding`, F91): every read kept with its whole address, so a P10 grader counts reads by address (T-P10-03's `followed_prose_link`). */
+export function chatBrowserBinding(record) {
+  return testHostBinding(record, SITES, PAGES, SLOW, sleep, p16Page, true);
 }

@@ -582,6 +582,68 @@ body{background:var(--bg-primary);color:var(--text-primary);font-family:var(--fo
 .qf-fcard--chat .pv{height:calc(4 * 18px + 8px)}
 .qf-bubble--agent>.qf-fcard--chat{margin-block:8px 0}
 
+/* ===== Search and media (chat), P10: four surfaces settled in the design system before any part draws them, from the
+   muse.ai capture of 2026-11-01 (docs/plan-v2/contracts/P10-search-browser-media.md, B-P10-02, B-P10-08, B-P10-11,
+   B-P10-12, B-P10-13, B-P10-17, delta 8). Specimen: ds/specimens/search-media.html. Nothing here is drawn live: the
+   map and the image card wait on D-0029 (proposed), the browser card on Kyle's look (delta 8).
+   The source link card (.qf-linkcard) is its own bubble under the answer, the reply's inline link naming the same
+   page: the page's language as a tile beside its own name and host, or, once a preview image is read, the image above
+   them (.has-preview). The browser card (.qf-bcard) is a bubble: a globe tile tinted by the state, "Browser", the
+   state in the Activity table's words (ACTIVITY_TEXT.status) and the task's title, the page's thumbnail, an open
+   control as wide as the card. Its panel (.qf-bpanel) is the title, the state and the host, Take control of the
+   browser and the close X, then the remote page under its address; at phone width the control wraps under the title.
+   The places card (.qf-places) is the map once, a pin and a label per place, with the list laid over its corner: each
+   place's name, rating, price, category and an open state that says when it was read; drawn again after a reload it
+   says when it was checked, never a fresh "Open" (B-P10-12). The image card (.qf-imgcard) is a square thumbnail as
+   its own bubble with its name; the Library's Images tile is a square in .qf-imggrid. */
+.qf-linkcard{display:flex;align-items:center;gap:10px;width:100%;max-width:345px;padding:12px;border-radius:var(--radius-22);background:var(--bubble-agent);color:inherit;text-decoration:none}
+.qf-linkcard:hover,.qf-imgcard:hover{filter:brightness(.97)}
+.qf-linkcard:focus-visible,.qf-imgcard:focus-visible,.qf-imgtile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.qf-linkcard .tile{display:flex;align-items:center;justify-content:center;width:40px;height:40px;flex-shrink:0;border-radius:var(--radius-12);background:var(--fill-secondary-elevated);color:var(--text-secondary);font:500 12px/16px var(--font-sans);text-transform:uppercase}
+.qf-linkcard.has-preview{flex-direction:column;align-items:stretch;gap:8px;padding:4px 4px 12px}
+.qf-linkcard .pv{aspect-ratio:16/9;overflow:hidden;border-radius:18px;background:var(--fill-secondary)}
+.qf-linkcard.has-preview .tx{padding:0 12px}
+.qf-linkcard .pv>svg,.qf-bcard .th>svg,.qf-bpanel .th>svg,.qf-places .map>svg,.qf-imgcard .th>svg,.qf-imgtile>svg{display:block;width:100%;height:100%}
+.qf-linkcard .tx,.qf-bcard .tx,.qf-bpanel-head .tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.qf-linkcard .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 13px/18px var(--font-sans)}
+.qf-linkcard .host,.qf-bcard .sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);font:400 12px/16px var(--font-sans)}
+.qf-bcard{display:flex;flex-direction:column;gap:12px;width:100%;max-width:316px;padding:16px;border-radius:var(--radius-22);background:var(--bubble-agent)}
+.qf-bcard-head{display:flex;align-items:center;gap:10px}
+.qf-bcard .tile{display:flex;align-items:center;justify-content:center;width:40px;height:40px;flex-shrink:0;border-radius:var(--radius-12);background:var(--accent-bg);color:var(--accent)}
+.qf-bcard .tile.is-done{background:var(--fill-success);color:var(--text-success)}
+.qf-bcard .tile.is-wait{background:var(--fill-warning);color:var(--text-warning)}
+.qf-bcard .tile>svg{width:22px;height:22px}
+.qf-bcard .kd{font:500 14px/20px var(--font-sans)}
+.qf-bcard .sub{color:var(--text-primary);font-size:13px;line-height:18px}
+.qf-bcard .th{aspect-ratio:16/10;overflow:hidden;border:1px solid var(--fill-divider);border-radius:var(--radius-12);background:var(--fill-secondary)}
+.qf-bcard .qf-btn{width:100%;height:36px;background:var(--fill-primary);color:var(--text-primary)}
+.qf-bpanel{display:flex;flex-direction:column;width:100%;min-width:0;border-inline-start:1px solid var(--fill-divider);background:var(--bg-primary)}
+.qf-bpanel-head{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;padding:10px 12px}
+.qf-bpanel-head .tx{min-width:200px}
+.qf-bpanel-head h3{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 16px/22px var(--font-sans)}
+.qf-bpanel-head .sub{color:var(--text-secondary);font:400 13px/18px var(--font-sans)}
+.qf-bpanel-addr{display:flex;align-items:center;height:36px;margin:0 12px;padding:0 14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-radius:var(--radius-full);background:var(--fill-secondary);color:var(--text-secondary);font:400 13px/18px var(--font-sans)}
+.qf-bpanel .th{margin:10px 12px 12px;aspect-ratio:16/10;overflow:hidden;border:1px solid var(--fill-divider);border-radius:var(--radius-12);background:var(--fill-secondary)}
+.qf-bpanel-note{margin:0 12px 12px;color:var(--text-secondary);font:400 12px/16px var(--font-sans)}
+.qf-places{position:relative;width:100%;max-width:576px;aspect-ratio:576/500;overflow:hidden;border:1px solid var(--fill-divider);border-radius:var(--radius-16);background:var(--fill-secondary)}
+.qf-places .map{position:absolute;inset:0}
+.qf-places .pin{position:absolute;display:flex;flex-direction:column;align-items:center;gap:2px;transform:translate(-50%,-12px);color:var(--gray-900);font:600 12px/16px var(--font-sans);white-space:nowrap}
+.qf-places .pin>i{width:24px;height:24px;border:3px solid var(--text-white);border-radius:50%;background:var(--fill-blue);box-shadow:var(--elevation-1)}
+.qf-places-list{position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:12px;width:calc(100% - 24px);max-width:276px;padding:12px 16px;border-radius:var(--radius-14);background:var(--fill-blur-thick);color:var(--text-primary);box-shadow:var(--elevation-2);-webkit-backdrop-filter:blur(36px);backdrop-filter:blur(36px)}
+.qf-place{display:flex;flex-direction:column;gap:2px}
+.qf-place .nm{font:500 14px/20px var(--font-sans)}
+.qf-place .mt{color:var(--text-secondary);font:400 12px/16px var(--font-sans)}
+.qf-place .rt{color:var(--text-rating)}
+.qf-place .op.is-open{color:var(--text-success)}
+.qf-place .op.is-closed{color:var(--text-destructive)}
+.qf-place .op.is-stale{color:var(--text-secondary)}
+.qf-imgcard{display:flex;flex-direction:column;width:220px;max-width:100%;overflow:hidden;border-radius:var(--radius-22);background:var(--bubble-agent);color:inherit;text-decoration:none}
+.qf-imgcard .th{aspect-ratio:1/1;background:var(--fill-secondary)}
+.qf-imgcard .nm{padding:6px 12px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);font:400 12px/16px var(--font-sans)}
+.qf-imggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;width:100%}
+.qf-imgtile{display:block;aspect-ratio:1/1;overflow:hidden;border:1px solid var(--fill-divider);border-radius:var(--radius-16);background:var(--fill-secondary)}
+.qf-msg>.qf-linkcard,.qf-msg>.qf-bcard,.qf-msg>.qf-imgcard{align-self:flex-start}
+
 /* Share targets */
 .qf-share{display:flex;gap:24px;padding:4px 0;justify-content:center;flex-wrap:wrap}
 .qf-share>div{display:flex;flex-direction:column;align-items:center;gap:8px;width:64px}

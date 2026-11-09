@@ -47,7 +47,8 @@ export function attachmentDeps(env: Env, storage: DurableObjectStorage, person: 
     describe: describeForModel,
     convert: converterFor(env),
     now: () => Date.now(),
-    // Null until F71 (and on a deploy with no AI binding or SPEECH off): a voice note is kept untranscribed, its audio not kept.
-    speech: speechOf(env as unknown as SpeechEnv),
+    // Null on a deploy with no AI binding or SPEECH off: a voice note is then kept untranscribed, its audio not kept (F70).
+    // With it, each transcription is admitted by the tenant's Ledger on route `speech` and written there (F71, D-0026).
+    speech: speechOf(env as unknown as SpeechEnv, { ledger, tenant: env.TENANT_ID, now: () => Date.now() }),
   };
 }

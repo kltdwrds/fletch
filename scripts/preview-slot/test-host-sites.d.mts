@@ -4,4 +4,5 @@ export declare const CHALLENGE: string;
 export declare const NO_LIVE_BROWSER: string;
 export declare const SITES: Record<string, { markdown?: string; wall?: "bot" | "rate"; retryAfter?: string }>;
 export declare const PAGES: Record<string, string>;
-export declare function testHostBinding(record: (e: { kind: string; host: string; url?: string }) => Promise<unknown>, sites?: typeof SITES, pages?: Record<string, string>, slow?: Record<string, number>, wait?: (ms: number) => Promise<unknown>, byAddress?: boolean): BrowserBinding;
+export declare function testHostBinding(record: (e: { kind: string; host: string; url?: string }) => Promise<unknown>, sites?: typeof SITES, pages?: Record<string, string>, slow?: Record<string, number>, wait?: (ms: number) => Promise<unknown>, byUrl?: (url: unknown) => { status: number; markdown: string } | undefined, byAddress?: boolean): BrowserBinding;
+export declare function chatBrowserBinding(record: (e: { kind: string; host: string; url?: string }) => Promise<unknown>): BrowserBinding;

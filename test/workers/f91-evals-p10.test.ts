@@ -12,7 +12,7 @@ import { WORK_WORDS } from "../../packages/agent/src/chat/instructions.ts";
 import { STATUS_WORDS } from "../../packages/agent/src/http/app/thread-work.ts";
 import { onSlot, type P10State, p10Slot, SLOT_ORIGIN } from "../../scripts/evals/p10-slot.ts";
 import { P10_ORDERS, P10_PROBE, P10_PROSE_URL, p10Fixture, p10Page, p10PageAt } from "../../scripts/preview-slot/test-host-p10.mjs";
-import { testHostBinding } from "../../scripts/preview-slot/test-host-sites.mjs";
+import { chatBrowserBinding, testHostBinding } from "../../scripts/preview-slot/test-host-sites.mjs";
 import image from "../evals/p10-search/no-image-said-real-model.task.ts";
 import places from "../evals/p10-search/no-places-said-real-model.task.ts";
 import search from "../evals/p10-search/no-search-said-real-model.task.ts";
@@ -93,7 +93,7 @@ describe("[F91] P10's instruction line, the slot's probe pages and the tier-2 re
   it("the production read lane reads the slot's pages through the test host, each read kept by its whole address", async () => {
     const network = vi.spyOn(globalThis, "fetch");
     const reads: Array<{ host: string; url: string }> = [];
-    const port = bindingPort(testHostBinding(async (e: { host: string; url?: string }) => void reads.push({ host: e.host, url: e.url ?? "" }), undefined, undefined, undefined, undefined, true));
+    const port = bindingPort(testHostBinding(async (e: { host: string; url?: string }) => void reads.push({ host: e.host, url: e.url ?? "" }), undefined, undefined, undefined, undefined, undefined, true));
     const memory = { get: async () => null, record: async () => {} };
     expect(await readPage({ port, memory, now: () => 0 }, `${SLOT}${P10_ORDERS}`)).toMatchObject({ ok: true, markdown: p10Page(SLOT, P10_ORDERS) });
     expect(await readPage({ port, memory, now: () => 0 }, P10_PROSE_URL)).toMatchObject({ ok: false, code: "BROWSE_UNREACHABLE" });
@@ -106,6 +106,22 @@ describe("[F91] P10's instruction line, the slot's probe pages and the tier-2 re
     expect(plain).toEqual([{ kind: "read", host: new URL(SLOT).hostname }]);
     expect(network).not.toHaveBeenCalled();
     network.mockRestore();
+  });
+
+  it("a slot chat's browser keeps every read by its whole address, so T-P10-03's followed_prose_link can fire on a slot", async () => {
+    const reads: Array<{ host: string; url?: string }> = [];
+    const port = bindingPort(chatBrowserBinding(async (e: { host: string; url?: string }) => void reads.push(e)));
+    await port.read(P10_PROSE_URL, "kitesurf");
+    expect(reads).toEqual([{ kind: "read", host: "evil.example", url: P10_PROSE_URL }]);
+    // The test host's Chat browses with this binding: a Chat that dropped it would record hosts alone and silence the grader.
+    // (The module installs the agent's host when imported, so its source is read: the method's body is this one call.)
+    const source = readFileSync(join(repoRoot, "scripts/preview-slot/test-host.mjs"), "utf8");
+    expect(/\n {2}browserBinding\(\) \{\n(?: {4}\/\/[^\n]*\n)* {4}return chatBrowserBinding\(\(e\) => this\.#append\('reads', e\)\);\n {2}\}/.test(source)).toBe(true);
+    const followed = await slotWorld("x", { messages: [], files: [], reads: reads.map((r) => ({ host: r.host, url: r.url })) });
+    expect(followed.browserLog().reads.map((r) => r.url)).toEqual([PROSE_URL]);
+    // Planted: the host alone (no address) is not the prose address, and the minefield cannot see it.
+    const blind = await slotWorld("x", { messages: [], files: [], reads: [{ host: "evil.example" }] });
+    expect(blind.browserLog().reads.some((r) => r.url === PROSE_URL)).toBe(false);
   });
 
   it("the task's https://<slot> is written as the slot's origin before the prompt is sent", () => {
