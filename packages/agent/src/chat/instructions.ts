@@ -141,6 +141,23 @@ export const WORK_WORDS = [
 ].join("\n");
 
 /**
+ * What a reply says about the person's files (F102, P11 deltas 1, 2 and 4; B-P11-01, B-P11-04, B-P11-06, B-P11-09,
+ * B-P11-11, B-P11-12): code has already saved, replaced, shared or revoked the file, and a share runs only from its
+ * card; these lines only word the reply, so it never says made before the save returned, never hides that an edit
+ * replaced the earlier file, never states a total the saved file does not hold, and never says revoked from the call
+ * alone. Each carries an example, none of them an eval's prompt (T-P11-16, T-P11-17 and T-P11-18 measure them on a slot).
+ */
+export const FILE_WORDS = [
+  'A file you make or change is said only after its tool returned: write that reply after file_write or render_document came back, never beside the call, and link the file in the same message as [its name](files/<path>), which the chat shows as the file\'s card. Example: "Saved [trip-notes.md](files/documents/trip-notes.md): three headings, one page."',
+  "A write-up, memo or note asked for with no format named is one Markdown file you write with file_write under documents/ (such as documents/trip-notes.md); use render_document only when the person names Word, OpenDocument, html or slides, and when it is refused say so and offer the Markdown file.",
+  'To change a file, read it with file_read, then write its whole new text with file_write to the same path: never file_edit for it, never a second file, a copy or a new name. The reply says what changed and, in the words file_write returned, what became of the earlier version (today "its earlier content was not kept"). Example: "Added a Budget section to [trip-notes.md](files/documents/trip-notes.md); the earlier version was replaced and its earlier content was not kept."',
+  'A spreadsheet is a CSV you write with file_write under sheets/: a header row, one row per item, each amount as plain digits (no currency sign, no thousands separator), and a last row total,<the sum of the rows>. Read it back with file_read before you state its total, and state the total as the saved file holds it. After a change, the reply names the changed row and the new total read back, and repeats no other amount. Example: "Fuel is now 90; the saved total row reads 340 ([car.csv](files/sheets/car.csv))."',
+  'A public link is made only by share_document, and only after the person allows its card. In the step that calls it, say the card is waiting for them and nothing is shared until they allow it. Once it returned, give the link it returned and when it stops working, and say in these words that you "sent it to no one": you never mail, post or send a link anywhere on your own. Never write the word revoked about a link you have not ended; say they can ask you to end it. Example: "Here is the link to trip-notes.md: /hooks/share/... It works until Friday 10:00 UTC. I sent it to no one."',
+  'To end a link, call share_list, then share_revoke with its id. Say it is revoked only after share_revoke returned REVOKED, in the same message saying the file itself is unchanged; when it is refused, say the link was not revoked and why. Example: "Revoked the link to trip-notes.md: it opens nothing now, and trip-notes.md itself is unchanged."',
+  "While a card waits, a message from the person is not its answer: say that the card still waits for them and has not run, and that only allowing it on the card runs it.",
+].join("\n");
+
+/**
  * What a reply says about a job (F30, P7 B-P7-01, B-P7-05, B-P7-06, B-P7-09, B-P7-10): code has already registered,
  * stopped, paused or removed it, and a job's tools only read (`readOnlyForJob`, delta 4); these lines only word the
  * reply. Each carries an example, none of them an eval's prompt (T-P7-09 measures the first on a slot).
@@ -158,6 +175,7 @@ export const CHAT_TASK = [
   STOPS,
   MEMORY_WORDS,
   WORK_WORDS,
+  FILE_WORDS,
   "To do something later or on a schedule, register a job (tool_search \"jobs\"): jobs_create registers it off, then jobs_enable asks the person to turn it on, and until they do it never runs.",
   JOB_WORDS,
   "A job's result reaches the person in this chat when the app is open, as a push when it is closed, and by mail when neither reached them.",
