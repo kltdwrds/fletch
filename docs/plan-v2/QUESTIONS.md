@@ -9,8 +9,8 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ### Q51 (F56), 2026-11-08: may a paid deploy carry the renderer's container (D-0030)?
 
-**Blocks:** nothing (Kyle's one-hour ruling, 2026-11-08); F56 built it behind `--paid` and D-0030 is `proposed`.
-**Recommended answer:** yes: accept D-0030. A `--paid` deploy binds `RENDERER` and runs one pandoc container (at most two
+**Blocks:** nothing (Kyle's one-hour ruling, 2026-11-08); F56 built it behind `--paid` with the switch off (`RENDERER_ON_PAID = false` in `scripts/preview-plan.mjs`), so no deploy gets a container until D-0030 is accepted.
+**Recommended answer:** yes: accept D-0030 and set `RENDERER_ON_PAID` to `true` (and grant the preview pool's token the Containers scope, which refused `Forbidden` on 2026-11-08, so tier 2 can run). A `--paid` deploy binds `RENDERER` and runs one pandoc container (at most two
 instances); a deploy without it refuses render with `HOST_RENDER_UNAVAILABLE` naming the binding. If the bill is
 unwelcome, move the container behind its own flag; the host's refusal already covers a deploy without it.
 

@@ -19,6 +19,11 @@ behind its own flag.
 
 ## Context
 
+Until this record is accepted the switch is off: `RENDERER_ON_PAID` in `scripts/preview-plan.mjs` is `false`, so no
+deploy, paid or not, gets the container, and every deploy refuses render by the binding's name. Accepting it is that
+one line set to `true` (its test in `scripts/preview-plan.test.mjs` flips with it).
+
+
 F56 (Kyle's one-hour ruling, 2026-11-08: defaults, best effort, reconcile later) built it. It is one-way because a
 container spends money on the owner's account. `render` was already a published `HostFeature`, so no package contract
 changed beyond an optional `RENDERER` on `SingleAccountEnv` (a changeset, minor). This record extends D-0021's set

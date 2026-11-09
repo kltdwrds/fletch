@@ -31,7 +31,7 @@ prints the setup link once (D-0023). The code is `scripts/self-host.mjs` (the ru
 
    Optional: `--account-id <32 hex>` when the login reaches several accounts (`pnpm exec wrangler whoami` lists
    them; without it wrangler's own error names the choice); `--paid` adds the Worker Loader (`LOADER`) and Images
-   (`IMAGES`) bindings and the document renderer (`RENDERER`, a pandoc container: D-0030, proposed), which need the
+   (`IMAGES`) bindings (and, once D-0030 is accepted, the document renderer `RENDERER`, a pandoc container; off until then), which need the
    Workers Paid plan; without `RENDERER` a document render is refused with `HOST_RENDER_UNAVAILABLE`. By default chat runs on Muse Spark through the AI Gateway
    `qyvr`, which holds the Meta key, and every model call goes through that gateway (`packages/agent/wrangler.jsonc`);
    `--var AI_GATEWAY_ID=<gateway id>` names another gateway (another account makes its own, with a Meta key stored on

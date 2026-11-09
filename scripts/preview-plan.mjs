@@ -95,6 +95,11 @@ export const KNOWN_CONFIG_KEYS = new Set([
 
 /** The Renderer's binding and container a paid deploy adds (F56); the image is `RENDER_IMAGE` in packages/agent/src/render/render.ts. */
 export const RENDERER_BINDING = { name: 'RENDERER', class_name: 'Renderer' };
+/**
+ * Whether a paid deploy gets the renderer's container: false until Kyle accepts D-0030, since a container spends money
+ * on the owner's account. Until then every deploy refuses render by the binding's name (HOST_RENDER_UNAVAILABLE).
+ */
+export const RENDERER_ON_PAID = false;
 export const RENDERER_CONTAINER = { class_name: 'Renderer', image: 'docker.io/pandoc/minimal:3.11.0', max_instances: 2 };
 
 /**
@@ -104,7 +109,7 @@ export const RENDERER_CONTAINER = { class_name: 'Renderer', image: 'docker.io/pa
  * KNOWN_CONFIG_KEYS, or a binding the deploy has no resource for, is refused rather than copied. `label` and `what`
  * name the caller in a refusal (`preview`, `a preview slot`).
  */
-export function deployConfig(raw, { name, r2, vectorize, vars = {}, paid = false, label, what }) {
+export function deployConfig(raw, { name, r2, vectorize, vars = {}, paid = false, renderer = RENDERER_ON_PAID, label, what }) {
   const unknown = Object.keys(raw).filter((k) => !KNOWN_CONFIG_KEYS.has(k));
   if (unknown.length > 0) {
     throw new Error(`${label}: packages/agent/wrangler.jsonc has ${unknown.join(', ')}, which ${what} does not know: decide what ${what} gets in scripts/preview-plan.mjs`);
@@ -126,8 +131,10 @@ export function deployConfig(raw, { name, r2, vectorize, vars = {}, paid = false
   if (paid) {
     out.worker_loaders = [{ binding: 'LOADER' }];
     out.images = { binding: 'IMAGES' };
-    // The document renderer (F56, proposed D-0030): the Renderer class is in the base exports, its binding and its
-    // pandoc container only here, so a free-plan deploy has neither and the host refuses render by the binding's name.
+  }
+  // The document renderer (F56, proposed D-0030, off until accepted): the Renderer class is in the base exports, its
+  // binding and its pandoc container only here, so a deploy without them refuses render by the binding's name.
+  if (paid && renderer) {
     out.durable_objects = { ...raw.durable_objects, bindings: [...(raw.durable_objects?.bindings ?? []), RENDERER_BINDING] };
     out.containers = [RENDERER_CONTAINER];
   }
@@ -143,7 +150,7 @@ export function deployConfig(raw, { name, r2, vectorize, vars = {}, paid = false
  * as `pnpm self-host --paid` does (D-0021); `vars` are the model vars of `SLOT_VAR_KEYS` (`pnpm preview up --var K=V`),
  * laid over the base config's own, so a slot can run its chat on another model than the default.
  */
-export function slotConfig(raw, plan, { accountId, placeholder = false, deploy, paid = false, vars = {} }) {
+export function slotConfig(raw, plan, { accountId, placeholder = false, deploy, paid = false, renderer = RENDERER_ON_PAID, vars = {} }) {
   const strangeVars = Object.keys(vars).filter((k) => !SLOT_VAR_KEYS.includes(k));
   if (strangeVars.length > 0) throw new Error(`preview: --var takes only ${SLOT_VAR_KEYS.join(', ')}; not ${strangeVars.join(', ')}`);
   const agentClasses = Object.entries(raw.exports ?? {}).filter(([, e]) => e.type === 'durable-object').map(([c]) => c);
@@ -155,6 +162,7 @@ export function slotConfig(raw, plan, { accountId, placeholder = false, deploy, 
     vectorize: plan.vectorize,
     vars: { ...vars, TENANT_ID: plan.name, OWNER_EMAIL: SLOT_OWNER, PREVIEW_SERVING: placeholder ? 'placeholder' : 'app', PREVIEW_DEPLOY: deploy },
     paid: paid && !placeholder,
+    renderer,
     label: 'preview',
     what: 'a preview slot',
   });

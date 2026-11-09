@@ -79,7 +79,12 @@ describe("[F56] the renderer the deploy has", () => {
   it("without the binding, render is refused by name: the person hears HOST_RENDER_UNAVAILABLE and the missing RENDERER, and nothing is saved", async () => {
     const host = singleAccountHost(hostEnv());
     const w = authorityWorld({ script: [load, renderStep("docx"), { text: "I could not make it." }], render: hostRender(host) as never });
-    await w.say(ada.email, "Make me an artifact: about you.");
+    const { chatId, result } = await w.say(ada.email, "Make me an artifact: about you.");
+    // What the person sees: the turn's Activity drawer draws the render step failed, with the code and the missing binding.
+    const opened = await w.http(ada.email, "GET", `/app/activity/${chatId}/${(result as { turnId: string }).turnId}`);
+    const step = (opened.body.steps as Array<Record<string, unknown>>).find((s) => s.tool === "render_document");
+    expect(JSON.stringify(step)).toContain('"code":"HOST_RENDER_UNAVAILABLE"');
+    expect(JSON.stringify(step)).toContain("the RENDERER container binding is missing");
     const said = w.transcriptOf(ada.email).join("\n");
     expect(said).toContain("HOST_RENDER_UNAVAILABLE: the document was not made and nothing was saved: this deploy has no document renderer: the RENDERER container binding is missing");
     expect(said).not.toContain("SAVED:");
