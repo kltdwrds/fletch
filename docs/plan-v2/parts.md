@@ -1242,11 +1242,22 @@ model-only path), a refusal that is not a host refusal (no sentence), a second k
 per refusal), and pin Q50's failed trial 2 turn as passing now that code speaks. (4) Tier 2: T-P9-15 three trials on
 this worktree's slot (slot 2 or 3 with `pnpm preview up`; slot 1 is staging and `--slot 1` is refused), declared in the
 PR body before it starts (task id and tree hash), Muse Spark the default; T-P9-13 and T-P9-14 three trials each to show
-no regression; results committed; `pnpm preview down` when done.
+no regression; results committed; `pnpm preview down` when done. (5) Added by the orchestrator on 2026-11-09, in the open, under
+Kyle's one-hour ruling of 2026-11-08 and Q48's answered precedent (a scope line that forbids what the part's own rule
+makes necessary is a drafting error in the part): T-P9-05's tier-1 graders, which read "the first reply" and "the
+second turn" as the chat's first and second bubbles, read by turn instead, as F42's T-P9-15 grader reads, because code's
+sentence is now the turn's first message; its `version_hash` moves and the contract's line follows; the run the old
+reading refused is pinned verbatim as passing in the task's tier-1 test and the planted negatives still fail it. Code's
+sentence may now supply "not bound", "only you" and the host; `EGRESS_CRED_HOST_DENIED` stays the refusal's own code.
 
-**Acceptance:** `pnpm evals T-P9-15` `pass` (three of three); `pnpm evals T-P9-13` and `pnpm evals T-P9-14` `pass`;
-`ACCEPT F59: PASS`; `VERIFIER: no blocking findings` (a finding that the words moved to code is answered by Kyle's
-ruling on Q50 and is not a block).
+**Acceptance:** `pnpm evals T-P9-15` `pass` (three of three) on the declared run on the final tree; `pnpm evals
+T-P9-13` and `pnpm evals T-P9-14` show no regression on that run: a failed trial whose turn has no path through this
+part's change (a typed-secret turn with no keyed egress, where neither the sentence nor the trimmed line runs) is model
+variance, not a regression, its reply read from the slot before release and quoted in the PR (the orchestrator's
+reading under Kyle's one-hour ruling of 2026-11-08: Q49's three-of-three bar is a part's own must-have's, and here these
+two are regression checks; listed under Reconcile in WAITING-ON-KYLE.md); `ACCEPT F59: PASS`; `VERIFIER: no blocking
+findings` (a finding that the words moved to code is answered by Kyle's ruling on Q50 and is not a block; a finding on
+scope line (5) is answered by this amendment).
 
 **Not in scope:** any other instruction line; a clause change; the card's own words (F48); graders beyond the required
 fact this part moves and its hash.
