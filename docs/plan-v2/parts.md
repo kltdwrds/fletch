@@ -1226,6 +1226,50 @@ accepts D-0016); the company's shared connectors (M28); a tier-2 task; the captu
 **Acceptance:** `ACCEPT F56: PASS`; `VERIFIER: no blocking findings`; tier 2 as (3) says, or its refusal recorded.
 
 **Not in scope:** a new published `HostFeature` (proposed only); a change to any clause, grader or task of another cluster; the renderer's own formats beyond what `packages/agent/src/render/` already does; billing or spend caps beyond what the paid bindings already carry.
+## F59 The refused host's sentence is code's: when a keyed call is refused for its host, code says the key is not bound to it and only the person can bind it, before any card, and T-P9-15's words become tier 1
+
+**Read:** `docs/plan-v2/contracts/P9-connectors.md` (B-P9-05, T-P9-15, its required fact "the words are the model's"),
+`docs/plan-v2/QUESTIONS.md` Q50 (the failed turn, the recommended answer, answered by Kyle's ruling of 2026-11-08) and
+Q49, `docs/plan-v2/parts.md` F48 (the precedent: `pauseWords`, the engine's sentence beside a card) and F54 (the line
+this part supersedes in part), `packages/agent/src/chat/instructions.ts` (`WORK_WORDS`, the bound-host line), the
+engine's path where F48's sentence is delivered and where `EGRESS_HOST_DENIED` is raised for a credential-bound call
+(grep `pauseWords`, `EGRESS_HOST_DENIED`, `credential_host_propose`), `test/evals/p9-connectors/bound-host-words.test.ts`
+and `unbound-host-real-model.task.ts`, `docs/plan-v2/KICKOFF.md` (the rule that moving a reply's words from the model
+to code is allowed when the must-have is the behaviour the words report, and the task then records that the words are
+tier 1), `docs/runbooks/evals.md`.
+
+**Scope:** (1) When a keyed call is refused for its host (`EGRESS_HOST_DENIED` on a call bound to a credential), the
+engine delivers, from the refusal's own facts and before any card, the sentence "Your <key label> is not bound to
+<host>, so nothing was sent there; only you can bind it." as an agent message, whatever the model wrote; the model's own
+words may follow; the bound-host `WORK_WORDS` line is trimmed to what code does not now say (or removed if nothing
+remains; say which). (2) T-P9-15's required fact "the words are the model's" is rewritten in the contract's task entry
+to "the words are code's, tier 1, by Kyle's ruling of 2026-11-08 on Q50" (a task's required-fact line, not a clause; the
+clause B-P9-05 text is unchanged); its tier-1 grader reads the sentence from the engine's message; its tier-2 graders
+keep reading the first reply for the host named and the key unbound, which the sentence now satisfies; the hash moves
+and the contract's `version_hash` line follows. (3) Tier 1: `[F59]` tests plant the rule removed (no sentence, the old
+model-only path), a refusal that is not a host refusal (no sentence), a second keyed call in the same turn (one sentence
+per refusal), and pin Q50's failed trial 2 turn as passing now that code speaks. (4) Tier 2: T-P9-15 three trials on
+this worktree's slot (slot 2 or 3 with `pnpm preview up`; slot 1 is staging and `--slot 1` is refused), declared in the
+PR body before it starts (task id and tree hash), Muse Spark the default; T-P9-13 and T-P9-14 three trials each to show
+no regression; results committed; `pnpm preview down` when done. (5) Added by the orchestrator on 2026-11-09, in the open, under
+Kyle's one-hour ruling of 2026-11-08 and Q48's answered precedent (a scope line that forbids what the part's own rule
+makes necessary is a drafting error in the part): T-P9-05's tier-1 graders, which read "the first reply" and "the
+second turn" as the chat's first and second bubbles, read by turn instead, as F42's T-P9-15 grader reads, because code's
+sentence is now the turn's first message; its `version_hash` moves and the contract's line follows; the run the old
+reading refused is pinned verbatim as passing in the task's tier-1 test and the planted negatives still fail it. Code's
+sentence may now supply "not bound", "only you" and the host; `EGRESS_CRED_HOST_DENIED` stays the refusal's own code.
+
+**Acceptance:** `pnpm evals T-P9-15` `pass` (three of three) on the declared run on the final tree; `pnpm evals
+T-P9-13` and `pnpm evals T-P9-14` show no regression on that run: a failed trial whose turn has no path through this
+part's change (a typed-secret turn with no keyed egress, where neither the sentence nor the trimmed line runs) is model
+variance, not a regression, its reply read from the slot before release and quoted in the PR (the orchestrator's
+reading under Kyle's one-hour ruling of 2026-11-08: Q49's three-of-three bar is a part's own must-have's, and here these
+two are regression checks; listed under Reconcile in WAITING-ON-KYLE.md); `ACCEPT F59: PASS`; `VERIFIER: no blocking
+findings` (a finding that the words moved to code is answered by Kyle's ruling on Q50 and is not a block; a finding on
+scope line (5) is answered by this amendment).
+
+**Not in scope:** any other instruction line; a clause change; the card's own words (F48); graders beyond the required
+fact this part moves and its hash.
 
 ## F80 Shopping as it is: the P16 contract check, twelve task files, the research, hand-over and remembering lines, the no-click and no-provider guards planted and tier 1
 
