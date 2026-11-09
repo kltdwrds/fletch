@@ -17,6 +17,7 @@
 // cut short leaves nothing written. An ask to publish one is refused `PODCAST_FEED_UNAVAILABLE` (D-0026: no feed).
 import { Type } from "@earendil-works/pi-ai";
 import type { EffectBuffer } from "../chat/tools.ts";
+import { writeJournal } from "../files/journaled.ts";
 import type { JournalRow } from "../grants/journal.ts";
 import type { Namespace, ToolSpec } from "../tools/registry.ts";
 import type { AudioApi, AudioItem } from "./audio.ts";
@@ -176,8 +177,9 @@ export function speechNamespace(speech: Speech | null, env: SpeechEnv, deps?: Sp
       const words = (on.said() ?? "").toLowerCase();
       if (!new RegExp(`\\b${speaker.replace(/[^a-z0-9]/g, "")}\\b`).test(words)) return fail("VOICE_NOT_ASKED", "the voice changes only when the person names the speaker in their own typed message; ask them which voice they want");
       const r = (await audioCall({ op: "voice-set", speaker, writer: "chat" })) as { speaker: string };
-      await on.journal?.({ id: `voice:${id}`, at: on.now(), actor: `agent:${on.person}`, principal: on.person, actionKind: "speech.voice_set", subjectRef: `personal;resource:voice/${r.speaker}`, counterpart: "own-agent", origin: on.person, hops: 0, decision: "auto", grantId: null, outcome: "VOICE_SET", runId: `chat:${on.chatId}`, tokens: 0 });
-      return text(`VOICE SET: read-alouds now use the voice ${r.speaker}.`, { speaker: r.speaker });
+      // The record is written; a row the Ledger refused or never answered is said in the details, never thrown as a failure.
+      const journaled = await writeJournal(on.journal, { id: `voice:${id}`, at: on.now(), actor: `agent:${on.person}`, principal: on.person, actionKind: "speech.voice_set", subjectRef: `personal;resource:voice/${r.speaker}`, counterpart: "own-agent", origin: on.person, hops: 0, decision: "auto", grantId: null, outcome: "VOICE_SET", runId: `chat:${on.chatId}`, tokens: 0 });
+      return text(`VOICE SET: read-alouds now use the voice ${r.speaker}.`, { speaker: r.speaker, journaled });
     },
   };
   const status: ToolSpec<typeof StatusParams> = {

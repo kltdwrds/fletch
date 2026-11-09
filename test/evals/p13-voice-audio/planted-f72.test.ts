@@ -1,11 +1,13 @@
 // Every guard F72 adds, planted on the production path (KICKOFF, "Plant the guard"): a feed route planted in the
 // sources, the feed refusal's code taken out of `episode_publish`, the Settings pick written to a store the record does
 // not hold, the player taken out of the Library's drawing and of the chat's audio item, an episode with a turn cut short
-// or in one voice, and a speaker outside aura-2's list; each fails the grader or the check that holds it.
+// or in one voice, a speaker outside aura-2's list, and a journal that refuses or never answers the Settings pick's row;
+// each fails the grader or the check that holds it.
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { AUDIO_TEXT } from "../../../packages/agent/src/http/app/audio.ts";
 import { graded, played, sam } from "./harness.ts";
 import { episodeCall, F72_TASKS, optionsF72, SCRIPT, said } from "./runs-f72.ts";
-import { chatItemsAsDrawn, libraryAsDrawn } from "./harness-surfaces.ts";
+import { chatItemsAsDrawn, libraryAsDrawn, pickVoice } from "./harness-surfaces.ts";
 
 const plant = vi.hoisted(() => ({ feedCode: false, store: false }));
 vi.mock("../../../packages/agent/src/speech/speech.ts", async (original) => {
@@ -18,7 +20,7 @@ vi.mock("../../../packages/agent/src/speech/audio.ts", async (original) => {
   const settingsVoiceSet: typeof m.settingsVoiceSet = async (audio, person, speaker, journal, now) => {
     if (!plant.store) return m.settingsVoiceSet(audio, person, speaker, journal, now);
     await m.settingsVoiceSet(audio, person, speaker, journal, now);
-    return audio.call({ op: "voice-set", speaker: "luna", writer: "settings" }, person);
+    return { ...(await audio.call({ op: "voice-set", speaker: "luna", writer: "settings" }, person)), journaled: true } as Awaited<ReturnType<typeof m.settingsVoiceSet>>;
   };
   return { ...m, settingsVoiceSet };
 });
@@ -103,4 +105,34 @@ describe("[F72] P13 audio surfaces: each guard planted", () => {
     expect([r.status, (r.body as { code?: string }).code]).toEqual([404, "VOICE_UNKNOWN"]);
     expect(w.voice()).toEqual(before);
   });
+
+  // The record is written before its row (two objects share no transaction), so the Ledger's answer can only be reported:
+  // a pick whose row was refused or never answered is saved and said so, never shown as "Not saved".
+  for (const [how, plantJournal] of [
+    ["never answers (the Ledger call throws)", async () => { throw new Error("planted: the Ledger did not answer"); }],
+    ["is refused JOURNAL_ROW_INVALID", async () => ({ ok: false as const, code: "JOURNAL_ROW_INVALID" as const, reason: "planted" })],
+  ] as const) {
+    it(`a Settings pick whose journal row ${how}: 200 with the pick and journaled: false, the pick read back, no voice_set row, and the page says saved but not journaled`, async () => {
+      const x = t("T-P13-16");
+      const w = await played(x.task, optionsF72(x));
+      const rowsBefore = w.voice().changes;
+      const ledger = w.w.ledger() as unknown as { journal: (row: unknown) => Promise<unknown> };
+      const journal = ledger.journal;
+      ledger.journal = plantJournal;
+      try {
+        const r = await w.w.http(sam.email, "POST", "/app/speaker", { speaker: "orion" });
+        expect([r.status, r.body]).toEqual([200, { ok: true, speaker: "orion", set: true, writer: "settings", journaled: false }]);
+        expect((await w.w.http(sam.email, "GET", "/app/speaker")).body).toMatchObject({ ok: true, speaker: "orion", set: true });
+        const pick = await pickVoice(w, "zeus");
+        expect([pick.note, pick.code]).toEqual([AUDIO_TEXT.voiceSavedUnjournaled, ""]);
+      } finally {
+        ledger.journal = journal;
+      }
+      expect(w.voice()).toEqual({ speaker: "zeus", changes: rowsBefore });
+      // The Ledger taking rows again: the next pick is journaled, and said as a plain save.
+      const r = await w.w.http(sam.email, "POST", "/app/speaker", { speaker: "orion" });
+      expect(r.body).toMatchObject({ ok: true, speaker: "orion", journaled: true });
+      expect(w.voice().changes).toEqual([...rowsBefore, { speaker: "orion", writer: "settings" }]);
+    });
+  }
 });

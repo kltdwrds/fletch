@@ -38,8 +38,11 @@ export function fileRow(o: { owner: string; by: Actor; actionKind: "files.delete
   };
 }
 
-/** Writes the row; whether the Ledger took it. A refusal or a Ledger that did not answer is `false`, never success. */
-async function write(journal: JournalSink | undefined, row: JournalRow): Promise<boolean> {
+/**
+ * Writes the row; whether the Ledger took it. A refusal or a Ledger that did not answer is `false`, never success, and
+ * never a throw: the record this row describes has already been written, so the caller says `journaled: false` instead.
+ */
+export async function writeJournal(journal: JournalSink | undefined, row: JournalRow): Promise<boolean> {
   if (!journal) return false;
   try {
     const r = (await journal(row)) as { ok?: boolean } | undefined;
@@ -54,7 +57,7 @@ export async function journaledDelete(d: { files: PersonFiles; links: PersonLink
   const r = await d.files.remove(input, requester);
   if (!r.ok) return r;
   const ended = await d.links.endSharesOf(r.path);
-  const journaled = await write(d.journal, fileRow({ owner: requester, by, actionKind: "files.delete", subjectRef: `personal;resource:file:${r.path}`, at: d.links.at() }));
+  const journaled = await writeJournal(d.journal, fileRow({ owner: requester, by, actionKind: "files.delete", subjectRef: `personal;resource:file:${r.path}`, at: d.links.at() }));
   return { ok: true, path: r.path, sharesEnded: ended.length, journaled, ...(r.trashed ? { trashed: true } : {}) };
 }
 
@@ -62,7 +65,7 @@ export async function journaledDelete(d: { files: PersonFiles; links: PersonLink
 export async function journaledRevoke(d: { links: PersonLinks; journal?: JournalSink }, id: string, requester: string, by: Actor): Promise<JournaledRevoke> {
   const r = await d.links.revoke(id, requester);
   if (!r.ok) return r;
-  const journaled = await write(d.journal, fileRow({ owner: requester, by, actionKind: "files.unshare", subjectRef: `personal;connector:files;resource:file:${r.path}`, at: d.links.at() }));
+  const journaled = await writeJournal(d.journal, fileRow({ owner: requester, by, actionKind: "files.unshare", subjectRef: `personal;connector:files;resource:file:${r.path}`, at: d.links.at() }));
   return { ...r, journaled };
 }
 
@@ -73,7 +76,7 @@ export type JournaledUntrash = Extract<UntrashResult, { ok: true }> & { sharesEn
 export async function journaledRestore(d: { files: PersonFiles; links: PersonLinks; journal?: JournalSink }, input: { path: string; n: number }, requester: string, by: Actor): Promise<JournaledRestore> {
   const r = await d.files.restoreVersion(input, requester);
   if (!r.ok) return r;
-  const journaled = await write(d.journal, historyRow({ owner: requester, by, actionKind: "files.restore", path: r.path, at: d.links.at() }));
+  const journaled = await writeJournal(d.journal, historyRow({ owner: requester, by, actionKind: "files.restore", path: r.path, at: d.links.at() }));
   return { ...r, journaled };
 }
 
@@ -85,7 +88,7 @@ export async function journaledUntrash(d: { files: PersonFiles; links: PersonLin
   const r = await d.files.restoreTrashed(input, requester);
   if (!r.ok) return r;
   const ended = await d.links.endSharesOf(r.path);
-  const journaled = await write(d.journal, historyRow({ owner: requester, by, actionKind: "files.restore", path: r.path, at: d.links.at() }));
+  const journaled = await writeJournal(d.journal, historyRow({ owner: requester, by, actionKind: "files.restore", path: r.path, at: d.links.at() }));
   return { ...r, sharesEnded: ended.length, journaled };
 }
 
