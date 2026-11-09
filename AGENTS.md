@@ -92,8 +92,8 @@ environment: gotcha 1); when a task is done, `pnpm check` and the tests it touch
 opening a PR or marking it ready. Never pipe a gate into `tail`, `head` or `grep`, which hides its exit status:
 `pnpm check > "$LOG" 2>&1; echo "check exit $?"`, then read the log.
 
-The pre-commit hook applies Biome fixes to staged files and runs the scans over the index. Fix what a hook
-reports; never skip it. `.claude/hooks/no-hook-bypass.mjs` refuses any command that would.
+The pre-commit hook applies Biome fixes to staged files, refuses a staged git conflict marker and runs the scans over
+the index. Fix what a hook reports; never skip it. `.claude/hooks/no-hook-bypass.mjs` refuses any command that would.
 
 ## Long sessions
 

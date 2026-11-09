@@ -1,6 +1,8 @@
 // The pre-commit hook (harness-conventions.md; installed by simple-git-hooks from package.json):
-// applies Biome's safe fixes to the staged files, then runs the secret scan and the privacy scan
-// (acceptance-checks.md steps 5 and 6) over the index, so a leak is refused before it is committed.
+// applies Biome's safe fixes to the staged files, refuses a leftover git conflict marker in any staged text
+// file (Q61: twice a scripted merge committed one into a Markdown ledger, af9ea89 and 3d038c9, and no gate
+// reads Markdown), then runs the secret scan and the privacy scan (acceptance-checks.md steps 5 and 6)
+// over the index, so a leak is refused before it is committed.
 // When a design input or a generated file (`tokens.ts`, `icons.ts`) is staged (M26.1, M27.1), it compiles the
 // staged design files with scripts/ds-tokens.ts and refuses a staged output that differs from that fresh run.
 //
@@ -11,7 +13,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { compileDesign, DS_INPUTS, DS_OUTPUTS, staleOutputs } from "./ds-tokens.ts";
-import { privacyScan, secretScan, stagedIndex } from "./scans.ts";
+import { type FileSource, type Finding, privacyScan, secretScan, stagedIndex } from "./scans.ts";
 
 function git(args: string[], cwd: string): string {
   const res = spawnSync("git", args, { cwd, encoding: "utf8" });
@@ -49,6 +51,31 @@ function stagedTokens(root: string): { ok: true } | { ok: false; reason: string 
   }
 }
 
+/** A line git writes when a merge conflicts: the start, the base and the end of a hunk. */
+const CONFLICT_START = /^<<<<<<< /;
+const CONFLICT_MARKER = /^(<<<<<<< |\|\|\|\|\|\|\| |>>>>>>> )/;
+/** The separator alone is a setext heading underline in Markdown; it is a marker only after a start. */
+const CONFLICT_SEPARATOR = /^=======\r?$/;
+
+/**
+ * Lines left by an unresolved merge in the staged text files, over the whole index and not only the hunks a
+ * commit adds (`git diff --check` reads the hunks alone and flags every lone `=======`). Binary blobs are
+ * skipped. Findings name a file and a line, never the text.
+ */
+export function conflictMarkers(source: FileSource): Finding[] {
+  const findings: Finding[] = [];
+  for (const file of source.files) {
+    const content = source.read(file);
+    if (content === null) continue;
+    let open = false;
+    content.split("\n").forEach((line, i) => {
+      if (CONFLICT_START.test(line)) open = true;
+      if (CONFLICT_MARKER.test(line) || (open && CONFLICT_SEPARATOR.test(line))) findings.push({ file, line: i + 1, rule: "conflict-marker" });
+    });
+  }
+  return findings;
+}
+
 export function preCommit(root: string): { ok: boolean; refused?: string; lines: string[] } {
   const lines: string[] = [];
   const staged = list(git(["diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR"], root)).filter(
@@ -76,6 +103,11 @@ export function preCommit(root: string): { ok: boolean; refused?: string; lines:
   }
 
   const index = stagedIndex(root);
+  const markers = conflictMarkers(index);
+  for (const f of markers) lines.push(`  ${f.file}:${f.line} ${f.rule}`);
+  lines.push(`pre-commit: conflict markers: ${index.files.length} staged files, ${markers.length} findings`);
+  if (markers.length) return { ok: false, refused: "conflict markers", lines };
+
   const secret = secretScan(root, join(root, ".dev.vars"), index);
   for (const f of secret.findings) lines.push(`  ${f.file}:${f.line} ${f.rule}`);
   lines.push(`pre-commit: secret scan: ${secret.files} staged files, ${secret.findings.length} findings`);
