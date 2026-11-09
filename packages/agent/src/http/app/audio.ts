@@ -4,8 +4,9 @@
 // person's own `Person` makes (`/app/file/link`, as the Library's images), its duration and voice in words, and Open to
 // the file's address in the Library. The Audio section lists the person's `audio_items` records (`/app/library`'s
 // `audio`), never a loose file, each with its player. Settings > Voice lists aura-2's speakers and writes the person's
-// pick to the same record the chat's `voice_set` writes, with writer `settings` (`/app/speaker`). What a record says is
-// data: it is set as text, never as markup.
+// pick to the same record the chat's `voice_set` writes, with writer `settings` (`/app/speaker`); a pick saved whose
+// journal row the Ledger did not take is said so (`journaled: false`), never as not saved. What a record says is data:
+// it is set as text, never as markup.
 
 /** The words the audio surfaces show, one table, so a test walks them for a code shown as words. */
 export const AUDIO_TEXT = {
@@ -17,6 +18,7 @@ export const AUDIO_TEXT = {
   voice: "Voice",
   voiceSub: "Read-alouds and episodes use this voice",
   voiceSaved: "Saved. Read-alouds now use this voice.",
+  voiceSavedUnjournaled: "Saved. Read-alouds now use this voice; the change was not journaled.",
   voiceNotSaved: "Not saved: that did not go through. Try again.",
   voiceUnread: "Your voice could not be read just now.",
   noPlayer: "This audio could not be played just now.",
@@ -89,6 +91,6 @@ async function voiceRow() {
 }
 $("set-voice").onchange = async () => {
   const r = await post("/app/speaker", { speaker: $("set-voice").value });
-  if (r.ok) coded($("set-voice-note"), AUD.voiceSaved, "");
+  if (r.ok) { const b = await r.json().catch(() => ({})); coded($("set-voice-note"), b.journaled === false ? AUD.voiceSavedUnjournaled : AUD.voiceSaved, ""); }
   else { const b = await r.json().catch(() => ({})); coded($("set-voice-note"), AUD.voiceNotSaved, b.code); voiceRow(); }
 };`;
