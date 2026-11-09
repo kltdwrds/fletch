@@ -46,6 +46,10 @@ function unwrap<T extends { ok: boolean }>(r: T): Exclude<T, { ok: false }> {
   }
   return r as Exclude<T, { ok: false }>;
 }
+/** What `file_write` says when it took an earlier file's place (F100, P11 delta 1): the earlier content is not kept until F103's versions (D-0028). */
+export const REPLACED_WORDS = "an earlier file at this path was replaced; its earlier content was not kept";
+/** A home file's last change, as `file_list` gives it beside the size (F100, B-P11-16). */
+export const changedAt = (ms: number) => new Date(ms).toISOString().slice(0, 16).replace("T", " ");
 const treeOnly = (tool: string, path: string) =>
   new Error(`FILES_TREE_ONLY: ${tool} works on the working tree, work/ (work, uploads and spills); ${path} is a home file: file_read it and file_write the whole text`);
 
@@ -68,14 +72,14 @@ export function filesNamespace(api: FilesApi, requester: string, writer: string,
     name: "file_list",
     kind: "observation",
     label: "List files",
-    description: "List your files, optionally under a prefix (work/ for the working tree), with sizes.",
+    description: "List your files, optionally under a prefix (work/ for the working tree), with sizes and, for home files, the time of the last change.",
     parameters: ListParams,
     execute: async (_id, p) => {
       const lines: string[] = [];
       let truncated = false;
       if (!inTree(p.prefix)) {
         const r = unwrap(await api.fileList(p, requester));
-        lines.push(...r.files.map((f) => `${f.path} (${f.size} bytes, sha256 ${f.sha256.slice(0, 12)}${f.spilled ? ", in R2" : ""})`));
+        lines.push(...r.files.map((f) => `${f.path} (${f.size} bytes, changed ${changedAt(f.updated_at)} UTC, sha256 ${f.sha256.slice(0, 12)}${f.spilled ? ", in R2" : ""})`));
       }
       if (options.tree && (p.prefix === undefined || p.prefix === "" || inTree(p.prefix))) {
         const r = unwrap(await options.tree.treeList({ prefix: p.prefix || undefined }, requester));
@@ -120,7 +124,8 @@ export function filesNamespace(api: FilesApi, requester: string, writer: string,
         return text(`saved ${r.path}, ${r.size} bytes`, r);
       }
       const r = unwrap(await api.fileWrite(p, { requester, writer }));
-      return text(`saved ${r.path}, ${r.size} bytes, sha256 ${r.sha256}${r.spilled ? " (stored in R2)" : ""}`, r);
+      const saved = `${r.path}, ${r.size} bytes, sha256 ${r.sha256}${r.spilled ? " (stored in R2)" : ""}`;
+      return text(r.replaced ? `REPLACED: saved ${saved}; ${REPLACED_WORDS}` : `saved ${saved}`, r);
     },
   };
   const edit: ToolSpec<typeof EditParams> = {

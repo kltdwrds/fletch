@@ -25,8 +25,7 @@ import type { JobsApi } from "../jobs/tools.ts";
 import { type Job, jobName } from "./job.ts";
 import { PERSON_HEADER } from "../http/identity.ts";
 import { personFiles, personMemory, personTree } from "../memory/rpc.ts";
-import type { RenderResult } from "../render/render.ts";
-import { documentsApi } from "../render/tools.ts";
+import { documentsApi, hostRender } from "../render/tools.ts";
 import { onboardingNamespace, type OnboardingApi } from "../company/onboarding-tools.ts";
 import type { Namespace } from "../tools/registry.ts";
 import { BUILTIN_SKILLS } from "../skills/builtin.ts";
@@ -36,7 +35,7 @@ import type { SubAgentInput, SubAgentResult } from "../subagents/run.ts";
 import { SubAgentStore } from "../subagents/store.ts";
 import { verifyHandoff } from "../subagents/verifier.ts";
 import { migrateObject, probeObject } from "../migrations/catalog.ts";
-import { available, hostOf } from "../host.ts";
+import { hostOf } from "../host.ts";
 import { modelConfig } from "../model/routes.ts";
 import { type ChatSearch, searchChat } from "../chat/search.ts";
 
@@ -88,7 +87,7 @@ export class Chat extends Agent<Env> {
       memory: (person) => personMemory(this.env, person),
       files: (person) => personFiles(this.env, person),
       tree: (person) => personTree(this.env, person),
-      documents: (person) => documentsApi(async (call, requester) => (await getAgentByName(this.env.PERSON, person)).documentCall(requester, call), async (input) => (available(host.render) ? ((await host.render.render(input)) as RenderResult) : host.render)),
+      documents: (person) => documentsApi(async (call, requester) => (await getAgentByName(this.env.PERSON, person)).documentCall(requester, call), hostRender(host)),
       skills: new SkillCatalog(this.env.AGENT_BUCKET, host.tenant.shape, (p) => this.company().teamsOf(p), BUILTIN_SKILLS),
       skillSeen: (person) => async (name, hash) => ((await getAgentByName(this.env.PERSON, person)).platformCall({ op: "skill-seen", name, hash }) as unknown as Promise<"first" | "same" | "changed">),
       code: (person) => codeFor(this.codeHost(), person),
