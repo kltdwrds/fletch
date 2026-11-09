@@ -93,13 +93,17 @@ describe("[F91] P10's instruction line, the slot's probe pages and the tier-2 re
   it("the production read lane reads the slot's pages through the test host, each read kept by its whole address", async () => {
     const network = vi.spyOn(globalThis, "fetch");
     const reads: Array<{ host: string; url: string }> = [];
-    const port = bindingPort(testHostBinding(async (e: { host: string; url: string }) => void reads.push(e)));
+    const port = bindingPort(testHostBinding(async (e: { host: string; url?: string }) => void reads.push({ host: e.host, url: e.url ?? "" }), undefined, undefined, undefined, undefined, true));
     const memory = { get: async () => null, record: async () => {} };
     expect(await readPage({ port, memory, now: () => 0 }, `${SLOT}${P10_ORDERS}`)).toMatchObject({ ok: true, markdown: p10Page(SLOT, P10_ORDERS) });
     expect(await readPage({ port, memory, now: () => 0 }, P10_PROSE_URL)).toMatchObject({ ok: false, code: "BROWSE_UNREACHABLE" });
     expect(await readPage({ port, memory, now: () => 0 }, "https://walled.test/")).toMatchObject({ ok: false, code: "BROWSE_BOT_WALL" });
     expect(reads.map((r) => r.url)).toContain(`${SLOT}${P10_ORDERS}`);
     expect(reads.filter((r) => r.url === P10_PROSE_URL).length).toBeGreaterThan(0);
+    // Without `byAddress` (the other clusters' worlds), a record is the host alone, as before.
+    const plain: unknown[] = [];
+    await bindingPort(testHostBinding(async (e: unknown) => void plain.push(e))).read(`${SLOT}${P10_PROBE}`, "kitesurf");
+    expect(plain).toEqual([{ kind: "read", host: new URL(SLOT).hostname }]);
     expect(network).not.toHaveBeenCalled();
     network.mockRestore();
   });

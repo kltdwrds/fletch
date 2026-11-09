@@ -5,7 +5,7 @@
 // session is refused by name. Pure, so `scripts/preview-slot.test.mjs` runs it under plain Node. A page served by its
 // whole address (`PAGES`, F32's probe page, ./test-host-p5.mjs; F34's two, ./test-host-p3.mjs) is answered before its
 // host is looked up, a slow one (`SLOW`) after its delay. F91: the slot's own P10 probe pages (./test-host-p10.mjs) are
-// answered by path on a slot's host, and each record carries the whole address read, so a P10 grader counts by address.
+// answered by path on a slot's host, and a chat's record carries the whole address read, so a P10 grader counts by address.
 import { P3_PAGES, SLOW } from './test-host-p3.mjs';
 import { p10PageAt } from './test-host-p10.mjs';
 import { PAGES as P5_PAGES, pageAt } from './test-host-p5.mjs';
@@ -28,15 +28,15 @@ export const NO_LIVE_BROWSER = "BROWSE_SESSION_FAILED: the preview slot's test h
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** A Browser Run binding over PAGES, the P10 pages and SITES; `record({ kind, host, url })` is awaited before each answer, and a page in `slow` answers after `wait(ms)`. */
-export function testHostBinding(record, sites = SITES, pages = PAGES, slow = SLOW, wait = sleep) {
+/** A Browser Run binding over PAGES, the P10 pages and SITES; `record({ kind, host })` (with `url`, the whole address, when `byAddress`, F91) is awaited before each answer, and a page in `slow` answers after `wait(ms)`. */
+export function testHostBinding(record, sites = SITES, pages = PAGES, slow = SLOW, wait = sleep, byAddress = false) {
   const refuse = async () => {
     throw new Error(NO_LIVE_BROWSER);
   };
   return {
     async quickAction(name, options) {
       const host = new URL(String(options?.url ?? '')).hostname.toLowerCase();
-      await record({ kind: 'read', host, url: String(options?.url ?? '') });
+      await record(byAddress ? { kind: 'read', host, url: String(options?.url ?? '') } : { kind: 'read', host });
       if (name !== 'markdown') return Response.json({ success: false, errors: [{ message: `the test host serves no ${name}` }] }, { status: 400 });
       const page = pageAt(options?.url, pages) ?? p10PageAt(options?.url);
       const delay = slow[String(options?.url ?? '').replace(/\/$/, '')];

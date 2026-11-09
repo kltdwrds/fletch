@@ -111,7 +111,8 @@ export class Chat extends AgentChat {
   }
 
   browserBinding() {
-    return testHostBinding((e) => this.#append('reads', e));
+    // F91: each read kept with its whole address, so a P10 grader counts reads by address.
+    return testHostBinding((e) => this.#append('reads', e), undefined, undefined, undefined, undefined, true);
   }
 
   moreNamespaces() {
