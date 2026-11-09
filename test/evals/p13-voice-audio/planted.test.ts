@@ -105,7 +105,7 @@ describe("[F70] P13 voice and audio: each guard planted", () => {
 
   it("the transcript column: a transcribed note keeps its transcript on its row; without the migration the write fails", async () => {
     const ai = fakeSpeechAI();
-    const speech: Speech = { transcribe: async (i) => ({ ok: true, text: String(((await ai.binding.run(TRANSCRIBE_MODEL, { audio: [...i.bytes] })) as { text: string }).text) }) };
+    const speech: Speech = { transcribe: async (i) => ({ ok: true, text: String(((await ai.binding.run(TRANSCRIBE_MODEL, { audio: [...i.bytes] })) as { text: string }).text) }), speak: async () => ({ ok: false, code: "SPEECH_UNAVAILABLE", reason: "this test transcribes only" }) };
     const keep = async (list: typeof HARNESS_MIGRATIONS) => {
       const r2 = new FakeR2();
       const bytes = probeNote();

@@ -4,7 +4,7 @@
 // whose credentials the real Vault resolves only under a company grant, and company skills written by
 // admins alone and read by every member's catalog.
 import { describe, expect, it } from "vitest";
-import { GLM_WORKERS_AI, MODEL_TIERS, MUSE_SPARK_CONTRIBUTOR, ROUTES } from "../../packages/agent/src/model/routes.ts";
+import { GLM_WORKERS_AI, MODEL_TIERS, MUSE_SPARK_CONTRIBUTOR, ROUTES, SPEECH_MODELS } from "../../packages/agent/src/model/routes.ts";
 import { VaultCore } from "../../packages/agent/src/vault/core.ts";
 import { ObjectHarness } from "../support/object-harness.ts";
 import { ada, authorityWorld } from "./support/authority-world.ts";
@@ -19,11 +19,12 @@ describe("[M10.2] admin pages", () => {
     expect(await w.http(ada.email, "PUT", "/admin/settings", { modelTier: "gold" })).toMatchObject({ status: 400, body: { code: "SETTINGS_INVALID" } });
     const set = await w.http(ada.email, "PUT", "/admin/settings", { budgets: { personDailyMicros: 40_000 }, modelTier: "economy" });
     expect(set.body).toMatchObject({ settings: { budgets: { personDailyMicros: 40_000, tenantDailyMicros: 20_000_000 }, budgetsSet: { personDailyMicros: 40_000 }, modelTier: "economy" } });
-    expect(w.ledger().budgets()).toEqual({ personDailyMicros: 40_000, tenantDailyMicros: 20_000_000 });
+    expect(w.ledger().budgets()).toEqual({ personDailyMicros: 40_000, tenantDailyMicros: 20_000_000, tenantSpeechMonthlyMicros: 5_000_000 });
     expect(w.ledger().budgetsSet()).toEqual({ personDailyMicros: 40_000 });
     // The economy tier admits D1's default model, GLM 5.3 Flash on Workers AI, and refuses the smoke route's and
-    // Muse Spark (a deploy's chat on Meta, D-0020), before the call.
-    expect(MODEL_TIERS.economy).toEqual([GLM_WORKERS_AI]);
+    // Muse Spark (a deploy's chat on Meta, D-0020), before the call. The two speech models are in every tier (F71): speech
+    // has its own monthly cap.
+    expect(MODEL_TIERS.economy).toEqual([GLM_WORKERS_AI, ...SPEECH_MODELS]);
     expect(ROUTES.chat).toBe(GLM_WORKERS_AI);
     expect(await w.ledger().admit({ person: ada.email, runId: "r1", model: ROUTES.chat })).toEqual({ ok: true });
     expect(await w.ledger().admit({ person: ada.email, runId: "r1", model: MUSE_SPARK_CONTRIBUTOR })).toMatchObject({ ok: false, code: "MODEL_TIER_REFUSED" });

@@ -318,7 +318,7 @@ T-P8-13  must-have  tier 2
   collateral: none
   graders: code over the turns and the Person's chat rows; the words by the line's required phrase; three trials
   reference: B-P8-10 and B-P8-01 under D-0025; Muse's own reply on step 2 (no creation flow, `answers/step-2.md`)
-  version_hash: filled by F61
+  version_hash: fd302354fc54
   file: test/evals/p8-group-chats/room-ask-said-not-done.task.ts
 
 T-P8-14  must-have  tier 1

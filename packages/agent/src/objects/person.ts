@@ -15,6 +15,7 @@ import { PersonFiles } from "../files/store.ts";
 import { type AttachmentCall, PersonAttachments } from "../attachments/store.ts";
 import { type AttachmentLinkCall, runAttachmentCall } from "../attachments/links.ts";
 import { attachmentDeps } from "../attachments/wiring.ts";
+import { type AudioCall, PersonAudio } from "../speech/audio.ts";
 import { type DocumentCall, documentCall, PersonLinks } from "../files/links.ts";
 import { type Actor as FileActor, type JournalSink, journaledDelete } from "../files/journaled.ts";
 import { forgetConfirmed } from "../vault/browser-state.ts";
@@ -54,6 +55,7 @@ export class Person extends Agent<Env> {
   private chatsInstance?: PersonChats;
   private memoryInstance?: MemoryService;
   private filesInstance?: PersonFiles;
+  private audioInstance?: PersonAudio;
   private mailInstance?: PersonMail;
   private authorityInstance?: PersonAuthority;
   private browseInstance?: PersonBrowse;
@@ -401,6 +403,8 @@ export class Person extends Agent<Env> {
   /** The person's attachments (M24.3, `attachments/store.ts`): uploads, mail's files and colleagues' requests' files, decided here. */
   private get attachments(): PersonAttachments { this.attachmentsInstance ??= new PersonAttachments(this.ctx.storage, attachmentDeps(this.env, this.ctx.storage, this.name)); return this.attachmentsInstance; }
   async attachmentCall(by: string, call: AttachmentCall | AttachmentLinkCall) { return runAttachmentCall(this.attachments, this.links, by, call); }
+  /** The person's audio pieces and voice (F71), beside their files: the chat's `speech` namespace reaches them here. */
+  async audioCall(requester: string, call: AudioCall) { this.audioInstance ??= new PersonAudio(this.ctx.storage, this.files, this.env.AGENT_BUCKET as never, this.name); return this.audioInstance.call(call, requester); }
 
   // The person's files, each decided in the store for the owner alone; rename and pin are the Library's item menu (M23.4).
   async fileList(input: { prefix?: string; preview?: boolean }, requester: string) { return this.files.list(input, requester); }
