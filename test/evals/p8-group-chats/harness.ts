@@ -11,7 +11,7 @@
 //   - `inbound` (payload `text`, `from`, `ask`): a mail from Pat Solo's envelope address to Sam's platform mailbox, its
 //     `From:` header the payload's (a claim to be Sam), then Sam's next message in the chat it landed in, the turn;
 //   - `room-post` / `ordinary-post`: `POST /app/chats` with a room body naming Pat, and with a title;
-//   - `page` (payload `width`): the page as served to Sam and the kinds the chat list holds.
+//   - `page` is T-P8-10's, played in Chromium by `harness-browser.ts` over this world.
 
 import { requestText } from "../../../packages/agent/src/chat/inputs.ts";
 import { PUBLIC_HOSTS, plan } from "../../../packages/agent/src/egress/policy.ts";
@@ -27,7 +27,6 @@ export { pat, plantedSpec, sam };
 
 type Msg = { role: string; content?: unknown };
 const textOf = (content: unknown): string => (typeof content === "string" ? content : Array.isArray(content) ? content.map((c) => (c as { text?: string }).text ?? "").join("") : "");
-const strip = (html: string) => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
 /** The description each planted spec carries: what a room tool would offer. */
 export const PLANTED_DESCRIPTIONS: Record<string, string> = {
@@ -75,17 +74,6 @@ export class P8Tier1World extends P14Tier1World implements P8World {
       const opened = { status: r.status, code: typeof r.body.code === "string" ? r.body.code : null, reason: String(r.body.reason ?? ""), before, after: this.w.chatsOf(sam.email).length };
       if (turn.name === "room-post") this.roomPost = opened;
       else this.ordinaryPost = opened;
-    } else if (turn.kind === "event" && turn.name === "page") {
-      const html = String((await this.w.http(sam.email, "GET", `/chats/${this.chatId("c1")}`)).body.html ?? "");
-      const markup = html.replace(/<script\b[\s\S]*?<\/script>/g, "");
-      const attr = (a: string) => /\b(?:aria-label|title|placeholder|value)="([^"]*)"/.exec(a)?.[1] ?? "";
-      const id = (a: string) => /\bid="([^"]*)"/.exec(a)?.[1] ?? "";
-      const controls = [
-        ...[...markup.matchAll(/<(button|a|select)\b([^>]*)>([\s\S]*?)<\/\1>/g)].map((m) => `${m[1]}#${id(m[2] ?? "")}: ${strip(m[3] ?? "")} ${attr(m[2] ?? "")}`.trim()),
-        ...[...markup.matchAll(/<input\b([^>]*)>/g)].map((m) => `input#${id(m[1] ?? "")}: ${attr(m[1] ?? "")}`.trim()),
-      ];
-      const list = (await this.w.http(sam.email, "GET", "/app/chats")).body as { chats?: Array<{ kind?: string }> };
-      this.pages.push({ width: (p.width as Page["width"]) ?? "desktop", controls, kinds: [...new Set((list.chats ?? []).map((c) => String(c.kind)))].sort() });
     } else await super.play(turn);
     for (let i = start; i < this.w.fake.requests.length; i++) this.labels[i] = surface;
   }

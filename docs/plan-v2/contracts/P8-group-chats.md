@@ -269,7 +269,7 @@ T-P8-10  must-have  tier 1
   minefields: add_people_control, agent_opened_room
   graders: code (DOM)
   reference: B-P8-10; `step-1-dom.md`, `step-8-dom.md`
-  version_hash: eb34e8a67b82
+  version_hash: 81958bd4efdc
   file: test/evals/p8-group-chats/no-room-creation.task.ts
 
 T-P8-11  must-have  tier 1

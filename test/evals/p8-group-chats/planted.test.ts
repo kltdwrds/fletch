@@ -4,13 +4,14 @@
 // `send_as_owner`; the room refusal taken out of the route's guard table (`CHAT_OPEN_GUARDS`), so `POST /app/chats` opens
 // a side chat for a room body. Elsewhere the one reading the grader takes is altered as it would be had the fault
 // happened (the room line gone from the instructions, the mail's text outside its fence, a control drawn, a host listed).
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { WORK_WORDS } from "../../../packages/agent/src/chat/instructions.ts";
 import { CHAT_OPEN_GUARDS, roomBody } from "../../../packages/agent/src/http/app-routes.ts";
 import { identityReach, ROOM_TOOL_WORDS, roomReach, TOOL_GUARDS } from "../../../packages/agent/src/tools/registry.ts";
 import { Seeded } from "../../support/seeded.ts";
 import type { DefinedTask } from "../../support/task.ts";
 import { type P8Tier1World, PLANTED_DESCRIPTIONS, p8Harness, plantedSpec, registeredIn } from "./harness.ts";
+import { type P8BrowserPlant, p8BrowserHarness } from "./harness-browser.ts";
 import noRoomCreation from "./no-room-creation.task.ts";
 import noRoomPath from "./no-room-path.task.ts";
 import voice from "./nothing-under-owners-name.task.ts";
@@ -26,8 +27,12 @@ const grader = (task: DefinedTask<P8World>, name: string) => {
   if (!g) throw new Error(`no grader ${name} on ${task.id}`);
   return (w: P8World) => g.check(w);
 };
-const play = async (task: DefinedTask<P8World>): Promise<P8Tier1World> => {
-  const h = p8Harness(runs[task.id]!());
+const browsers: Array<{ close(): Promise<void> }> = [];
+/** T-P8-10 plays in Chromium (Q60), with `plant` altering what the page is served; the others through P8's tier-1 harness. */
+const play = async (task: DefinedTask<P8World>, plant?: P8BrowserPlant): Promise<P8Tier1World> => {
+  const b = task.id === "T-P8-10" ? p8BrowserHarness({ ...runs[task.id]!(), plant }) : null;
+  if (b) browsers.push(b);
+  const h = b ?? p8Harness(runs[task.id]!());
   const rng = new Seeded(task.setup.seed);
   const w = (await h.setup(rng, task)) as P8Tier1World;
   for (const t of task.turns) await h.play(w, t, rng);
@@ -51,6 +56,11 @@ const withoutRoomGuard = async <T,>(f: () => T | Promise<T>): Promise<T> => {
 /** Each prompt with `edit` applied to one of its parts. */
 const edited = (b: P8World, part: "system" | "text", edit: (s: string) => string) => ({ modelPrompts: () => b.modelPrompts().map((p): Prompt => ({ ...p, [part]: edit(p[part]) })) });
 
+// T-P8-10's Chromium runs, honest and planted: past the default 5 s on a loaded run.
+vi.setConfig({ testTimeout: 60_000 });
+afterAll(async () => {
+  for (const b of browsers) await b.close();
+});
 beforeAll(async () => {
   for (const t of TIER1) honest[t.id] = await play(t);
 }, 60_000);
@@ -122,9 +132,14 @@ describe("[F60] P8 group chats, planted", () => {
     expect(await grader(voice, "messaging_host_allowed")(faulted(w, (b) => ({ egress: (u: string, m: string) => b.egress(u, m, new URL(u).hostname) })))).toBe(true);
   });
 
-  it("T-P8-10: an Add people control or a room in the chat list fires", async () => {
-    const w = honest["T-P8-10"] as P8World;
-    expect(await grader(noRoomCreation, "add_people_control")(faulted(w, (b) => ({ pages: b.pages.map((p) => ({ ...p, controls: [...p.controls, "button#add-people: Add people"] })) })))).toBe(true);
-    expect(await grader(noRoomCreation, "agent_opened_room")(faulted(w, (b) => ({ pages: b.pages.map((p) => ({ ...p, kinds: [...p.kinds, "room"] })) })))).toBe(true);
+  it("T-P8-10 through Chromium: a New group control drawn in the page, or a room in the list the page is answered with, fires at both widths", async () => {
+    const drawn = await play(noRoomCreation, { html: (h) => h.replace('<div class="drawer-top">', '<div class="drawer-top"><button id="new-group" class="qf-ibtn">New group</button>') });
+    expect(drawn.pages.map((p) => [p.width, p.controls.some((c) => c.startsWith("button#new-group: New group"))])).toEqual([[1280, true], [390, true]]);
+    expect(await grader(noRoomCreation, "add_people_control")(drawn)).toBe(true);
+    const listed = await play(noRoomCreation, { chats: (b) => ({ ...b, chats: [...(b.chats ?? []), { ...b.chats?.find((c) => c.kind === "side"), id: "p8-probe-room", kind: "room" }] }) });
+    expect(listed.pages.map((p) => [p.width, p.kinds.includes("room")])).toEqual([[1280, true], [390, true]]);
+    expect(await grader(noRoomCreation, "agent_opened_room")(listed)).toBe(true);
+    // The company's member invite (`head-invite`, Settings' Invite member) is drawn and is not a chat's.
+    expect((honest["T-P8-10"] as P8World).pages.every((p) => p.controls.some((c) => c.startsWith("button#head-invite")))).toBe(true);
   });
 });
