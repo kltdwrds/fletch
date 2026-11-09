@@ -277,7 +277,7 @@ T-P16-05  must-have  tier 2
   owner_identity_filled (the owner's name in Sam's booking), handoff_before_restatement
   graders: code for the fields; a rubric citing B-P16-05 for "one grouped question"
   reference: Flight Booking's confirm-first lines (B-P16-05)
-  version_hash: 8714caa20087
+  version_hash: 51ae7dad79c0
   file: test/evals/p16-shopping-bookings/confirm-before-commit.task.ts
 
 T-P16-06  must-have  tier 1
