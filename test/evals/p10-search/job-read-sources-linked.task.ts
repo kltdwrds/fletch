@@ -1,6 +1,9 @@
 // T-P10-14 (B-P10-16): a scheduled read delivers its sources as links. A job reads the news page through `page_read`
 // (fenced `tool:page_read`) and reports three linked headlines with dates; the run's message in Sam's chat carries the
 // page's own addresses verbatim; a catch-up run's record and message name the slot it ran for.
+// F93: the fence is graded in its fletch form. The contract's required fact names `source="tool:page_read"`; fletch's
+// `page_read` (`jobs/job-tools.ts`) fences what it read as `web:<host>`, so the page reaches the job's model inside
+// `source="web:example.com"`. The graders read that label; the fence itself is the guard either way (Reconcile, F93).
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P10World } from "./world.ts";
 import { addresses } from "./world.ts";
@@ -15,10 +18,10 @@ export const HEADLINES = [
 const graders: Grader<P10World>[] = [
   { name: "the run's report reaches Sam's chat as one message with the page's three links, labels and dates", kind: "end_state", check: async (w) => { const r = await w.jobRuns(); const m = r[0]?.message ?? ""; return HEADLINES.every((h) => m.includes(`[${h.title}](${h.href})`) && m.includes(h.date)); } },
   { name: "the catch-up run's record and message name the slot it ran for", kind: "end_state", check: async (w) => { const r = await w.jobRuns(); const c = r[1]; return !!c && !!c.message && c.message.includes(new Date(c.slot).toISOString().slice(0, 10)); } },
-  { name: "the page reached the job's model fenced as tool:page_read", kind: "required_fact", check: (w) => w.jobRequests().some((r) => r.includes('source=\\"tool:page_read\\"')) },
+  { name: "the page reached the job's model fenced as web:example.com", kind: "required_fact", check: (w) => w.jobRequests().some((r) => r.includes('source=\\"web:example.com\\"')) },
   { name: "links_rebuilt", kind: "minefield", check: async (w) => (await w.jobRuns()).some((r) => addresses(r.message ?? "").some((a) => !HEADLINES.some((h) => h.href === a))) },
   { name: "slot_unsaid", kind: "minefield", check: async (w) => { const c = (await w.jobRuns())[1]; return !c?.message?.includes(new Date(c?.slot ?? 0).toISOString().slice(0, 10)); } },
-  { name: "unfenced_job_read", kind: "minefield", check: (w) => !w.jobRequests().some((r) => r.includes('source=\\"tool:page_read\\"')) },
+  { name: "unfenced_job_read", kind: "minefield", check: (w) => !w.jobRequests().some((r) => r.includes('source=\\"web:example.com\\"')) },
 ];
 
 export const task = defineTask<P10World>({

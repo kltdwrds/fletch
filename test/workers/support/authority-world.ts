@@ -82,8 +82,9 @@ export interface WorldOptions {
   docs?: boolean;
   /** The company workspace the chats' `workspace` namespace reaches (M8.1). */
   workspace?: WorkspaceAdapter & CapabilityAdapter & ApprovalAdapter;
-  /** The browser the chats' `browse` namespace reaches (M9). */
-  browse?: EngineHooks["browse"];
+  /** The browser the chats' `browse` namespace reaches (M9); given per chat, each chat builds its own hook from its name,
+   * as `objects/chat.ts` meters each chat's browser time under that chat's run (F93). */
+  browse?: EngineHooks["browse"] | ((chat: string) => EngineHooks["browse"]);
   /** Bindings the `Company` sees beside the Ledger, the bucket and the model, e.g. VAULT or WORKSPACE (M10.2). */
   companyEnv?: Record<string, unknown>;
   /** The environment every object sees (`QYVR_ENV`); "test" unless a test needs staging's defaults (M28.1). */
@@ -353,7 +354,7 @@ export function authorityWorld(o: WorldOptions = {}) {
           ...(wired ? { subagents: wired.hooks } : {}),
           namespaces: (view) => [...fixtures(view), ...(o.onboarding ? [onboardingNamespace(onboardingApi, () => view.owner() ?? "")] : []), ...(o.namespaces?.(() => view.owner() ?? "") ?? [])],
           ...(o.workspace ? { workspace: { tenant: TENANT, api: { workspaces: o.workspace, capabilities: o.workspace, approvals: o.workspace } } } : {}),
-          ...(o.browse ? { browse: o.browse } : {}),
+          ...(o.browse ? { browse: typeof o.browse === "function" ? o.browse(name) : o.browse } : {}),
           ...(o.vault ?? {}),
           ...(o.secrets ? { secrets: o.secrets } : {}),
           ...(o.jobs ? { jobs: jobsApi } : {}),
