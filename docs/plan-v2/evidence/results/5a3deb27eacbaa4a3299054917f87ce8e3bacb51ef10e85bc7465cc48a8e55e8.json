@@ -52,6 +52,31 @@
         }
       ],
       "status": "pass"
+    },
+    {
+      "run_at": "2026-11-09T03:10:08.322Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-09T03:10:08.322Z",
+          "finished_at": "2026-11-09T03:10:50.991Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-09T03:10:50.991Z",
+          "finished_at": "2026-11-09T03:11:19.476Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-09T03:11:19.476Z",
+          "finished_at": "2026-11-09T03:11:48.926Z"
+        }
+      ],
+      "status": "pass"
     }
   ]
 }
