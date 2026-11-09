@@ -2,7 +2,7 @@
 // plants each of the check's guards; they are not repeated here). Eleven clauses and fifteen tasks, each task's file under
 // `test/evals/p8-group-chats/`; every clause cites evidence, every file exists, loads and matches its block; and every
 // tier-1 task's `version_hash` and T-P8-09's are filled with its file's hash as the tier-2 runner computes it (Q14), the
-// nine held by D-0025 door 1 among them. T-P8-13, the tier-2 room ask, is hashed by F61 and stays "filled by F61". The
+// nine held by D-0025 door 1 among them. T-P8-13, the tier-2 room ask, is hashed by F61 (`test/m0/f61-contract.test.ts`). The
 // room line of `WORK_WORDS` keeps the turn's operating block under its cap (D-0019).
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -45,10 +45,9 @@ describe("[F60] the P8 contract", () => {
     expect((await checkContract(planted, disk)).map((f) => `${f.code} ${f.id}`)).toEqual(["CONTRACT_TASK_UNKNOWN B-P8-08"]);
   });
 
-  it("every version_hash F60 writes is filled and is its file's hash under Node's loader; T-P8-13 is left to F61; an unfilled or stale one is named", () => {
+  it("every version_hash F60 writes is filled and is its file's hash under Node's loader (T-P8-13 is F61's); an unfilled or stale one is named", () => {
     const contract = text();
     expect(f60Stale(contract)).toEqual([]);
-    expect(/^T-P8-13 [\s\S]*?version_hash: (.+)/m.exec(contract)?.[1]).toBe("filled by F61");
     // Planted: T-P8-11's line put back to unfilled is caught by id.
     const t11 = /^T-P8-11 [\s\S]*?version_hash: (\S+)/m.exec(contract)?.[1] as string;
     expect(t11).toMatch(/^[0-9a-f]{12}$/);
