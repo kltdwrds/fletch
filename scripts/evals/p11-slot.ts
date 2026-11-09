@@ -33,8 +33,9 @@ export interface P11SlotDeps {
 
 /**
  * T-P11-17's memo, in Sam's Library before the turns: at the path its "memo is unchanged" grader reads (`MEMO_DOCX`,
- * `documents/p11-memo.docx`), so that grader measures the seeded bytes; the contract's setup line names
- * `documents/p11-eval-memo.docx`, a name the grader never reads (F102, the verifier's finding; Reconcile in PR #171).
+ * `documents/p11-memo.docx`), so that grader measures the seeded bytes, and the contract's setup line names the same path
+ * since 2026-11-09. The task file's own `setup.records` still says `documents/p11-eval-memo.docx` (F102, the verifier's
+ * finding; Reconcile in PR #171): it is hash-pinned and moves with the P11 rerun.
  */
 export const P11_SLOT_MEMO = MEMO_DOCX;
 /** The choice the runner approves a card with: allow once (a share's card offers no lasting one). */

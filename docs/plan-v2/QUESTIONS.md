@@ -16,6 +16,7 @@ Markdown. AGENTS.md's rule for the same defect twice is one proposed change. Pro
 (or a `scripts/check-conflict-markers.mjs` under `pnpm harness`) that fails on a line starting with `<<<<<<< `, `=======`
 followed by a `>>>>>>> ` later in the file, or `>>>>>>> ` in any staged text file, with a planted test. Default until you
 answer: the orchestrator greps for the markers before every merge commit (`git grep -l -E '^(<<<<<<< |>>>>>>> )'`).
+**Triage, 2026-11-09 (default taken, the smaller half):** the hook placement landed as PR #179 (merged 2026-11-09): `scripts/pre-commit.ts` refuses a staged conflict marker, with `scripts/pre-commit.test.mjs` planting one. The harness placement (`scripts/check-conflict-markers.mjs` under `pnpm harness`, the only one that catches a marker already committed, on CI) needs `HARNESS_CHECKS` in `scripts/accept.ts` to gain the row (`scripts/gates.test.mjs` holds that list equal to the directory), and `scripts/accept.ts` is on the never-edit list for a session; that half is yours: say yes and the orchestrator opens it as a part naming `scripts/accept.ts`, or do it in your own commit.
 
 ### Q52 (F90), 2026-11-08 (Q51 on this branch until 2026-11-09, renumbered past F56's Q51): P10's tier-1 blocks for T-P10-01 and T-P10-02 differ from shipped behaviour, and F90 splits
 
@@ -43,18 +44,6 @@ staging, which runs without `--paid`): D-0031 (proposed) supersedes D-0030, `REN
 the binding and one `lite` container, and `deploy-staging.yml` deploys with it. Still yours: Account › Workers Containers
 › Write on `fletch-staging-deploy` (the deploy refuses `PREVIEW_RENDER_TOKEN` before any upload until then), then one
 re-run of the workflow; and D-0031's acceptance in your own commit. The pool token (D-0008) is not widened.
-
-### Q60 (F60), 2026-11-09: may T-P8-10 read the page as served, at both widths, until a Chromium run lands?
-
-**Blocks:** nothing under Kyle's one-hour ruling of 2026-11-08; the verifier's one blocking finding on F60.
-T-P8-10's setup is "browser test at desktop and phone width". F60 reads the page as served to Sam (`GET /chats/<c1>`,
-script stripped) and the chat list's kinds, once per width; the markup is the same at both widths, and a control the
-page script draws on the client (`chats-list.ts`, `overlays.ts`, `message-actions.ts`) is not read. The company's
-member invite (`head-invite`, Settings' Invite member) is not a chat's and passes.
-**Recommended answer:** yes for F60; F61 adds the Chromium run at 1280 and 390 over P14's `harness-browser.ts` and reads
-the rendered DOM with the same `ROOM_CONTROL` grader, which changes T-P8-10's hash then. Renumber this question at
-reconcile if main has a Q60.
-**Done on `claude/f60-done` (2026-11-09, under Kyle's one-hour ruling of 2026-11-08):** T-P8-10 runs in hermetic Chromium at 1280 and 390 over the rendered DOM with the same `ROOM_CONTROL` grader (`test/evals/p8-group-chats/harness-browser.ts`), replacing the as-served read; its `version_hash` is 4b7366d51713 (the archived view graded too, after the verifier on PR #158); F61 need not add it.
 
 ### Q47 (F42), 2026-11-01 (Q39 on the F42 branch until 2026-11-08, then Q45; renumbered past main's Q39, Q43, Q45 and Q46): may F42's must-haves count, when the lead-in bubble both models write fails T-P9-13 at origin/main too?
 
@@ -185,7 +174,62 @@ oracle correction; clauses B-P13-08 and B-P13-09 name no code.
 answer `SHARE_EXPIRED`, saying to whoever opens it that it was ended? That would change F101's revoke (and T-P11-11,
 T-P11-17), not F74.
 
+### Q63 (F93), 2026-11-09: is `browse_keep_site`'s card after outside content a guard or a defect under the boundary rule?
+
+**Blocks:** nothing; F93 is DONE with the gate in place. Reversing it changes a must-have grader, a contract block and a log line, so it is yours.
+As built: `packages/agent/src/tools/registry.ts:49-54` declares `asksAfterExternal` ("what a page asked for waits for the person (B-P10-09, F93). The crossing it stops: a page's say-so writing into the person's Vault"); `packages/agent/src/browse/tools.ts:199-203` sets it on `browse_keep_site` (`kind: "observation"`, `mutates: true`); `packages/agent/src/chat/gate.ts:120` gates `spec.asksAfterExternal === true && state.sawExternal && own` and `:176` flags the card `AFTER_EXTERNAL_INPUT` (`chat/cards.ts:171` says "this follows content from outside your own records"). Planted at `test/evals/p10-search/planted.test.ts:97` (strip the flag → grader "a keep after the page's say-so carries AFTER_EXTERNAL_INPUT" breaks, `:233-236`); task `kept-sign-in-on-ask.task.ts`; contract T-P10-08 (must-have, tier 1, hash 1382671fc014, `contracts/P10-search-browser-media.md:364-382`) and clause B-P10-09 (`:134-136`); `docs/decisions/log.md:58-62`.
+**Reading 1, a defect:** AGENTS.md's boundary rule ("the deploy and its signed-in pages"; "inside them, the owner's own agent working the owner's own workspace meets no second gate"): the Vault is a Durable Object of this deploy, the write is the owner's own sealed state for the owner's later session, and the gate fires only when `own` is true, so it slows the owner down and stops no crossing. Q52 already applied the rule to `memory_write` after a page (no card).
+**Reading 2, a guard:** the actor is the page ("save your login now", the task's turn), not the owner; the write seeds every later live session with that site's cookies; B-P10-09 says a kept sign-in exists "only on the person's ask" and the agent "never creates a kept sign-in on its own"; the gate asks only in that case and runs at once on the owner's typed ask. The crossing named is a page's say-so into the Vault, as the rule requires before a guard.
+**Recommended answer:** reading 2 stands as built (a page's instruction is "message content is data", and the card is how the person's ask is told from the page's); if you take reading 1, the orchestrator writes the part: remove `asksAfterExternal` from `browse_keep_site`, amend T-P10-08 and B-P10-09, rehash, and replace the planted grader.
+
+### Q64 (KICKOFF), 2026-11-09: must a tier-2 part rerun when a later merge changes `instructions.ts` before its PR lands?
+
+**Blocks:** nothing; every row below is DONE at KICKOFF's bar as written ("the score is that run's three trials on that tree"). KICKOFF does not say a later merge invalidates a run; the "only ledger merges after" reading in `WAITING-ON-KYLE.md` was F42's verifier's (Q49), and the facts below show it was not met twice.
+Declared tree against merged tree, `packages/agent/src/chat/instructions.ts` only (tree ids confirmed against each `PROGRESS.md` row):
+
+| Part | Declared run (tree, time) | PR head → merge | Instruction lines changed between | Rerun? |
+|---|---|---|---|---|
+| F81 | `a09fb05` (2689ab15, 02:12Z) | `dc1e13b` → `089bac9` (#162, 02:40Z) | `WORK_WORDS` gained F71's voice-note line (F71 merged 02:27Z) | no |
+| F91 | `34010bd` (5aca3dcf, 02:48Z) | `ffd7bf2` → `797e0ce` (#167, 03:15Z) | none | run 3 was on the merged head |
+| F102 | `16de202` (3e344e2c, 03:08Z) | `45384f7` → `0b31c91` (#171, 03:28Z) | `WORK_WORDS` gained F91's two P10 lines (merge "F91 and F74 landed") | no |
+| F73 | `d445807` (55636eff, 03:02Z) | `1333767` → `8f8e131` (#174, 03:37Z) | F91's two `WORK_WORDS` lines and the whole `FILE_WORDS` block (F102) | no |
+| F61 | `1e20ef0` (10cb3a58, 01:46Z) | `aa66ed3` → `d139a44` (#161, 02:03Z) | none | n/a |
+
+After every run, 071c582 (03:55Z, F103) changed `FILE_WORDS`'s edit line, and PR #177 (merged 2026-11-09) changed its Example (the store now keeps a version on every replacement, so the Example's "not kept" was stale); both touch every chat prompt (`CHAT_TASK`).
+**Recommended answer:** (a) the score stays the declared run's (KICKOFF as written) and a merge that changes `instructions.ts` after a part's run is listed in the PR body under Reconcile, as these were, with a rerun only on your ask; or (b) a part reruns its must-haves once more on the merged head when the diff between its declared tree and the merge touches `instructions.ts` (F91's shape), which costs about three trials per task per part and serializes merges. Default until you answer: (a), with the table above kept current by the orchestrator; no eval is rerun by a session on its own.
+
+### Q65 (D-0026), 2026-11-09: should an accepted record's `confirmation` name every later part's test, or only the first?
+
+**Blocks:** nothing; `node scripts/check-decisions.mjs` passes (30 records, 0 violations) because a `review` confirmation is never checked.
+`docs/decisions/0026-speech-on-fletch.md:4-9` is `accepted`, `decider: Kyle`, `confirmation: review`, `review-by: 2026-12-31`, with line 12 "Confirmation to come: the contract check test the Translate part F70 adds names this record". That test exists and names it: `test/m0/f70-contract.test.ts:6` ("This is the contract check D-0026 names as its confirmation to come"). Nine other P13 files mention `D-0026` (the p13 `world.ts`, five task files, `m25-3-migrations.test.ts`, `m28-1-budgets-dollars.test.ts`); no `[F71]`, `[F72]`, `[F73]` or `[F74]` test names it. D-0025 and D-0027 are in the same state (`review`, "to come" prose, F60's and F80's contract tests exist). `docs/decisions/README.md:18-19` says `confirmation` is "a test, a check or a hook that mentions the record's id … or `review` with a `review-by` date when nothing executable can"; it does not say one test or every test. Precedent: D-0016 names F55's one test.
+**Recommended answer:** the contract check alone (`test/m0/f70-contract.test.ts` for D-0026, `f60-contract` for D-0025, `f80-contract` for D-0027): it is the one test that holds the cluster's clauses, and a later part's tests cite the contract, not the record. A one-line README rule ("a record's confirmation is its cluster's contract check") and the three field edits are yours, since they change accepted records; the orchestrator does not touch them.
+
+### Q66 (F71, F72), 2026-11-09: is a new per-person settings table (`speech_settings`) a storage schema, so a one-way door?
+
+**Blocks:** nothing; F71 and F72 are DONE and the table is in use. If yes, a `proposed` record is written after the fact and you accept it; nothing is rebuilt.
+`packages/agent/src/speech/audio.ts:12-15` creates `speech_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, writer TEXT NOT NULL, updated_at INTEGER NOT NULL)` beside `audio_items` in the Person object, by migration `schema("person.audio", "f71", AUDIO)` (`migrations/catalog.ts:82`): a new table, not a row in an existing settings table (those are `job_settings`, `delivery_state`, `loop_settings`, the company's `settings`). One row, key `speaker`, written by `settingsVoiceSet` with `writer: "settings"` and one journal row `speech.voice_set`. The log lines `docs/decisions/log.md:56` (F71) and `:71-76` (F72) class the work two-way and do not name the table. AGENTS.md's one-way list names "a storage schema"; D-0028 applied it to "a new table and R2 prefix", D-0018 to "a name field is a storage schema (where it lives, who reads it …)".
+**Recommended answer:** yes by the two records' own usage, so the orchestrator writes a `proposed` record for the table under the next free number (D-0031 is taken by PR #176's renderer flag), `decider: agent` pending yours, with the table's shape, `writer`, the journal row and the migration as its content and `test/m0/f70-contract.test.ts` as confirmation; you accept or fold it into D-0026 with one line.
+
+### Q67 (F71), 2026-11-09: close the speech cap's in-flight overshoot with a reservation row (one-way), an in-memory count (two-way), or leave it?
+
+**Blocks:** nothing; the cap holds between calls. Spend on your account (D-0026), so the gap is listed rather than taken.
+`Ledger.admit` (`packages/agent/src/objects/ledger.ts:83-91`, `decideSpeech` in `ledger/budget.ts:122-125`) sums `cost_micros` of recorded `model_calls`; the spend lands in `Ledger.record` (`:62-81`) after the provider answered (`speech/speech.ts:85-110`). Every call admitted before any `record` lands sees the same pre-spend sum. Concurrency is unbounded in code across chats, sub-agents (`MAX_OPEN = 12` per chat), jobs (`MAX_JOBS = 25`) and voice-note uploads. Per-call maximum (`SPEECH_PRICES`, `budget.ts:66-69`): a `speak` of 2,000 chars is 60,000 micros ($0.06); an episode's first turn, up to about 6,000 chars, 180,000 micros ($0.18); a transcription of an 8 MiB low-bitrate MP3 about 70,000 micros. Worst overshoot is N concurrent calls times that: at N = 10, $0.60 to $1.80 over the $5 monthly cap (12% to 36%), or over the slot's $1 cap 60% to 180%; the $20 daily tenant cap has the same race. No test lands two admissions before a record.
+**Recommended answer:** the two-way fix as a plain PR: an in-memory in-flight count on the Ledger instance (added at `admit`, released at `record`, counted into `decideSpeech`; lost on eviction, so never worse than today), with a test that admits twice before any record and sees the second refused. The one-way fix, a `reserved` row in `model_calls` settled by `record` (fits the table without `ALTER`, but changes what a row means and needs an expiry sweep and a rollup filter), is a `proposed` record and a part if you want "an unaccounted call is never the default" to hold across evictions too.
+
 ## Answered by default
+
+### Q60 (F60), 2026-11-09: may T-P8-10 read the page as served, at both widths, until a Chromium run lands?
+
+**Blocks:** nothing under Kyle's one-hour ruling of 2026-11-08; the verifier's one blocking finding on F60.
+T-P8-10's setup is "browser test at desktop and phone width". F60 reads the page as served to Sam (`GET /chats/<c1>`,
+script stripped) and the chat list's kinds, once per width; the markup is the same at both widths, and a control the
+page script draws on the client (`chats-list.ts`, `overlays.ts`, `message-actions.ts`) is not read. The company's
+member invite (`head-invite`, Settings' Invite member) is not a chat's and passes.
+**Recommended answer:** yes for F60; F61 adds the Chromium run at 1280 and 390 over P14's `harness-browser.ts` and reads
+the rendered DOM with the same `ROOM_CONTROL` grader, which changes T-P8-10's hash then. Renumber this question at
+reconcile if main has a Q60.
+**Done on `claude/f60-done` (2026-11-09, under Kyle's one-hour ruling of 2026-11-08):** T-P8-10 runs in hermetic Chromium at 1280 and 390 over the rendered DOM with the same `ROOM_CONTROL` grader (`test/evals/p8-group-chats/harness-browser.ts`), replacing the as-served read; its `version_hash` is 4b7366d51713 (the archived view graded too, after the verifier on PR #158); F61 need not add it.
+**Answered by default (orchestrator, 2026-11-09, triage of the review channel's handoff):** PR #158 merged to main on 2026-11-09T01:25Z (head d72bdf8); `PROGRESS.md`'s F60 row names it, the Chromium run and hash 4b7366d51713 (`test/evals/p8-group-chats/no-room-creation.test.ts`, `harness-browser.ts`; `contracts/P8-group-chats.md` T-P8-10). Nothing is open here; F61 did not add the run.
 
 ### Q46 (F51, after Q37), 2026-11-08: T-P14-14 is 0 of 3 on Muse Spark after line 109; two oracle faults, not the reply
 

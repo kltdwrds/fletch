@@ -54,7 +54,7 @@ export const RESPONSE_MAX = 1_000_000;
 const PASSED_HEADERS = new Set(["content-type", "etag", "last-modified", "link", "location", "retry-after", "x-ratelimit-remaining", "x-ratelimit-reset"]);
 
 /** The refusals of a keyed call for its host: the host is not listed, or the key may not be sent there (F59). */
-export const HOST_REFUSALS: ReadonlySet<EgressCode> = new Set(["EGRESS_HOST_DENIED", "EGRESS_CRED_HOST_DENIED"]);
+export const HOST_REFUSALS: ReadonlySet<string> = new Set<EgressCode>(["EGRESS_HOST_DENIED", "EGRESS_CRED_HOST_DENIED"]);
 
 /** The plan refusals that write an audit row: a host or a credential the request may not use. */
 export const AUDITED_REFUSALS: ReadonlySet<EgressCode> = new Set(["EGRESS_HOST_DENIED", "EGRESS_CRED_HOST_DENIED", "EGRESS_CRED_UNKNOWN"]);
