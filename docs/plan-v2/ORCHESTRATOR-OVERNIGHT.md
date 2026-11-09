@@ -172,8 +172,8 @@ T-P13-14 3 of 3 under a $1 speech cap, 12,171 micros spent). Held: F103 (#168, `
 finding D-0028 itself) stays a draft BLOCKED on the D-0028 decide item, as F55 was. Plain PR #172 moved October's 68
 decision-log lines to `docs/decisions/log-2026-10.md`: the live log had reached its 40 KB cap and four landings in a row
 had to condense older entries first. Every part the translations produced is now DONE on main but F103. Scorecard: P8,
-P10, P11, P13 and P16 rows name their parts; P10, P11, P13 and P16 meet level 2's tier-2 reading on their must-haves
-and wait on the orchestrator's re-level, P8 on the rooms door. Verifier passes it took: F61, F71, F92, F93, F81, F72, F91
+P10, P11, P13 and P16 rows name their parts; P10, P11, P13 and P16 raised to level 2 by the orchestrator (every must-have passing,
+the tier-2 ones on a slot; the rows quote the accept, verifier and results lines), P8 at level 1 on the rooms door. Verifier passes it took: F61, F71, F92, F93, F81, F72, F91
 and F73 one each, F74 and F102 two, F101 three; every finding fixed by a builder, none argued away. Lessons kept: land
 tier-2 parts before the parts that change the same instruction lines, or rerun the declared run on the merged tree (F91
 did; F81 landed on its declared tree with main's new `WORK_WORDS` lines unexercised, a Reconcile item); a merge resolved
