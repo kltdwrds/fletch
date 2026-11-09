@@ -24,8 +24,9 @@ and shown to the owner by name, never as empty or success (`test/workers/f1-refu
   GLM (`CHAT_PROVIDER=workers-ai`) the alternative. Its Contributor tier sends the chat's content to Meta, which may
   train on it; a deploy that must keep chat content on Cloudflare sets `CHAT_PROVIDER=workers-ai`.
 - **Migrations are append-only**, one list per object in `packages/agent/src/migrations/`, run in the constructor.
-- **Paid-plan bindings are optional.** `LOADER` and `IMAGES` are not in the base config, so `wrangler types` keeps
-  them optional in `packages/agent/src/env.d.ts`; `pnpm self-host --paid` adds them (D-0021).
+- **Paid-plan bindings are optional.** `LOADER`, `IMAGES` and `RENDERER` are not in the base config, so `wrangler types`
+  keeps them optional in `packages/agent/src/env.d.ts`; `pnpm self-host --paid` adds the first two (D-0021), `--render`
+  the Renderer, the pandoc container behind `render_document` (`packages/agent/src/objects/renderer.ts`, D-0031).
 - **Generated files.** `packages/agent/src/http/app/tokens.ts` and `icons.ts` come from `pnpm ds`; the pre-commit
   hook refuses a hand edit. The design sources are under `packages/agent/src/design/`.
 - **Platform docs are for the model.** `packages/agent/docs/platform/` holds manuals the agent reads at run time

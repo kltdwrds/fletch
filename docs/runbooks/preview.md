@@ -19,7 +19,7 @@ Run `pnpm install` first, then `pnpm preview doctor` once in a new environment.
 
 | Command | Does |
 |---|---|
-| `pnpm preview up` | Leases a free slot (or renews this worktree's lease) and deploys the working tree to it. A new lease starts empty, with new `MASTER_KEY` and `SETUP_TOKEN`, and prints the setup link for the first passkey. `--slot n` asks for one, `--ttl hours` sets the lease (24 by default; every `up` renews it), `--paid` adds the Worker Loader and Images bindings and, once D-0030 (proposed) is accepted and `RENDERER_ON_PAID` is on, the Renderer's pandoc container (it is off; the slots token is refused `Forbidden` on the containers API, 2026-11-08) as `pnpm self-host --paid` does, `--var K=V` (repeatable) overrides one of the model vars `AI_GATEWAY_ID`, `CHAT_PROVIDER` that the base config sets (`packages/agent/wrangler.jsonc`, read by `packages/agent/src/model/routes.ts`): without one the slot's chat runs on Muse Spark through the gateway `qyvr`, and `--var CHAT_PROVIDER=workers-ai` puts it on GLM 5.3 Flash, still through that gateway; any other key is refused; an override lasts until the next `up` without it. |
+| `pnpm preview up` | Leases a free slot (or renews this worktree's lease) and deploys the working tree to it. A new lease starts empty, with new `MASTER_KEY` and `SETUP_TOKEN`, and prints the setup link for the first passkey. `--slot n` asks for one, `--ttl hours` sets the lease (24 by default; every `up` renews it), `--paid` adds the Worker Loader and Images bindings as `pnpm self-host --paid` does, `--render` adds the Renderer (the pandoc container behind "Make me an artifact", one `lite` instance, Workers Paid; the credential needs Account > Workers Containers > Write, else `PREVIEW_RENDER_TOKEN` before anything is deployed; D-0031), `--var K=V` (repeatable) overrides one of the model vars `AI_GATEWAY_ID`, `CHAT_PROVIDER` that the base config sets (`packages/agent/wrangler.jsonc`, read by `packages/agent/src/model/routes.ts`): without one the slot's chat runs on Muse Spark through the gateway `qyvr`, and `--var CHAT_PROVIDER=workers-ai` puts it on GLM 5.3 Flash, still through that gateway; any other key is refused; an override lasts until the next `up` without it. |
 | `pnpm preview status` | This worktree's lease, what the slot serves, its `/health`, and the setup link again. |
 | `pnpm preview tail` | `wrangler tail` on the slot's Worker. |
 | `pnpm preview down` | Releases the slot: the placeholder deployed (which deletes every agent Durable Object and its storage), new secrets, the bucket and the index emptied, every session key deleted, the lease ended. |
@@ -49,7 +49,7 @@ lease row says `staging` and never expires. The code is `scripts/preview-staging
 | `pnpm preview down --slot 1 --force` | (Kyle's login) Unstages and releases it as `down` releases a lease: placeholder, new secrets, bucket and index emptied. Its data is gone. The inventory mark stays, so no branch takes it until a PR removes the mark. |
 | `pnpm preview list` | `staging (main, deployed on merge; serving …)`, or `staging, not converted yet: …` before the conversion. |
 | `pnpm preview staging status` | Its lease, what it serves and its `/health`. |
-| `pnpm preview staging deploy` | Redeploys main: refused unless the checkout is the `main` branch or detached at `origin/main`, with no change to a tracked file and the lease says staging (`PREVIEW_STAGING_NOT_CONVERTED`). It is one `wrangler deploy` of the agent: every secret, Durable Object, the bucket and the index stay. |
+| `pnpm preview staging deploy` | Redeploys main: refused unless the checkout is the `main` branch or detached at `origin/main`, with no change to a tracked file and the lease says staging (`PREVIEW_STAGING_NOT_CONVERTED`). It is one `wrangler deploy` of the agent: every secret, Durable Object, the bucket and the index stay. `--render` (the workflow's) adds the Renderer's container (D-0031), after checking that the credential reaches the account's containers: without Account > Workers Containers > Write it refuses with `PREVIEW_RENDER_TOKEN` before any upload. |
 | `pnpm preview staging secrets` | Kyle's Mac, on his `op` and `gh` logins: mints or rolls `fletch-staging-deploy` (Editor on slot 1's Worker alone), stores it in 1Password, sets the workflow's three secrets and dispatches it (below). |
 
 The lease protects the slot from code that predates staging too: no claim takes a staging lease, its expiry (2100) is
@@ -109,12 +109,16 @@ run it again, which rolls it.
 ### The workflow
 
 `.github/workflows/deploy-staging.yml` runs on every push to main, and by hand:
-`gh workflow run deploy-staging.yml --ref main`. It installs, runs `pnpm check`, then `pnpm preview staging deploy`
+`gh workflow run deploy-staging.yml --ref main`. It installs, runs `pnpm check`, then `pnpm preview staging deploy --render`
 on the scoped token (`FLETCH_PREVIEW_AUTH=token`). Two merges queue and the newest waiting one wins; a deploy running
 is never cancelled. A failure fails the job; it never deploys another slot. It reads three repository secrets:
 `CLOUDFLARE_API_TOKEN` (the `fletch-staging-deploy` token, set by `pnpm preview staging secrets`), `CLOUDFLARE_ACCOUNT_ID` and `FLETCH_PREVIEW_SUBDOMAIN`.
 No lease key: the token already deploys every slot Worker, so a key would prove nothing more, and the deploy does no
 keyed op. Until the conversion has run, each run fails with `PREVIEW_STAGING_NOT_CONVERTED`.
+`--render` deploys the Renderer's pandoc container (D-0031), so `fletch-staging-deploy` needs Account > Workers
+Containers > Write beside its Workers Editor on `fletch-pv-1`: `wrangler deploy` activates the Worker before it creates
+the container application, so the command checks first (`wrangler containers list`). Until Kyle adds that permission,
+each run fails with `PREVIEW_RENDER_TOKEN` before any upload and the slot keeps serving the previous main.
 
 ## Credentials
 
@@ -189,3 +193,6 @@ make or delete a Cloudflare resource.
   copied as it is, it would point a slot at another deploy's resource.
 - **A shell that forces colour** makes `gh`'s JSON unparseable; `gc` reads plain lines with colour off.
 - **Deleting the Worker deletes its Durable Object state**: only `deprovision` does it.
+- **A slot's container application outlives the slot.** A `--render` deploy creates `<worker>-renderer` (e.g.
+  `fletch-pv-1-renderer`) on the account; `down` and `deprovision` leave it, so delete it by hand
+  (`wrangler containers delete`) when the slot no longer renders.

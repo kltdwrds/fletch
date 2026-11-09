@@ -1,7 +1,8 @@
 ---
 id: D-0030
 title: A paid deploy (--paid) also binds the document renderer, a pandoc container, beside Code Mode and Images
-status: proposed
+status: superseded
+superseded-by: D-0031
 door: one-way
 decided: 2026-11-08
 decider: agent

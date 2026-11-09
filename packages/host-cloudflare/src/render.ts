@@ -1,15 +1,15 @@
 // The document renderer one account has (F56): the `RENDERER` Durable Object namespace, whose object runs pandoc in a
-// container, reached over RPC and never imported. A deploy has it only when its config binds it, which only a paid
-// deploy does (`--paid`); without it `render` is refused by name with the binding it lacks (D-0001). What the object
-// answers is checked before it is passed on: a render that claims success without a document is refused with
-// `RENDER_OUTPUT_INVALID`, never shown as made.
+// container, reached over RPC and never imported. A deploy has it only when its config binds it, which only a deploy
+// made with `--render` does (D-0031); without it `render` is refused by name with the binding it lacks (D-0001). What
+// the object answers is checked before it is passed on: a render that claims success without a document is refused
+// with `RENDER_OUTPUT_INVALID`, never shown as made.
 import { type HostFailure, type RenderService, unavailable } from "@qyvr/host";
 
 /** The binding a deploy's config adds for render; its name is in the refusal, so the owner knows what is missing. */
 export const RENDERER_BINDING = "RENDERER";
 
 /** Why render is refused on a deploy without the binding: the binding by name and the deploy that adds it. */
-export const RENDERER_MISSING = `this deploy has no document renderer: the ${RENDERER_BINDING} container binding is missing, and only a deploy made with --paid (pnpm self-host --paid, pnpm preview up --paid) adds it`;
+export const RENDERER_MISSING = `this deploy has no document renderer: the ${RENDERER_BINDING} container binding is missing, and only a deploy made with --render (pnpm self-host --render, pnpm preview up --render) adds it`;
 
 /** The Renderer object's RPC, as its stub exposes it. */
 export interface RendererStub {

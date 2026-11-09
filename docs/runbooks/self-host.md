@@ -11,7 +11,7 @@ prints the setup link once (D-0023). The code is `scripts/self-host.mjs` (the ru
 
 - Setting up a new fletch for one owner on one account.
 - Updating a deploy after `git pull`: the same command again redeploys the code and changes nothing else.
-- Adding the paid-plan bindings (`--paid`, D-0021) or a model var (`--var`).
+- Adding the paid-plan bindings (`--paid`, D-0021), the document renderer (`--render`, D-0031) or a model var (`--var`).
 
 ## Steps
 
@@ -31,8 +31,8 @@ prints the setup link once (D-0023). The code is `scripts/self-host.mjs` (the ru
 
    Optional: `--account-id <32 hex>` when the login reaches several accounts (`pnpm exec wrangler whoami` lists
    them; without it wrangler's own error names the choice); `--paid` adds the Worker Loader (`LOADER`) and Images
-   (`IMAGES`) bindings (and, once D-0030 is accepted, the document renderer `RENDERER`, a pandoc container; off until then), which need the
-   Workers Paid plan; without `RENDERER` a document render is refused with `HOST_RENDER_UNAVAILABLE`. By default chat runs on Muse Spark through the AI Gateway
+   (`IMAGES`) bindings, which need the Workers Paid plan; `--render` adds the document renderer (`RENDERER`, a pandoc
+   container, Workers Paid, D-0031); without it a document render is refused with `HOST_RENDER_UNAVAILABLE`. By default chat runs on Muse Spark through the AI Gateway
    `qyvr`, which holds the Meta key, and every model call goes through that gateway (`packages/agent/wrangler.jsonc`);
    `--var AI_GATEWAY_ID=<gateway id>` names another gateway (another account makes its own, with a Meta key stored on
    its custom provider `meta`), and `--var CHAT_PROVIDER=workers-ai` puts chat on GLM 5.3 Flash on Workers AI. No other

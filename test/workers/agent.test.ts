@@ -17,7 +17,7 @@ describe("[M0.1] agent script", () => {
   it("/health names the seven object classes from AD-1", async () => {
     const res = await call("/health");
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true, tenant: "solo-sam", objects: [...AD1_OBJECTS] });
+    expect(await res.json()).toEqual({ ok: true, tenant: "solo-sam", objects: [...AD1_OBJECTS], render: false });
   });
 
   it("exports each object class; those no part has built yet answer NOT_IMPLEMENTED with their name", async () => {

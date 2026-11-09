@@ -7,7 +7,7 @@
 import { randomBytes } from 'node:crypto';
 import { origin, ownerTag, refusal, stagingSlots } from './preview-plan.mjs';
 import { account, deploySlot, needInventory } from './preview-pool.mjs';
-import { dropKeys, keyAccepted, must, op, planOf, release, waitReady } from './preview.mjs';
+import { dropKeys, keyAccepted, must, op, planOf, release, renderPreflight, waitReady } from './preview.mjs';
 
 /** How many times `convert` reads the lease before refusing, and the wait between reads: two minutes. */
 export const LEASE_CODE_READS = 24;
@@ -65,9 +65,10 @@ export async function waitLeaseCode(ctx, plan, id) {
  * 3. marks the lease staging, a compare-and-set on the tag it read, so a lease taken meanwhile is never taken over;
  * 4. deletes every PREVIEW_KEY_* (the last holder's and this one): nobody holds the staging lease.
  * A slot that was free (its secrets rotated by a release, so nobody knows its setup token) gets a new SETUP_TOKEN, and
- * only then; `setupToken` is returned for its first passkey. Converting a staging slot again changes nothing.
+ * only then; `setupToken` is returned for its first passkey. Converting a staging slot again changes nothing. With
+ * `render` the credential's reach to the account's containers is checked before the deploy (renderPreflight).
  */
-export async function convert(ctx, { paid = false, vars = {} } = {}) {
+export async function convert(ctx, { paid = false, render = false, vars = {} } = {}) {
   if (ctx.mode !== 'oauth') throw refusal('PREVIEW_STAGING_LOGIN', "`staging convert` runs on Kyle's wrangler login, never on a token");
   fromMain(ctx, '`staging convert`');
   const inv = needInventory(ctx);
@@ -78,8 +79,9 @@ export async function convert(ctx, { paid = false, vars = {} } = {}) {
     ctx.log(`preview: slot ${n} is staging already; nothing to convert (\`pnpm preview staging deploy\` redeploys it)`);
     return { plan, already: true, setupToken: null };
   }
+  if (render) renderPreflight(ctx);
   ctx.log(`preview: slot ${n}: deploying main over what it holds (its secrets, objects, bucket and index stay)`);
-  const d = deploySlot(ctx, inv, n, { paid, vars });
+  const d = deploySlot(ctx, inv, n, { paid, render, vars });
   await waitReady(ctx, plan, d.deploy);
   await waitLeaseCode(ctx, plan, d.deploy);
   const auth = { key: randomBytes(32).toString('hex'), tag: ownerTag(ctx.root) };
@@ -101,16 +103,19 @@ export async function convert(ctx, { paid = false, vars = {} } = {}) {
 
 /**
  * Redeploys main to the staging slot (CI on every merge, or by hand): only after its lease says staging, never another
- * slot, and nothing but a deploy of the agent, so its secrets, objects, bucket and index stay. Fails, never falls back.
+ * slot, and nothing but a deploy of the agent, so its secrets, objects, bucket and index stay. Fails, never falls back:
+ * with `render` (the workflow's) a credential that cannot reach the account's containers is refused before the deploy
+ * with PREVIEW_RENDER_TOKEN, so the slot keeps serving the main it had.
  */
-export async function deployStaging(ctx, { paid = false, vars = {} } = {}) {
+export async function deployStaging(ctx, { paid = false, render = false, vars = {} } = {}) {
   fromMain(ctx, '`staging deploy`');
   const inv = needInventory(ctx);
   const n = stagingSlot(inv);
   const plan = planOf(ctx, n);
   const lease = await publicLease(ctx, plan);
   if (!lease.staging) throw refusal('PREVIEW_STAGING_NOT_CONVERTED', `slot ${n}'s lease is not staging yet; on Kyle's login, \`pnpm preview staging convert\` from a clean main checkout converts it once`);
-  const d = deploySlot(ctx, inv, n, { paid, vars });
+  if (render) renderPreflight(ctx);
+  const d = deploySlot(ctx, inv, n, { paid, render, vars });
   await waitReady(ctx, plan, d.deploy);
   return { plan, deploy: d.deploy };
 }
@@ -148,6 +153,6 @@ export async function stagingCommand(ctx, sub, opts) {
     const health = await ctx.fetch(`${origin(plan)}/health`).then(async (r) => `${r.status} ${await r.text()}`, (e) => `no answer: ${e.message}`);
     ctx.log(`preview: slot ${plan.n}: ${lease.staging ? 'staging' : 'marked staging in the inventory, NOT converted yet'}\n  serving ${lease.serving} (deploy ${lease.deploy})\n  app     ${origin(plan)}: /health ${health}`);
   } else {
-    throw new Error('usage: pnpm preview staging <convert|deploy|status|secrets> [--paid] [--var K=V]...');
+    throw new Error('usage: pnpm preview staging <convert|deploy|status|secrets> [--paid] [--render] [--var K=V]...');
   }
 }

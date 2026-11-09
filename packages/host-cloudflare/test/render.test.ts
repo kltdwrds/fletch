@@ -28,7 +28,7 @@ describe("[F56] the single-account host's renderer", () => {
     const host = singleAccountHost(env());
     expect(host.render).toEqual({ ok: false, code: "HOST_RENDER_UNAVAILABLE", reason: RENDERER_MISSING });
     expect(RENDERER_MISSING).toContain("RENDERER");
-    expect(RENDERER_MISSING).toContain("--paid");
+    expect(RENDERER_MISSING).toContain("--render");
   });
 
   it("is the tenant's Renderer object where the deploy binds it, and passes a real document on", async () => {

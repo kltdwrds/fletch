@@ -367,3 +367,8 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   narrowing; the tool is not renamed). The nine held P8 tasks are skipped by name as vitest todos, since Biome refuses
   `.skip`. The T-P8-10 control check read the page as served until 2026-11-09, when PR #158 (Q60) made it a Chromium run at 1280 and 390 over the rendered DOM, drawn and listed chat kinds both graded.
   Rejected: renaming `onboarding_invite`, and a Biome ignore comment per held test.
+- 2026-11-09 The renderer's container gets its own deploy flag, `--render` (D-0031, proposed, superseding D-0030's
+  `--paid` ride-along), and `deploy-staging.yml` carries it: staging never deployed with `--paid`, and Code Mode and
+  Images are unmeasured on that account. One `lite` instance, `max_instances: 1`, a five-minute inactivity timeout set
+  by the object, a `render` boolean on `/health`. Rejected: flipping `RENDERER_ON_PAID` (Kyle's acceptance of D-0030,
+  not the agent's) and deploying staging with `--paid`.

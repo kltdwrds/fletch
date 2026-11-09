@@ -100,6 +100,8 @@ export function fakeAccount({ subdomain, slotsByWorker }) {
     }
     if (a === 'vectorize' && b === 'delete') return s.vectorize.delete(c) ? okOut() : { status: 1, out: 'no such' };
     if (a === 'whoami') return okOut('logged in');
+    // The --render pre-flight's read of the account's container applications: none here.
+    if (line === 'containers list') return okOut('[]');
     if (a === 'deploy') {
       const config = JSON.parse(s.configs.get(path.join(opts.cwd, args[2])).replace(/^\/\/.*\n/, ''));
       // Like wrangler, the tag is the one looked up before the upload: none for the deploy that makes the Worker.

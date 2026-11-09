@@ -93,23 +93,25 @@ export const KNOWN_CONFIG_KEYS = new Set([
   'r2_buckets', 'vars', 'vectorize',
 ]);
 
-/** The Renderer's binding and container a paid deploy adds (F56); the image is `RENDER_IMAGE` in packages/agent/src/render/render.ts. */
-export const RENDERER_BINDING = { name: 'RENDERER', class_name: 'Renderer' };
 /**
- * Whether a paid deploy gets the renderer's container: false until Kyle accepts D-0030, since a container spends money
- * on the owner's account. Until then every deploy refuses render by the binding's name (HOST_RENDER_UNAVAILABLE).
+ * The Renderer's binding and container a `--render` deploy adds (D-0031): its own flag, not
+ * `--paid`, so staging carries render without Code Mode and Images. The image is `RENDER_IMAGE` in
+ * packages/agent/src/render/render.ts, and the test holds the two equal. A container needs Workers Paid; the image is a
+ * public Docker Hub reference, so wrangler builds and pushes nothing. One `lite` instance (the cheapest type) per
+ * deploy: one owner, one tenant.
  */
-export const RENDERER_ON_PAID = false;
-export const RENDERER_CONTAINER = { class_name: 'Renderer', image: 'docker.io/pandoc/minimal:3.11.0', max_instances: 2 };
+export const RENDERER_BINDING = { name: 'RENDERER', class_name: 'Renderer' };
+export const RENDERER_CONTAINER = { class_name: 'Renderer', image: 'docker.io/pandoc/minimal:3.11.0', instance_type: 'lite', max_instances: 1 };
 
 /**
  * The agent's raw base config as one deploy of it, the part a preview slot and a self-host deploy share: its Worker
  * `name` on workers.dev, each R2 and Vectorize binding pointed at the deploy's own resource (`r2`, `vectorize`: a name
- * by binding), `vars` laid over the base vars, and with `paid` the paid-plan bindings (D-0021). A base key outside
+ * by binding), `vars` laid over the base vars, with `paid` the paid-plan bindings (D-0021) and with `render` the
+ * Renderer's binding and container (D-0031). A base key outside
  * KNOWN_CONFIG_KEYS, or a binding the deploy has no resource for, is refused rather than copied. `label` and `what`
  * name the caller in a refusal (`preview`, `a preview slot`).
  */
-export function deployConfig(raw, { name, r2, vectorize, vars = {}, paid = false, renderer = RENDERER_ON_PAID, label, what }) {
+export function deployConfig(raw, { name, r2, vectorize, vars = {}, paid = false, render = false, label, what }) {
   const unknown = Object.keys(raw).filter((k) => !KNOWN_CONFIG_KEYS.has(k));
   if (unknown.length > 0) {
     throw new Error(`${label}: packages/agent/wrangler.jsonc has ${unknown.join(', ')}, which ${what} does not know: decide what ${what} gets in scripts/preview-plan.mjs`);
@@ -132,9 +134,9 @@ export function deployConfig(raw, { name, r2, vectorize, vars = {}, paid = false
     out.worker_loaders = [{ binding: 'LOADER' }];
     out.images = { binding: 'IMAGES' };
   }
-  // The document renderer (F56, proposed D-0030, off until accepted): the Renderer class is in the base exports, its
-  // binding and its pandoc container only here, so a deploy without them refuses render by the binding's name.
-  if (paid && renderer) {
+  // The document renderer (D-0031): the Renderer class is in the base exports, its binding and its pandoc container
+  // only here, so a deploy without `render` refuses render by the binding's name (HOST_RENDER_UNAVAILABLE).
+  if (render) {
     out.durable_objects = { ...raw.durable_objects, bindings: [...(raw.durable_objects?.bindings ?? []), RENDERER_BINDING] };
     out.containers = [RENDERER_CONTAINER];
   }
@@ -147,10 +149,11 @@ export function deployConfig(raw, { name, r2, vectorize, vars = {}, paid = false
  * The placeholder runs the slot's ops alone: the agent's classes are `deleted` tombstones, which delete every object
  * and its storage (idempotent, and harmless for a class never made: verified 2026-10-22), so a release wipes the
  * agent's state. `deploy` is a random id the slot echoes, so a deploy is known live; `paid` adds the paid-plan bindings
- * as `pnpm self-host --paid` does (D-0021); `vars` are the model vars of `SLOT_VAR_KEYS` (`pnpm preview up --var K=V`),
+ * as `pnpm self-host --paid` does (D-0021), and `render` the Renderer's binding and container (D-0031), never on the
+ * placeholder, whose tombstones delete the Renderer's objects like every agent class's; `vars` are the model vars of `SLOT_VAR_KEYS` (`pnpm preview up --var K=V`),
  * laid over the base config's own, so a slot can run its chat on another model than the default.
  */
-export function slotConfig(raw, plan, { accountId, placeholder = false, deploy, paid = false, renderer = RENDERER_ON_PAID, vars = {} }) {
+export function slotConfig(raw, plan, { accountId, placeholder = false, deploy, paid = false, render = false, vars = {} }) {
   const strangeVars = Object.keys(vars).filter((k) => !SLOT_VAR_KEYS.includes(k));
   if (strangeVars.length > 0) throw new Error(`preview: --var takes only ${SLOT_VAR_KEYS.join(', ')}; not ${strangeVars.join(', ')}`);
   const agentClasses = Object.entries(raw.exports ?? {}).filter(([, e]) => e.type === 'durable-object').map(([c]) => c);
@@ -162,7 +165,7 @@ export function slotConfig(raw, plan, { accountId, placeholder = false, deploy, 
     vectorize: plan.vectorize,
     vars: { ...vars, TENANT_ID: plan.name, OWNER_EMAIL: SLOT_OWNER, PREVIEW_SERVING: placeholder ? 'placeholder' : 'app', PREVIEW_DEPLOY: deploy },
     paid: paid && !placeholder,
-    renderer,
+    render: render && !placeholder,
     label: 'preview',
     what: 'a preview slot',
   });

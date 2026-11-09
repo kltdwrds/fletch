@@ -13,6 +13,13 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 **Recommended answer:** yes: accept D-0030 and set `RENDERER_ON_PAID` to `true` (and grant the preview pool's token the Containers scope, which refused `Forbidden` on 2026-11-08, so tier 2 can run). A `--paid` deploy binds `RENDERER` and runs one pandoc container (at most two
 instances); a deploy without it refuses render with `HOST_RENDER_UNAVAILABLE` naming the binding. If the bill is
 unwelcome, move the container behind its own flag; the host's refusal already covers a deploy without it.
+
+Orchestrator, 2026-11-09: taken as its last sentence under Kyle's instruction of 2026-11-09 (artifacts end to end on
+staging, which runs without `--paid`): D-0031 (proposed) supersedes D-0030, `RENDERER_ON_PAID` is gone, `--render` adds
+the binding and one `lite` container, and `deploy-staging.yml` deploys with it. Still yours: Account › Workers Containers
+› Write on `fletch-staging-deploy` (the deploy refuses `PREVIEW_RENDER_TOKEN` before any upload until then), then one
+re-run of the workflow; and D-0031's acceptance in your own commit. The pool token (D-0008) is not widened.
+
 ### Q60 (F60), 2026-11-09: may T-P8-10 read the page as served, at both widths, until a Chromium run lands?
 
 **Blocks:** nothing under Kyle's one-hour ruling of 2026-11-08; the verifier's one blocking finding on F60.
