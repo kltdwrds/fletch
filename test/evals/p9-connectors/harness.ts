@@ -1,6 +1,7 @@
 // The tier-1 harness of the P9 tasks (F35): P3's world (`P3Tier1World`: Sam's real `ChatEngine` chats `c1` and `c2`,
 // the real gate, grants, journal, Ledger, routes and page script, the one scripted fake model) with the tenant's real
-// `VaultCore` wired as `objects/chat.ts` wires it: egress for the connectors (GitHub, Hacker News and a fixture
+// `VaultCore` (its browser-state subclass, as `objects/vault.ts` builds it) wired as `objects/chat.ts` wires it:
+// egress for the connectors (GitHub, Hacker News and a fixture
 // connector with one observation, `fixture_count`, and one action, `fixture_create`, through the chat gate),
 // `credential_list`, `credential_request` and `credential_host_propose`, the hold for a secret typed in chat, the fill
 // and scrub for the browse namespace, and the listing the Connected pane reads. The fake network answers
@@ -18,14 +19,14 @@
 //   - `grant` (payload `kind`): Sam signs a standing grant for an action kind;
 //   - `expire` (payload `ms`): time passes.
 // Every event records how many requests the network had been sent when it ran (`marks`).
-import type { FillApi } from "../../../packages/agent/src/browse/tools.ts";
+import type { FillApi, LoginsApi } from "../../../packages/agent/src/browse/tools.ts";
 import { egressFor } from "../../../packages/agent/src/connectors/egress.ts";
 import { SCHEMA as DELIVERY_SCHEMA } from "../../../packages/agent/src/delivery/service.ts";
 import { type VaultDirectory, vaultRoutes } from "../../../packages/agent/src/http/vault-routes.ts";
 import type { ParsedMail } from "../../../packages/agent/src/mail/mime.ts";
 import { PersonMail } from "../../../packages/agent/src/person/mail.ts";
 import type { Namespace } from "../../../packages/agent/src/tools/registry.ts";
-import { VaultCore } from "../../../packages/agent/src/vault/core.ts";
+import { BrowserStateVault, type StorageState } from "../../../packages/agent/src/vault/browser-state.ts";
 import { holdTypedSecrets } from "../../../packages/agent/src/vault/typed.ts";
 import type { FakeSite } from "../../support/browser/fake-browser.ts";
 import type { FakeStep } from "../../support/fake-model.ts";
@@ -61,6 +62,8 @@ export interface P9HarnessOptions {
   jobFetch?: (url: string, init: RequestInit) => Promise<Response>;
   /** More addresses a child's brief may carry (P16's shop, F80). */
   childUrls?: string[];
+  /** The Vault's saved logins wired into the chat's browse namespace, as `objects/chat.ts` does (P16's kept login, F80). */
+  logins?: boolean;
 }
 
 /** The writer the capture form and settings pass for a signed-in person. */
@@ -103,7 +106,7 @@ const settleUi = async () => {
 };
 
 export class P9Tier1World extends P3Tier1World implements P9World {
-  readonly vaultH: ObjectHarness<VaultCore>;
+  readonly vaultH: ObjectHarness<BrowserStateVault>;
   readonly mailH: ObjectHarness<PersonMail>;
   readonly deliveryH: ObjectHarness<object>;
   readonly network: ReturnType<typeof fakeNetwork>;
@@ -116,13 +119,17 @@ export class P9Tier1World extends P3Tier1World implements P9World {
     const box: { w?: P9Tier1World } = {};
     const net = fakeNetwork(o.probe);
     const now = () => box.w?.w.clock.now ?? T0;
-    const vaultH = new ObjectHarness("vault", (ctx) => new VaultCore(ctx as never, { tenant: TENANT, keys: keysFor(TENANT, testMasterKey()), fetch: net.fetch, now, inject: (s, sel, v) => (box.w as P9Tier1World).browser.inject(s, sel, v) }), {});
+    // The Vault as `objects/vault.ts` builds it: the browser-state core, its capture and restore over the fake browser.
+    const browserState = { capture: (s: string) => (box.w as P9Tier1World).browser.browserState.capture(s), restore: (s: string, st: StorageState) => (box.w as P9Tier1World).browser.browserState.restore(s, st) };
+    const vaultH = new ObjectHarness("vault", (ctx) => new BrowserStateVault(ctx as never, { tenant: TENANT, keys: keysFor(TENANT, testMasterKey()), fetch: net.fetch, now, inject: (s, sel, v) => (box.w as P9Tier1World).browser.inject(s, sel, v), browserState }), {});
     const vault = () => vaultH.instance;
     const fill = (person: string): FillApi => ({ fill: (req) => vault().fill(req, { person, purpose: "browse_fill" }), scrub: (session, t) => vault().scrub(session, t) });
+    const logins = (person: string): LoginsApi => ({ save: (req) => vault().saveBrowserState(req, { person }), restore: (req) => vault().restoreBrowserState(req, { person }) });
     super({
       script: o.script,
       sites: { [LOGIN_HOST]: { page: { title: "Sign in", text: "Enter the code we mailed you." } }, ...(o.sites ?? {}) },
       fill,
+      ...(o.logins ? { logins } : {}),
       ...(o.childTools ? { childTools: o.childTools } : {}),
       ...(o.childUrls ? { childUrls: o.childUrls } : {}),
       world: () => ({
@@ -160,7 +167,7 @@ export class P9Tier1World extends P3Tier1World implements P9World {
     this.deliveryH = new ObjectHarness(`delivery-${sam.id}`, () => ({}), {});
   }
 
-  vault(): VaultCore {
+  vault(): BrowserStateVault {
     return this.vaultH.instance;
   }
 
