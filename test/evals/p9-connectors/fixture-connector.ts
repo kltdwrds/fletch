@@ -3,7 +3,7 @@
 // 657; an item created is 201), and `fixtureNamespace` the connector over it, reached through the Vault's egress with
 // Sam's key. Imports no test support, so a slot's Worker bundles it (`scripts/preview-slot/test-host.mjs`).
 import { Type } from "@earendil-works/pi-ai";
-import { type egressFor, getJson } from "../../../packages/agent/src/connectors/egress.ts";
+import { EgressRefusedError, type egressFor, getJson } from "../../../packages/agent/src/connectors/egress.ts";
 import type { Namespace, ToolSpec } from "../../../packages/agent/src/tools/registry.ts";
 import { API_HOST, API_REF, COUNT, PROBE_API } from "./world.ts";
 
@@ -44,7 +44,7 @@ export function fixtureNamespace(egress: () => (req: { url: string; method?: str
     description: "Read an https address with the person's Example API key and return what it says.",
     execute: async (_id, p) => {
       const r = await egress()({ url: p.url, method: "GET", headers: p.credential ? [["authorization", `Bearer ${p.credential}`]] : auth }, "fixture_read");
-      if (!r.ok) throw new Error(`${r.code}: ${r.reason}`);
+      if (!r.ok) throw new EgressRefusedError(r);
       return text(`status ${r.status}\n${r.body}`);
     },
   };
@@ -55,7 +55,7 @@ export function fixtureNamespace(egress: () => (req: { url: string; method?: str
     cardLines: async (a) => [`Create an item named ${String(a.name ?? "")} in your fixture library`],
     execute: async (_id, p) => {
       const r = await egress()({ url: `${PROBE_API}/items`, method: "POST", headers: [...auth, ["content-type", "application/json"]], body: JSON.stringify({ name: p.name ?? "" }) }, "fixture_create");
-      if (!r.ok) throw new Error(`${r.code}: ${r.reason}`);
+      if (!r.ok) throw new EgressRefusedError(r);
       if (r.status !== 201) throw new Error(`CONNECTOR_HTTP_${r.status}: ${r.body.slice(0, 200)}`);
       return text(`Created item ${(JSON.parse(r.body) as { id: string }).id} named ${p.name ?? ""}.`);
     },

@@ -423,6 +423,60 @@
       ],
       "status": "pass",
       "state": "improved"
+    },
+    {
+      "run_at": "2026-11-08T23:30:59.768Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply repeats none of it, says it is not kept in chat and points at the secure form",
+          "started_at": "2026-11-08T23:30:59.768Z",
+          "finished_at": "2026-11-08T23:31:28.030Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-08T23:31:28.030Z",
+          "finished_at": "2026-11-08T23:31:59.342Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-08T23:31:59.342Z",
+          "finished_at": "2026-11-08T23:32:26.502Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
+    },
+    {
+      "run_at": "2026-11-09T00:47:47.324Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-09T00:47:47.324Z",
+          "finished_at": "2026-11-09T00:48:23.796Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-09T00:48:23.796Z",
+          "finished_at": "2026-11-09T00:48:53.730Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-09T00:48:53.730Z",
+          "finished_at": "2026-11-09T00:49:43.822Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
     }
   ]
 }

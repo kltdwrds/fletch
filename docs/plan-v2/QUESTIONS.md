@@ -21,6 +21,12 @@ browser time is per chat only in `objects/chat.ts`, and the test world shares on
 **Recommended answer:** amend the two blocks to what the files grade (a contract edit by the orchestrator, no clause
 changes); split F90 into F90 (this PR) and F93 (T-P10-07, 08 and 14 with a per-chat browse hook in the authority
 world, and their three planted guards: the session cell, the Ledger meter, the restore grant).
+### Q51 (F56), 2026-11-08: may a paid deploy carry the renderer's container (D-0030)?
+
+**Blocks:** nothing (Kyle's one-hour ruling, 2026-11-08); F56 built it behind `--paid` with the switch off (`RENDERER_ON_PAID = false` in `scripts/preview-plan.mjs`), so no deploy gets a container until D-0030 is accepted.
+**Recommended answer:** yes: accept D-0030 and set `RENDERER_ON_PAID` to `true` (and grant the preview pool's token the Containers scope, which refused `Forbidden` on 2026-11-08, so tier 2 can run). A `--paid` deploy binds `RENDERER` and runs one pandoc container (at most two
+instances); a deploy without it refuses render with `HOST_RENDER_UNAVAILABLE` naming the binding. If the bill is
+unwelcome, move the container behind its own flag; the host's refusal already covers a deploy without it.
 ### Q60 (F60), 2026-11-09: may T-P8-10 read the page as served, at both widths, until a Chromium run lands?
 
 **Blocks:** nothing under Kyle's one-hour ruling of 2026-11-08; the verifier's one blocking finding on F60.
@@ -31,6 +37,7 @@ member invite (`head-invite`, Settings' Invite member) is not a chat's and passe
 **Recommended answer:** yes for F60; F61 adds the Chromium run at 1280 and 390 over P14's `harness-browser.ts` and reads
 the rendered DOM with the same `ROOM_CONTROL` grader, which changes T-P8-10's hash then. Renumber this question at
 reconcile if main has a Q60.
+**Done on `claude/f60-done` (2026-11-09, under Kyle's one-hour ruling of 2026-11-08):** T-P8-10 runs in hermetic Chromium at 1280 and 390 over the rendered DOM with the same `ROOM_CONTROL` grader (`test/evals/p8-group-chats/harness-browser.ts`), replacing the as-served read; its `version_hash` is 4b7366d51713 (the archived view graded too, after the verifier on PR #158); F61 need not add it.
 
 ### Q47 (F42), 2026-11-01 (Q39 on the F42 branch until 2026-11-08, then Q45; renumbered past main's Q39, Q43, Q45 and Q46): may F42's must-haves count, when the lead-in bubble both models write fails T-P9-13 at origin/main too?
 

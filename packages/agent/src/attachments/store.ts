@@ -12,6 +12,7 @@
 // person's tree.
 import { discloses, readersOf } from "../memory/disclosure.ts";
 import { homeKey } from "../memory/home.ts";
+import { SPEECH_UNAVAILABLE, type Speech } from "../speech/speech.ts";
 import { type AttachmentClass, type Caps, CAPS, checkAttachment, cleanName, type ImageConverter, MAX_PER_MESSAGE, sha256Hex, toJpeg } from "./caps.ts";
 
 /** The ingest seam (workstream A's `files/ingest.ts`), injected so the owning store stays testable alone. */
@@ -39,10 +40,16 @@ export const SCHEMA = `CREATE TABLE IF NOT EXISTS attachments (
   status TEXT NOT NULL, code TEXT, kind TEXT, tree_path TEXT, pages INTEGER, caption TEXT, created_at INTEGER NOT NULL,
   CHECK (message_id IS NULL OR notice_id IS NULL));`;
 
+/**
+ * The line a voice note kept untranscribed carries (F70, D-0026): said, never a silent drop, and the audio not kept. The
+ * `transcript` column (migration `person.attachments-transcript`) holds a voice note's transcript once speech is on (F71).
+ */
+export const SPEECH_UNAVAILABLE_LINE = "this deploy cannot transcribe speech, so it was not transcribed, and its audio was not kept";
+
 type Row = {
   id: string; owner: string; sha256: string; name: string; mime: string; size: number; cls: AttachmentClass; source: "chat" | "mail" | "request";
   chat_id: string | null; message_id: string | null; notice_id: string | null; request_id: string | null; audience: string | null;
-  status: "read" | "unread"; code: string | null; kind: string | null; tree_path: string | null; pages: number | null; caption: string | null; created_at: number;
+  status: "read" | "unread"; code: string | null; kind: string | null; tree_path: string | null; pages: number | null; caption: string | null; created_at: number; transcript?: string | null;
 };
 
 /** What the person and their page are shown of one attachment; never the bucket key. */
@@ -67,6 +74,11 @@ export interface AttachmentDeps {
   convert: ImageConverter | null;
   now(): number;
   caps?: Caps;
+  /**
+   * This deploy's speech (`speech/speech.ts`): null or absent is off, and a voice note is then kept untranscribed with
+   * `SPEECH_UNAVAILABLE`. Either way its audio is deleted from the bucket once its row is written (D-0026).
+   */
+  speech?: Speech | null;
 }
 
 const view = (r: Row): AttachmentView => ({ id: r.id, name: r.name, mime: r.mime, size: r.size, source: r.source, status: r.status, ...(r.code ? { code: r.code } : {}), ...(r.pages ? { pages: r.pages } : {}), at: r.created_at });
@@ -95,6 +107,7 @@ export class PersonAttachments {
 
   /** The model's line for one row: its id, so the agent can name it, and the reader's words for it. */
   line(r: Row): string {
+    if (r.cls === "audio") return r.transcript != null ? `[attachment ${r.id}] ${r.name} is a voice note; you read its transcript, you did not hear it: <transcript>${r.transcript}</transcript>` : `[attachment ${r.id}] ${r.name} is a voice note, kept untranscribed (${r.code ?? SPEECH_UNAVAILABLE}): ${SPEECH_UNAVAILABLE_LINE}.`;
     const result: IngestResult =
       r.status === "read" ? { ok: true, kind: r.kind as "image", treePath: r.tree_path ?? "", pages: r.pages ?? 0, ...(r.caption ? { captionText: r.caption } : {}) } : { ok: false, code: r.code ?? "ATTACHMENT_UNREAD", reason: r.cls === "video" ? "a video is kept for the person; its content is not read" : "it could not be read" };
     return `[attachment ${r.id}] ${this.deps.describe(r.name, result)}`;
@@ -141,6 +154,7 @@ export class PersonAttachments {
       "INSERT INTO attachments (id, owner, sha256, name, mime, size, cls, source, chat_id, notice_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'unread', ?)",
       id, p, a.sha256, a.name, a.mime, a.size, a.cls, a.source, a.chatId ?? null, a.noticeId ?? null, this.deps.now(),
     );
+    if (a.cls === "audio") return this.keepAudio(id, a);
     let result: IngestResult = { ok: false, code: "ATTACHMENT_VIDEO_UNREAD", reason: "a video is kept, not read" };
     if (a.cls !== "video") {
       const bytes = a.bytes ?? (await this.read(attachmentKey(p, a.sha256)));
@@ -152,6 +166,29 @@ export class PersonAttachments {
     }
     if (result.ok) this.sql.exec("UPDATE attachments SET status = 'read', kind = ?, tree_path = ?, pages = ?, caption = ? WHERE id = ?", result.kind, result.treePath, result.pages, result.captionText ?? null, id);
     else this.sql.exec("UPDATE attachments SET code = ? WHERE id = ?", result.code, id);
+    return this.rows("id = ?", id)[0] as Row;
+  }
+
+  /**
+   * A voice note or audio file (P13, D-0026): transcribed when this deploy has speech, its transcript on the row; kept
+   * untranscribed with `SPEECH_UNAVAILABLE` when it has none (F70: every deploy). Either way the audio is deleted from the
+   * bucket once the row is written, so what stays is the transcript, the digest, the size and the type.
+   */
+  private async keepAudio(id: string, a: { sha256: string; mime: string; bytes?: Uint8Array }): Promise<Row> {
+    const key = attachmentKey(this.deps.person, a.sha256);
+    const speech = this.deps.speech ?? null;
+    let heard: { ok: true; text: string } | { ok: false; code: string; reason: string } = { ok: false, code: SPEECH_UNAVAILABLE, reason: SPEECH_UNAVAILABLE_LINE };
+    if (speech) {
+      const bytes = a.bytes ?? (await this.read(key));
+      try {
+        heard = bytes ? await speech.transcribe({ bytes, mime: a.mime }) : { ok: false, code: "ATTACHMENT_NOT_STORED", reason: "the stored file is gone" };
+      } catch (e) {
+        heard = { ok: false, code: "SPEECH_FAILED", reason: String((e as Error)?.message ?? e).slice(0, 200) };
+      }
+    }
+    if (heard.ok) this.sql.exec("UPDATE attachments SET status = 'read', kind = 'audio', transcript = ? WHERE id = ?", heard.text, id);
+    else this.sql.exec("UPDATE attachments SET code = ? WHERE id = ?", heard.code, id);
+    await this.deps.bucket.delete(key);
     return this.rows("id = ?", id)[0] as Row;
   }
 
@@ -202,7 +239,7 @@ export class PersonAttachments {
       const id = crypto.randomUUID();
       this.sql.exec(
         "INSERT INTO attachments (id, owner, sha256, name, mime, size, cls, source, chat_id, request_id, audience, status, code, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'request', ?, ?, ?, 'unread', 'REQUEST_ATTACHMENT', ?)",
-        id, r.from, ref.sha256, cleanName(ref.name), String(ref.mime), Number(ref.size), ref.cls === "video" || ref.cls === "image" ? ref.cls : "file", r.chatId, r.requestId, audience, this.deps.now(),
+        id, r.from, ref.sha256, cleanName(ref.name), String(ref.mime), Number(ref.size), ref.cls === "video" || ref.cls === "image" || ref.cls === "audio" ? ref.cls : "file", r.chatId, r.requestId, audience, this.deps.now(),
       );
       lines.push(String(ref.line ?? ""));
     }

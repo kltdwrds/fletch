@@ -7,6 +7,7 @@
 // own, otherwise the turn pauses for the decision (`awaitDecision`). A restricted observation sets
 // the task's latch, after which no grant applies automatically and nothing is forwarded.
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
+import { EgressRefusedError, hostRefusalWords } from "../connectors/egress.ts";
 import type { CreateResult } from "../grants/store.ts";
 import { needsFreshCard } from "../grants/engine.ts";
 import { parseSubjectRef, subjectRef } from "../grants/journal.ts";
@@ -105,10 +106,21 @@ export class ChatGate implements Gate {
       if (parseSubjectRef(d.subject.ref)) this.o.effects.push({ kind: "refusal", id, tool: spec.name, descriptor: d, decision, outcome: spec.refuses, code: spec.refuses });
       return run();
     }
+    // A keyed call refused for its host is said by code, from the refusal's facts, before any card (F59, Q50): a tool
+    // that throws has no words of its own, so the sentence takes the call's announce slot and history draws it there.
+    const said = async () => {
+      try {
+        return await run();
+      } catch (err) {
+        const refusal = err instanceof EgressRefusedError ? err.hostRefusal : null;
+        if (refusal) this.o.effects.push({ kind: "deliver", id: `${id}:announce`, text: hostRefusalWords(refusal) });
+        throw err;
+      }
+    };
     const gated = spec.kind === "action" || spec.subject?.(args).scope === "company";
     if (!gated) {
       if (spec.mutates && !own) return text(`REQUEST_CANNOT_WRITE: ${spec.name} changes ${this.o.nameOf(this.o.principal)}'s own records, which a colleague's request never does`, { code: "REQUEST_CANNOT_WRITE" });
-      const result = await run();
+      const result = await said();
       // Words a tool wrote in code for the person (not model text) are delivered once with the step, so
       // a turn that pauses on a card with no reply still says them (M19.2).
       const announce = (result.details as { announce?: unknown } | undefined)?.announce;
@@ -153,7 +165,7 @@ export class ChatGate implements Gate {
         this.o.effects.push({ kind: "action", id, tool: spec.name, args, descriptor: d, ...(await this.detail(spec, args)) });
         return text(queuedText(id, decision.grantId as string), { queued: id, grant: decision.grantId });
       }
-      const result = await run();
+      const result = await said();
       this.o.effects.push({ kind: "journal", id, tool: spec.name, descriptor: d, decision, outcome: "DONE" });
       if (spec.external) state.sawExternal = true;
       return result;

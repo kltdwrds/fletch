@@ -12,6 +12,8 @@ import { jobsNamespace } from "../jobs/tools.ts";
 import { memorySpecs } from "../memory/tools.ts";
 import { documentsNamespace } from "../render/tools.ts";
 import { skillsNamespace } from "../skills/tools.ts";
+import { speechOf } from "../speech/speech.ts";
+import { speechNamespace } from "../speech/tools.ts";
 import { subagentsNamespace } from "../subagents/tools.ts";
 import type { Namespace } from "../tools/registry.ts";
 import type { ViewResult } from "../views/select.ts";
@@ -73,6 +75,9 @@ export function chatNamespaces(d: SessionDeps, person: string, effects: EffectBu
   if (hooks.workspace) namespaces.push(workspaceNamespace(hooks.workspace.api, { tenant: hooks.workspace.tenant, principal: person, effects }));
   if (hooks.subagents) namespaces.push(subagentsNamespace(hooks.subagents, { effects, context, latched: () => gateState.latched(), person }));
   if (context.counterpart.kind === "own-agent") namespaces.push(todoNamespace(store), dbQueryNamespace({ query: d.queryView }, d.schedule));
+  // Speech (P13): `speak` refused SPEECH_UNAVAILABLE until F71, and calls refused VOICE_CALL_UNAVAILABLE on every deploy.
+  const speechEnv = hooks.speech ?? {};
+  namespaces.push(speechNamespace(speechOf(speechEnv), speechEnv));
   const extra = hooks.namespaces;
   namespaces.push(...(typeof extra === "function" ? extra({ owner: d.owner, pending: d.pending }) : (extra ?? [])));
   return namespaces;

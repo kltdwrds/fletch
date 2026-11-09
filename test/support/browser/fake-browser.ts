@@ -4,6 +4,15 @@
 // rate limit, refuse Kitesurf, or reflect what is typed into it (a hostile or careless page).
 import type { BrowserPort, PageView, PortResult, ReadEngine, ReadResult } from "../../../packages/agent/src/browse/port.ts";
 
+/**
+ * Playwright's `storageState`, as `vault/browser-state.ts` names it; written out here, since that module's sealing
+ * imports Worker-only crypto types this Node-side file is not checked against.
+ */
+interface StorageState {
+  cookies: Array<{ name: string; value: string; domain: string; path: string; expires: number; httpOnly: boolean; secure: boolean; sameSite: "Strict" | "Lax" | "None" }>;
+  origins: Array<{ origin: string; localStorage: Array<{ name: string; value: string }> }>;
+}
+
 export interface FakeSite {
   markdown?: string;
   /** Kitesurf cannot render the page; Chromium can. */
@@ -89,6 +98,25 @@ export class FakeBrowser implements BrowserPort {
     this.waiting.delete(session);
     if (clearWall) delete this.sites[clearWall]?.wall;
   }
+
+  /** A session's cookies and storage, as the binding's CDP capture reads them (M24.3); set by `signIn`. */
+  private readonly states = new Map<string, StorageState>();
+  /** Every login the Vault put into a session, in order. */
+  readonly restored: Array<{ session: string; state: StorageState }> = [];
+
+  /** The person signed in on a session's page: what the Vault's capture then reads. Not a listed session. */
+  signIn(session: string, state: StorageState): void {
+    this.states.set(session, state);
+  }
+
+  /** The Vault's `browserState` deps over this browser, as `objects/vault.ts` wires them over the binding. */
+  readonly browserState = {
+    capture: async (session: string): Promise<StorageState> => this.states.get(session) ?? { cookies: [], origins: [] },
+    restore: async (session: string, state: StorageState): Promise<void> => {
+      this.states.set(session, state);
+      this.restored.push({ session, state });
+    },
+  };
 
   /** The Vault's injector: records what reached the page. */
   inject = async (session: string, selector: string, value: string): Promise<void> => {

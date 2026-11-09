@@ -15,7 +15,7 @@
 // mints a matching one-shot fill grant (`grantForAction`). From M25.1 the agent's code may hold an
 // opaque surrogate for a credential (`surrogate`), swapped back to its reference here at egress for its
 // person alone, and a host the agent proposed is written only by the person's approval of its card.
-import { type AuditRow, type EgressContext, type EgressResult, egressFetch, egressFill, type FillResult, type Revealed } from "../egress/module.ts";
+import { type AuditRow, type EgressContext, type EgressResult, egressFetch, egressFill, type FillResult, HOST_REFUSALS, type Revealed } from "../egress/module.ts";
 import { CRED_REF, type EgressFailure, type HostRule, type OutboundRequest, redact } from "../egress/policy.ts";
 import { hasSurrogate, mintSurrogate, SURROGATE, surrogateHash } from "../egress/surrogate.ts";
 import { checkUse, type CredentialGrant, GRANT_MAX_MS, type GrantUseCode, mostTelling, newNonce, sign, type StoredGrant } from "./grants.ts";
@@ -541,6 +541,9 @@ export class VaultCore extends OAuthVault {
     const result = await this.onEgressPath((path) => egressFetch({ fetch: this.deps.fetch, reveal: this.revealFor(who, used, path), hosts: this.hostRules(who.person), audit, now: this.deps.now, publicHost: publicHostFor(who.purpose) }, req, who));
     // The provider refused the key it was sent (F36, P9 delta 5): the Connected row says so at the use that found it.
     if (result.ok && (result.status === 401 || result.status === 403)) for (const ref of sent) this.event(this.connectorOf(ref) !== null ? COMPANY : who.person, ref, "rejected", "provider", `HTTP ${result.status}`);
+    // A keyed call refused for its host carries the key's own label, so code can say which key is not bound (F59).
+    const label = !result.ok && result.ref && HOST_REFUSALS.has(result.code) ? this.sql("SELECT label FROM secrets WHERE owner = ? AND ref = ?", this.connectorOf(result.ref) !== null ? COMPANY : who.person, result.ref)[0]?.label : undefined;
+    if (!result.ok && typeof label === "string" && label) return { ...result, label };
     const connector = [...used][0];
     return result.ok && connector ? { ...result, scope: { kind: "company", connector } } : result;
   }

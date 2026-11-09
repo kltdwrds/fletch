@@ -17,9 +17,9 @@ describe("[F1] singleAccountHost", () => {
     expect(singleAccountHost(env({ TENANT_SHAPE: "nonsense" })).tenant.shape).toBe("standalone");
   });
 
-  it("refuses every platform feature with its code and a reason", () => {
+  it("refuses every platform feature with its code and a reason (render by its missing binding: F56)", () => {
     const host = singleAccountHost(env());
-    for (const [feature, value] of [["mail", host.mail], ["workspace", host.workspace], ["provisioning", host.provisioning], ["members", host.members], ["render", host.render]] as const) {
+    for (const [feature, value] of [["mail", host.mail], ["workspace", host.workspace], ["provisioning", host.provisioning], ["members", host.members]] as const) {
       expect(value).toMatchObject({ ok: false, code: `HOST_${feature.toUpperCase()}_UNAVAILABLE`, reason: `${feature} is not part of the self-host build; see README` });
     }
   });
