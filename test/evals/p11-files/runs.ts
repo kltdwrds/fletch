@@ -238,6 +238,8 @@ export const later: Record<string, () => Run> = {
     },
   }),
   "T-P11-11": () => ({
+    // The revoke removes the memo's seeded share pointer by design (F101).
+    removes: [MEMO_DOCX],
     // No Renderer answers here (`render: []`): the `documents` namespace is offered for its share tools, as on every deploy.
     spec: { script: [load(["documents"]), call("share_list", {}, "sl1"), { text: "Two links are live: the memo and the budget, each with its expiry above." }, revokeFrom(MEMO_DOCX), { text: "Revoked the link to the memo; it opens nothing now and the memo itself is unchanged." }], render: [] },
     seed: async (t) => {
@@ -262,6 +264,8 @@ export const later: Record<string, () => Run> = {
     ],
   }),
   "T-P11-12": () => ({
+    // The delete removes the deck's seeded bytes and its seeded share pointer by design (F101).
+    removes: [deck],
     spec: { script: [load(["files"]), call("file_delete", { path: deck }, "d1"), { text: "Deleted the deck; its share link ended." }] },
     seed: async (t) => {
       const r = await t.w.host(sam.email).files.writeBytes({ path: deck, bytes: new TextEncoder().encode("PK p11 deck slide"), mediaType: PPTX }, { requester: sam.email, writer: `agent:${sam.email}` });
@@ -279,6 +283,8 @@ export const later: Record<string, () => Run> = {
     ],
   }),
   "T-P11-15": () => ({
+    // The delete removes the memo's seeded bytes by design (F101); its share is made and ended within the turns.
+    removes: [MEMO_DOCX],
     spec: { script: [...script09, { text: `Shared: [p11 memo](files/${MEMO_DOCX}).` }], render: ["docx"] },
     seed: (t) => t.seedDocx(MEMO_DOCX),
     turns: [

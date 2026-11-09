@@ -14,7 +14,7 @@ import type { Snapshot } from "../../support/scenario.ts";
 import type { Seeded } from "../../support/seeded.ts";
 import type { Task, TaskHarness, Turn } from "../../support/task.ts";
 import { authorityWorld, person, T0, TENANT } from "../../workers/support/authority-world.ts";
-import type { Answer, CardSeen, Entry, FileRow, LinkSeen, P11World, RenderRun } from "./world.ts";
+import { type Answer, type CardSeen, type Entry, type FileRow, homeR2, type LinkSeen, type P11World, type RenderRun } from "./world.ts";
 
 export const sam = person("sam-solo");
 export const pat = person("pat-solo");
@@ -92,8 +92,12 @@ export class P11Tier1 implements P11World {
   readonly w: ReturnType<typeof authorityWorld>;
   readonly renderer: { asked: string[] } | null;
   before: FileRow[] = [];
-  /** The R2 keys the seed left (F101): setup's, whose fate each task grades in its own end state. */
-  seeded = new Set<string>();
+  /**
+   * The seeded R2 keys the run declares its turns remove (F101, `Run.removes`): a file's bytes and its share pointers,
+   * left out of the collateral snapshot because the scenario core cannot declare a removal; the task's end state grades
+   * them. Every other key stays in the snapshot exactly.
+   */
+  exempt = new Set<string>();
   readonly answers: Record<string, Answer> = {};
   readonly at: P11World["at"] = {};
   readonly renders: RenderRun[] = [];
@@ -166,11 +170,11 @@ export class P11Tier1 implements P11World {
     // R2 is read as P11's area alone: Sam's home files and the share pointers (the standing files a first chat seeds are P14's).
     // A journal id carries the chat's random id and a share pointer its random share id: each is named by what is stable;
     // a row whose id names no chat (a file's delete or a share's revoke, F101) is named by its action and subject alone.
-    // The seed's own keys are setup (F101): a delete or a revoke removes them by design, and the task's end state grades it.
+    // The seeded keys a run declares its turns remove (F101, `Run.removes`) are left out; nothing else is.
     return {
       journal: (await this.w.journal()).map((r) => `${r.actionKind} ${r.subjectRef} ${r.id.split(":").slice(1).join(":")}`.trimEnd()),
       vault: [],
-      r2: [...this.w.r2.objects.keys()].filter((k) => (k.includes("/files/") || k.startsWith("shares/")) && !this.seeded.has(k)).map((k) => k.replace(/^shares\/[0-9a-f]+$/, "shares/<id>")).sort(),
+      r2: [...this.w.r2.objects.keys()].filter((k) => (k.includes("/files/") || k.startsWith("shares/")) && !this.exempt.has(k)).map((k) => k.replace(/^shares\/[0-9a-f]+$/, "shares/<id>")).sort(),
     };
   }
 
@@ -232,6 +236,8 @@ export interface Run {
   spec: WorldSpec;
   seed?: (t: P11Tier1) => Promise<void>;
   turns: Array<(t: P11Tier1, turn: Turn) => Promise<void>>;
+  /** Seeded home paths whose bytes and share pointers the turns are meant to remove (F101: a delete, a revoke). */
+  removes?: string[];
   /** Runs after the turns: read-backs that are not turns (the listing, a second world). */
   after?: (t: P11Tier1) => Promise<void>;
 }
@@ -251,7 +257,10 @@ export function p11Harness(run: Run): TaskHarness<P11Tier1> {
       await t.open();
       await run.seed?.(t);
       t.before = t.files();
-      t.seeded = new Set(t.w.r2.objects.keys());
+      // Only the keys the run declares (its paths' bytes and their seeded share pointers), and only those the seed made.
+      const removes = run.removes ?? [];
+      const keys = new Set(t.w.r2.objects.keys());
+      for (const k of [...removes.map(homeR2), ...t.shares().filter((x) => removes.includes(x.path)).map((x) => `shares/${x.id}`)]) if (keys.has(k)) t.exempt.add(k);
       (t as unknown as { restore: () => void }).restore = () => {
         globalThis.fetch = real;
       };
