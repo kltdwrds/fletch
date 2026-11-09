@@ -367,3 +367,14 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   narrowing; the tool is not renamed). The nine held P8 tasks are skipped by name as vitest todos, since Biome refuses
   `.skip`. The T-P8-10 control check read the page as served until 2026-11-09, when PR #158 (Q60) made it a Chromium run at 1280 and 390 over the rendered DOM, drawn and listed chat kinds both graded.
   Rejected: renaming `onboarding_invite`, and a Biome ignore comment per held test.
+- 2026-11-09 F101 (P11 deltas 6 to 8, under Kyle's ruling of 2026-11-08, "no blockers, just move; we can always go back
+  later and reconcile"): a file's delete and a share's revoke are journaled from the owner's `Person` through
+  `packages/agent/src/files/journaled.ts`, one row each with an id that names no chat (`files.delete.<uuid>`), the
+  delete's subject `personal;resource:file:<path>` as T-P11-12 names it and the revoke's `personal;connector:files;resource:file:<path>`
+  as `share_document`'s own; a row the Ledger does not take is said in the tool's words, never assumed. The P11 harness's
+  collateral snapshot leaves out the R2 keys the seed made (a delete or revoke removes them by design, and each task's
+  end state grades that) and names a chatless journal row by action and subject alone. Four task files' collateral and
+  T-P11-02's format sentence were corrected to what the contract's features write (T-P11-07's deck bytes, T-P11-11's and
+  T-P11-17's unshare row, T-P11-15's delete row; four formats with pptx), before any tier-2 run, and their hashes
+  refreshed in the contract. Rejected: declaring removals in the collateral check (a change to the shared scenario core),
+  and a `revoked_at` column (delta 6).

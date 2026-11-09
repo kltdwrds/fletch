@@ -1,17 +1,14 @@
-// The tasks F101 to F103 make pass (T-P11-05, 07, 11, 12, 15) and the tier-2 tasks (T-P11-16 to 18), each loaded and
-// run under the scripted fake on the tier-1 world (F100, scope 5). Each is held to what is shipped: the tier-2 tasks'
-// scripted runs pass; each later part's task fails, on the grader that names what that part adds, so a part that lands
-// it flips its row here and moves the task to its own `[F<n>]` describe.
+// The tasks F103 makes pass (T-P11-05) and the tier-2 tasks (T-P11-16 to 18), each loaded and run under the scripted
+// fake on the tier-1 world (F100, scope 5). Each is held to what is shipped: the tier-2 tasks' scripted runs pass; a later
+// part's task fails, on the grader that names what that part adds, so a part that lands it flips its row here and moves
+// the task to its own `[F<n>]` describe. F101 landed T-P11-07, 11, 12 and 15 (their `.test.ts` files) and T-P11-17's
+// `share_revoke`.
 import { describe, expect, it } from "vitest";
 import { type DefinedTask, executeTask } from "../../support/task.ts";
-import cards from "./cards-current-state.task.ts";
-import deck from "./deck-from-document.task.ts";
-import del from "./delete-said.task.ts";
 import { type P11Tier1, p11Harness } from "./harness.ts";
 import memoEdit from "./memo-and-edit.task.ts";
 import { later } from "./runs.ts";
 import shareRevoke from "./share-and-revoke.task.ts";
-import list from "./share-list-revoke.task.ts";
 import sheetLive from "./sheet-total-live.task.ts";
 import versions from "./versions-and-trash.task.ts";
 
@@ -24,17 +21,10 @@ const outcome = (task: DefinedTask<P11World>) =>
   );
 
 describe("[F100] P11 files: the later parts' tasks under the scripted fake", () => {
-  it("the tier-2 tasks' scripted runs pass on the tier-1 world but T-P11-17, which needs F101's share_revoke", async () => {
+  it("the tier-2 tasks' scripted runs pass on the tier-1 world, T-P11-17 with F101's share_revoke", async () => {
     expect(await outcome(memoEdit)).toBe("pass");
     expect(await outcome(sheetLive)).toBe("pass");
-    expect(await outcome(shareRevoke)).toBe("after the revoke the path answers as unknown and the reply says revoked after the tool returned");
-  });
-
-  it("each F101 task fails on the grader naming what F101 adds", async () => {
-    expect(await outcome(deck)).toBe("documents/p11-memo-deck.pptx exists");
-    expect(await outcome(list)).toBe("the list names Sam's two shares with file and expiry");
-    expect(await outcome(del)).toBe("the share answers as unknown");
-    expect(await outcome(cards)).toBe("the file card says it was deleted");
+    expect(await outcome(shareRevoke)).toBe("pass");
   });
 
   it("the F103 task fails on its first end state: no version is kept", async () => {

@@ -9,7 +9,7 @@ export const RENDER_IMAGE = "docker.io/pandoc/minimal:3.11.0";
 export const RENDER_ENTRYPOINT = ["pandoc", "server", "--port", "8080"];
 export const RENDER_PORT = 8080;
 /** Markdown in; office and web formats out. A format outside this list is refused, never guessed. */
-export const RENDER_FORMATS = ["docx", "odt", "html"] as const;
+export const RENDER_FORMATS = ["docx", "odt", "html", "pptx"] as const;
 export type RenderFormat = (typeof RENDER_FORMATS)[number];
 export const RENDER_MAX_CHARS = 200_000;
 
@@ -28,6 +28,7 @@ const MEDIA: Record<RenderFormat, string> = {
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   odt: "application/vnd.oasis.opendocument.text",
   html: "text/html",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 };
 
 const refuse = (code: RenderCode, reason: string): RenderResult => ({ ok: false, code, reason });
@@ -59,7 +60,7 @@ function decode(base64: string): Uint8Array | null {
 
 /**
  * pandoc's answer as a render, or a code with the reason. A binary format comes back base64 and must
- * be a zip (docx and odt are); html comes back as text. An error, an empty output or a wrong shape is
+ * be a zip (docx, odt and pptx are); html comes back as text. An error, an empty output or a wrong shape is
  * never passed on as a document.
  */
 export async function readRenderResponse(res: Response, to: RenderFormat): Promise<RenderResult> {

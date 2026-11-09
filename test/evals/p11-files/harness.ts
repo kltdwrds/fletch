@@ -4,6 +4,7 @@
 // Renderer port: the production `render()` over a pandoc port that answers the formats it is told to. A world for
 // T-P11-02 is also built on the self-host default host, whose render is `singleAccountHost`'s own refusal. Each task's
 // scripted run (`runs.ts`) plays its turns here and records what it saw into `P11World` (`world.ts`).
+import { zipSync } from "fflate";
 import { available } from "../../../packages/agent/src/host.ts";
 import { singleAccountHost } from "@qyvr/host-cloudflare";
 import { serve } from "../../../packages/agent/src/http/serve.ts";
@@ -23,6 +24,27 @@ export { T0 };
 export const DOCX_BYTES = [0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x06, 0x00, 0x08, 0x00, 0x77, 0x72, 0x65, 0x6e];
 export const DOCX_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
+/**
+ * A pptx as pandoc makes one from `---`-separated Markdown (F101): one slide per part, each slide's text its part's
+ * lines, in a package `ooxml.ts` reads back. The Renderer port's stand-in, so a deck's slide count is read from bytes.
+ */
+export function fakePptx(markdown: string): Uint8Array {
+  const P = "http://schemas.openxmlformats.org/presentationml/2006/main";
+  const A = "http://schemas.openxmlformats.org/drawingml/2006/main";
+  const R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+  const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const parts = markdown.split(/^---\s*$/m).map((p) => p.trim()).filter(Boolean);
+  const files: Record<string, Uint8Array> = {};
+  const put = (k: string, v: string) => {
+    files[k] = new TextEncoder().encode(v);
+  };
+  put("[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/></Types>`);
+  put("ppt/presentation.xml", `<?xml version="1.0" encoding="UTF-8"?><p:presentation xmlns:p="${P}" xmlns:r="${R}"><p:sldIdLst>${parts.map((_, i) => `<p:sldId id="${256 + i}" r:id="rId${i + 1}"/>`).join("")}</p:sldIdLst></p:presentation>`);
+  put("ppt/_rels/presentation.xml.rels", `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${parts.map((_, i) => `<Relationship Id="rId${i + 1}" Type="${R}/slide" Target="slides/slide${i + 1}.xml"/>`).join("")}</Relationships>`);
+  for (const [i, part] of parts.entries()) put(`ppt/slides/slide${i + 1}.xml`, `<?xml version="1.0" encoding="UTF-8"?><p:sld xmlns:p="${P}" xmlns:a="${A}"><p:cSld><p:spTree><p:sp><p:txBody>${part.split("\n").filter((l) => l.trim()).map((l) => `<a:p><a:r><a:t>${esc(l.replace(/^#+\s*/, ""))}</a:t></a:r></a:p>`).join("")}</p:txBody></p:sp></p:spTree></p:cSld></p:sld>`);
+  return zipSync(files);
+}
+
 /** The production `render()` over a pandoc port answering `formats`; every format it is asked for is kept. */
 export function recordingRenderer(formats: string[]) {
   const asked: string[] = [];
@@ -30,7 +52,7 @@ export function recordingRenderer(formats: string[]) {
     const body = (await req.json()) as { to: string; text: string };
     asked.push(body.to);
     if (!formats.includes(body.to)) return new Response(JSON.stringify({ error: `unknown writer ${body.to}` }), { status: 200 });
-    const output = body.to === "html" ? `<html><body>${body.text.replace(/[<>&]/g, "")}</body></html>` : btoa(String.fromCharCode(...DOCX_BYTES));
+    const output = body.to === "html" ? `<html><body>${body.text.replace(/[<>&]/g, "")}</body></html>` : btoa(String.fromCharCode(...(body.to === "pptx" ? fakePptx(body.text) : DOCX_BYTES)));
     return new Response(JSON.stringify({ output }), { status: 200 });
   };
   const render = ((input: unknown) => renderMarkdown(input, { fetch: port as never }, async () => {})) as (input: { markdown: string; to: string }) => Promise<RenderResult>;
@@ -70,6 +92,8 @@ export class P11Tier1 implements P11World {
   readonly w: ReturnType<typeof authorityWorld>;
   readonly renderer: { asked: string[] } | null;
   before: FileRow[] = [];
+  /** The R2 keys the seed left (F101): setup's, whose fate each task grades in its own end state. */
+  seeded = new Set<string>();
   readonly answers: Record<string, Answer> = {};
   readonly at: P11World["at"] = {};
   readonly renders: RenderRun[] = [];
@@ -140,11 +164,13 @@ export class P11Tier1 implements P11World {
 
   async snapshot(): Promise<Snapshot> {
     // R2 is read as P11's area alone: Sam's home files and the share pointers (the standing files a first chat seeds are P14's).
-    // A journal id carries the chat's random id and a share pointer its random share id: each is named by what is stable.
+    // A journal id carries the chat's random id and a share pointer its random share id: each is named by what is stable;
+    // a row whose id names no chat (a file's delete or a share's revoke, F101) is named by its action and subject alone.
+    // The seed's own keys are setup (F101): a delete or a revoke removes them by design, and the task's end state grades it.
     return {
-      journal: (await this.w.journal()).map((r) => `${r.actionKind} ${r.subjectRef} ${r.id.split(":").slice(1).join(":")}`),
+      journal: (await this.w.journal()).map((r) => `${r.actionKind} ${r.subjectRef} ${r.id.split(":").slice(1).join(":")}`.trimEnd()),
       vault: [],
-      r2: [...this.w.r2.objects.keys()].filter((k) => k.includes("/files/") || k.startsWith("shares/")).map((k) => k.replace(/^shares\/[0-9a-f]+$/, "shares/<id>")).sort(),
+      r2: [...this.w.r2.objects.keys()].filter((k) => (k.includes("/files/") || k.startsWith("shares/")) && !this.seeded.has(k)).map((k) => k.replace(/^shares\/[0-9a-f]+$/, "shares/<id>")).sort(),
     };
   }
 
@@ -225,6 +251,7 @@ export function p11Harness(run: Run): TaskHarness<P11Tier1> {
       await t.open();
       await run.seed?.(t);
       t.before = t.files();
+      t.seeded = new Set(t.w.r2.objects.keys());
       (t as unknown as { restore: () => void }).restore = () => {
         globalThis.fetch = real;
       };

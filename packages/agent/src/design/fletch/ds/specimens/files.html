@@ -1,0 +1,65 @@
+<!doctype html>
+<!-- P11 (before F101): the files specimen. A static document drawn from the design system's own sheets and the classes
+     the app page already serves (test/workers/f101-files-specimen.test.ts holds that, and that its words are the page's
+     word table, `CARD_STATE_TEXT` in packages/agent/src/http/app/thread-work.ts), from the muse.ai capture of 2026-11-01
+     (docs/plan-v2/contracts/P11-files-documents.md, B-P11-16 and B-P11-17; the evidence step-10-library.png,
+     step-11-reload-deck.png and step-11-reload-link.png). Each theme draws, at desktop width: the Library item with its
+     kind, last change and size (B-P11-16); the chat's file card for a file that is there, and the same card once the
+     file was deleted (the head kept, the words of the table, no link); the share card while its link is live, and the
+     same card once the link was revoked, and once it expired (the title and words of the table, no Open button).
+     Then at phone width (a 390 stage): the deleted file card and the revoked share card. Muse's cards are stored once
+     and never learn of a delete or a revoke (delta 8); fletch's ask the owner's Person at draw time. Listed for Kyle as
+     a `look` item by the orchestrator. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Files: the Library item, and file and share cards from the store, specimen</title>
+<link rel="stylesheet" href="../../prototype/ds/qyvr-fletch/tokens.css">
+<link rel="stylesheet" href="../components/bundle.css">
+</head>
+<body>
+<div class="qf-vp" data-theme="light" id="light">
+<div class="qf-stage"><span class="qf-cap">Files, light. A Library item names its kind, last change and size, read from the store.</span></div>
+<div class="qf-stage" id="light-library"><div style="width:560px">
+<div class="qf-file lib-row"><span class="nm">p11-memo.docx</span><span class="m">Document</span><span class="m">2 minutes ago</span><span class="m">14 KB</span></div>
+<div class="qf-file lib-row"><span class="nm">p11-budget.csv</span><span class="m">Spreadsheet</span><span class="m">Yesterday</span><span class="m">88 B</span></div>
+</div></div>
+<div class="qf-stage"><span class="qf-cap">A file card asks the store at draw time. Present: the name, the kind and the first lines. Deleted: the same head, the table's words, and nothing to open.</span></div>
+<div class="qf-stage" id="light-file"><div class="qf-msg" style="width:560px">
+<div class="qf-bubble qf-bubble--agent">Saved:
+<a class="qf-fcard qf-fcard--chat" href="/library/files/documents/p11-memo.docx"><span class="qf-fcard-head"><span class="nm">p11-memo.docx</span><span class="kd">docx</span></span></a></div>
+</div></div>
+<div class="qf-stage" id="light-file-deleted"><div class="qf-msg" style="width:560px">
+<div class="qf-bubble qf-bubble--agent">Saved:
+<span class="qf-fcard qf-fcard--chat" data-state="deleted"><span class="qf-fcard-head"><span class="nm">p11-memo.docx</span><span class="kd">docx</span></span><span class="t-foot t-2">Deleted: this file is no longer in your Library.</span></span></div>
+</div></div>
+<div class="qf-stage"><span class="qf-cap">A share card asks the person's shares at draw time. Live: the link and its expiry. Revoked or expired: the table's title and words, and no Open button.</span></div>
+<div class="qf-stage" id="light-share"><div style="width:560px">
+<div class="qf-prompt-card"><h3>Shared publicly: p11-memo.docx</h3><p>Anyone with this link can open p11-memo.docx until 2026-11-02 23:27 UTC. After that it stops working.</p><div class="act"><a class="qf-btn qf-btn--secondary" href="/hooks/share/0">Open</a></div></div>
+</div></div>
+<div class="qf-stage" id="light-share-revoked"><div style="width:560px">
+<div class="qf-prompt-card" data-state="revoked"><h3>Link revoked</h3><p>This share link was revoked; it opens nothing now.</p></div>
+</div></div>
+<div class="qf-stage" id="light-share-expired"><div style="width:560px">
+<div class="qf-prompt-card" data-state="expired"><h3>Link expired</h3><p>This share link has expired; it opens nothing now.</p></div>
+</div></div>
+<div class="qf-stage"><span class="qf-cap">Phone, 390. The deleted file card and the revoked share card at the thread's width.</span></div>
+<div class="qf-stage" id="light-phone"><div class="qf-thread" style="width:390px;max-width:390px">
+<div class="qf-msg"><div class="qf-bubble qf-bubble--agent">Saved:
+<span class="qf-fcard qf-fcard--chat" data-state="deleted"><span class="qf-fcard-head"><span class="nm">p11-memo.docx</span><span class="kd">docx</span></span><span class="t-foot t-2">Deleted: this file is no longer in your Library.</span></span></div></div>
+<div class="qf-prompt-card" data-state="revoked"><h3>Link revoked</h3><p>This share link was revoked; it opens nothing now.</p></div>
+</div></div>
+</div>
+<div class="qf-vp" data-theme="dark" id="dark">
+<div class="qf-stage"><span class="qf-cap">Files, dark. The same states.</span></div>
+<div class="qf-stage" id="dark-file-deleted"><div class="qf-msg" style="width:560px">
+<div class="qf-bubble qf-bubble--agent">Saved:
+<span class="qf-fcard qf-fcard--chat" data-state="deleted"><span class="qf-fcard-head"><span class="nm">p11-memo.docx</span><span class="kd">docx</span></span><span class="t-foot t-2">Deleted: this file is no longer in your Library.</span></span></div>
+</div></div>
+<div class="qf-stage" id="dark-share-revoked"><div style="width:560px">
+<div class="qf-prompt-card" data-state="revoked"><h3>Link revoked</h3><p>This share link was revoked; it opens nothing now.</p></div>
+</div></div>
+</div>
+</body>
+</html>
