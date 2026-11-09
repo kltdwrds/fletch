@@ -1,6 +1,10 @@
 // T-P10-06 (B-P10-07): a read is now. The probe changes its heading between two turns; both reads reach the browser,
 // each result's head names the engine, the second carries the second heading, and browse memory keeps the engine, the
 // state and the code only, never a page's text.
+// Not planted (parts.md F90, scope 2): `served_from_store`, `engine_unsaid` and `cached_unmarked` guard against a copy of
+// a page fletch does not keep (a read always reaches the browser, and browse memory holds no page text), so no guard on
+// the production path can be removed; a world-level fake would test the grader, not fletch. `planted.test.ts` has no
+// test for them; the honest run still holds each one.
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P10World } from "./world.ts";
 import { PROBE, PROBE_HEADING, PROBE_HEADING_2, resultsOf } from "./world.ts";

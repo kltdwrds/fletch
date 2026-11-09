@@ -17,7 +17,7 @@ import task, { TOOL } from "./status-while-working.task.ts";
 import type { Entry, Frame } from "./world.ts";
 
 const PROMPT = "Search the web for the Cloudflare docs page about Durable Object alarms and give me the link.";
-const SCRIPT: FakeStep[] = [{ toolCall: { name: TOOL, arguments: { query: "durable object alarms" } } }, { text: "" }];
+const script = (tool: string): FakeStep[] => [{ toolCall: { name: tool, arguments: { query: "durable object alarms" } } }, { text: "" }];
 
 type Plant = (js: string) => string;
 
@@ -40,8 +40,11 @@ class StatusWorld implements LoopPageWorld {
     this.keep = keep;
   }
 
-  /** `plant` rewrites the shipped page script; `keep` drops frames on the way to the page. */
-  static async open(o: { plant?: Plant; keep?: (f: Frame) => boolean } = {}): Promise<StatusWorld> {
+  /**
+   * `plant` rewrites the shipped page script; `keep` drops frames on the way to the page; `tool` names the held tool
+   * (the task's `TOOL` unless given), so a tool the table does word can be held as well as one it does not.
+   */
+  static async open(o: { plant?: Plant; keep?: (f: Frame) => boolean; tool?: string } = {}): Promise<StatusWorld> {
     let started: () => void = () => {};
     const running = new Promise<void>((r) => {
       started = r;
@@ -53,7 +56,10 @@ class StatusWorld implements LoopPageWorld {
         if (world) world.release = r;
       });
     };
-    const chat = new P2Tier1World(authorityWorld({ script: SCRIPT, stores: true, namespaces: () => [webNamespace(during)] }));
+    const held = o.tool ?? TOOL;
+    const web = webNamespace(during);
+    const ns = { ...web, tools: web.tools.map((t) => ({ ...t, name: held })) };
+    const chat = new P2Tier1World(authorityWorld({ script: script(held), stores: true, namespaces: () => [ns] }));
     await chat.open("c1");
     await chat.w.host(sam.email).memory.standingFiles();
     const p = await page({ onSend() {} }, {}, o.plant);
@@ -145,18 +151,24 @@ describe("[F24] T-P2-04's status line, planted", () => {
     return w;
   };
 
-  it("the line is the table's words for the tool, sent as the tool started, and it goes when the tool returns", async () => {
-    const w = await StatusWorld.open();
-    await play(w, task.turns[0] as Turn);
-    // F90 (P10 delta 1): fletch has no `web_search`, so the table has no word for it; the test host's held tool is
-    // worded as any tool the table does not name.
-    expect(w.working().status).toBe(STATUS_OTHER);
-    expect(w.frames().filter((f) => f.type === "status")).toEqual([expect.objectContaining({ tool: TOOL })]);
-    await play(w, task.turns[1] as Turn);
-    expect(w.frames().filter((f) => f.type === "status").map((f) => f.tool)).toEqual([TOOL, null]);
-    expect(w.drawn().map((d) => d.kind)).toEqual(["you"]);
-    expect(w.working().status).toBeNull();
-  });
+  // F90 (P10 delta 1): fletch has no `web_search`, so the table has no row for the task's held tool. The table's words
+  // are held on `browse_open`, a tool fletch has and the table words; the task's own tool shows STATUS_OTHER.
+  for (const [tool, words] of [
+    ["browse_open", STATUS_WORDS.browse_open],
+    [TOOL, STATUS_OTHER],
+  ] as const) {
+    it(`the line is the table's words for the tool (${tool}), sent as the tool started, and it goes when the tool returns`, async () => {
+      expect(words).toBeTruthy();
+      const w = await StatusWorld.open({ tool });
+      await play(w, task.turns[0] as Turn);
+      expect(w.working().status).toBe(words);
+      expect(w.frames().filter((f) => f.type === "status")).toEqual([expect.objectContaining({ tool })]);
+      await play(w, task.turns[1] as Turn);
+      expect(w.frames().filter((f) => f.type === "status").map((f) => f.tool)).toEqual([tool, null]);
+      expect(w.drawn().map((d) => d.kind)).toEqual(["you"]);
+      expect(w.working().status).toBeNull();
+    });
+  }
 
   it("a page that words the line by the tool's identifier fails the status grader", async () => {
     const w = await both({ plant: (js) => js.replace("STATUS[tool] : STATUS_OTHER", "tool : tool") });

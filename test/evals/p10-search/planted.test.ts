@@ -2,10 +2,12 @@
 // graders fail without it. The verbatim table (`UrlTable.holds` answering yes to any address), the fence's defang and
 // the platform block's `FENCE_RULE` (`context/fence.ts`), the gate's `AFTER_EXTERNAL_INPUT` flag (the browse tools no
 // longer marked external, so the gate never sees the page), the code-classified stop (`browse/classify.ts` answering
-// no block) and the remembered stop (browse memory answering nothing). The read-is-now minefields, which guard against
-// a cache fletch does not keep, are planted on the one store their grader reads. The deleted `web_search` status word
-// is held here too: the table names no tool fletch lacks. The per-chat session cell, the Ledger meter and the restore
-// grant (T-P10-07, T-P10-08) wait on their harness reads (PR, Reconcile).
+// no block) and the remembered stop (browse memory answering nothing), and the page script drawing a link as its anchor.
+// A minefield whose guard has no production path is not planted on a fake (parts.md F90, scope 2): T-P10-06's
+// read-is-now minefields guard against a cache fletch does not keep, and T-P10-15's `drifted` against a second copy of
+// the reply fletch does not keep (a reload reads the one stored thread); each task file says so. The deleted
+// `web_search` status word is held on the production table itself. The per-chat session cell, the Ledger meter and the
+// restore grant (T-P10-07, 08 and 14) are planted in F93.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PersonBrowse } from "../../../packages/agent/src/browse/memory.ts";
 import { UrlTable } from "../../../packages/agent/src/browse/urls.ts";
@@ -103,33 +105,19 @@ describe("[F90] the P10 guards, planted", () => {
     expect(await broken(t04)).toEqual(expect.arrayContaining(["retried_wall", "live_past_wall"]));
   });
 
-  it("the read is now: a second turn answered from a kept copy, or a copy with no engine, fires its minefield", async () => {
-    const w = await played(t06, runs["T-P10-06"]!());
-    const g = (name: string) => t06.graders.find((x) => x.name === name)!.check;
-    const kept = Object.assign(Object.create(w) as P10World, { browserLog: () => ({ ...w.browserLog(), reads: w.browserLog().reads.slice(0, 1) }) });
-    expect(await g("served_from_store")(kept)).toBe(true);
-    const unsaid = Object.assign(Object.create(w) as P10World, { results: () => w.results().map((r) => (r.tool === "browse_open" ? { ...r, text: r.text.replace(/ \(via \w+/, " (") } : r)) });
-    expect(await g("engine_unsaid")(unsaid)).toBe(true);
-    const same = Object.assign(Object.create(w) as P10World, { results: () => { const rs = w.results(); const first = rs.find((r) => r.tool === "browse_open"); return rs.map((r) => (r.tool === "browse_open" ? first! : r)); } });
-    expect(await g("cached_unmarked")(same)).toBe(true);
-  });
 
-  it("the reload and the phone page: a page that draws a link as text, and a reply that drifts on reload, each fire", async () => {
+  it("the reload and the phone page: a page that draws a link as text fires link_lost", async () => {
     const w = await played(t15, runs["T-P10-15"]!());
     const g = (name: string) => t15.graders.find((x) => x.name === name)!.check;
     expect(await g("link_lost")(w)).toBe(false);
     // On the production path: the shipped page script drawing a link's words in place of its anchor.
     w.pagePlant = (js) => js.replace("const a = el(\"a\", m[1]); a.href = m[2];", "const a = el(\"span\", m[1]);");
     expect(await g("link_lost")(w)).toBe(true);
-    const drift = Object.assign(Object.create(w) as P10World, { reloaded: async () => ({ ...(await w.reloaded()), after: ["Something else."] }) });
-    expect(await g("drifted")(drift)).toBe(true);
   });
 
-  it("the status table names no tool fletch lacks: a web_search word put back is caught (delta 1)", () => {
-    const lacking = (table: Record<string, string>) => Object.keys(table).filter((t) => t === "web_search");
-    expect(lacking(STATUS_WORDS)).toEqual([]);
+  // The guard is the production table and the page script built from it: putting the row back fails these lines.
+  it("the status table names no tool fletch lacks: no web_search row, in the table or the page script (delta 1)", () => {
+    expect(Object.keys(STATUS_WORDS)).not.toContain("web_search");
     expect(THREAD_WORK_SCRIPT).not.toContain("web_search");
-    // Planted: the deleted row returned is named.
-    expect(lacking({ ...STATUS_WORDS, web_search: "Searching the web" })).toEqual(["web_search"]);
   });
 });

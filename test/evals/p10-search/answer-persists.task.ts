@@ -3,6 +3,9 @@
 // and the shipped page at phone width (the page harness's default layout) draws the links as anchors with the same
 // href. The history is the transcript's; the page's text is stored nowhere else. The Activity half of the reload is
 // T-P5-15's (`test/evals/p5-activity/reload-and-phone.task.ts`) and is not repeated here.
+// Not planted (parts.md F90, scope 2): `drifted` guards against a second copy of the reply fletch does not keep (a
+// reload reads the one stored transcript), so it has no guard on the production path to remove and `planted.test.ts`
+// has no test for it. `link_lost` is planted on the shipped page script.
 import { defineTask, type Grader } from "../../support/task.ts";
 import { ASK } from "./page-read-names-source.task.ts";
 import type { P10World } from "./world.ts";
