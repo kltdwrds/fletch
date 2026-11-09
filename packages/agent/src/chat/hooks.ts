@@ -60,6 +60,8 @@ export interface EngineHooks {
   secrets?: (person: string, text: string) => Promise<{ ok: true; text: string } | { ok: false; code: "SECRET_NOT_HELD" }>;
   /** The browser (M9): the read lane, the live lane and fill; without it there is no `browse` namespace. */
   browse?: BrowseHook;
+  /** The deploy's speech settings, the `AI` binding and the `SPEECH` var (P13, F70): read by `speechOf`; absent is no binding, so speech is off. */
+  speech?: import("../speech/speech.ts").SpeechEnv;
   /** Further namespaces: fixtures in tests; a function receives the chat's view (its pending simulated calls). */
   namespaces?: Namespace[] | ((view: ChatView) => Namespace[]);
   /** The principal's grants on their `Person` (M7.1); without it nothing gated runs. */

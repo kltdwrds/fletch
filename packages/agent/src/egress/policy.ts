@@ -38,7 +38,8 @@ export type EgressCode =
   | "EGRESS_OAUTH_REFRESH_FAILED";
 
 /** `ref` names the credential a refused plan carried, when it carried one (F35: the refusal's audit row). */
-export type EgressFailure = { ok: false; code: EgressCode; reason: string; host?: string; ref?: string };
+/** `label` is the credential's own name, set by the Vault on a refusal for its host (F59) so code can name the key. */
+export type EgressFailure = { ok: false; code: EgressCode; reason: string; host?: string; ref?: string; label?: string };
 
 /**
  * One place a credential's value may stand on a request: a header after an optional scheme word
