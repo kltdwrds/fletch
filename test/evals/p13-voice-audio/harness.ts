@@ -55,7 +55,7 @@ export interface P13HarnessOptions {
    * each call admitted and written by the authority world's real Ledger; `cues` in the order the binding is called,
    * `monthlyMicros` the tenant's speech cap, `seed` turns played before the task's (a render the task starts after).
    */
-  speech?: { cues?: SpeechCue[]; monthlyMicros?: number; seed?: Turn[] };
+  speech?: { cues?: SpeechCue[]; monthlyMicros?: number; seed?: Turn[]; voice?: string };
 }
 
 export class P13Tier1World implements P13World {
@@ -84,6 +84,8 @@ export class P13Tier1World implements P13World {
   async open(): Promise<void> {
     this.chat = ((await this.w.host(sam.email).chats.main(this.w.clock.now)) as { chatId: string }).chatId;
     if (this.o.speech?.monthlyMicros !== undefined) await this.w.ledger().setBudgets({ tenantSpeechMonthlyMicros: this.o.speech.monthlyMicros });
+    // Sam's voice record as set before the task (the setup's "voice record set"), straight in the store: no journal row.
+    if (this.o.speech?.voice) await this.w.host(sam.email).audio.call({ op: "voice-set", speaker: this.o.speech.voice, writer: "setup" }, sam.email);
   }
 
   /** The tenant Ledger's rows, read from its storage. */

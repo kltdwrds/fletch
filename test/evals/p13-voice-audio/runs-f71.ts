@@ -65,7 +65,7 @@ export const F72_GRADERS = ["the Library's Audio section lists it with a player 
 export const F71_TASKS = [
   { task: note, speech: {} },
   { task: capsTask, speech: {} },
-  { task: readAloud, speech: {} },
+  { task: readAloud, speech: { voice: "asteria" } },
   { task: partial, speech: { cues: ["fail", "short"] } },
   { task: findable, speech: { seed: SEED } },
   { task: voice, speech: {} },
