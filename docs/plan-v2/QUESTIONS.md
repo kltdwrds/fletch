@@ -7,6 +7,20 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## Open, not blocking
 
+### Q52 (F90), 2026-11-08 (Q51 on this branch until 2026-11-09, renumbered past F56's Q51): P10's tier-1 blocks for T-P10-01 and T-P10-02 differ from shipped behaviour, and F90 splits
+
+**Blocks:** nothing under the one-hour ruling (F90's PR carries the readings under Reconcile); F90 is DONE-ready
+pending the verifier, its remaining tier-1 runs split to F93.
+Three findings from F90's tier 1. (1) T-P10-02's block names `memory_write` as the write that carries
+`AFTER_EXTERNAL_INPUT`; shipped, a save to the person's own memory runs with no card (the boundary rule of 2026-10-30),
+so no flag can ride on it, and the file grades the flag on a gated send (`mail_send`), where the contract's Properties
+put it ("a gated call after external input"). (2) T-P10-01's block says the page's link reaches the model as
+`url_id:1`; the url table numbers the address Sam wrote first, so the link is `url_id:2`, and the file grades "its
+`url_id` number". (3) T-P10-07, T-P10-08 and T-P10-14 have task files but no tier-1 run in the hour: the Ledger's
+browser time is per chat only in `objects/chat.ts`, and the test world shares one browse hook across chats.
+**Recommended answer:** amend the two blocks to what the files grade (a contract edit by the orchestrator, no clause
+changes); split F90 into F90 (this PR) and F93 (T-P10-07, 08 and 14 with a per-chat browse hook in the authority
+world, and their three planted guards: the session cell, the Ledger meter, the restore grant).
 ### Q51 (F56), 2026-11-08: may a paid deploy carry the renderer's container (D-0030)?
 
 **Blocks:** nothing (Kyle's one-hour ruling, 2026-11-08); F56 built it behind `--paid` with the switch off (`RENDERER_ON_PAID = false` in `scripts/preview-plan.mjs`), so no deploy gets a container until D-0030 is accepted.
