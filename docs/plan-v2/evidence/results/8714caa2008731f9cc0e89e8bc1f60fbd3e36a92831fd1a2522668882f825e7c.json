@@ -1,0 +1,38 @@
+{
+  "task_id": "T-P16-05",
+  "cluster": "P16",
+  "version_hash": "8714caa2008731f9cc0e89e8bc1f60fbd3e36a92831fd1a2522668882f825e7c",
+  "runs": [
+    {
+      "run_at": "2026-11-09T01:59:46.865Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the second reply restates the chosen fare's fields, then asks only the fare page's fields in one question",
+          "started_at": "2026-11-09T01:59:46.865Z",
+          "finished_at": "2026-11-09T02:00:21.661Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "MINEFIELD",
+          "rule": "fields_not_required",
+          "started_at": "2026-11-09T02:00:21.661Z",
+          "finished_at": "2026-11-09T02:00:56.629Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "no traveller detail asked before the pick",
+          "started_at": "2026-11-09T02:00:56.629Z",
+          "finished_at": "2026-11-09T02:01:40.004Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}

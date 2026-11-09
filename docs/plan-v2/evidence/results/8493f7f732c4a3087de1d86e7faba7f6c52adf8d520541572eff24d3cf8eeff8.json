@@ -1,0 +1,36 @@
+{
+  "task_id": "T-P16-03",
+  "cluster": "P16",
+  "version_hash": "8493f7f732c4a3087de1d86e7faba7f6c52adf8d520541572eff24d3cf8eeff8",
+  "runs": [
+    {
+      "run_at": "2026-11-09T01:49:44.773Z",
+      "preview_slot": "fletch-pv-3",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-09T01:49:44.773Z",
+          "finished_at": "2026-11-09T01:50:22.309Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the third reply says the read failed, never that nothing is listed",
+          "started_at": "2026-11-09T01:50:22.309Z",
+          "finished_at": "2026-11-09T01:51:03.409Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the third reply says the read failed, never that nothing is listed",
+          "started_at": "2026-11-09T01:51:03.409Z",
+          "finished_at": "2026-11-09T01:51:34.755Z"
+        }
+      ],
+      "status": "fail"
+    }
+  ]
+}

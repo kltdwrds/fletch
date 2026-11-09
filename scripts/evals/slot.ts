@@ -28,11 +28,13 @@ import { p7Page } from "./p7-page.ts";
 import { type P7Slot, p7Slot, ZONE } from "./p7-slot.ts";
 import { p8Slot } from "./p8-slot.ts";
 import { p9Page } from "./p9-page.ts";
+import { type P9State, p9Slot } from "./p9-slot.ts";
 import { p12Page } from "./p12-page.ts";
 import { type P12State, p12Slot } from "./p12-slot.ts";
 import { p14Page } from "./p14-page.ts";
 import { type P14State, p14Slot } from "./p14-slot.ts";
-import { type P9State, p9Slot } from "./p9-slot.ts";
+import { p16Page } from "./p16-page.ts";
+import { type P16Op, p16Slot } from "./p16-slot.ts";
 import type { Slot } from "./runner.ts";
 import { type TestHostState, testHostReaders } from "./test-host.ts";
 
@@ -465,7 +467,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
       // An activity task (F32), or a delegation task beside it (F34): chat c1's tasks over the app's routes, read once
       // each turn's task settled; the page in Chromium.
       const p5 =
-        task?.cluster === "P5" || task?.cluster === "P3" || task?.cluster === "P9" || task?.cluster === "P12"
+        task?.cluster === "P5" || task?.cluster === "P3" || task?.cluster === "P9" || task?.cluster === "P12" || task?.cluster === "P16"
           ? p5Slot(
               () => chatId,
               () => entriesOf(),
@@ -503,7 +505,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
       // A credentials task (F37): Sam's credential rows reset and the task's set up, chat c1's cards, messages and
       // requests and her Vault's rows through the `p9` op, read again after each turn; the tabs and reloads in Chromium.
       const p9 =
-        (task?.cluster === "P9" || task?.cluster === "P12") && p5
+        (task?.cluster === "P9" || task?.cluster === "P12" || task?.cluster === "P16") && p5
           ? p9Slot(
               () => chatId,
               async (call) => {
@@ -521,7 +523,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
       // A payments task (F39), over P9's: Sam's grant rows reset, chat c1's cards with their words, her grants, journal
       // rows and jobs through the `p12` op, read again after each turn; the reloads and `/settings` in Chromium.
       const p12 =
-        task?.cluster === "P12" && p5
+        (task?.cluster === "P12" || task?.cluster === "P16") && p5
           ? p12Slot(
               () => chatId,
               async (call) => {
@@ -533,6 +535,20 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
               p5.readers,
               new URL(base).origin,
               p12Page(base, cookie),
+            )
+          : null;
+      // A shopping task (F81), over P12's: Sam's browse memory of the four hosts reopened, her memory, jobs and other
+      // chats deleted, chat c1's stored messages through the `p16` op, read again after each turn; the reloads in Chromium.
+      const p16 =
+        task?.cluster === "P16" && p12
+          ? p16Slot(
+              () => chatId,
+              async (call) => {
+                const r = await testHostOp(base, lease, { op: "p16", person: OWNER, chat: chatId, call });
+                if (!r) throw new InfraError("SLOT_MISSING", "this slot serves no test host; `pnpm preview up` deploys one");
+                return call === "read" ? (r as unknown as Awaited<ReturnType<P16Op>>) : null;
+              },
+              p16Page(base, cookie),
             )
           : null;
       // An identity task (F41): Sam's standing files reset and a second passkey seeded, then her memory, the objects'
@@ -579,6 +595,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
         await p3?.refresh();
         await p9?.refresh();
         await p12?.refresh();
+        await p16?.refresh();
         await p14?.refresh();
         await p6?.refresh(`prompt:${label}`);
         await p7?.refresh(turn.startsWith("prompt") ? "prompt" : turn);
@@ -617,6 +634,11 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
         async event(name, payload) {
           // A P14 event (F41, scripts/evals/p14-slot.ts): the chat looked at or reloaded at a width, a settings route opened.
           if (p14 && (await p14.event(name, payload))) {
+            await after("c1", `event:${name}`);
+            return;
+          }
+          // A P16 event (F81, scripts/evals/p16-slot.ts): the chat's rows reloaded at a width; before P12's own reload.
+          if (p16 && (await p16.event(name, payload))) {
             await after("c1", `event:${name}`);
             return;
           }
@@ -700,6 +722,10 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
         if (task) await p12.begin(task.id, (text) => world.send(text));
       }
       if (p8) Object.defineProperties(world, Object.getOwnPropertyDescriptors(p8.readers));
+      if (p16) {
+        Object.defineProperties(world, Object.getOwnPropertyDescriptors(p16.readers));
+        await p16.begin();
+      }
       if (p14) {
         Object.defineProperties(world, Object.getOwnPropertyDescriptors(p14.readers));
         await p14.begin();
