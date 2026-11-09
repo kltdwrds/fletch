@@ -35,10 +35,10 @@ describe('preview slot ops: the lease', () => {
   });
 
   it('shows the public lease to anyone, naming the branch only by its hash, and the whole lease to a key holder', async () => {
-    assert.deepEqual((await call('GET', 'lease')).body, { leased: false, expiresAt: null, branchHash: null, serving: 'placeholder', deploy: null });
+    assert.deepEqual((await call('GET', 'lease')).body, { leased: false, expiresAt: null, branchHash: null, serving: 'placeholder', deploy: null, leaseDeploy: null });
     await claim(A);
     const pub = (await call('GET', 'lease')).body;
-    assert.deepEqual(pub, { leased: true, expiresAt: now + 3600, branchHash: sha256Hex('claude/x'), serving: 'placeholder', deploy: null });
+    assert.deepEqual(pub, { leased: true, expiresAt: now + 3600, branchHash: sha256Hex('claude/x'), serving: 'placeholder', deploy: null, leaseDeploy: null });
     assert.ok(!JSON.stringify(pub).includes('claude/x'));
     const full = (await call('GET', 'lease', A)).body;
     assert.equal(full.tag, 'aaaaaa');
@@ -156,7 +156,7 @@ describe('preview slot ops: the staging lease', () => {
     const r = await stage(B, 'aaaaaa');
     assert.equal(r.status, 200);
     assert.deepEqual([r.body.tag, r.body.staging, r.body.already], [STAGING_TAG, true, false]);
-    assert.deepEqual((await call('GET', 'lease')).body, { leased: true, expiresAt: STAGING_EXPIRES_AT, branchHash: null, staging: true, serving: 'placeholder', deploy: null });
+    assert.deepEqual((await call('GET', 'lease')).body, { leased: true, expiresAt: STAGING_EXPIRES_AT, branchHash: null, staging: true, serving: 'placeholder', deploy: null, leaseDeploy: null });
     assert.equal((await stage(A, null)).body.already, true);
     assert.equal(slot.AGENT_BUCKET.map.size, 1);
   });
@@ -181,7 +181,7 @@ describe('preview slot ops: the staging lease', () => {
     assert.equal(slot.AGENT_BUCKET.map.size, 1);
     assert.equal(mayEnd({ tag: STAGING_TAG, staging: true, expiresAt: 1 }, { force: true, expectTag: STAGING_TAG }, 10), false);
     assert.deepEqual((await call('POST', 'reset', { ...A, body: { force: true, expectTag: STAGING_TAG, unstage: true } })).body, { done: true });
-    assert.deepEqual((await call('GET', 'lease')).body, { leased: false, expiresAt: null, branchHash: null, serving: 'placeholder', deploy: null });
+    assert.deepEqual((await call('GET', 'lease')).body, { leased: false, expiresAt: null, branchHash: null, serving: 'placeholder', deploy: null, leaseDeploy: null });
   });
 });
 

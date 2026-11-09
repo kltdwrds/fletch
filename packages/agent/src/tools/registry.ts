@@ -99,6 +99,29 @@ export function identityReach(spec: Pick<ToolSpec, "name" | "description">): str
   return word ?? IDENTITY_TOOL_OFFER.exec(spec.description)?.[0]?.toLowerCase() ?? null;
 }
 
+/**
+ * D-0025 door 1 (F60, P8 delta 5): no tool makes, joins or speaks in a chat with other people, and none writes from the
+ * person's own account or under their name (door 2). A name word, or a description that offers one of those, is
+ * refused at build as `identityReach` refuses an identity tool. `invite` counts only in a description that invites to a
+ * chat, group or room: `onboarding_invite` invites a member to the company, which is not a room (the word list narrowed,
+ * as F60's scope allows).
+ */
+export const ROOM_TOOL_WORDS: readonly string[] = ["room", "rooms", "group", "groups", "participant", "participants"];
+export const ROOM_TOOL_OFFER =
+  /\b((?:create|make|start|open|join|enter)s? (?:a |an |the |this )?(?:new )?(?:group|room|chat|conversation|thread) (?:chat )?(?:with|between|for) (?:other )?(?:people|persons?|members?|someone|participants?|outsiders?|contacts?|others?)|(?:create|make|start|open|join|enter)s? (?:a |an |the |this )?(?:new )?(?:group chats?|group conversations?|chat rooms?|rooms?)|adds? (?:a |another |one )?(?:person|people|someone|member|participant|contact)s? to (?:a |an |the |this |their )?(?:group|room|chat|conversation|thread)|invites? (?:\w+ )?(?:to|into) (?:a |an |the |this )?(?:group|room|chat|conversation|thread)|(?:send|post|write|reply|speak)s?(?: \w+){0,3} (?:from|through|via) (?:the person's|the owner's|the user's|their|your) own (?:account|number|address|profile)|(?:send|post|write|reply|speak)s?(?: \w+){0,3} (?:as|under) (?:the person|the owner|the user)(?:'s name\b|(?!'s|\w))|under (?:the person's|the owner's|the user's|their) (?:own )?name)/i;
+
+/** The room word a tool's name holds or its description offers, or null (D-0025): the second guard `ToolRegistry` applies. */
+export function roomReach(spec: Pick<ToolSpec, "name" | "description">): string | null {
+  const word = spec.name.split("_").find((w) => ROOM_TOOL_WORDS.includes(w));
+  return word ?? ROOM_TOOL_OFFER.exec(spec.description)?.[0]?.toLowerCase() ?? null;
+}
+
+/** The guards `ToolRegistry` applies to every tool at build, each with the refusal it raises; tested by iterating it. */
+export const TOOL_GUARDS: ReadonlyArray<{ reach: (spec: Pick<ToolSpec, "name" | "description">) => string | null; refuse: (name: string, reach: string) => string }> = [
+  { reach: identityReach, refuse: (name, reach) => `TOOL_IDENTITY_REFUSED: ${name} reaches "${reach}", which only the person changes` },
+  { reach: roomReach, refuse: (name, reach) => `TOOL_ROOM_REFUSED: ${name} reaches "${reach}": no room with other people and nothing under the person's name until D-0025's doors are opened` },
+];
+
 /** The namespaces of one tenant's agent, fixed at construction; loads are per session. */
 export class ToolRegistry {
   readonly namespaces: readonly Namespace[];
@@ -110,8 +133,10 @@ export class ToolRegistry {
       for (const t of ns.tools) {
         if (!NAME.test(t.name)) throw new Error(`TOOL_NAME_INVALID: ${t.name}`);
         if (seen.has(t.name)) throw new Error(`TOOL_NAME_DUPLICATE: ${t.name}`);
-        const reach = identityReach(t);
-        if (reach) throw new Error(`TOOL_IDENTITY_REFUSED: ${t.name} reaches "${reach}", which only the person changes`);
+        for (const g of TOOL_GUARDS) {
+          const reach = g.reach(t);
+          if (reach) throw new Error(g.refuse(t.name, reach));
+        }
         seen.add(t.name);
       }
     }

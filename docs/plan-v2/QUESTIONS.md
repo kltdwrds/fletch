@@ -21,6 +21,16 @@ browser time is per chat only in `objects/chat.ts`, and the test world shares on
 **Recommended answer:** amend the two blocks to what the files grade (a contract edit by the orchestrator, no clause
 changes); split F90 into F90 (this PR) and F93 (T-P10-07, 08 and 14 with a per-chat browse hook in the authority
 world, and their three planted guards: the session cell, the Ledger meter, the restore grant).
+### Q60 (F60), 2026-11-09: may T-P8-10 read the page as served, at both widths, until a Chromium run lands?
+
+**Blocks:** nothing under Kyle's one-hour ruling of 2026-11-08; the verifier's one blocking finding on F60.
+T-P8-10's setup is "browser test at desktop and phone width". F60 reads the page as served to Sam (`GET /chats/<c1>`,
+script stripped) and the chat list's kinds, once per width; the markup is the same at both widths, and a control the
+page script draws on the client (`chats-list.ts`, `overlays.ts`, `message-actions.ts`) is not read. The company's
+member invite (`head-invite`, Settings' Invite member) is not a chat's and passes.
+**Recommended answer:** yes for F60; F61 adds the Chromium run at 1280 and 390 over P14's `harness-browser.ts` and reads
+the rendered DOM with the same `ROOM_CONTROL` grader, which changes T-P8-10's hash then. Renumber this question at
+reconcile if main has a Q60.
 
 ### Q47 (F42), 2026-11-01 (Q39 on the F42 branch until 2026-11-08, then Q45; renumbered past main's Q39, Q43, Q45 and Q46): may F42's must-haves count, when the lead-in bubble both models write fails T-P9-13 at origin/main too?
 

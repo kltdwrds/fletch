@@ -9,7 +9,7 @@ import { down, gc, loadLease, up } from './preview.mjs';
 import { fakeAccount, fakeSlot, fakeSlotsFetch } from './preview-fakes.mjs';
 import { leaseLabel, SECRETS, sha256Hex, slotPlan, stagingSlots } from './preview-plan.mjs';
 import { loadInventory, provision, saveInventory } from './preview-pool.mjs';
-import { convert, deployStaging, stagingSlot, unstage } from './preview-staging.mjs';
+import { convert, deployStaging, LEASE_CODE_READS, LEASE_CODE_WAIT_MS, stagingSlot, unstage } from './preview-staging.mjs';
 
 // The staging slot (scripts/preview-staging.mjs) against the fakes of scripts/preview-fakes.mjs: converting slot 1 in
 // place keeps its data and secrets, a staging deploy never rotates them, and no lease command takes, releases or wipes it.
@@ -147,6 +147,72 @@ describe('staging: converting slot 1 in place', () => {
     assert.ok(setupToken);
     assert.equal(acct.secrets.get('fletch-pv-1').SETUP_TOKEN, setupToken);
     assert.equal(acct.secrets.get('fletch-pv-1').MASTER_KEY, before.MASTER_KEY);
+  });
+});
+
+/**
+ * Slot 1's lease object as Cloudflare ran it on the first live conversion: still on the code from before the deploy
+ * (no deploy id, and `stage` answering 500 as a missing RPC method does) for the first `stale` lease reads after the
+ * next deploy.
+ */
+function laggingLeaseObject(stale) {
+  let reads = 0;
+  let lagging = false;
+  const s = slot1();
+  const was = s.vars.PREVIEW_DEPLOY;
+  s.leaseCode = () => {
+    if (s.vars.PREVIEW_DEPLOY === was) return was;
+    reads++;
+    lagging = reads <= stale;
+    return lagging ? null : s.vars.PREVIEW_DEPLOY;
+  };
+  const stage = s.lease.stage;
+  s.lease.stage = async (...a) => {
+    if (lagging) throw new Error('500: the lease object has no stage method');
+    return stage(...a);
+  };
+  return { reads: () => reads };
+}
+
+describe('staging: convert waits for the lease object to run the new deploy', () => {
+  it('reads the lease until its object runs the deploy wrangler made, then marks it staging; no sleep but the injected one', async () => {
+    await heldByMergedBranch();
+    const lag = laggingLeaseObject(3);
+    const slept = [];
+    const lines = [];
+    await convert(main({ sleep: async (ms) => slept.push(ms), log: (l) => lines.push(l) }));
+    const deploy = slot1().vars.PREVIEW_DEPLOY;
+    assert.equal((await lease(main(), 1)).staging, true);
+    // waitReady's own lease read is the first stale one; the wait reads the other two, then the fresh one.
+    assert.ok(lag.reads() > 3, 'the object ran the new deploy only after three stale reads');
+    assert.deepEqual(slept, [LEASE_CODE_WAIT_MS, LEASE_CODE_WAIT_MS], 'one wait after each stale read');
+    assert.equal(lines.filter((l) => l.includes(`waiting for its lease object to run deploy ${deploy} (read`) && l.includes('code that names no deploy')).length, 2, lines.join('\n'));
+    assert.ok(lines.some((l) => l.includes(`runs deploy ${deploy} (read 3 of at most ${LEASE_CODE_READS})`)), lines.join('\n'));
+    assert.ok(intact());
+  });
+
+  it('refuses with PREVIEW_DEPLOY_NOT_SERVING when the object never runs it: no key set, the lease not marked, the data kept', async () => {
+    await heldByMergedBranch();
+    laggingLeaseObject(Number.POSITIVE_INFINITY);
+    const secrets = { ...acct.secrets.get('fletch-pv-1') };
+    const slept = [];
+    const err = await convert(main({ sleep: async (ms) => slept.push(ms) })).catch((e) => e);
+    assert.equal(err.code, 'PREVIEW_DEPLOY_NOT_SERVING', err.message);
+    const deploy = slot1().vars.PREVIEW_DEPLOY;
+    assert.match(err.message, new RegExp(`did not run deploy ${deploy} after ${LEASE_CODE_READS} reads`));
+    assert.match(err.message, /code that names no deploy/);
+    assert.equal(slept.length, LEASE_CODE_READS - 1, 'bounded: no wait after the last read');
+    assert.deepEqual(acct.secrets.get('fletch-pv-1'), secrets, 'no PREVIEW_KEY_* was set, nothing rotated');
+    assert.equal((await lease(main(), 1)).staging, undefined);
+    assert.ok(intact());
+  });
+
+  it('a lease read reports the deploy its object runs, apart from the one the Worker serves', async () => {
+    await heldByMergedBranch();
+    slot1().leaseCode = () => 'older';
+    const l = await lease(main(), 1);
+    assert.equal(l.leaseDeploy, 'older');
+    assert.notEqual(l.deploy, 'older');
   });
 });
 

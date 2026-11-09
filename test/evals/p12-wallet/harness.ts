@@ -30,6 +30,14 @@ export interface P12HarnessOptions {
   seed?: (w: P12Tier1World) => Promise<void>;
   /** Rewrites the shipped page script before the tabs run it (`planted.test.ts`). */
   plant?: P9HarnessOptions["plant"];
+  /** More sites beside the checkout page, or a page in its place (P16's shop, F80). */
+  sites?: P9HarnessOptions["sites"];
+  /** What a job's `page_read` reaches (P16's watches, F80). */
+  jobFetch?: P9HarnessOptions["jobFetch"];
+  /** More tools offered to a child beside `shop_buy`, for its gate to refuse (P16's live lane, F80). */
+  childTools?: P9HarnessOptions["childTools"];
+  /** More addresses a child's brief may carry (P16's shop, F80). */
+  childUrls?: P9HarnessOptions["childUrls"];
 }
 
 /** What a child was offered for its gate to refuse: the same purchase as the chat's fixture. Records a run, which none may have. */
@@ -72,7 +80,7 @@ export class P12Tier1World extends P9Tier1World implements P12World {
 
   constructor(o: P12HarnessOptions) {
     const ran: string[] = [];
-    super({ script: o.script, ...(o.plant ? { plant: o.plant } : {}), sites: { "shop.example.com": { page: { title: "Checkout", text: `Your cart: one ${"p12 probe"} at 12.00 USD. Card number, expiry and security code below. Pay now.` } } }, childTools: () => [childShop(ran)] });
+    super({ script: o.script, ...(o.plant ? { plant: o.plant } : {}), sites: { "shop.example.com": { page: { title: "Checkout", text: `Your cart: one ${"p12 probe"} at 12.00 USD. Card number, expiry and security code below. Pay now.` } }, ...(o.sites ?? {}) }, ...(o.jobFetch ? { jobFetch: o.jobFetch } : {}), ...(o.childUrls ? { childUrls: o.childUrls } : {}), childTools: (p) => [childShop(ran), ...(o.childTools?.(p) ?? [])] });
     this.childRan = ran;
     // Every descriptor the gate commits, so an effect can be committed again as it was (T-P12-03).
     this.w.hooks.beforeCommit = (d) => void this.descriptors.push(d);
