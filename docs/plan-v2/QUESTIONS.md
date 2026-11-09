@@ -7,6 +7,21 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## Open, not blocking
 
+### Q51 (F90), 2026-11-08: P10's tier-1 blocks for T-P10-01 and T-P10-02 differ from shipped behaviour, and F90 splits
+
+**Blocks:** nothing under the one-hour ruling (F90's PR carries the readings under Reconcile); F90 stays BLOCKED until
+its remaining tier-1 runs land.
+Three findings from F90's tier 1. (1) T-P10-02's block names `memory_write` as the write that carries
+`AFTER_EXTERNAL_INPUT`; shipped, a save to the person's own memory runs with no card (the boundary rule of 2026-10-30),
+so no flag can ride on it, and the file grades the flag on a gated send (`mail_send`), where the contract's Properties
+put it ("a gated call after external input"). (2) T-P10-01's block says the page's link reaches the model as
+`url_id:1`; the url table numbers the address Sam wrote first, so the link is `url_id:2`, and the file grades "its
+`url_id` number". (3) T-P10-07, T-P10-08 and T-P10-14 have task files but no tier-1 run in the hour: the Ledger's
+browser time is per chat only in `objects/chat.ts`, and the test world shares one browse hook across chats.
+**Recommended answer:** amend the two blocks to what the files grade (a contract edit by the orchestrator, no clause
+changes); split F90 into F90.1 (this PR) and F90.2 (T-P10-07, 08 and 14 with a per-chat browse hook in the authority
+world, and their three planted guards: the session cell, the Ledger meter, the restore grant).
+
 ### Q47 (F42), 2026-11-01 (Q39 on the F42 branch until 2026-11-08, then Q45; renumbered past main's Q39, Q43, Q45 and Q46): may F42's must-haves count, when the lead-in bubble both models write fails T-P9-13 at origin/main too?
 
 **Blocks:** nothing since F45 merged (2026-11-08, PR #111): F45 is option (a) below, and F42 is rebased onto it and runs its declared tier 2 again (Q31's default). Until then it blocked F42's acceptance; all else was in: the line, its tier-1 test, `ACCEPT F42: PASS`.
