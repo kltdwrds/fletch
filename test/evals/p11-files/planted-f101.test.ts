@@ -17,9 +17,11 @@ import cards from "./cards-current-state.task.ts";
 import deck from "./deck-from-document.task.ts";
 import del from "./delete-said.task.ts";
 import { call, load, type P11Tier1, p11Harness, pat, type Run, sam } from "./harness.ts";
-import { DECK_MARKDOWN, drawnThread, later, revokeFrom } from "./runs.ts";
+import { DECK_MARKDOWN, drawnThread, later, revokeFrom, runs } from "./runs.ts";
+import exportBeside from "./export-beside.task.ts";
+import { collateral } from "../../support/scenario.ts";
 import list from "./share-list-revoke.task.ts";
-import { DECK, MEMO_DOCX, type P11World, results } from "./world.ts";
+import { DECK, homeR2, MEMO_DOCX, type P11World, results } from "./world.ts";
 
 async function played(task: DefinedTask<P11Tier1>, run: Run): Promise<P11Tier1> {
   const h = p11Harness(run);
@@ -109,6 +111,18 @@ describe("[F101] P11 files: planted faults", () => {
     const silent = await drawnThread(w, (js) => js.replace('if (a.dataset.code === "FILES_NOT_FOUND") deletedCard(a, head);', ""));
     expect(await mine(cards, "the file card says it was deleted")(faulted(w, { answers: { ...w.answers, page: { ...w.answers.page!, body: silent } } }))).toBe(false);
     expect(await mine(cards, "card_removed")(faulted(w, { answers: { ...w.answers, transcript: { ...w.answers.transcript!, body: "[]" } } }))).toBe(true);
+  });
+
+  it("the collateral check stays exact: a seeded key removed where the run declares no removal fails it, and a declared run exempts only its own keys", async () => {
+    // T-P11-08 seeds the memo's docx in R2 and declares no removal: taking its bytes out is collateral.
+    const w = await played(exportBeside, runs["T-P11-08"]!());
+    expect(w.exempt.size).toBe(0);
+    const before = await w.snapshot();
+    w.w.r2.objects.delete(homeR2(MEMO_DOCX));
+    expect(collateral(before, await w.snapshot(), exportBeside.collateral)).toEqual([{ area: "r2", added: [], removed: [homeR2(MEMO_DOCX)], expected: [] }]);
+    // T-P11-12 exempts the deck's bytes and its one seeded pointer, nothing else.
+    const d = await played(del, later["T-P11-12"]!());
+    expect([...d.exempt].map((k) => k.replace(/^shares\/[0-9a-f]{32}$/, "shares/<id>")).sort()).toEqual([homeR2("documents/p11-deck.pptx"), "shares/<id>"].sort());
   });
 
   it("T-P11-17's scripted revoke reads the share id from what the model was shown", () => {

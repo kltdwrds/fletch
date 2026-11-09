@@ -13,6 +13,8 @@ const specimen = readFileSync(`${DS_DIR}/specimens/files.html`, "utf8");
 /** Every class a selector in the served CSS names. */
 const defined = new Set([...PAGE_CSS.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/\.([a-zA-Z_][\w-]*)/g)].map((m) => m[1] as string));
 const undefinedClasses = (html: string) => [...new Set([...html.matchAll(/\sclass="([^"]*)"/g)].flatMap((m) => (m[1] as string).split(/\s+/).filter(Boolean)))].filter((c) => !defined.has(c)).sort();
+/** Whether a stage draws a share card in an ended state with the table's title and words. */
+const says = (html: string, s: "revoked" | "expired") => html.includes(`<h3>${CARD_STATE_TEXT[s].title}</h3><p>${CARD_STATE_TEXT[s].text}</p>`);
 const stage = (id: string) => specimen.match(new RegExp(`<div class="qf-stage" id="${id}">([\\s\\S]*?)\\n</div></div>`))?.[1] ?? "";
 
 describe("[F101] the files specimen: the Library item and the cards drawn from the store", () => {
@@ -30,7 +32,7 @@ describe("[F101] the files specimen: the Library item and the cards drawn from t
     expect(stage("light-file-deleted")).toContain(CARD_STATE_TEXT.deleted);
     expect(stage("light-file-deleted")).not.toContain("href=");
     for (const s of ["revoked", "expired"] as const) {
-      expect(stage(`light-share-${s}`)).toContain(`<h3>${CARD_STATE_TEXT[s].title}</h3><p>${CARD_STATE_TEXT[s].text}</p>`);
+      expect(says(stage(`light-share-${s}`), s)).toBe(true);
       expect(stage(`light-share-${s}`)).not.toContain("href=");
     }
     expect(stage("light-share")).toContain("Shared publicly: p11-memo.docx");
@@ -45,6 +47,7 @@ describe("[F101] the files specimen: the Library item and the cards drawn from t
 
   it("planted: a specimen whose revoked card still reads Shared publicly fails", () => {
     const stale = stage("light-share-revoked").replace(`<h3>${CARD_STATE_TEXT.revoked.title}</h3>`, "<h3>Shared publicly: p11-memo.docx</h3>");
-    expect(stale.includes(`<h3>${CARD_STATE_TEXT.revoked.title}</h3>`)).toBe(false);
+    expect(stale).not.toBe(stage("light-share-revoked"));
+    expect(says(stale, "revoked")).toBe(false);
   });
 });
