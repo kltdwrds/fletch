@@ -51,17 +51,20 @@ export function p10Slot(replies: () => string[], read: () => Promise<P10State>):
   };
   const messages = () => state.messages.map((b) => JSON.parse(b) as Msg);
   const readers: P10Readers = {
-    replies: (chat = "c1") => (c1(chat), [...replies()]),
+    replies: (chat = "c1") => {
+      c1(chat);
+      return [...replies()];
+    },
     calls: () =>
       messages()
         .filter((m) => m.role === "assistant" && Array.isArray(m.content))
         .flatMap((m) => (m.content as Array<{ type: string; name?: string; arguments?: Record<string, unknown> }>).filter((c) => c.type === "toolCall").map((c) => ({ tool: String(c.name), args: c.arguments ?? {} }))),
-    results: (chat = "c1") => (
-      c1(chat),
-      messages()
+    results: (chat = "c1") => {
+      c1(chat);
+      return messages()
         .filter((m) => m.role === "toolResult")
-        .map((m) => ({ tool: m.toolName ?? "", text: textOf(m.content), isError: !!m.isError }))
-    ),
+        .map((m) => ({ tool: m.toolName ?? "", text: textOf(m.content), isError: !!m.isError }));
+    },
     files: async () => state.files.filter((f) => !before.has(f)),
     browserLog: () => ({ reads: state.reads.map((r) => ({ url: r.url ?? `https://${r.host}/`, engine: "test-host" })), sessions: [], gotos: [] }),
   } as P10Readers;
