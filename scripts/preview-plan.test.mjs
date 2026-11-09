@@ -18,7 +18,6 @@ import {
   record,
   RENDERER_BINDING,
   RENDERER_CONTAINER,
-  RENDERER_ON_PAID,
   SLOT_OWNER,
   SLOT_VAR_KEYS,
   slotConfig,
@@ -112,22 +111,33 @@ describe('preview plan: the slot config', () => {
     assert.equal(slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', paid: true, placeholder: true }).worker_loaders, undefined);
   });
 
-  it('[F56] adds the Renderer binding and its pandoc container only when paid and D-0030 is on, beside the lease, never to the placeholder', () => {
-    assert.equal(RENDERER_ON_PAID, false, 'off until Kyle accepts D-0030: a container spends money');
-    assert.equal(slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', paid: true }).containers, undefined);
+  it('[F56] adds the Renderer binding and its pandoc container only with render (D-0031), beside the lease, never to the placeholder', () => {
+    const lease = { name: LEASE_OBJECT.binding, class_name: LEASE_OBJECT.className };
+    assert.deepEqual(BASE.exports.Renderer, { type: 'durable-object', storage: 'sqlite' }, 'the class is on every deploy');
+    // No flag: neither the binding nor the container.
     assert.equal(app.containers, undefined);
     assert.ok(!app.durable_objects.bindings.some((b) => b.name === 'RENDERER'));
-    assert.deepEqual(BASE.exports.Renderer, { type: 'durable-object', storage: 'sqlite' }, 'the class is on every deploy');
-    const paid = slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', paid: true, renderer: true });
-    assert.deepEqual(paid.containers, [RENDERER_CONTAINER]);
-    assert.equal(slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', renderer: true }).containers, undefined, 'never without --paid');
-    assert.deepEqual(paid.durable_objects.bindings.slice(-2), [RENDERER_BINDING, { name: LEASE_OBJECT.binding, class_name: LEASE_OBJECT.className }]);
-    const ph = slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', paid: true, renderer: true, placeholder: true });
+    // --paid no longer carries it (D-0031).
+    const paid = slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', paid: true });
+    assert.equal(paid.containers, undefined);
+    assert.ok(!paid.durable_objects.bindings.some((b) => b.name === 'RENDERER'));
+    // --render alone adds exactly the binding beside the lease's, and the one container.
+    const render = slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', render: true });
+    assert.deepEqual(render.containers, [RENDERER_CONTAINER]);
+    assert.deepEqual(render.durable_objects.bindings, [...BASE.durable_objects.bindings, RENDERER_BINDING, lease]);
+    assert.equal(render.worker_loaders, undefined, 'render is not --paid');
+    // The placeholder gets no container, and tombstones the Renderer like every agent class.
+    const ph = slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', render: true, placeholder: true });
     assert.equal(ph.containers, undefined);
+    assert.deepEqual(ph.exports.Renderer, { type: 'durable-object', state: 'deleted' });
+    assert.deepEqual(ph.durable_objects.bindings, [lease]);
     // The image is the one the Renderer's code names, so the deployed container is the pandoc it speaks to.
     const tsImage = readFileSync(path.join(REPO, 'packages', 'agent', 'src', 'render', 'render.ts'), 'utf8').match(/RENDER_IMAGE = "([^"]+)"/)?.[1];
     assert.equal(RENDERER_CONTAINER.image, tsImage);
     assert.equal(RENDERER_CONTAINER.class_name, RENDERER_BINDING.class_name);
+    // The cheapest instance, one per deploy: one owner, one tenant.
+    assert.equal(RENDERER_CONTAINER.instance_type, 'lite');
+    assert.equal(RENDERER_CONTAINER.max_instances, 1);
   });
 
   it("sets the model vars --var names, over the base config and under the slot's own, and refuses any other var", () => {

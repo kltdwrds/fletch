@@ -19,7 +19,7 @@ import { agentDir, CONFIG, account, deploySlot, deprovision, drainBucket, INVENT
 export const ACCOUNT_ID = '62b4c5143baaabf42b828a0d7a6b272e';
 
 const USAGE = `usage: pnpm preview <command>
-  up [--slot n] [--ttl hours] [--paid] [--var K=V]...   lease a slot (or renew this worktree's) and deploy the working tree to it; --var sets a model var (AI_GATEWAY_ID, CHAT_PROVIDER)
+  up [--slot n] [--ttl hours] [--paid] [--render] [--var K=V]...   lease a slot (or renew this worktree's) and deploy the working tree to it; --render adds the Renderer's container (D-0031); --var sets a model var (AI_GATEWAY_ID, CHAT_PROVIDER)
   status                  this worktree's lease and what its slot answers
   tail                    wrangler tail on its slot's Worker
   down                    release its slot: placeholder (the agent's objects deleted), new secrets, bucket and index emptied
@@ -30,7 +30,7 @@ const USAGE = `usage: pnpm preview <command>
   deprovision [--slot n]  (Kyle's login) delete what the inventory records for one slot, or all
   token [--template id] [--group id] [--env-file path] [--admin-env NAME]   (Kyle's Mac) make or update the slot Workers' token
   staging convert         (Kyle's login, a clean main checkout) once: deploy main to the staging slot and mark its lease staging, its data kept
-  staging deploy          (a clean main checkout; CI on merge) redeploy main to the staging slot, its secrets and data kept
+  staging deploy [--render]   (a clean main checkout; CI on merge) redeploy main to the staging slot, its secrets and data kept; --render adds the Renderer's container
   staging status          the staging slot's lease, what it serves and its /health
   staging secrets         (Kyle's Mac: op and gh logins) mint or roll fletch-staging-deploy, store it in 1Password, set the workflow's secrets, dispatch it
   down --slot n --force   (Kyle's login) unstage the staging slot and release it: its data wiped, as \`down\` does`;
@@ -160,11 +160,23 @@ export async function waitReady(ctx, plan, id) {
 }
 
 /**
+ * Refuses a `--render` deploy before anything is deployed when the credential cannot reach the account's containers:
+ * `wrangler deploy` uploads and activates the Worker before it creates the container application, so without the
+ * containers permission the deploy would leave new code live with no container behind it.
+ */
+export function renderPreflight(ctx) {
+  const r = ctx.run(['containers', 'list']);
+  if (r.status !== 0) throw refusal('PREVIEW_RENDER_TOKEN', '--render deploys a container application, which this credential cannot reach: add Account > Workers Containers > Write to the token (the staging workflow deploys on fletch-staging-deploy), then run again; nothing was deployed');
+}
+
+/**
  * Leases a slot for this worktree (or renews its lease) and deploys the working tree to it. A new lease first wipes what
  * the last left (the placeholder's deploy deletes the agent's objects; the ops empty the bucket and index) and gets new
- * secrets. Returns the plan and the setup token for the slot's first passkey.
+ * secrets. `render` is checked first (renderPreflight), so a credential that cannot deploy it leases nothing. Returns the
+ * plan and the setup token for the slot's first passkey.
  */
-export async function up(ctx, { slot, ttlHours = DEFAULT_TTL_HOURS, paid = false, vars = {} } = {}) {
+export async function up(ctx, { slot, ttlHours = DEFAULT_TTL_HOURS, paid = false, render = false, vars = {} } = {}) {
+  if (render) renderPreflight(ctx);
   const inv = needInventory(ctx);
   const held = loadLease(ctx);
   let claim;
@@ -190,7 +202,7 @@ export async function up(ctx, { slot, ttlHours = DEFAULT_TTL_HOURS, paid = false
     const setupToken = await rotate(ctx, plan, auth);
     saveLease(ctx, { ...loadLease(ctx), setupToken });
   }
-  const d = deploySlot(ctx, inv, plan.n, { paid, vars });
+  const d = deploySlot(ctx, inv, plan.n, { paid, vars, render });
   await waitReady(ctx, plan, d.deploy);
   return { plan, setupToken: loadLease(ctx).setupToken };
 }
@@ -427,7 +439,7 @@ async function main(argv) {
   const setupLink = (plan, token) => (token ? `${origin(plan)}/login?setup=${token}` : 'already used by this lease (or not kept)');
   if (command === 'up') {
     const vars = varFlags(flags.var);
-    const { plan, setupToken } = await up(ctx, { slot: intFlag(flags.slot, 'slot'), ttlHours: intFlag(flags.ttl, 'ttl') ?? DEFAULT_TTL_HOURS, paid: flags.paid === true, vars });
+    const { plan, setupToken } = await up(ctx, { slot: intFlag(flags.slot, 'slot'), ttlHours: intFlag(flags.ttl, 'ttl') ?? DEFAULT_TTL_HOURS, paid: flags.paid === true, render: flags.render === true, vars });
     const model = Object.keys(vars).length ? `\n  model  ${Object.entries(vars).map(([k, v]) => `${k}=${v}`).join(' ')}` : '';
     console.log(`preview: slot ${plan.n} serves this worktree\n  app    ${origin(plan)}\n  setup  ${setupLink(plan, setupToken)}\n  owner  the fixture person, tenant ${plan.name}${model}\n  release it with \`pnpm preview down\` before this branch's PR merges`);
   } else if (command === 'status') {
@@ -451,7 +463,7 @@ async function main(argv) {
     await stagingSecrets({ inv: needInventory(ctx), subdomain: knownSubdomain(ctx), log: console.log });
   } else if (command === 'staging') {
     const { stagingCommand } = await import('./preview-staging.mjs');
-    await stagingCommand(ctx, rest[0], { paid: flags.paid === true, vars: varFlags(flags.var) });
+    await stagingCommand(ctx, rest[0], { paid: flags.paid === true, render: flags.render === true, vars: varFlags(flags.var) });
   } else if (command === 'gc') {
     const failures = await gc(ctx, { dryRun: flags['dry-run'] === true, slot: intFlag(flags.slot, 'slot'), force: flags.force === true });
     if (failures.length > 0) throw new Error(`preview: gc left ${failures.length}:\n- ${failures.join('\n- ')}`);

@@ -38,6 +38,13 @@ world, and their three planted guards: the session cell, the Ledger meter, the r
 **Recommended answer:** yes: accept D-0030 and set `RENDERER_ON_PAID` to `true` (and grant the preview pool's token the Containers scope, which refused `Forbidden` on 2026-11-08, so tier 2 can run). A `--paid` deploy binds `RENDERER` and runs one pandoc container (at most two
 instances); a deploy without it refuses render with `HOST_RENDER_UNAVAILABLE` naming the binding. If the bill is
 unwelcome, move the container behind its own flag; the host's refusal already covers a deploy without it.
+
+Orchestrator, 2026-11-09: taken as its last sentence under Kyle's instruction of 2026-11-09 (artifacts end to end on
+staging, which runs without `--paid`): D-0031 (proposed) supersedes D-0030, `RENDERER_ON_PAID` is gone, `--render` adds
+the binding and one `lite` container, and `deploy-staging.yml` deploys with it. Still yours: Account › Workers Containers
+› Write on `fletch-staging-deploy` (the deploy refuses `PREVIEW_RENDER_TOKEN` before any upload until then), then one
+re-run of the workflow; and D-0031's acceptance in your own commit. The pool token (D-0008) is not widened.
+
 ### Q47 (F42), 2026-11-01 (Q39 on the F42 branch until 2026-11-08, then Q45; renumbered past main's Q39, Q43, Q45 and Q46): may F42's must-haves count, when the lead-in bubble both models write fails T-P9-13 at origin/main too?
 
 **Blocks:** nothing since F45 merged (2026-11-08, PR #111): F45 is option (a) below, and F42 is rebased onto it and runs its declared tier 2 again (Q31's default). Until then it blocked F42's acceptance; all else was in: the line, its tier-1 test, `ACCEPT F42: PASS`.

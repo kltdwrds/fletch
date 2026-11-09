@@ -11,7 +11,7 @@ import { platformLifecycle } from "./lifecycle-routes.ts";
 import { wantsPage } from "./pages.ts";
 import { type Directory, route } from "./routes.ts";
 import { log } from "../obs/log.ts";
-import { hostOf } from "../host.ts";
+import { available, hostOf } from "../host.ts";
 
 export interface ServeDeps {
   dir: Directory;
@@ -24,7 +24,8 @@ export async function serve(request: Request, env: Env, props: DispatchProps | n
   const url = new URL(request.url);
   if (url.pathname === "/health" && request.method === "GET") {
     // `deploy` is the commit the deploy was made from (DEPLOY_COMMIT, set by `pnpm preview`), so a live check ties to a tree; null where nothing set it.
-    return json({ ok: true, tenant: env.TENANT_ID, objects: OBJECT_CLASSES, deploy: env.DEPLOY_COMMIT ?? null });
+    // `render` says the deploy's host offers render (the binding is there), not that its container answers.
+    return json({ ok: true, tenant: env.TENANT_ID, objects: OBJECT_CLASSES, deploy: env.DEPLOY_COMMIT ?? null, render: available(hostOf(env).render) });
   }
   // The script serves only its own tenant: props that name another are a platform fault.
   if (!props || props.tenant !== env.TENANT_ID) return json({ code: "TENANT_MISMATCH" }, 403);

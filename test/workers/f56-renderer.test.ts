@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { singleAccountHost } from "../../packages/host-cloudflare/src/index.ts";
 import { homeKey } from "../../packages/agent/src/memory/home.ts";
 import { Renderer } from "../../packages/agent/src/objects/renderer.ts";
-import { NO_CONTAINER, type RenderContainer } from "../../packages/agent/src/render/container.ts";
+import { NO_CONTAINER, RENDER_SLEEP_AFTER_MS, type RenderContainer } from "../../packages/agent/src/render/container.ts";
 import { RENDER_ENTRYPOINT, RENDER_PORT } from "../../packages/agent/src/render/render.ts";
 import { hostRender } from "../../packages/agent/src/render/tools.ts";
 import type { FakeStep } from "../support/fake-model.ts";
@@ -17,16 +17,29 @@ const DOCX_BYTES = [0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x06, 0x00];
 const DOCX = btoa(String.fromCharCode(...DOCX_BYTES));
 const ABOUT = `# About me\n\nI am ${ada.name}'s agent.`;
 
-/** A container that runs a fake pandoc on its port: started once, every start and request recorded. */
-function fakeContainer(answer: (body: { to: string; text: string }) => Response = (b) => new Response(JSON.stringify({ output: b.to === "html" ? "<h1>About me</h1>" : DOCX }))) {
+/**
+ * A container that runs a fake pandoc on its port: started once, every start, timeout and request recorded, in one
+ * `events` order. `running` starts it as already up (an object restarted by a deploy); `fail` makes `start` throw.
+ */
+function fakeContainer(answer: (body: { to: string; text: string }) => Response = (b) => new Response(JSON.stringify({ output: b.to === "html" ? "<h1>About me</h1>" : DOCX })), opts: { running?: boolean; fail?: string } = {}) {
   const starts: unknown[] = [];
   const ports: number[] = [];
+  const timeouts: number[] = [];
+  const events: string[] = [];
   const asked: Array<{ to: string; text: string }> = [];
   const c: RenderContainer = {
     get running() {
-      return starts.length > 0;
+      return !!opts.running || starts.length > 0;
     },
-    start: (o) => void starts.push(o),
+    start: (o) => {
+      events.push("start");
+      if (opts.fail) throw new Error(opts.fail);
+      starts.push(o);
+    },
+    setInactivityTimeout: async (ms) => {
+      events.push(`timeout:${ms}`);
+      timeouts.push(ms);
+    },
     getTcpPort: (port) => {
       ports.push(port);
       return {
@@ -38,7 +51,7 @@ function fakeContainer(answer: (body: { to: string; text: string }) => Response 
       };
     },
   };
-  return { c, starts, ports, asked };
+  return { c, starts, ports, timeouts, events, asked };
 }
 
 /** The RENDERER namespace a paid deploy binds: each object is the real Renderer class over `container`. */
@@ -64,6 +77,8 @@ describe("[F56] the renderer the deploy has", () => {
     // pandoc started once in the container, with no internet, and asked on its own port.
     expect(box.starts).toEqual([{ entrypoint: RENDER_ENTRYPOINT, enableInternet: false }]);
     expect(box.ports).toEqual([RENDER_PORT]);
+    // It stays up for RENDER_SLEEP_AFTER_MS after the request, set once the start has returned.
+    expect(box.events).toEqual(["start", `timeout:${RENDER_SLEEP_AFTER_MS}`]);
     expect(box.asked).toMatchObject([{ text: ABOUT, to: "docx" }]);
     expect(bind.named).toEqual([`${TENANT}:renderer`]);
     // The bytes are in Ada's Library.
@@ -114,5 +129,38 @@ describe("[F56] the renderer the deploy has", () => {
     await obj.render({ markdown: "# y", to: "html" });
     expect(box.starts).toHaveLength(1);
     expect(box.asked.map((a) => a.text)).toEqual(["# x", "# y"]);
+    expect(box.timeouts).toEqual([RENDER_SLEEP_AFTER_MS, RENDER_SLEEP_AFTER_MS]);
+  });
+
+  it("a container already running when the object starts is not started again, and its timeout is set in the constructor and on each render", async () => {
+    const box = fakeContainer(undefined, { running: true });
+    const held: Array<Promise<unknown>> = [];
+    const ctx = {
+      container: box.c,
+      blockConcurrencyWhile: (f: () => Promise<unknown>) => {
+        const p = f();
+        held.push(p);
+        return p;
+      },
+    };
+    const obj = new Renderer(ctx as never, {} as never);
+    await Promise.all(held);
+    expect(held).toHaveLength(1);
+    expect(box.timeouts).toEqual([RENDER_SLEEP_AFTER_MS]);
+    await obj.render({ markdown: "# x", to: "html" });
+    expect(box.starts).toEqual([]);
+    expect(box.timeouts).toEqual([RENDER_SLEEP_AFTER_MS, RENDER_SLEEP_AFTER_MS]);
+    expect(box.asked.map((a) => a.text)).toEqual(["# x"]);
+  });
+
+  it("a container that will not start is RENDER_UNAVAILABLE with its message in the reason: nothing thrown, pandoc never asked", async () => {
+    const box = fakeContainer(undefined, { fail: "no container instance available" });
+    const obj = new Renderer({ container: box.c } as never, {} as never);
+    const reason = "the Renderer's container did not start: no container instance available";
+    expect(await obj.render({ markdown: "# x", to: "docx" })).toEqual({ ok: false, code: "RENDER_UNAVAILABLE", reason });
+    expect(await obj.toMarkdown({ from: "docx", to: "markdown", base64: DOCX })).toEqual({ ok: false, code: "RENDER_UNAVAILABLE", reason });
+    expect(box.timeouts).toEqual([]);
+    expect(box.ports).toEqual([]);
+    expect(box.asked).toEqual([]);
   });
 });

@@ -6,7 +6,7 @@
 //   shares     Sam's live shares through `/app/shares`; cards and links from the chat's history as the page draws it;
 //   answers    the share link's public answer, asked with no session at all (`/hooks/share/<id>.<sig>`).
 // A trial begins with Sam's Library emptied through `/app/file/delete` (which ends every share of a file), then the task's
-// setup: T-P11-17's memo seeded by the `p11` op at the path its grader reads, the slot having no Renderer (D-0030, proposed). The `approve` event
+// setup: T-P11-17's memo seeded by the `p11` op at the path its grader reads, the slot having no Renderer (D-0031, proposed). The `approve` event
 // (P11 only) decides the chat's pending card `once` through the page's route, with the counts taken either side of it.
 // A reading the tier-2 tasks never make (the R2 pointers, the journal, the renders, the egress) throws by name: the
 // slot answers it nowhere, so it is never given as empty.

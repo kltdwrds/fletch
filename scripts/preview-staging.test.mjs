@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { down, gc, loadLease, up } from './preview.mjs';
 import { fakeAccount, fakeSlot, fakeSlotsFetch } from './preview-fakes.mjs';
-import { leaseLabel, SECRETS, sha256Hex, slotPlan, stagingSlots } from './preview-plan.mjs';
+import { leaseLabel, RENDERER_BINDING, RENDERER_CONTAINER, SECRETS, sha256Hex, slotPlan, stagingSlots } from './preview-plan.mjs';
 import { loadInventory, provision, saveInventory } from './preview-pool.mjs';
 import { convert, deployStaging, LEASE_CODE_READS, LEASE_CODE_WAIT_MS, stagingSlot, unstage } from './preview-staging.mjs';
 
@@ -240,6 +240,31 @@ describe('staging: the deploy on merge', () => {
     assert.equal(made.filter((c) => c.startsWith('deploy')).length, 1);
     assert.deepEqual(acct.deployed.at(-1).name, 'fletch-pv-1');
     assert.equal(acct.deployed.at(-1).config.vars.PREVIEW_SERVING, 'app');
+    assert.equal(acct.deployed.at(-1).config.containers, undefined, 'no container without --render');
+    assert.ok(!made.includes('containers list'), 'no pre-flight without --render');
+  });
+
+  it('[F56] with --render checks the credential reaches containers, then deploys the Renderer beside the lease (D-0031)', async () => {
+    await heldByMergedBranch();
+    await convert(main());
+    const calls = acct.calls.length;
+    await deployStaging(main({ mode: 'token' }), { render: true });
+    const made = acct.calls.slice(calls);
+    const listed = made.indexOf('containers list');
+    assert.ok(listed >= 0 && listed < made.findIndex((c) => c.startsWith('deploy')), made.join('\n'));
+    const { config } = acct.deployed.at(-1);
+    assert.deepEqual(config.containers, [RENDERER_CONTAINER]);
+    assert.deepEqual(config.durable_objects.bindings.slice(-2), [RENDERER_BINDING, { name: 'PREVIEW_LEASE', class_name: 'PreviewLease' }]);
+    assert.ok(intact());
+  });
+
+  it('[F56] with --render refuses PREVIEW_RENDER_TOKEN before any deploy when the credential cannot reach containers', async () => {
+    await heldByMergedBranch();
+    await convert(main());
+    const before = acct.deployed.length;
+    acct.fail.push('containers list');
+    await rejectsWith(deployStaging(main({ mode: 'token' }), { render: true }), 'PREVIEW_RENDER_TOKEN');
+    assert.equal(acct.deployed.length, before, 'the slot keeps serving the main it had');
   });
 
   it('takes a detached HEAD at origin/main (a worktree or cloud session), and refuses one at any other commit or unfetched', async () => {

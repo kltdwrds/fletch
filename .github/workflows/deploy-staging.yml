@@ -39,11 +39,14 @@ jobs:
           CHECK_FILE_SIZES_BASE: ${{ github.event.before != '0000000000000000000000000000000000000000' && github.event.before || '' }}
         run: pnpm check
       # The scoped token deploys only the slot Workers (D-0008). The command reads the slot's public lease and deploys
-      # only when it says staging; any failure fails the job, and it never falls back to another slot.
-      - name: Deploy main to the staging slot (pnpm preview staging deploy)
+      # only when it says staging; any failure fails the job, and it never falls back to another slot. --render adds the
+      # Renderer's pandoc container (D-0031), which needs Account > Workers Containers > Write on fletch-staging-deploy;
+      # until the token has it the step refuses with PREVIEW_RENDER_TOKEN before any upload, so the slot keeps serving
+      # the previous main.
+      - name: Deploy main to the staging slot (pnpm preview staging deploy --render)
         env:
           FLETCH_PREVIEW_AUTH: token
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           FLETCH_PREVIEW_SUBDOMAIN: ${{ secrets.FLETCH_PREVIEW_SUBDOMAIN }}
-        run: pnpm preview staging deploy
+        run: pnpm preview staging deploy --render

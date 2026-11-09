@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { selfHost } from './self-host.mjs';
 import { NAME_RE, parseSelfHostArgs, SELF_HOST_CONFIG, SELF_HOST_VAR_KEYS, secretsToMint, selfHostConfig, selfHostEnv, setupLink } from './self-host-plan.mjs';
 import { fakeAccount } from './preview-fakes.mjs';
+import { RENDERER_BINDING, RENDERER_CONTAINER } from './preview-plan.mjs';
 
 // `pnpm self-host` (scripts/self-host.mjs, scripts/self-host-plan.mjs): the arguments and their refusals, the deploy's
 // config from the agent's real base config, and whole runs against a fake account answering wrangler's calls
@@ -26,15 +27,16 @@ const args = (...extra) => ['--name', 'sam', '--owner-email', EMAIL, ...extra];
 const refusal = (argv) => parseSelfHostArgs(argv).refusal?.code;
 
 describe('self-host: arguments', () => {
-  it('reads the name, the owner, the account, --paid and the model vars', () => {
-    assert.deepEqual(parseSelfHostArgs(args('--account-id', ACCT, '--paid', '--var', 'AI_GATEWAY_ID=gw', '--var', 'CHAT_PROVIDER=meta')), {
+  it('reads the name, the owner, the account, --paid, --render and the model vars', () => {
+    assert.deepEqual(parseSelfHostArgs(args('--account-id', ACCT, '--paid', '--render', '--var', 'AI_GATEWAY_ID=gw', '--var', 'CHAT_PROVIDER=meta')), {
       name: 'sam',
       ownerEmail: EMAIL,
       accountId: ACCT,
       paid: true,
+      render: true,
       vars: { AI_GATEWAY_ID: 'gw', CHAT_PROVIDER: 'meta' },
     });
-    assert.deepEqual(parseSelfHostArgs(args()), { name: 'sam', ownerEmail: EMAIL, accountId: undefined, paid: false, vars: {} });
+    assert.deepEqual(parseSelfHostArgs(args()), { name: 'sam', ownerEmail: EMAIL, accountId: undefined, paid: false, render: false, vars: {} });
   });
 
   it('refuses a name that is not a tenant id, by name', () => {
@@ -142,12 +144,16 @@ describe('self-host: the deploy config', () => {
     assert.ok(!JSON.stringify(c).includes('LOADER') && !JSON.stringify(c).includes('IMAGES'));
   });
 
-  it('[F56] adds no Renderer binding or container, even with --paid, until D-0030 is accepted', () => {
+  it('[F56] adds the Renderer binding and its container exactly with --render, and --paid alone carries neither (D-0031)', () => {
+    const render = selfHostConfig(BASE, { ...opts, render: true });
+    assert.deepEqual(render.containers, [RENDERER_CONTAINER]);
+    assert.deepEqual(render.durable_objects.bindings, [...BASE.durable_objects.bindings, RENDERER_BINDING]);
+    assert.equal(render.worker_loaders, undefined, '--render is not --paid');
     const paid = selfHostConfig(BASE, { ...opts, paid: true });
     assert.equal(paid.containers, undefined);
     assert.deepEqual(paid.durable_objects, BASE.durable_objects);
-    assert.equal(c.containers, undefined);
     assert.ok(!JSON.stringify(paid).includes('RENDERER'));
+    assert.equal(c.containers, undefined);
   });
 
   it("names no key outside the agent's config but its name, account and workers.dev, and none of the base's resources", () => {

@@ -46,14 +46,20 @@ Rulings the orchestrator took for Kyle under Kyle's one-hour ruling of 2026-11-0
 
 ## Open
 
-- [ ] 2026-11-09 decide: **D-0030 (proposed): the renderer's pandoc container runs on a paid deploy, and the preview pool's token
-  needs the Containers scope for tier 2.** F56 (PR #150, draft) wires `render` into the single-account host from a `RENDERER`
-  binding and refuses `HOST_RENDER_UNAVAILABLE` without it; the container is a spend on your account, so `RENDERER_ON_PAID`
-  stays `false` until you accept D-0030. `pnpm preview up --paid` was refused by the slots token (`Forbidden` on the
-  containers API), so "Make me an artifact: about you" never ran. What your answer changes: accept flips the flag and its
-  test; the token gets the Containers scope by `pnpm preview token` on your Mac after the policy gains it. Recommended:
-  accept, and widen the token once. The record sits on PR #150's branch until it merges.
-  [PR #150](https://github.com/kltdwrds/fletch/pull/150).
+- [ ] 2026-11-09 do: **one click for artifacts on staging: add Account › Workers Containers › Write to the token
+  `fletch-staging-deploy`, then re-run deploy-staging.** Main deploys staging with `pnpm preview staging deploy --render`
+  (D-0031, proposed: the renderer's pandoc container on its own flag, not `--paid`). The token holds Individual Workers
+  Editor on `fletch-pv-1` alone, and the containers API answers 403 to it, so every run of the workflow fails at
+  `PREVIEW_RENDER_TOKEN` before any upload (the slot keeps the main it has) until the permission is there. Dashboard:
+  Manage Account › Account API Tokens › `fletch-staging-deploy` › Edit › add permission Account › Workers Containers ›
+  Write (account-wide: containers have no per-application scope, so the token then reaches the qyvr sandboxes' container
+  applications too). Then `gh workflow run deploy-staging.yml --ref main`, or merge anything. Do not re-run
+  `pnpm preview staging secrets` afterwards: it mints the Editor group alone and would drop the permission (D-0031's
+  Consequences). What your answer changes: nothing in the code; only whether staging renders. Recommended: do it, and
+  accept D-0031 in your own commit (D-0030 is superseded by it; `RENDERER_ON_PAID` is gone). After the green run,
+  type "Make me an artifact: about you" on https://fletch-pv-1.edwards-ky1.workers.dev and open the document in the
+  Library; `/health` on the slot says `render: true` once the host binds the container.
+  [D-0031](../decisions/0031-renderer-container-on-its-own-flag.md); [the runbook's Staging section](../runbooks/preview.md#staging-slot-1-main-on-every-merge).
 
 - [ ] 2026-11-09 question: **Q51 (F90) and Q51 (F56) collide, and Q60 (F60) sits far from its neighbours: the branches
   numbered their questions apart.** F90's Q51 (T-P10-01 and T-P10-02 differ from their contract blocks; three tier-1 runs

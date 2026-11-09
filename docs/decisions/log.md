@@ -78,3 +78,8 @@ Entries from before November 2026 are in `log-2026-10.md` (moved whole on 2026-1
   contract's `SHARE_EXPIRED`, a grader refined before any run; the contract's end_state and Build note 10 wait on Q62.
 - 2026-11-09 (F73, Kyle's ruling of 2026-11-08): T-P13-14 runs from a cloud session, not Kyle's Mac; the voice note rides the next prompt. Rejected: waiting for the Mac.
 - 2026-11-09 (triage B.8, PR #184): T-P15-07's collateral gains `message:c1:7:agent`, code's F59 host sentence said on the card path when the second fill is refused for its host (`chat/approvals.ts`), and its hash is refilled; the sentence is right there (it names the host, never the value), so the count moved, not the words.
+- 2026-11-09 The renderer's container gets its own deploy flag, `--render` (D-0031, proposed, superseding D-0030's
+  `--paid` ride-along), and `deploy-staging.yml` carries it: staging never deployed with `--paid`, and Code Mode and
+  Images are unmeasured on that account. One `lite` instance, `max_instances: 1`, a five-minute inactivity timeout set
+  by the object, a `render` boolean on `/health`. Rejected: flipping `RENDERER_ON_PAID` (Kyle's acceptance of D-0030,
+  not the agent's) and deploying staging with `--paid`.

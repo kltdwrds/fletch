@@ -310,6 +310,22 @@ describe('up --var', () => {
   });
 });
 
+describe('up --render', () => {
+  it('[F56] refuses PREVIEW_RENDER_TOKEN before it leases or deploys anything when the credential cannot reach containers', async () => {
+    assert.deepEqual(parseFlags(['--render', '--paid']).flags, { render: true, paid: true });
+    const a = worktree('a');
+    const before = acct.deployed.length;
+    acct.fail.push('containers list');
+    await assert.rejects(up(a, { render: true }), (e) => e.code === 'PREVIEW_RENDER_TOKEN');
+    assert.equal(acct.deployed.length, before);
+    assert.equal(loadLease(a), null);
+    acct.fail.length = 0;
+    await up(a, { render: true });
+    assert.equal(acct.deployed.at(-1).config.containers.length, 1);
+    assert.equal(acct.deployed.at(-2).config.containers, undefined, 'never on the placeholder');
+  });
+});
+
 describe('doctor', () => {
   it('tokenChecks sends the token on stdin, never on the command line', () => {
     const seen = [];

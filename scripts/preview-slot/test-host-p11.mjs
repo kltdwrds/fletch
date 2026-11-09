@@ -7,7 +7,7 @@
 //   agent's words. A `send_to_user` call is the agent's words to the owner (the history draws it so, `chat/history.ts`),
 //   never a send to anyone else, so it is an `agent` entry, and its own result is left out.
 // - The seed. One `.docx` under `documents/p11-` written into the person's Library as the task's setup names it
-//   (T-P11-17), since the slot has no Renderer (D-0030 proposed); nothing else can be written through the op.
+//   (T-P11-17), since the slot has no Renderer (D-0031 proposed); nothing else can be written through the op.
 // Everything else (the Library, the shares, the public path) the runner reads through the app's own routes.
 
 /** The only paths the seed writes: a P11 probe document. */

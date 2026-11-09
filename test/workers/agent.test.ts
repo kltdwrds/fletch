@@ -17,14 +17,14 @@ describe("[M0.1] agent script", () => {
   it("/health names the seven object classes from AD-1, and no deploy commit where none was set", async () => {
     const res = await call("/health");
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true, tenant: "solo-sam", objects: [...AD1_OBJECTS], deploy: null });
+    expect(await res.json()).toEqual({ ok: true, tenant: "solo-sam", objects: [...AD1_OBJECTS], deploy: null, render: false });
   });
 
   it("/health names the commit the deploy was made from (DEPLOY_COMMIT), so a live check ties to a tree", async () => {
     const commit = "0123456789abcdef0123456789abcdef01234567";
     const res = await worker.fetch(new Request("https://solo-sam.example/health") as Request<unknown, IncomingRequestCfProperties>, { ...env, DEPLOY_COMMIT: commit } as Env, {} as ExecutionContext);
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true, tenant: "solo-sam", objects: [...AD1_OBJECTS], deploy: commit });
+    expect(await res.json()).toEqual({ ok: true, tenant: "solo-sam", objects: [...AD1_OBJECTS], deploy: commit, render: false });
   });
 
   it("exports each object class; those no part has built yet answer NOT_IMPLEMENTED with their name", async () => {

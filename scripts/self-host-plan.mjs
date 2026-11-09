@@ -19,21 +19,23 @@ export const SELF_HOST_CONFIG = 'wrangler.self-host.jsonc';
 /** Every variable wrangler would take a credential or an account from instead of the owner's login (and its legacy CF_ names). */
 const CREDENTIAL_VARS = ['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_API_KEY', 'CLOUDFLARE_EMAIL', 'CLOUDFLARE_ACCOUNT_ID', 'CF_API_TOKEN', 'CF_API_KEY', 'CF_EMAIL', 'CF_ACCOUNT_ID', 'CLAUDE_CODE_OAUTH_TOKEN'];
 
-export const USAGE = 'usage: pnpm self-host --name <name> --owner-email <email> [--account-id <32 hex>] [--paid] [--var AI_GATEWAY_ID=<id>] [--var CHAT_PROVIDER=meta]';
+export const USAGE = 'usage: pnpm self-host --name <name> --owner-email <email> [--account-id <32 hex>] [--paid] [--render] [--var AI_GATEWAY_ID=<id>] [--var CHAT_PROVIDER=meta]';
 
 const refuse = (code, reason) => ({ refusal: { code, reason } });
 
 /**
- * The command line as `{ name, ownerEmail, accountId, paid, vars }`, or `{ refusal: { code, reason } }` for the first
+ * The command line as `{ name, ownerEmail, accountId, paid, render, vars }`, or `{ refusal: { code, reason } }` for the first
  * thing wrong with it. Nothing here reaches wrangler or the account.
  */
 export function parseSelfHostArgs(argv) {
   const values = {};
   const pairs = [];
   let paid = false;
+  let render = false;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--paid') paid = true;
+    else if (a === '--render') render = true;
     else if (['--name', '--owner-email', '--account-id', '--var'].includes(a)) {
       const v = argv[++i];
       if (v === undefined || v.startsWith('--')) return refuse('SELF_HOST_ARG_UNKNOWN', `${a} needs a value; ${USAGE}`);
@@ -57,7 +59,7 @@ export function parseSelfHostArgs(argv) {
   }
   const invalid = modelVarsProblem(vars);
   if (invalid) return refuse('SELF_HOST_VAR_INVALID', invalid);
-  return { name, ownerEmail, accountId, paid, vars };
+  return { name, ownerEmail, accountId, paid, render, vars };
 }
 
 /**
@@ -76,10 +78,10 @@ function modelVarsProblem(vars) {
 /**
  * The deploy's config from the agent's raw base config: the agent from this checkout (`main` is relative to
  * packages/agent/, where the config is written) as Worker `name`, on its own bucket `<name>-agent` and index
- * `<name>-memory`, its own tenant and owner, the model vars given, the account when one was named, and the paid-plan
- * bindings only with `paid` (D-0021).
+ * `<name>-memory`, its own tenant and owner, the model vars given, the account when one was named, the paid-plan
+ * bindings only with `paid` (D-0021), and the Renderer's binding and pandoc container only with `render` (D-0031).
  */
-export function selfHostConfig(base, { name, accountId, ownerEmail, paid = false, vars = {} }) {
+export function selfHostConfig(base, { name, accountId, ownerEmail, paid = false, render = false, vars = {} }) {
   const strange = Object.keys(vars).filter((k) => !SELF_HOST_VAR_KEYS.includes(k));
   if (strange.length > 0) throw new Error(`self-host: --var takes only ${SELF_HOST_VAR_KEYS.join(', ')}; not ${strange.join(', ')}`);
   const config = deployConfig(base, {
@@ -88,6 +90,7 @@ export function selfHostConfig(base, { name, accountId, ownerEmail, paid = false
     vectorize: { MEMORY_INDEX: `${name}-memory` },
     vars: { TENANT_ID: name, TENANT_SHAPE: 'standalone', QYVR_ENV: 'self-host', OWNER_EMAIL: ownerEmail, ...vars },
     paid,
+    render,
     label: 'self-host',
     what: 'a self-host deploy',
   });
