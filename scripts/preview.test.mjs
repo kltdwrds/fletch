@@ -17,6 +17,8 @@ const { experimental_readRawConfig } = createRequire(path.join(REPO, 'package.js
 const readRaw = () => experimental_readRawConfig({ config: path.join(REPO, 'packages', 'agent', 'wrangler.jsonc') }).rawConfig;
 const SUB = 'example-sub';
 const ACCT = 'a'.repeat(32);
+/** The head commit every test worktree sits at: what `up` writes into the slot's DEPLOY_COMMIT. */
+const HEAD = 'c'.repeat(40);
 
 let repo;
 let acct;
@@ -39,6 +41,7 @@ function worktree(name, extra = {}) {
     dir: path.join(repo, 'git-common', 'fletch-previews'),
     branch: `claude/${name}`,
     owner: `test ${name}`,
+    headCommit: () => HEAD,
     run: acct.run,
     drain: acct.drain,
     mergedHashes: () => merged,
@@ -154,6 +157,7 @@ describe('a lease', () => {
     assert.deepEqual(deploys().slice(-2), ['fletch-pv-1 placeholder', 'fletch-pv-1 app']);
     const app = acct.deployed.at(-1).config;
     assert.equal(app.vars.TENANT_ID, 'fletch-pv-1');
+    assert.equal(app.vars.DEPLOY_COMMIT, HEAD, 'the deploy names the head commit it was made from, for /health');
     assert.equal(slots.get('fletch-pv-1').vars.PREVIEW_SERVING, 'app');
     assert.equal((await lease(a, 1)).branchHash, sha256Hex('claude/a'));
   });

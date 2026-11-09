@@ -60,9 +60,9 @@ describe("[M1.2] chat surface", () => {
     expect(admit(ada.email, null)).toBe("CHAT_UNCLAIMED");
   });
 
-  it("every route but /health needs the dispatcher's person, for this script's tenant", async () => {
+  it("every route needs the dispatcher's person, for this script's tenant (/health is answered before route runs: serve.ts, agent.test.ts)", async () => {
     const w = world();
-    expect((await w.call("/health")).status).toBe(200);
+    expect([(await w.call("/health")).status, await (await w.call("/health")).json()]).toEqual([401, { code: "NO_SESSION" }]);
     for (const [path, init] of [["/", {}], ["/chats", { method: "POST" }], ["/ledger/calls", {}]] as const) {
       const res = await w.call(path, undefined, init);
       expect([path, res.status, await res.json()]).toEqual([path, 401, { code: "NO_SESSION" }]);

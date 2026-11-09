@@ -146,11 +146,12 @@ export function deployConfig(raw, { name, r2, vectorize, vars = {}, paid = false
  * tenant (the slot's name) and the fixture owner, on workers.dev, with the lease's Durable Object beside the agent's.
  * The placeholder runs the slot's ops alone: the agent's classes are `deleted` tombstones, which delete every object
  * and its storage (idempotent, and harmless for a class never made: verified 2026-10-22), so a release wipes the
- * agent's state. `deploy` is a random id the slot echoes, so a deploy is known live; `paid` adds the paid-plan bindings
+ * agent's state. `deploy` is a random id the slot echoes, so a deploy is known live; `commit` is the head commit it was
+ * made from, which the agent's `/health` names as `deploy`, so a live check ties to a tree; `paid` adds the paid-plan bindings
  * as `pnpm self-host --paid` does (D-0021); `vars` are the model vars of `SLOT_VAR_KEYS` (`pnpm preview up --var K=V`),
  * laid over the base config's own, so a slot can run its chat on another model than the default.
  */
-export function slotConfig(raw, plan, { accountId, placeholder = false, deploy, paid = false, renderer = RENDERER_ON_PAID, vars = {} }) {
+export function slotConfig(raw, plan, { accountId, placeholder = false, deploy, commit, paid = false, renderer = RENDERER_ON_PAID, vars = {} }) {
   const strangeVars = Object.keys(vars).filter((k) => !SLOT_VAR_KEYS.includes(k));
   if (strangeVars.length > 0) throw new Error(`preview: --var takes only ${SLOT_VAR_KEYS.join(', ')}; not ${strangeVars.join(', ')}`);
   const agentClasses = Object.entries(raw.exports ?? {}).filter(([, e]) => e.type === 'durable-object').map(([c]) => c);
@@ -160,7 +161,7 @@ export function slotConfig(raw, plan, { accountId, placeholder = false, deploy, 
     name: plan.worker,
     r2: plan.r2,
     vectorize: plan.vectorize,
-    vars: { ...vars, TENANT_ID: plan.name, OWNER_EMAIL: SLOT_OWNER, PREVIEW_SERVING: placeholder ? 'placeholder' : 'app', PREVIEW_DEPLOY: deploy },
+    vars: { ...vars, TENANT_ID: plan.name, OWNER_EMAIL: SLOT_OWNER, PREVIEW_SERVING: placeholder ? 'placeholder' : 'app', PREVIEW_DEPLOY: deploy, DEPLOY_COMMIT: commit },
     paid: paid && !placeholder,
     renderer,
     label: 'preview',

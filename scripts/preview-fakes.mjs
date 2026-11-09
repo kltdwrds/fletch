@@ -46,7 +46,7 @@ export function fakeVectorize({ lag = 0 } = {}) {
 
 /** One slot: its stores, its lease object, the agent's Durable Object state, and what its Worker is serving. */
 export function fakeSlot(host, opts = {}) {
-  const s = { host, AGENT_BUCKET: fakeR2(), MEMORY_INDEX: fakeVectorize(opts), objects: new Map(), vars: { PREVIEW_SERVING: 'placeholder', PREVIEW_DEPLOY: null, TENANT_ID: null } };
+  const s = { host, AGENT_BUCKET: fakeR2(), MEMORY_INDEX: fakeVectorize(opts), objects: new Map(), vars: { PREVIEW_SERVING: 'placeholder', PREVIEW_DEPLOY: null, DEPLOY_COMMIT: null, TENANT_ID: null } };
   // The lease object runs the deploy the Worker serves; a test replaces `leaseCode` to keep it on an older one.
   s.leaseCode = () => s.vars.PREVIEW_DEPLOY;
   s.lease = memoryLease({ deploy: () => s.leaseCode() });
@@ -65,7 +65,7 @@ export function fakeSlotsFetch(slots, secretsOf, clock, { before } = {}) {
     const r = await ops(new Request(url, init), env, { lease: slot.lease, now: clock.now() });
     if (r) return r;
     if (env.PREVIEW_SERVING !== 'app') return new Response('This fletch preview slot is free.\n', { status: 503 });
-    if (u.pathname === '/health') return Response.json({ ok: true, tenant: env.TENANT_ID });
+    if (u.pathname === '/health') return Response.json({ ok: true, tenant: env.TENANT_ID, deploy: env.DEPLOY_COMMIT ?? null });
     return new Response('agent', { status: 200 });
   };
 }
@@ -109,7 +109,7 @@ export function fakeAccount({ subdomain, slotsByWorker }) {
       const slot = slotsByWorker.get(config.name);
       if (slot) {
         if (Object.values(config.exports).some((e) => e.state === 'deleted')) slot.objects.clear();
-        Object.assign(slot.vars, { PREVIEW_SERVING: config.vars.PREVIEW_SERVING, PREVIEW_DEPLOY: config.vars.PREVIEW_DEPLOY, TENANT_ID: config.vars.TENANT_ID });
+        Object.assign(slot.vars, { PREVIEW_SERVING: config.vars.PREVIEW_SERVING, PREVIEW_DEPLOY: config.vars.PREVIEW_DEPLOY, DEPLOY_COMMIT: config.vars.DEPLOY_COMMIT ?? null, TENANT_ID: config.vars.TENANT_ID });
       }
       const out = opts.extraEnv?.WRANGLER_OUTPUT_FILE_PATH;
       const url = `https://${config.name}.${subdomain}.workers.dev`;

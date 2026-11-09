@@ -23,7 +23,8 @@ const json = (body: unknown, status = 200) => Response.json(body, { status });
 export async function serve(request: Request, env: Env, props: DispatchProps | null, deps: ServeDeps): Promise<Response> {
   const url = new URL(request.url);
   if (url.pathname === "/health" && request.method === "GET") {
-    return json({ ok: true, tenant: env.TENANT_ID, objects: OBJECT_CLASSES });
+    // `deploy` is the commit the deploy was made from (DEPLOY_COMMIT, set by `pnpm preview`), so a live check ties to a tree; null where nothing set it.
+    return json({ ok: true, tenant: env.TENANT_ID, objects: OBJECT_CLASSES, deploy: env.DEPLOY_COMMIT ?? null });
   }
   // The script serves only its own tenant: props that name another are a platform fault.
   if (!props || props.tenant !== env.TENANT_ID) return json({ code: "TENANT_MISMATCH" }, 403);

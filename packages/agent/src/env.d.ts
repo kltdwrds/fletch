@@ -7,6 +7,8 @@ interface Env {
   MASTER_KEY?: string;
   /** The token in the `/login?setup=` link that creates the first passkey: a Worker secret, never config. */
   SETUP_TOKEN?: string;
+  /** The commit the deploy was made from, echoed by `/health`; `pnpm preview` sets it, a deploy without it answers null. */
+  DEPLOY_COMMIT?: string;
   /** Code Mode's Worker Loader (M25.5). */
   LOADER?: WorkerLoader;
   /** Cloudflare Images (M24.4): HEIC to JPEG. */

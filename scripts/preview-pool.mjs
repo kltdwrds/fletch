@@ -138,15 +138,17 @@ export function deployWith(run, cwd, config) {
 }
 
 /**
- * Deploys slot `n`'s Worker: the placeholder (which wipes the agent's objects) or the agent. Returns the Worker's tag
+ * Deploys slot `n`'s Worker: the placeholder (which wipes the agent's objects) or the agent, naming the head commit it
+ * is made from (`DEPLOY_COMMIT`, which the agent's `/health` echoes). Returns the Worker's tag
  * (the id a token policy names it by, from wrangler's output file; none on the deploy that makes the Worker), the
  * deploy's id, which the slot echoes once it serves this deploy, and the workers.dev subdomain wrangler printed.
  */
 export function deploySlot(ctx, inv, n, { placeholder = false, paid = false, vars = {} } = {}) {
   const plan = slotPlan(n);
   const deploy = randomBytes(8).toString('hex');
+  const commit = ctx.headCommit();
   const dir = agentDir(ctx.root);
-  ctx.write(path.join(dir, CONFIG), configText(slotConfig(ctx.readRaw(path.join(dir, 'wrangler.jsonc')), plan, { accountId: inv.accountId, placeholder, deploy, paid, vars })));
+  ctx.write(path.join(dir, CONFIG), configText(slotConfig(ctx.readRaw(path.join(dir, 'wrangler.jsonc')), plan, { accountId: inv.accountId, placeholder, deploy, commit, paid, vars })));
   ctx.log(`preview: deploying ${plan.worker} (${placeholder ? 'placeholder' : 'this worktree'})`);
   const r = deployWith(ctx.run, dir, CONFIG);
   account(ctx.run).ok(r, `deploying ${plan.worker}`);
