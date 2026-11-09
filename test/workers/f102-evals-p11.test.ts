@@ -132,6 +132,13 @@ describe("[F102] P11 on a slot: the reply's words, the readers, the resets and t
     expect(FILE_WORDS).toContain("its earlier content was not kept");
     // F103 (D-0028 proposed): a store that keeps versions answers "kept as version n", and the line names that too.
     expect(FILE_WORDS).toContain("kept as version n");
+    // Planted: the edit line's Example says the outcome the store returns. F103's store keeps a version on every
+    // replacement, so file_write always answers "kept as version n"; an Example that says "was not kept" coaches the
+    // model toward words the tool never returns (T-P11-16 fails a reply that says "not kept" over a kept version).
+    const editLine = FILE_WORDS.split("\n").find((l) => l.startsWith("To change a file")) as string;
+    const example = editLine.slice(editLine.indexOf('Example: "'));
+    expect(example).toContain("was kept as version 1");
+    expect(example).not.toContain("was not kept");
   });
 
   it("every P11 version_hash in the contract is its file's hash; a stale one is named", () => {
