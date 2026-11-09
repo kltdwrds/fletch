@@ -12,6 +12,7 @@ import type { ImageConverter } from "./caps.ts";
 import { imagesConverter } from "./images.ts";
 import { available, hostOf } from "../host.ts";
 import type { MarkdownResult } from "../render/reverse.ts";
+import { type SpeechEnv, speechOf } from "../speech/speech.ts";
 import type { AttachmentBucket, AttachmentDeps } from "./store.ts";
 
 /** The one converter a tenant script has: its own Images binding; without it, HEIC is refused in words (`toJpeg`). */
@@ -46,5 +47,7 @@ export function attachmentDeps(env: Env, storage: DurableObjectStorage, person: 
     describe: describeForModel,
     convert: converterFor(env),
     now: () => Date.now(),
+    // Null until F71 (and on a deploy with no AI binding or SPEECH off): a voice note is kept untranscribed, its audio not kept.
+    speech: speechOf(env as unknown as SpeechEnv),
   };
 }

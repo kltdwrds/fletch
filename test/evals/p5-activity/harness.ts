@@ -28,7 +28,7 @@ import type { JobDefinition } from "../../../packages/agent/src/jobs/body.ts";
 import { chargeMicros } from "../../../packages/agent/src/ledger/budget.ts";
 import type { PersonDashboardDeps } from "../../../packages/agent/src/obs/dashboard.ts";
 import people from "../../fixtures/people.json" with { type: "json" };
-import type { FillApi } from "../../../packages/agent/src/browse/tools.ts";
+import type { FillApi, LoginsApi } from "../../../packages/agent/src/browse/tools.ts";
 import { FakeBrowser, type FakeSite } from "../../support/browser/fake-browser.ts";
 import type { FakeRequest, FakeStep } from "../../support/fake-model.ts";
 import { ObjectHarness } from "../../support/object-harness.ts";
@@ -81,6 +81,8 @@ export interface P5HarnessOptions {
   sites?: Record<string, FakeSite>;
   /** The Vault's fill and scrub for the browse namespace, as `objects/chat.ts` wires them (F35). */
   fill?: (person: string) => FillApi;
+  /** The Vault's saved logins for the browse namespace, as `objects/chat.ts` wires them (P16's kept login, F80). */
+  logins?: (person: string) => LoginsApi;
 }
 
 export class P5Tier1World implements P5World {
@@ -103,7 +105,7 @@ export class P5Tier1World implements P5World {
       }
       return h.instance;
     };
-    const hook = { port: this.browser, memory: (person: string) => ({ get: async (d: string) => browseMemory(person).get(d), record: async (r: Parameters<PersonBrowse["record"]>[0]) => browseMemory(person).record(r) }), ...(o.fill ? { fill: o.fill } : {}) };
+    const hook = { port: this.browser, memory: (person: string) => ({ get: async (d: string) => browseMemory(person).get(d), record: async (r: Parameters<PersonBrowse["record"]>[0]) => browseMemory(person).record(r) }), ...(o.fill ? { fill: o.fill } : {}), ...(o.logins ? { logins: o.logins } : {}) };
     // A sub-agent's production reads are the Hacker News pair (`SUBAGENT_READS`); here, as F14's children read a
     // fixture, the child reads the probe page through the real `browse_open`, offered eager (a child has no
     // `tool_search`), its url table holding the address its brief carries as the chat's holds the one Sam typed.

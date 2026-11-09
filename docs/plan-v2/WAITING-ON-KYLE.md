@@ -25,6 +25,7 @@ Rulings the orchestrator took for Kyle under Kyle's one-hour ruling of 2026-11-0
 - F80 merged BLOCKED on the verifier's kept-login finding (the test world seeds no login for the shop host): `PROGRESS.md`, PR #152.
 - D-0028 (P11: Library versions and a trash), D-0029 (P10: search, places and images as owner-connected capabilities) and D-0030 (F56: the renderer's container on a paid deploy) are proposed, `decider: agent`, built on by nothing yet: `docs/decisions/`, PR #148, PR #150.
 - F56, F59, F70, F90 and F100 are built and BLOCKED at the run's stop, each a draft PR, each accept failed only on load timeouts (the machine ran seven suites at once) or, for F90, on three tier-1 runs not written; their accept runs were re-dispatched on the GitHub accept runner: `PROGRESS.md`, PRs #150, #147, #153, #156, #155.
+- F59 finished on its branch (PR #147): main merged, declared run 2 on tree 01755fb604cd (fletch-pv-2, Muse Spark) T-P9-15, T-P9-13 and T-P9-14 each 3 of 3, `ACCEPT F59: PASS` on that same tree (run 42541739616); T-P9-05's graders read by turn under the orchestrator's scope line (5) (Q48's precedent), so code's sentence may supply "not bound", "only you" and the host while `EGRESS_CRED_HOST_DENIED` stays the model's: `parts.md` (F59), `PROGRESS.md` (F59 row), `contracts/P9-connectors.md` (T-P9-05 hash).
 - Not taken, still yours: D-0011's own commit, the UAT looks, the Muse leftovers, the Muse sign-in, the tarball on your Mac.
 - Continuation after 00:30Z (the same ruling, the goal's bar not yet met: `ACCEPT F<n>: PASS` plus a clean verifier per part): F56 and F100 DONE on the runner's accept and a fresh verifier's `no blocking findings` (PRs #150, #155); F59's section amended in the open under Q48's precedent (scope line (5): T-P9-05's graders read by turn, the regression checks' variance reading, commit ebc3b24 on its branch); F90 split in the open into F90 (five tasks) and F93 (T-P10-07, 08, 14 with a per-chat browse hook), its Q51 renumbered Q52 (commit 48d5eca on its branch); fix-up builders dispatched for F70's two verifier findings (the three unplanted minefields, T-P13-04 as a browser test), F60's Q60 finding (a Chromium run at both widths) and F80's kept-login finding, each on its own branch and PR: `parts.md`, `PROGRESS.md`, `QUESTIONS.md`, the PRs' Reconcile lists.
 
@@ -47,7 +48,7 @@ Rulings the orchestrator took for Kyle under Kyle's one-hour ruling of 2026-11-0
 - [ ] 2026-11-09 look: **the one-hour run's five blocked parts, for the next session to finish, not for you.** F56, F59,
   F70, F90 and F100 each have a draft PR with a Reconcile section; their accept runs on the GitHub accept runner were
   dispatched at the run's end and their results land in the Actions tab; a fresh Opus verifier is owed on each passing
-  tree. F59 also waits on your read of T-P9-05's graders (moved to read by turn, beyond its scope) and T-P9-14 at 2 of 3.
+  tree. F59's two open reads are answered on its branch: T-P9-05 read by turn is scope line (5), and T-P9-14 is 3 of 3 on declared run 2.
   [PR #150](https://github.com/kltdwrds/fletch/pull/150), [#147](https://github.com/kltdwrds/fletch/pull/147),
   [#153](https://github.com/kltdwrds/fletch/pull/153), [#156](https://github.com/kltdwrds/fletch/pull/156),
   [#155](https://github.com/kltdwrds/fletch/pull/155).

@@ -11,4 +11,6 @@ interface Env {
   LOADER?: WorkerLoader;
   /** Cloudflare Images (M24.4): HEIC to JPEG. */
   IMAGES?: ImagesBinding;
+  /** The document renderer's pandoc container (F56), reached through the host (`hostOf(env).render`). */
+  RENDERER?: DurableObjectNamespace;
 }

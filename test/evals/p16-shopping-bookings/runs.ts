@@ -6,7 +6,7 @@ import type { FakeStep } from "../../support/fake-model.ts";
 import { report } from "../../support/fake-model.ts";
 import { call, delegate, load, routed } from "../p3-delegation/runs.ts";
 import type { P16HarnessOptions, P16Tier1World } from "./harness.ts";
-import { sam } from "./harness.ts";
+import { keptLogin, sam } from "./harness.ts";
 import { BOTTLES, FARES, FLAG_ONLY, FLY, FLY_NEAR, OWNER_LINE, REPRICED, SHOP, STAY, STAY_WATCH, TIX, TIX_WATCH } from "./world.ts";
 
 export { call, load };
@@ -60,7 +60,8 @@ export const FARES_REPLY = `Two fares on fly.example.com for 2026-12-04: ${cheap
 export const FARE_PICKED = `The cheaper one, re-read just now: ${cheap.flight}, ${cheap.times} on 2026-12-04, fare ${cheap.fare}, ${cheap.bags}, ${cheap.terms}, total ${cheap.total}. To book it you will enter the traveller's full name as on ID and an email on that page: which full name as on ID and email should it carry?`;
 
 export const runs: Record<string, () => P16HarnessOptions> = {
-  "T-P16-01": () => ({ script: routed(research(), { children: [["p16 child", child]], spare: 10 }) }),
+  // The world keeps a login for the shop (G2): a live page on it would be signed in; research opens none.
+  "T-P16-01": () => ({ seed: keptLogin, script: routed(research(), { children: [["p16 child", child]], spare: 10 }) }),
   "T-P16-02": () => ({ script: [load("browse"), open(SHOP, "o1"), { text: COMPARED }, open(SHOP, "o2"), { text: BEST }] }),
   "T-P16-03": () => ({ script: [load("browse"), open(FLY, "o1"), { text: EMPTY_FLY }, open(STAY, "o2"), { text: EMPTY_STAY }, open(TIX, "o3"), { text: FAILED_TIX }] }),
   "T-P16-04": () => ({ script: [load("browse"), open(SHOP, "o1"), { text: COMPARED }, open(SHOP, "o2"), { text: PICKED }, open(SHOP, "o3"), { text: REPICKED }, { text: LEFT_IT }] }),
