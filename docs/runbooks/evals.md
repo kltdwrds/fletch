@@ -109,3 +109,7 @@ tool lines and the production guard's answer for each (lines, calls and rows the
 draws the chat at a width and reads its name, panel and Identity card; `reload` reloads it and reads the replies from a
 fresh history; `settings` opens a route at a width, reloads it and reads the stored mode before and after; every
 request those pages made is kept by origin (`scripts/evals/p14-page.ts`).
+
+A P8 task (F61, `scripts/evals/p8-slot.ts`) needs no test host: each labelled chat is one the runner opened, and the
+grader reads Sam's app routes alone: the chat list (each chat's kind, and the chats there before the trial so one the
+turns opened is seen), the trial's tasks on `/app/activity` and each task's steps (one per tool call, its kind by code).

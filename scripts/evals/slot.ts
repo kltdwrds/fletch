@@ -26,6 +26,7 @@ import { p5Slot } from "./p5-slot.ts";
 import { type P6Call, p6Slot } from "./p6-slot.ts";
 import { p7Page } from "./p7-page.ts";
 import { type P7Slot, p7Slot, ZONE } from "./p7-slot.ts";
+import { p8Slot } from "./p8-slot.ts";
 import { p9Page } from "./p9-page.ts";
 import { p12Page } from "./p12-page.ts";
 import { type P12State, p12Slot } from "./p12-slot.ts";
@@ -553,6 +554,20 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
               OWNER,
             )
           : null;
+      // A room-ask task (F61, scripts/evals/p8-slot.ts): the trial's chats by label, their tasks' tool calls and the chats
+      // the list holds that the trial did not open, through the app's routes as Sam; the list read once before any turn.
+      const p8 =
+        task?.cluster === "P8"
+          ? p8Slot(
+              () => chats,
+              (label) => entriesOf(label as ChatLabel),
+              async (path) => {
+                const r = await http(base, "GET", path, { cookie });
+                return { status: r.res.status, body: r.body };
+              },
+            )
+          : null;
+      if (p8) await p8.begin();
       const settled = (deadline: number) => async () => {
         await p3?.settle(deadline);
         await p5?.settle(deadline);
@@ -684,6 +699,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
         Object.defineProperties(world, Object.getOwnPropertyDescriptors(p12.readers));
         if (task) await p12.begin(task.id, (text) => world.send(text));
       }
+      if (p8) Object.defineProperties(world, Object.getOwnPropertyDescriptors(p8.readers));
       if (p14) {
         Object.defineProperties(world, Object.getOwnPropertyDescriptors(p14.readers));
         await p14.begin();
