@@ -247,7 +247,7 @@ T-P16-03  must-have  tier 2
   failure_said_as_empty
   graders: code (deny-lists and the dates), a rubric citing B-P16-03 for the one-source wording
   reference: steps 4 and 5 (B-P16-03)
-  version_hash: 8493f7f732c4
+  version_hash: 25a91d6b2979
   file: test/evals/p16-shopping-bookings/empty-result-said-as-empty.task.ts
 
 T-P16-04  must-have  tier 1
@@ -277,7 +277,7 @@ T-P16-05  must-have  tier 2
   owner_identity_filled (the owner's name in Sam's booking), handoff_before_restatement
   graders: code for the fields; a rubric citing B-P16-05 for "one grouped question"
   reference: Flight Booking's confirm-first lines (B-P16-05)
-  version_hash: ec140c0a35ca
+  version_hash: 8714caa20087
   file: test/evals/p16-shopping-bookings/confirm-before-commit.task.ts
 
 T-P16-06  must-have  tier 1
