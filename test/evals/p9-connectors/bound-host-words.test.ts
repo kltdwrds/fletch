@@ -17,7 +17,7 @@ import { EffectBuffer } from "../../../packages/agent/src/chat/tools.ts";
 import { EgressRefusedError, hostRefusalWords } from "../../../packages/agent/src/connectors/egress.ts";
 import type { ToolSpec } from "../../../packages/agent/src/tools/registry.ts";
 import { CHAT_TASK, WORK_WORDS } from "../../../packages/agent/src/chat/instructions.ts";
-import { played } from "./harness.ts";
+import { asSam, exampleKey, played } from "./harness.ts";
 import { BOUND_REPLY, call, load, runs } from "./runs.ts";
 import unbound, { ASKS, CODE_WORDS } from "./unbound-host-real-model.task.ts";
 import type { P9World } from "./world.ts";
@@ -183,6 +183,20 @@ describe("[F59] the refused host's sentence is code's, before any card", () => {
     const before = await verdicts(modelOnly(w));
     expect(before[FIRST]).toBe(false);
     expect(Object.entries(before).find(([k]) => k.startsWith("the words are code's"))?.[1]).toBe(false);
+  });
+
+  it("the Vault names the key by the label Sam gave it on the form; without its lookup the reference's name stands in", async () => {
+    const o = runs["T-P9-15"]!();
+    const w = await played(unbound, { seed: async (x) => void (await x.vault().capture({ ...exampleKey(), label: "Example API" }, asSam())), script: o.script });
+    expect(w.replies("c1")[0]).toBe(TRIAL3_SECOND);
+    expect(w.replies("c1")).not.toContain(CODE);
+  });
+
+  it("planted: words beside the list call are commentary, never shown; code's sentence is still the first reply's", async () => {
+    const o = trial3();
+    const w = await played(unbound, { ...o, script: o.script.map((s, i) => (i === 3 ? { ...s, text: SLOT_WORDS } : s)) });
+    expect(w.replies("c1")).not.toContain(SLOT_WORDS);
+    expect(w.replies("c1").slice(0, 2)).toEqual([CODE, WAITING]);
   });
 
   it("a second keyed call refused in the same turn: one sentence per refusal", async () => {
