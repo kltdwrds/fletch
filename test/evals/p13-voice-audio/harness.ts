@@ -26,6 +26,7 @@ import { type AuthorityWorld, authorityWorld, person, T0, TENANT } from "../../w
 import { serve } from "../../../packages/agent/src/http/serve.ts";
 import { DEFAULT_SPEAKER, speechOf } from "../../../packages/agent/src/speech/speech.ts";
 import type { AttachmentRow, AudioItem, CardLine, P13World, ResultLine, ShareLine, SpeechCall, SpeechCue, SpeechRow, ToolLine, Upload } from "./world.ts";
+import { libraryAsDrawn, pickVoice } from "./harness-surfaces.ts";
 import { fakeSpeechAI, PROBE_FILE, probeNote, SPEECH_MODELS, silentMp3 } from "./world.ts";
 
 export const sam = person("sam-solo");
@@ -54,6 +55,8 @@ export interface P13HarnessOptions {
   script: FakeStep[];
   /** Replaces the sources a grader reads (`planted.test.ts`: a capture tool or route planted in the text). */
   plantSources?: (files: Array<{ file: string; text: string }>) => Array<{ file: string; text: string }>;
+  /** Rewrites the shipped page script the Library is drawn with (`planted-f72.test.ts`: the player taken out). */
+  plantPage?: (js: string) => string;
   /** The `dictate` turn: the shipped chat page in Chromium, its box filled with the text and sent (T-P13-04's browser test). */
   dictate?: (world: P13Tier1World, text: string) => Promise<void>;
   /**
@@ -139,10 +142,26 @@ export class P13Tier1World implements P13World {
     return this.ledgerRows("SELECT route, model, cost_micros FROM model_calls WHERE route = 'speech' AND status != 'refused' ORDER BY id").map((r) => ({ route: String(r.route), model: String(r.model), costMicros: Number(r.cost_micros) }));
   }
 
-  /** The codes `speak` refused with, in order, as the model read them. */
+  /** The codes `speak` and `episode_publish` refused with, in order, as the model read them. */
   refusals(): string[] {
-    return this.results().filter((r) => r.tool === "speak" && r.isError).map((r) => /\b(SPEECH_[A-Z_]+|MODEL_[A-Z_]+|BUDGET_[A-Z_]+)\b/.exec(r.text)?.[1] ?? "");
+    return this.results().filter((r) => (r.tool === "speak" || r.tool === "episode_publish") && r.isError).map((r) => /\b(SPEECH_[A-Z_]+|MODEL_[A-Z_]+|BUDGET_[A-Z_]+|PODCAST_[A-Z_]+|EPISODE_[A-Z_]+)\b/.exec(r.text)?.[1] ?? "");
   }
+
+  /** F72: the Library's Audio section as the shipped page draws it for Sam, each row with whether it holds a player. */
+  async library(): Promise<Array<{ id: string; player: boolean }>> {
+    return (await libraryAsDrawn(this, { desktop: true }, this.o.plantPage)).rows.map((r) => ({ id: r.id, player: r.player }));
+  }
+
+  /**
+   * F72: the route paths that would answer a podcast feed (a podcast or episode path, RSS or an XML document). The app's
+   * own Feed tab (`/feed`, the goals feed) and `/delivery/feedback` are pages of the signed-in app, not a podcast feed.
+   */
+  feedRoutes(): string[] {
+    return this.routes().filter((r) => /podcast|rss|\.xml\b|\/episodes?(\/|$)|\/feeds?\/[^/]*(audio|episode)/i.test(r));
+  }
+
+  /** F72: what Settings > Voice offered and said at each pick (`settings-voice` turns). */
+  readonly picks: Array<{ offered: string[]; note: string; code: string }> = [];
 
   /** The approval cards raised in Sam's chat: each one's action kind from its stored descriptor, its lines as drawn. */
   cards(): CardLine[] {
@@ -228,6 +247,9 @@ export class P13Tier1World implements P13World {
       if (!card) throw new Error("P13_NO_PENDING_CARD");
       await this.w.http(sam.email, "POST", `/chats/${this.chat}/cards/decide`, { ids: [card.id], choice: p.choice ?? "once" });
       await this.engine().settled();
+    } else if (turn.name === "settings-voice") {
+      // Sam picks a speaker in Settings > Voice on the shipped page; its request is the real `/app/speaker` route.
+      this.picks.push(await pickVoice(this, String(p.speaker ?? "")));
     } else if (turn.name === "read") {
       await this.w.say(sam.email, p.text ?? "p13 probe: what can you do with voice?", this.chat);
       await this.engine().settled();

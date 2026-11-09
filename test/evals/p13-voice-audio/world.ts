@@ -111,7 +111,7 @@ export interface P13World extends ScenarioWorld {
   cards?(): CardLine[];
   shares?(): ShareLine[];
   /** F72: the Library's Audio section as drawn, and the chat's audio items. */
-  library?(): Array<{ id: string; player: boolean }>;
+  library?(): Promise<Array<{ id: string; player: boolean }>>;
   /** F72: whether any route answers a feed. */
   feedRoutes?(): string[];
 }

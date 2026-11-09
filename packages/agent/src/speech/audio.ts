@@ -4,6 +4,7 @@
 // file. Removal marks the row and moves the object under the person's `trash/` prefix in one action, and restore brings
 // both back (B-P13-13); nothing about the file is held outside the deploy. The voice is one `speech_settings` row the
 // person's explicit ask writes, with its writer (B-P13-10, B-P13-15).
+import type { JournalRow } from "../grants/journal.ts";
 import type { PersonFiles } from "../files/store.ts";
 import { homeKey } from "../memory/home.ts";
 import { DEFAULT_SPEAKER, SPEAKERS } from "./speech.ts";
@@ -132,4 +133,16 @@ export class PersonAudio implements AudioApi {
     await this.bucket.delete(this.trashKey(r.path));
     return { ok: true, item: item(this.rows("id = ?", r.id)[0] as Row) };
   }
+}
+
+/**
+ * The person's own pick in Settings > Voice (F72, B-P13-10): the same `speech_settings` record the chat's `voice_set`
+ * writes, with writer `settings`, and one journal row naming the change and its writer. A speaker outside `SPEAKERS`
+ * is refused `VOICE_UNKNOWN` by the record and nothing is journaled.
+ */
+export async function settingsVoiceSet(audio: AudioApi, person: string, speaker: string, journal: (row: JournalRow) => Promise<unknown>, now: number): Promise<AudioResult> {
+  const r = await audio.call({ op: "voice-set", speaker: String(speaker ?? "").trim().toLowerCase(), writer: "settings" }, person);
+  if (!r.ok || !("speaker" in r)) return r;
+  await journal({ id: `voice:settings:${now}:${crypto.randomUUID()}`, at: now, actor: `person:${person}`, principal: person, actionKind: "speech.voice_set", subjectRef: `personal;resource:voice/${r.speaker}`, counterpart: "own-agent", origin: person, hops: 0, decision: "auto", grantId: null, outcome: "VOICE_SET", runId: `settings:${person}`, tokens: 0 });
+  return r;
 }

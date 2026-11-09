@@ -3,8 +3,9 @@
 // an oracle correction): the contract's task text and its Build note 10 read the revoke as an expiry set to now, so the link
 // would answer `SHARE_EXPIRED`; F101 shipped `share_revoke` as a delete of the share's row and pointer, so the revoked link
 // answers exactly as an unknown share (`SHARE_UNKNOWN`, 404, the same body). The graders read the shipped code. Clauses
-// B-P13-08 and B-P13-09 name no code ("can be revoked", "says when it ends"), so no clause changes; the contract's task line
-// is the orchestrator's to align (the PR's Reconcile).
+// B-P13-08 and B-P13-09 name no code ("can be revoked", "says when it ends"), so no clause changes; the contract's
+// end_state and Build note 10 are the orchestrator's to align, and whether a revoke should keep a row and answer
+// `SHARE_EXPIRED` instead is Kyle's (Q62 in docs/plan-v2/QUESTIONS.md).
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P13World } from "./world.ts";
 

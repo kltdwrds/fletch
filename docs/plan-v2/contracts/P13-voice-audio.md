@@ -265,7 +265,7 @@ T-P13-07  must-have  tier 1  (F71 the record and the agent's read; F72 the Libra
   minefields: loose_file (a file with no record), source_missing
   graders: code
   reference: Muse's gap (B-P13-07); fletch is stronger
-  version_hash: ed12c5e06783
+  version_hash: 884628c1bdea
   file: test/evals/p13-voice-audio/audio-is-a-findable-record.task.ts
 
 T-P13-08  must-have  tier 1  (F71)
@@ -303,7 +303,7 @@ T-P13-10  nice-to-have  tier 1  (F72)
   minefields: published_on_generation, feed_route, silent_refusal
   graders: code
   reference: `podcasts.episodes`, `publishing.md` (B-P13-11); the feed's refusal is D-0026's (delta 8)
-  version_hash: 386e34fdf2aa
+  version_hash: 1eb4bbe1227b
   file: test/evals/p13-voice-audio/podcast-episode-record-and-feed-refused.task.ts
 
 T-P13-11  nice-to-have  tier 1  (F70)
