@@ -29,9 +29,11 @@ import { type P7Slot, p7Slot, ZONE } from "./p7-slot.ts";
 import { p8Slot } from "./p8-slot.ts";
 import { p9Page } from "./p9-page.ts";
 import { type P9State, p9Slot } from "./p9-slot.ts";
+import { p11Slot } from "./p11-slot.ts";
 import { p12Page } from "./p12-page.ts";
 import { type P12State, p12Slot } from "./p12-slot.ts";
 import { p14Page } from "./p14-page.ts";
+import { onSlot, p10Slot } from "./p10-slot.ts";
 import { type P14State, p14Slot } from "./p14-slot.ts";
 import { p16Page } from "./p16-page.ts";
 import { type P16Op, p16Slot } from "./p16-slot.ts";
@@ -570,6 +572,19 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
               OWNER,
             )
           : null;
+      // A search, browser or media task (F91): chat c1's tool calls and results and Sam's files through the `p9` op's read,
+      // the browser's reads by address from the `state` op's log; Sam's files counted from the trial's start.
+      const p10 =
+        task?.cluster === "P10"
+          ? p10Slot(
+              () => replies,
+              async () => {
+                const r = (await testHostOp(base, lease, { op: "p9", person: OWNER, chat: chatId, call: "read" })) as { chat?: { messages?: string[] }; files?: string[] } | null;
+                if (!r) throw new InfraError("SLOT_MISSING", "this slot serves no test host; `pnpm preview up` deploys one");
+                return { messages: r.chat?.messages ?? [], files: r.files ?? [], reads: (state as TestHostState | null)?.log.reads ?? [] };
+              },
+            )
+          : null;
       // A room-ask task (F61, scripts/evals/p8-slot.ts): the trial's chats by label, their tasks' tool calls and the chats
       // the list holds that the trial did not open, through the app's routes as Sam; the list read once before any turn.
       const p8 =
@@ -584,6 +599,38 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
             )
           : null;
       if (p8) await p8.begin();
+      // A files task (F102, scripts/evals/p11-slot.ts): Sam's Library emptied and the task's setup made, then her files,
+      // shares and chat c1's entries read after each turn through the app's routes and the `p11` op; `approve` allows the
+      // pending card once through the page's route.
+      const p11 =
+        task?.cluster === "P11"
+          ? p11Slot({
+              read: async (path) => {
+                const r = await http(base, "GET", path, { cookie });
+                return { status: r.res.status, body: r.body };
+              },
+              post: async (path, body) => {
+                const r = await http(base, "POST", path, { cookie, body });
+                return { status: r.res.status, body: r.body };
+              },
+              publicGet: async (path) => {
+                const res = await fetch(base + path, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS), redirect: "manual" }).catch((e: Error) => e);
+                if (res instanceof Error) throw new InfraError("SLOT_UNREACHABLE", `GET ${path}: ${res.message}`);
+                return { status: res.status, text: await res.text() };
+              },
+              history: () => entriesOf(),
+              op: async (call, args = {}) => {
+                const r = await testHostOp(base, lease, { op: "p11", person: OWNER, call, chat: chatId, ...args });
+                if (!r) throw new InfraError("SLOT_MISSING", "this slot serves no test host; `pnpm preview up` deploys one");
+                return r;
+              },
+              decide: async (card, choice) => {
+                await decide(base, chatId, cookie, card, choice);
+                histories.set("c1", await history(base, chatId, cookie));
+              },
+            })
+          : null;
+      if (p11 && task) await p11.begin(task.id);
       const settled = (deadline: number) => async () => {
         await p3?.settle(deadline);
         await p5?.settle(deadline);
@@ -597,6 +644,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
         await p12?.refresh();
         await p16?.refresh();
         await p14?.refresh();
+        await p10?.refresh();
         await p6?.refresh(`prompt:${label}`);
         await p7?.refresh(turn.startsWith("prompt") ? "prompt" : turn);
       };
@@ -620,8 +668,10 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
           }
           prompted = true;
           const sent = Date.now();
-          const reply = await turn(base, chats.get(chat) as string, cookie, text, TURN_TIMEOUT_MS, p7 ? ZONE : "UTC");
+          const reply = await turn(base, chats.get(chat) as string, cookie, p10 ? onSlot(text, base) : text, TURN_TIMEOUT_MS, p7 ? ZONE : "UTC");
           replies.push(reply);
+          // F91: a P10 trial's reply is logged with its chat, so a failed trial's words are read from the run's log.
+          if (p10) log(`evals: ${task?.id ?? ""} reply in chat ${chats.get(chat)}: ${JSON.stringify(reply)}`);
           // A P5 request is over when its task is: the sub-agents it launched handed off and the turn they woke ended; a P3
           // one when nothing it started is out (F34). A `prompt` event with `wait` leaves its sub-agents running.
           if (!wait)
@@ -629,9 +679,15 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
               throw e instanceof InfraError ? e : new TurnError("TURN_TIMEOUT", e.message);
             });
           await after(chat);
+          await p11?.refresh("prompt");
           return reply;
         },
         async event(name, payload) {
+          // A P11 event (F102, scripts/evals/p11-slot.ts): the pending card approved once, the counts either side of it.
+          if (p11 && (await p11.event(name))) {
+            await after("c1", `event:${name}`);
+            return;
+          }
           // A P14 event (F41, scripts/evals/p14-slot.ts): the chat looked at or reloaded at a width, a settings route opened.
           if (p14 && (await p14.event(name, payload))) {
             await after("c1", `event:${name}`);
@@ -722,6 +778,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
         if (task) await p12.begin(task.id, (text) => world.send(text));
       }
       if (p8) Object.defineProperties(world, Object.getOwnPropertyDescriptors(p8.readers));
+      if (p11) Object.defineProperties(world, Object.getOwnPropertyDescriptors(p11.readers));
       if (p16) {
         Object.defineProperties(world, Object.getOwnPropertyDescriptors(p16.readers));
         await p16.begin();
@@ -729,6 +786,10 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
       if (p14) {
         Object.defineProperties(world, Object.getOwnPropertyDescriptors(p14.readers));
         await p14.begin();
+      }
+      if (p10) {
+        Object.defineProperties(world, Object.getOwnPropertyDescriptors(p10.readers));
+        await p10.begin();
       }
       return world;
     },

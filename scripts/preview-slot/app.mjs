@@ -3,11 +3,12 @@
 // `Vault` (and F32's `SubAgent`) are the test host's (./test-host.mjs, F26, F30, F32): the same objects with the fixture sites, the share fixture and the reads
 // a tier-2 grader needs. Deployed only to a slot, by scripts/preview.mjs; `pnpm self-host` deploys
 // packages/agent/src/index.ts itself. `/fixtures/p9-probe` is the Example API's stand-in, answered before either (F37,
-// ./test-host-p9.mjs).
+// ./test-host-p9.mjs), and `/fixtures/p10-orders` and `/fixtures/p10-probe` the P10 probe pages (F91, ./test-host-p10.mjs).
 import agent from '../../packages/agent/src/index.ts';
 import { leaseOf } from './lease.mjs';
 import { ops } from './ops.mjs';
 import { testHost } from './test-host.mjs';
+import { p10Fixture } from './test-host-p10.mjs';
 import { p9Fixture } from './test-host-p9.mjs';
 
 export * from '../../packages/agent/src/index.ts';
@@ -16,5 +17,5 @@ export { Chat, Job, Ledger, Person, SubAgent, Vault } from './test-host.mjs';
 
 export default {
   ...agent,
-  fetch: async (request, env, ctx) => p9Fixture(request) ?? (await ops(request, env, { lease: leaseOf(env), testHost })) ?? agent.fetch(request, env, ctx),
+  fetch: async (request, env, ctx) => p10Fixture(request) ?? p9Fixture(request) ?? (await ops(request, env, { lease: leaseOf(env), testHost })) ?? agent.fetch(request, env, ctx),
 };
