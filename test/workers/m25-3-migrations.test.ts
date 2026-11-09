@@ -30,6 +30,9 @@ function dormant<T extends object>(name: string, kind: ObjectKind, make: (ctx: u
 const names = <T extends object>(h: ObjectHarness<T>, kind: ObjectKind) => h.rows("SELECT name FROM migrations WHERE name LIKE ? ORDER BY name", `${kind}.%`).map((r) => String(r.name));
 const columnsOf = <T extends object>(h: ObjectHarness<T>) => Object.fromEntries(h.rows("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE '%_fts%' AND name != 'sqlite_sequence' ORDER BY name").map((t) => [t.name, h.rows(`SELECT name FROM pragma_table_info('${t.name}') ORDER BY name`).map((c) => c.name)]));
 
+/** Columns added after the fixtures were cut, by `<kind>.<table>`: F70's `person.attachments-transcript` (P13, D-0026). */
+const ADDED_SINCE_FIXTURE: Record<string, string[]> = { "person.attachments": ["transcript"] };
+
 describe("[M25.3] named migrations", () => {
   it("a migration applied twice is a no-op: the second run applies nothing and the record keeps its first time", () => {
     const h = new ObjectHarness("ledger-once", (ctx, e) => new Ledger(ctx as DurableObjectState, e as Env), {});
@@ -70,7 +73,8 @@ describe("[M25.3] named migrations", () => {
       migrate(fresh.instance.storage, OBJECT_MIGRATIONS[kind]);
       const after = columnsOf(old);
       expect(after, kind).toEqual(columnsOf(fresh));
-      for (const [table, cols] of Object.entries(before)) expect(after[table], `${kind}.${table}`).toEqual(cols);
+      // A column a later release adds to a fixture's table (named here, one per migration) is the only change it may see.
+      for (const [table, cols] of Object.entries(before)) expect(after[table], `${kind}.${table}`).toEqual([...(cols as string[]), ...(ADDED_SINCE_FIXTURE[`${kind}.${table}`] ?? [])].sort());
       expect(migrationStatus(old.instance.storage, OBJECT_MIGRATIONS[kind]).behind).toEqual([]);
     }
   });
