@@ -6,6 +6,7 @@
 import type { Caps, ImageConverter } from "../../../packages/agent/src/attachments/caps.ts";
 import { type DescribeFn, type IngestFn, PersonAttachments } from "../../../packages/agent/src/attachments/store.ts";
 import { runAttachmentCall } from "../../../packages/agent/src/attachments/links.ts";
+import type { Speech } from "../../../packages/agent/src/speech/speech.ts";
 import { PersonFiles } from "../../../packages/agent/src/files/store.ts";
 import { PersonLinks } from "../../../packages/agent/src/files/links.ts";
 import { type Directory, route } from "../../../packages/agent/src/http/routes.ts";
@@ -29,7 +30,7 @@ export type Ingested = { owner: string; attachmentId: string; name: string; mime
 /** The model's line for a file as the stand-in reader describes it. */
 export const describe: DescribeFn = (name, r) => (r.ok ? `${name} (${r.kind}, ${r.pages} page${r.pages === 1 ? "" : "s"}) is at ${r.treePath}` : `${name} could not be read (${r.code})`);
 
-export function attachmentWorld(o: { convert?: ImageConverter | null; caps?: Caps; ingest?: IngestFn; r2?: FakeR2 } = {}) {
+export function attachmentWorld(o: { convert?: ImageConverter | null; caps?: Caps; ingest?: IngestFn; r2?: FakeR2; speech?: Speech | null } = {}) {
   const r2 = o.r2 ?? new FakeR2();
   const clock = { now: T0 };
   const ingested: Ingested[] = [];
@@ -54,7 +55,7 @@ export function attachmentWorld(o: { convert?: ImageConverter | null; caps?: Cap
     if (!h) {
       h = new ObjectHarness(p, (ctx) => {
         const storage = (ctx as DurableObjectState).storage;
-        const store = new PersonAttachments(storage, { person: p, bucket: asBucket(r2) as never, ingest, describe, convert, now: () => clock.now, ...(o.caps ? { caps: o.caps } : {}) });
+        const store = new PersonAttachments(storage, { person: p, bucket: asBucket(r2) as never, ingest, describe, convert, now: () => clock.now, ...(o.caps ? { caps: o.caps } : {}), ...(o.speech ? { speech: o.speech } : {}) });
         return { store, links: new PersonLinks(storage, new PersonFiles(storage, asBucket(r2), p, () => clock.now), asBucket(r2), () => clock.now) };
       }, {});
       harnesses.set(p, h);

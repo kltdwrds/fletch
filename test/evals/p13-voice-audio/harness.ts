@@ -18,8 +18,9 @@ import type { DefinedTask, TaskHarness, Turn } from "../../support/task.ts";
 import { repoRoot } from "../../support/temp-repo.ts";
 import { attachmentWorld } from "../../workers/support/attachment-world.ts";
 import { type AuthorityWorld, authorityWorld, person } from "../../workers/support/authority-world.ts";
-import type { AttachmentRow, P13World, ResultLine, ToolLine, Upload } from "./world.ts";
-import { PROBE_FILE, probeNote, SPEECH_MODELS, silentMp3 } from "./world.ts";
+import { DEFAULT_SPEAKER, speechOf } from "../../../packages/agent/src/speech/speech.ts";
+import type { AttachmentRow, AudioItem, CardLine, P13World, ResultLine, SpeechCall, SpeechCue, SpeechRow, ToolLine, Upload } from "./world.ts";
+import { fakeSpeechAI, PROBE_FILE, probeNote, SPEECH_MODELS, silentMp3 } from "./world.ts";
 
 export const sam = person("sam-solo");
 export const pat = person("pat-solo");
@@ -49,11 +50,19 @@ export interface P13HarnessOptions {
   plantSources?: (files: Array<{ file: string; text: string }>) => Array<{ file: string; text: string }>;
   /** The `dictate` turn: the shipped chat page in Chromium, its box filled with the text and sent (T-P13-04's browser test). */
   dictate?: (world: P13Tier1World, text: string) => Promise<void>;
+  /**
+   * Speech on (F71): the chats' `speech` hook and the attachments' transcriber over the fake speech binding (`world.ts`),
+   * each call admitted and written by the authority world's real Ledger; `cues` in the order the binding is called,
+   * `monthlyMicros` the tenant's speech cap, `seed` turns played before the task's (a render the task starts after).
+   */
+  speech?: { cues?: SpeechCue[]; monthlyMicros?: number; seed?: Turn[] };
 }
 
 export class P13Tier1World implements P13World {
   readonly w: AuthorityWorld;
-  readonly a = attachmentWorld();
+  readonly a: ReturnType<typeof attachmentWorld>;
+  /** The fake speech binding when speech is on (F71); absent, as on every deploy before it. */
+  readonly speechAI?: ReturnType<typeof fakeSpeechAI>;
   readonly uploads: Upload[] = [];
   private chat = "";
   /** Sam's main chat, which the page opens at `/`. */
@@ -64,11 +73,60 @@ export class P13Tier1World implements P13World {
 
   constructor(o: P13HarnessOptions) {
     this.o = o;
-    this.w = authorityWorld({ seed: [sam, pat], stores: true, script: o.script });
+    const ai = o.speech ? fakeSpeechAI(o.speech.cues) : undefined;
+    this.w = authorityWorld({ seed: [sam, pat], stores: true, script: o.script, ...(ai ? { speech: { ai: ai.binding } } : {}) });
+    if (ai) this.speechAI = ai;
+    // The attachments' transcriber as `attachments/wiring.ts` builds it: the binding, admitted by the tenant's Ledger.
+    const speech = ai ? speechOf({ AI: ai.binding }, { ledger: this.w.ledger() as never, tenant: String((this.w.env as { TENANT_ID?: string }).TENANT_ID ?? "solo-sam"), now: () => this.w.clock.now }) : null;
+    this.a = attachmentWorld(speech ? { speech } : {});
   }
 
   async open(): Promise<void> {
     this.chat = ((await this.w.host(sam.email).chats.main(this.w.clock.now)) as { chatId: string }).chatId;
+    if (this.o.speech?.monthlyMicros !== undefined) await this.w.ledger().setBudgets({ tenantSpeechMonthlyMicros: this.o.speech.monthlyMicros });
+  }
+
+  /** The tenant Ledger's rows, read from its storage. */
+  private ledgerRows(sql: string): Record<string, unknown>[] {
+    const h = this.w.objects().find(([n]) => n === "ledger")?.[1];
+    return h ? h.rows(sql) : [];
+  }
+
+  /** Sam's `Person` rows from one table, empty before the table exists. */
+  private personRows(table: string): Record<string, unknown>[] {
+    const h = this.w.personHarness(sam.email);
+    return h?.rows("SELECT name FROM sqlite_master WHERE name = ?", table).length ? h.rows(`SELECT * FROM ${table} ORDER BY rowid`) : [];
+  }
+
+  speechCalls(): SpeechCall[] {
+    return this.speechAI?.calls ?? [];
+  }
+
+  audio(): AudioItem[] {
+    return this.personRows("audio_items").map((r) => ({ id: String(r.id), kind: r.kind as AudioItem["kind"], path: String(r.path), durationMs: Number(r.duration_ms), voice: String(r.voice), model: String(r.model), source: String(r.source), ...(r.topics ? { topics: JSON.parse(String(r.topics)) as string[] } : {}), removed: r.removed_at != null }));
+  }
+
+  voice(): { speaker: string | null; changes: Array<{ speaker: string; writer: string }> } {
+    const set = this.personRows("speech_settings").find((r) => r.key === "speaker");
+    const changes = this.ledgerRows("SELECT body FROM journal ORDER BY at, id")
+      .map((r) => JSON.parse(String(r.body)) as { actionKind: string; subjectRef: string; runId: string; principal: string })
+      .filter((j) => j.actionKind === "speech.voice_set" && j.principal === sam.email)
+      .map((j) => ({ speaker: j.subjectRef.split("voice/")[1] ?? "", writer: j.runId.split(":")[0] ?? "" }));
+    return { speaker: set ? String(set.value) : this.speechAI ? DEFAULT_SPEAKER : null, changes };
+  }
+
+  speechRows(): SpeechRow[] {
+    return this.ledgerRows("SELECT route, model, cost_micros FROM model_calls WHERE route = 'speech' AND status != 'refused' ORDER BY id").map((r) => ({ route: String(r.route), model: String(r.model), costMicros: Number(r.cost_micros) }));
+  }
+
+  /** The codes `speak` refused with, in order, as the model read them. */
+  refusals(): string[] {
+    return this.results().filter((r) => r.tool === "speak" && r.isError).map((r) => /\b(SPEECH_[A-Z_]+|MODEL_[A-Z_]+|BUDGET_[A-Z_]+)\b/.exec(r.text)?.[1] ?? "");
+  }
+
+  /** The approval cards raised in Sam's chats. */
+  cards(): CardLine[] {
+    return this.w.cardsOf(sam.email).map((c) => ({ kind: String((c as { actionKind?: string }).actionKind ?? (c as { kind?: string }).kind ?? ""), lines: [], pressed: (c as { state?: string }).state === "approved" }));
   }
 
   engine() {
@@ -172,6 +230,7 @@ export function p13Harness(o: P13HarnessOptions): TaskHarness<P13World> {
     setup: async () => {
       const w = new P13Tier1World(o);
       await w.open();
+      for (const t of o.speech?.seed ?? []) await w.play(t);
       // Sam's standing files are written on their first read, as a first turn would: here, before the snapshot.
       await w.w.host(sam.email).memory.standingFiles();
       return w;

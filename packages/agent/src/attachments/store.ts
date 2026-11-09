@@ -181,7 +181,7 @@ export class PersonAttachments {
     if (speech) {
       const bytes = a.bytes ?? (await this.read(key));
       try {
-        heard = bytes ? await speech.transcribe({ bytes, mime: a.mime }) : { ok: false, code: "ATTACHMENT_NOT_STORED", reason: "the stored file is gone" };
+        heard = bytes ? await speech.transcribe({ bytes, mime: a.mime, person: this.deps.person, ref: id }) : { ok: false, code: "ATTACHMENT_NOT_STORED", reason: "the stored file is gone" };
       } catch (e) {
         heard = { ok: false, code: "SPEECH_FAILED", reason: String((e as Error)?.message ?? e).slice(0, 200) };
       }

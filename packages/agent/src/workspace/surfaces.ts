@@ -11,7 +11,7 @@ export const WORKSHOP_BASE = "/workshop/";
 /** The Settings row that opens the workshop (M23.3): its words and path live here, where the workshop is named. */
 export const APPS_LINK = { label: "Workshop", sub: "Apps your agents built", href: WORKSHOP_BASE } as const;
 
-export type LinkCardKind = "workspace_actions" | "connection_request" | "connect" | "decide_in_workshop" | "share";
+export type LinkCardKind = "workspace_actions" | "connection_request" | "connect" | "decide_in_workshop" | "share" | "audio";
 
 /**
  * A card that sends the person somewhere to decide. It has no choices: nothing the app draws from it
