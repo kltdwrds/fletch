@@ -169,7 +169,7 @@ tasks 3 of 3 after main's instruction lines changed), F74 (#170, audio shares be
 two verifier passes, the second after Q62), F102 (#171, `FILE_WORDS` and P11 tier 2: T-P11-16, 17 and 18 each 3 of 3 on
 declared run 3; two verifier passes, the second after a vacuous memo grader was made real) and F73 (#174, P13 tier 2:
 T-P13-14 3 of 3 under a $1 speech cap, 12,171 micros spent). Held: F103 (#168, `ACCEPT F103: PASS`, the verifier's one
-finding D-0028 itself) stays a draft BLOCKED on the D-0028 decide item, as F55 was. Plain PR #172 moved October's 68
+finding D-0028 itself) merged BLOCKED on the D-0028 decide item, as F55 was and as its section says; a refusal of the record deletes its migration, module and bytes. Plain PR #172 moved October's 68
 decision-log lines to `docs/decisions/log-2026-10.md`: the live log had reached its 40 KB cap and four landings in a row
 had to condense older entries first. Every part the translations produced is now DONE on main but F103. Scorecard: P8,
 P10, P11, P13 and P16 rows name their parts; P10, P11, P13 and P16 raised to level 2 by the orchestrator (every must-have passing,

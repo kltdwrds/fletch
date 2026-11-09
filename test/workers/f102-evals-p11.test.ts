@@ -35,7 +35,7 @@ const B2 = "item,amount\nrent,1200\ntools,300\ntravel,500\ntotal,2000\n";
 
 /** The scripted model's turns per task, as the real model is asked to answer them on the slot. */
 const SCRIPTS: Record<string, FakeStep[]> = {
-  "T-P11-16": [load(["files"]), write(MEMO, MEMO_MARKDOWN, "w1"), { text: `Saved [p11 eval memo](files/${MEMO}).` }, read(MEMO, "f1"), write(MEMO, MEMO_WITH_RISKS, "w2"), { text: `Added a Risks section to [p11 eval memo](files/${MEMO}); the earlier version was replaced and its earlier content was not kept.` }],
+  "T-P11-16": [load(["files"]), write(MEMO, MEMO_MARKDOWN, "w1"), { text: `Saved [p11 eval memo](files/${MEMO}).` }, read(MEMO, "f1"), write(MEMO, MEMO_WITH_RISKS, "w2"), { text: `Added a Risks section to [p11 eval memo](files/${MEMO}); the earlier version was replaced and its earlier content was kept as version 1.` }],
   "T-P11-17": [load(["documents"]), call("share_document", { path: P11_SLOT_MEMO }, "s1"), { text: "The link is on the share card with its expiry; I sent it to no one." }, call("share_list", {}, "sl1"), revokeFrom(P11_SLOT_MEMO), { text: "Revoked the link to the memo; it opens nothing now and the memo itself is unchanged." }],
   "T-P11-18": [load(["files"]), write(SHEET, B1, "w1"), read(SHEET, "f1"), { text: `Saved [p11 eval budget](files/${SHEET}); the total row reads 1750.` }, write(SHEET, B2, "w2"), read(SHEET, "f2"), { text: `Travel is now 500; the saved total reads 2000 ([p11 eval budget](files/${SHEET})).` }],
 };
@@ -130,6 +130,8 @@ describe("[F102] P11 on a slot: the reply's words, the readers, the resets and t
     expect(missing(without)).toEqual(["revoked only from the tool's answer"]);
     // The tool words the edit line points at are the tool's own (F100), so a reply can quote them.
     expect(FILE_WORDS).toContain("its earlier content was not kept");
+    // F103 (D-0028 proposed): a store that keeps versions answers "kept as version n", and the line names that too.
+    expect(FILE_WORDS).toContain("kept as version n");
   });
 
   it("every P11 version_hash in the contract is its file's hash; a stale one is named", () => {

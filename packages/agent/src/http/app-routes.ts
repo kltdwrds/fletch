@@ -8,6 +8,7 @@
 
 import type { TaskRecord, TaskResult, TasksResult } from "../chat/activity.ts";
 import type { CardView } from "../chat/cards.ts";
+import { type HistoryCall, historyRoute } from "../files/journaled.ts";
 import type { LinkResult, ServedResult } from "../files/links.ts";
 import { JOB_ID } from "../jobs/body.ts";
 import { nextSlotAfter } from "../jobs/schedule.ts";
@@ -47,6 +48,8 @@ export interface AppDirectory extends ConnectorReads {
   fileDelete(person: string, path: string): Promise<{ ok: true; path: string } | Refusal>;
   /** The person's shares from their `Person` (F101, B-P11-13): each id, file and expiry, for the app and the chat's share card. */
   shares(person: string): Promise<{ ok: true; shares: unknown[] } | Refusal>;
+  /** The person's versions and trash (F103, D-0028 proposed), each call decided by their own `Person` for them alone. */
+  fileHistory(person: string, call: HistoryCall): Promise<{ ok: true } | Refusal>;
   /** A short-lived signed download or preview link to one of the person's files (M24.3), made by their `Person`. */
   fileLink(person: string, path: string, download: boolean): Promise<LinkResult>;
   /** A signed link presented with the session: the `Person` checks signature, expiry and owner, then serves the bytes. */
@@ -246,6 +249,9 @@ export async function appRoutes(request: Request, url: URL, person: string, dir:
   if (url.pathname === "/app/file/pin" && request.method === "POST") return answer(await part(() => dir.filePin(person, String(body.path ?? ""), body.pinned !== false)));
   if (url.pathname === "/app/file/delete" && request.method === "POST") return answer(await part(() => dir.fileDelete(person, String(body.path ?? ""))));
   if (url.pathname === "/app/shares" && request.method === "GET") return answer(await part(() => dir.shares(person)));
+  // Versions and the trash (F103, D-0028 proposed, built deletable): the session's own `Person` answers for them alone.
+  const history = historyRoute(url, request.method, body);
+  if (history) return answer(await part(() => dir.fileHistory(person, history)));
 
   if (url.pathname === "/app/activity" && request.method === "GET") {
     // The person's tasks (F12): the Person says which chats are theirs, each Chat answers its own tasks for its owner,

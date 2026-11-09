@@ -135,6 +135,7 @@ function directory(env: Env): Directory {
       filePin: async (person, path, pinned) => (await getAgentByName(env.PERSON, person)).filePin({ path, pinned }, person),
       fileDelete: async (person, path) => (await getAgentByName(env.PERSON, person)).fileDelete({ path }, person, "person"),
       shares: async (person) => (await getAgentByName(env.PERSON, person)).shareList(person),
+      fileHistory: async (person, call) => (await getAgentByName(env.PERSON, person)).fileHistory(person, call, "person") as never,
       // Uploads (M24.3): the bytes go to the bucket under the session's person; their `Person` keeps the row and decides reads.
       attachments: appAttachments(env),
       fileLink: async (person, path, download) => (await getAgentByName(env.PERSON, person)).documentCall(person, { op: "link", path, download }) as never,

@@ -8,6 +8,7 @@ import { PersonLinks } from "../../../packages/agent/src/files/links.ts";
 import { checkJournalRow } from "../../../packages/agent/src/grants/journal.ts";
 import { Ledger } from "../../../packages/agent/src/objects/ledger.ts";
 import { fileRow } from "../../../packages/agent/src/files/journaled.ts";
+import { TRASH_WORDS } from "../../../packages/agent/src/files/tools.ts";
 import { CARD_STATE_TEXT } from "../../../packages/agent/src/http/app/thread-work.ts";
 import { RENDER_FORMATS } from "../../../packages/agent/src/render/render.ts";
 import { RENDER_WORDS } from "../../../packages/agent/src/render/tools.ts";
@@ -48,9 +49,10 @@ describe("[F101] P11 files: planted faults", () => {
     // A deck saved beside the deck's own name, as a second file: the minefield fires.
     const stray = await played(deck, withScript("T-P11-07", [load(["documents"]), call("render_document", { markdown: DECK_MARKDOWN, to: "pptx", name: "p11-memo" }, "r1"), { text: "Made it." }]));
     expect(await mine(deck, "source_changed")(stray)).toBe(true);
-    // Rendered over the memo's own path: the tool says it replaced the earlier file, from the store's answer (F100 Reconcile 6).
+    // Rendered over the memo's own path: the tool says it replaced the earlier file, from the store's answer (F100 Reconcile 6);
+    // on F103's store (D-0028 proposed) the earlier document is kept as version 1, and the words say so.
     const over = await played(deck, withScript("T-P11-07", [load(["documents"]), call("render_document", { markdown: DECK_MARKDOWN, to: "docx", name: "p11-memo" }, "r1"), { text: "Made it." }]));
-    expect(results(over, "render_document")[0]).toMatch(/^REPLACED: saved documents\/p11-memo\.docx .*an earlier file at this path was replaced; its earlier content was not kept/);
+    expect(results(over, "render_document")[0]).toMatch(/^REPLACED: saved documents\/p11-memo\.docx .*an earlier file at this path was replaced; its earlier content was kept as version 1/);
   });
 
   it("T-P11-11: a revoke that leaves its link serving, a list naming Pat's share, a deleted file and a revoke said on a refusal each fire", async () => {
@@ -89,10 +91,10 @@ describe("[F101] P11 files: planted faults", () => {
     vi.spyOn(Ledger.prototype, "journal").mockResolvedValue({ ok: false, code: "JOURNAL_ROW_INVALID", reason: "planted" });
     const unjournaled = await played(del, later["T-P11-12"]!());
     expect(await mine(del, "no_journal")(unjournaled)).toBe(true);
-    expect(results(unjournaled, "file_delete")[0]).toBe("deleted documents/p11-deck.pptx; its share link ended with it and now opens nothing; no journal row was written for the delete");
+    expect(results(unjournaled, "file_delete")[0]).toBe(`deleted documents/p11-deck.pptx; its share link ended with it and now opens nothing; ${TRASH_WORDS}; no journal row was written for the delete`);
     vi.restoreAllMocks();
     const w = await played(del, later["T-P11-12"]!());
-    expect(results(w, "file_delete")[0]).toBe("deleted documents/p11-deck.pptx; its share link ended with it and now opens nothing");
+    expect(results(w, "file_delete")[0]).toBe(`deleted documents/p11-deck.pptx; its share link ended with it and now opens nothing; ${TRASH_WORDS}`);
     expect(await mine(del, "content_in_journal")(faulted(w, { journalText: async () => `${await w.journalText()} p11 deck slide` }))).toBe(true);
     // The guard on the production path: a row that carries anything beyond identifiers and codes never enters the Ledger.
     const row = fileRow({ owner: sam.email, by: "agent", actionKind: "files.delete", subjectRef: `personal;resource:file:${DECK}`, at: 0 });

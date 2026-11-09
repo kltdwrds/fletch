@@ -6,6 +6,7 @@
 // binary document (a rendered docx or odt): its bytes are always in R2 with their content type, its
 // row names the type, and it is read only as bytes (`readBytes`), never as numbered lines.
 import { homeKey } from "../memory/home.ts";
+import { type DropSink, FileHistory, type HistoryRefusal, type KeptRow } from "./versions.ts";
 
 export const INLINE_MAX = 16 * 1024;
 export const FILE_MAX = 1024 * 1024;
@@ -30,12 +31,20 @@ export interface FileEntry {
   preview?: string;
   /** Set on a binary document (M24.3): its content type. A text file has none. */
   mediaType?: string;
+  /** How many earlier versions the path keeps (F103, D-0028 proposed). */
+  versions: number;
 }
 export type ListResult = { ok: true; files: FileEntry[] } | FilesRefusal;
 export type ReadResult = { ok: true; path: string; sha256: string; size: number; spilled: boolean; total: number; lines: Array<{ n: number; text: string }>; next: number | null } | FilesRefusal;
-/** `replaced`: an earlier file stood at this path and the write took its place; its bytes are not kept (F100, delta 1 of P11; F103 keeps versions under D-0028). */
-export type WriteResult = { ok: true; path: string; sha256: string; size: number; spilled: boolean; replaced: boolean } | FilesRefusal;
-export type DeleteResult = { ok: true; path: string } | FilesRefusal;
+/**
+ * `replaced`: an earlier file stood at this path and the write took its place (F100, delta 1 of P11). `kept`: the
+ * version number the replaced bytes were kept as (F103, D-0028 proposed); absent, the earlier content was not kept.
+ */
+export type WriteResult = { ok: true; path: string; sha256: string; size: number; spilled: boolean; replaced: boolean; kept?: number } | FilesRefusal;
+/** `trashed`: the file and its versions went to the trash (F103), not away. */
+export type DeleteResult = { ok: true; path: string; trashed?: boolean } | FilesRefusal | HistoryRefusal;
+export type RestoreResult = { ok: true; path: string; restored: number; kept?: number; sha256: string } | FilesRefusal | HistoryRefusal;
+export type UntrashResult = { ok: true; path: string; versions: number } | FilesRefusal | HistoryRefusal;
 export type RenameResult = { ok: true; path: string; to: string } | FilesRefusal;
 export type PinResult = { ok: true; path: string; pinned: boolean } | FilesRefusal;
 export type BytesResult = { ok: true; path: string; sha256: string; size: number; bytes: Uint8Array; mediaType: string | null } | FilesRefusal;
@@ -76,12 +85,27 @@ export class PersonFiles {
   private readonly storage: DurableObjectStorage;
   private readonly bucket: R2Bucket;
   private readonly now: () => number;
+  /** The versions and the trash (F103, D-0028 proposed); `journal` takes a cap's drops. */
+  readonly history: FileHistory;
 
-  constructor(storage: DurableObjectStorage, bucket: R2Bucket, owner: string, now: () => number = () => Date.now()) {
+  constructor(storage: DurableObjectStorage, bucket: R2Bucket, owner: string, now: () => number = () => Date.now(), journal?: DropSink) {
     this.storage = storage;
     this.bucket = bucket;
     this.owner = owner;
     this.now = now;
+    this.history = new FileHistory(storage.sql, bucket, owner, now, journal);
+  }
+
+  /** A row's bytes as stored, or null when a spilled copy is missing. */
+  private async stored(r: Row): Promise<Uint8Array | null> {
+    return r.spilled === 1 ? bytesOf(await this.bucket.get(this.key(r.path))) : new TextEncoder().encode(r.body ?? "");
+  }
+
+  /** Keeps the row being replaced as its path's next version (F103): the number, or the refusal that stops the write. */
+  private async keepPrevious(r: Row): Promise<{ ok: true; n: number } | FilesRefusal | HistoryRefusal> {
+    const bytes = await this.stored(r);
+    if (bytes === null) return refuse("FILES_UNAVAILABLE", `the stored copy of ${r.path} is missing, so it was not replaced`);
+    return this.history.keep(r as KeptRow, bytes);
   }
 
   /** The R2 key of a spilled file. */
@@ -93,8 +117,8 @@ export class PersonFiles {
     return this.storage.sql.exec<Row>("SELECT * FROM files WHERE path = ?", path).toArray()[0];
   }
 
-  private entry(r: Row, preview = false): FileEntry {
-    const e: FileEntry = { path: r.path, size: r.size, sha256: r.sha256, writer: r.writer, updated_at: r.updated_at, spilled: r.spilled === 1, pinned: r.pinned === 1, ...(r.media_type ? { mediaType: r.media_type } : {}) };
+  private entry(r: Row, preview = false, counts?: Map<string, number>): FileEntry {
+    const e: FileEntry = { path: r.path, size: r.size, sha256: r.sha256, writer: r.writer, updated_at: r.updated_at, spilled: r.spilled === 1, pinned: r.pinned === 1, ...(r.media_type ? { mediaType: r.media_type } : {}), versions: counts?.get(r.path) ?? 0 };
     // A spilled file's start is not held in the row, so its thumbnail is its type mark alone.
     if (preview && r.body !== null) e.preview = r.body.split("\n").slice(0, PREVIEW_LINES).join("\n").slice(0, PREVIEW_CHARS);
     return e;
@@ -105,7 +129,8 @@ export class PersonFiles {
     const prefix = input.prefix ?? "";
     if (prefix && parseFilePath(prefix.replace(/\/$/, "")) === null) return refuse("FILES_PATH_INVALID", `not a file path: ${prefix}`);
     const rows = this.storage.sql.exec<Row>("SELECT * FROM files WHERE substr(path, 1, ?) = ? ORDER BY path", prefix.length, prefix).toArray();
-    return { ok: true, files: rows.map((r) => this.entry(r, input.preview === true)) };
+    const counts = this.history.counts();
+    return { ok: true, files: rows.map((r) => this.entry(r, input.preview === true, counts)) };
   }
 
   async read(input: { path: string; from?: number; limit?: number }, requester: string): Promise<ReadResult> {
@@ -138,6 +163,9 @@ export class PersonFiles {
     const sha256 = await sha256Hex(input.text);
     const spilled = size > INLINE_MAX;
     const previous = this.row(path);
+    // The replaced bytes are kept as a version before anything overwrites them (F103); a copy not kept stops the write.
+    const kept = previous ? await this.keepPrevious(previous) : null;
+    if (kept && !kept.ok) return kept as FilesRefusal;
     if (spilled) {
       const put = await this.bucket.put(this.key(path), input.text, { customMetadata: { sha256, writer: ctx.writer, updated_at: String(this.now()) } });
       if (!put) return refuse("FILES_UNAVAILABLE", `the store refused the write of ${path}`);
@@ -148,7 +176,7 @@ export class PersonFiles {
     );
     // A file that shrank back inline leaves no stale copy behind.
     if (previous?.spilled === 1 && !spilled) await this.bucket.delete(this.key(path));
-    return { ok: true, path, sha256, size, spilled, replaced: previous !== undefined };
+    return { ok: true, path, sha256, size, spilled, replaced: previous !== undefined, ...(kept?.ok ? { kept: kept.n } : {}) };
   }
 
   /**
@@ -162,14 +190,17 @@ export class PersonFiles {
     const size = input.bytes.byteLength;
     if (size > BINARY_MAX) return refuse("FILES_TOO_LARGE", `${size} bytes; the limit for a document is ${BINARY_MAX}`);
     const sha256 = await sha256Hex(input.bytes);
-    const replaced = this.row(path) !== undefined;
+    const previous = this.row(path);
+    const replaced = previous !== undefined;
+    const kept = previous ? await this.keepPrevious(previous) : null;
+    if (kept && !kept.ok) return kept as FilesRefusal;
     const put = await this.bucket.put(this.key(path), input.bytes, { httpMetadata: { contentType: input.mediaType }, customMetadata: { sha256, writer: ctx.writer, updated_at: String(this.now()) } });
     if (!put) return refuse("FILES_UNAVAILABLE", `the store refused the write of ${path}`);
     this.storage.sql.exec(
       "INSERT INTO files (path, size, sha256, writer, updated_at, body, spilled, media_type) VALUES (?, ?, ?, ?, ?, NULL, 1, ?) ON CONFLICT(path) DO UPDATE SET size = excluded.size, sha256 = excluded.sha256, writer = excluded.writer, updated_at = excluded.updated_at, body = NULL, spilled = 1, media_type = excluded.media_type",
       path, size, sha256, ctx.writer, this.now(), input.mediaType,
     );
-    return { ok: true, path, sha256, size, spilled: true, replaced };
+    return { ok: true, path, sha256, size, spilled: true, replaced, ...(kept?.ok ? { kept: kept.n } : {}) };
   }
 
   /** One file's bytes, text or binary, checked against its record; the owner alone. */
@@ -179,7 +210,7 @@ export class PersonFiles {
     if (path === null) return refuse("FILES_PATH_INVALID", `not a file path: ${input.path}`);
     const r = this.row(path);
     if (!r) return refuse("FILES_NOT_FOUND", `no file at ${path}`);
-    const bytes = r.spilled === 1 ? await bytesOf(await this.bucket.get(this.key(path))) : new TextEncoder().encode(r.body ?? "");
+    const bytes = await this.stored(r);
     if (bytes === null || (await sha256Hex(bytes)) !== r.sha256) return refuse("FILES_UNAVAILABLE", `the stored copy of ${path} is missing or differs from its record`);
     return { ok: true, path, sha256: r.sha256, size: r.size, bytes, mediaType: r.media_type };
   }
@@ -212,6 +243,7 @@ export class PersonFiles {
     const rows = this.storage.sql.exec<Row>("SELECT * FROM files").toArray();
     for (const r of rows) if (r.spilled === 1) await this.bucket.delete(this.key(r.path));
     this.storage.sql.exec("DELETE FROM files");
+    await this.history.purgeAll();
     return rows.length;
   }
 
@@ -221,9 +253,54 @@ export class PersonFiles {
     if (path === null) return refuse("FILES_PATH_INVALID", `not a file path: ${input.path}`);
     const r = this.row(path);
     if (!r) return refuse("FILES_NOT_FOUND", `no file at ${path}`);
+    // To the trash with its versions (F103), its bytes kept there before the live copy goes.
+    const bytes = await this.stored(r);
+    if (bytes === null || (await sha256Hex(bytes)) !== r.sha256) return refuse("FILES_UNAVAILABLE", `the stored copy of ${path} is missing or differs from its record`);
+    const trashed = await this.history.toTrash(r as KeptRow, bytes);
+    if (!trashed.ok) return trashed;
     if (r.spilled === 1) await this.bucket.delete(this.key(path));
     this.storage.sql.exec("DELETE FROM files WHERE path = ?", path);
-    return { ok: true, path };
+    return { ok: true, path, trashed: true };
+  }
+
+  /**
+   * Makes version `n` the current file again (F103): written as any write is, so the current bytes are kept as the
+   * next version first and nothing is lost. The owner alone.
+   */
+  async restoreVersion(input: { path: string; n: number }, requester: string): Promise<RestoreResult> {
+    if (requester !== this.owner) return refuse("FILES_NOT_OWNER", "only the owner restores their files");
+    const path = parseFilePath(input.path);
+    if (path === null) return refuse("FILES_PATH_INVALID", `not a file path: ${input.path}`);
+    if (!this.row(path)) return refuse("FILES_NOT_FOUND", `no file at ${path}`);
+    const v = await this.history.open(path, Number(input.n), requester);
+    if (!v.ok) return v;
+    const ctx = { requester, writer: requester };
+    const w = v.mediaType ? await this.writeBytes({ path, bytes: v.bytes, mediaType: v.mediaType }, ctx) : await this.write({ path, text: new TextDecoder().decode(v.bytes) }, ctx);
+    if (!w.ok) return w;
+    return { ok: true, path, restored: v.n, ...(w.kept ? { kept: w.kept } : {}), sha256: w.sha256 };
+  }
+
+  /** Takes a file out of the trash with its versions (F103); refused when a file stands at its path. The owner alone. */
+  async restoreTrashed(input: { path: string; id?: string }, requester: string): Promise<UntrashResult> {
+    if (requester !== this.owner) return refuse("FILES_NOT_OWNER", "only the owner restores their files");
+    const path = input.path ? parseFilePath(input.path) : "";
+    if (path === null) return refuse("FILES_PATH_INVALID", `not a file path: ${input.path}`);
+    if (path && this.row(path)) return refuse("FILES_EXISTS", `a file is already at ${path}`);
+    const t = await this.history.untrash(path, requester, input.id);
+    if (!t.ok) return t;
+    if (this.row(t.row.path)) return refuse("FILES_EXISTS", `a file is already at ${t.row.path}`);
+    const r = t.row;
+    const inline = !r.media_type && r.size <= INLINE_MAX;
+    if (!inline) {
+      const put = await this.bucket.put(this.key(r.path), t.bytes, { ...(r.media_type ? { httpMetadata: { contentType: r.media_type } } : {}), customMetadata: { sha256: r.sha256, writer: r.writer, updated_at: String(r.updated_at) } });
+      if (!put) return refuse("FILES_UNAVAILABLE", `the store refused the write of ${r.path}`);
+    }
+    this.storage.sql.exec(
+      "INSERT INTO files (path, size, sha256, writer, updated_at, body, spilled, pinned, media_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      r.path, r.size, r.sha256, r.writer, r.updated_at, inline ? new TextDecoder().decode(t.bytes) : null, inline ? 0 : 1, r.pinned ?? 0, r.media_type,
+    );
+    await t.finish();
+    return { ok: true, path: r.path, versions: this.history.counts().get(r.path) ?? 0 };
   }
 
   /** Moves a file to a new path in the person's own tree; an existing file at the new path is never overwritten. */
@@ -246,6 +323,8 @@ export class PersonFiles {
       await this.bucket.delete(this.key(path));
     }
     this.storage.sql.exec("UPDATE files SET path = ? WHERE path = ?", to, path);
+    // A file's versions go where it goes (F103).
+    this.storage.sql.exec("UPDATE file_versions SET path = ? WHERE path = ? AND trash_id IS NULL", to, path);
     return { ok: true, path, to };
   }
 
