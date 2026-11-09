@@ -20,7 +20,7 @@ import { compact, type Compacted } from "./compact-turn.ts";
 import { type CompactionRecord, ChatStore } from "./store.ts";
 import { childIds, type TaskRecord, taskOf, tasksOf, taskSteps, taskStop, taskUsage } from "./activity.ts";
 import { Approvals, type DecideResult, requestReply } from "./approvals.ts";
-import { addTally, replyToColleague, tallyOf } from "./approval-ports.ts";
+import { addTally, replyToColleague, sayAnnounce, tallyOf, turnContext } from "./approval-ports.ts";
 import { CardStore, type CardView, type Choice, pauseWords } from "./cards.ts";
 import type { LinkCard } from "../workspace/surfaces.ts";
 import type { ChatFrame, ClaimResult, SendResult, StopResult } from "./frames.ts";
@@ -394,7 +394,7 @@ export class ChatEngine {
    */
   async decide(ids: string[], by: { person: string; agent: boolean }, choice: Choice): Promise<DecideResult[]> {
     const results = await this.approvals().decide(ids, by, choice);
-    markContinuation(this.store, this.cards, results, (t) => this.contextOf(t, "").counterpart.kind === "own-agent");
+    markContinuation(this.store, this.cards, results, (t) => turnContext(this.store, t, "").counterpart.kind === "own-agent");
     await this.continueIfDue();
     if (!this.hooks.defer) await this.settled();
     return results;
@@ -440,11 +440,6 @@ export class ChatEngine {
   private streamFn(route: Route, person: string, runId: string) { return createStreamFn({ ai: this.env.AI, ledger: this.ledger(), wait: this.wait, now: this.now, schedule: this.schedule, models: modelConfig(this.env) }, { tenant: this.env.TENANT_ID, person, runId, route }); }
   private nameOf(email: string): string { return this.hooks.nameOf?.(email) ?? email; }
 
-  private contextOf(turnId: string, person: string): TurnContext {
-    const raw = this.store.meta(`context:${turnId}`);
-    return raw ? (JSON.parse(raw) as TurnContext) : ownTask(person);
-  }
-
   /** The gate's view of this chat for one turn: the latch, the cards, outside content read. */
   private gateState(turnId: string): GateState {
     return {
@@ -468,6 +463,7 @@ export class ChatEngine {
       ...(this.hooks.authority ? { authority: this.hooks.authority } : {}),
       ...(this.hooks.company ? { company: this.hooks.company } : {}),
       note: (id, text) => this.store.transaction(() => this.store.appendMessage(`decision:${id}`, { role: "system", content: text, timestamp: this.now() } as never)),
+      say: sayAnnounce(this.store, (f) => this.broadcast(f), () => this.now()),
       tally: (turnId, add) => addTally(this.store, turnId, add),
       reply: replyToColleague(this.store, this.hooks, () => this.chatId()),
       nameOf: (e) => this.nameOf(e),
@@ -505,7 +501,7 @@ export class ChatEngine {
       }
       const effects = new EffectBuffer();
       const state = this.gateState(turnId);
-      const session = this.toolSession(person, effects, this.contextOf(turnId, person), state);
+      const session = this.toolSession(person, effects, turnContext(this.store, turnId, person), state);
       await this.flushOutbox(session);
       const model = modelFor("chat", modelConfig(this.env));
       // A resumed step replays the blocks its turn assembled (M24.2), so it is the step it replaces.
@@ -515,7 +511,7 @@ export class ChatEngine {
         if (!replayed.ok) return this.failTurn(turnId, replayed.code, replayed.detail);
         messages = replayed.messages;
       } else {
-        const deps = { store: this.store, hooks: this.hooks, projections: this.projections, now: this.now, streamFn: (r: Route, p: string, id: string) => this.streamFn(r, p, id), context: this.contextOf(turnId, person) };
+        const deps = { store: this.store, hooks: this.hooks, projections: this.projections, now: this.now, streamFn: (r: Route, p: string, id: string) => this.streamFn(r, p, id), context: turnContext(this.store, turnId, person) };
         const assembled = await assembleTurn(deps, turnId, person, session, model);
         if (!assembled.ok) return this.failTurn(turnId, assembled.code, assembled.detail);
         messages = assembled.messages;

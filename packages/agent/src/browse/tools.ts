@@ -4,6 +4,7 @@
 // gave, verbatim. The credential value never reaches this module: `browse_fill` names a reference and
 // the Vault, through the egress module, types it into the page.
 import { Type } from "@earendil-works/pi-ai";
+import { EgressRefusedError } from "../connectors/egress.ts";
 import type { Namespace, ToolSpec } from "../tools/registry.ts";
 import { classify } from "./classify.ts";
 import { numberLinks } from "./markdown.ts";
@@ -12,9 +13,9 @@ import type { BrowserPort, PageView } from "./port.ts";
 import { blocked, readPage, rememberedStop } from "./read.ts";
 import { type UrlTable, validUrl } from "./urls.ts";
 
-/** What the tools need of the Vault: typing a credential into a session, and scrubbing what is read back. */
+/** What the tools need of the Vault: typing a credential into a session, and scrubbing what is read back. A refusal names the page's host when it has one. */
 export interface FillApi {
-  fill(req: { session: string; url: string; selector: string; ref: string; field?: string }): Promise<{ ok: true; host: string } | { ok: false; code: string; reason: string }>;
+  fill(req: { session: string; url: string; selector: string; ref: string; field?: string }): Promise<{ ok: true; host: string } | { ok: false; code: string; reason: string; host?: string }>;
   scrub(session: string, text: string): Promise<string>;
 }
 
@@ -191,7 +192,8 @@ export function browseNamespace(deps: BrowseDeps): Namespace {
       const g = await deps.port.goto(session, null);
       if (!g.ok) throw err(g.code, g.reason);
       const r = await deps.fill.fill({ session, url: g.page.url, selector: p.selector, ref: p.credential, ...(p.field ? { field: p.field } : {}) });
-      if (!r.ok) throw err(r.code, r.reason);
+      // A fill refused for its host is said by code from the refusal's facts (F59): the Vault names the host, this tool the reference.
+      if (!r.ok) throw new EgressRefusedError({ ...r, ref: p.credential });
       return text(`FILLED: ${p.selector} on ${r.host} from ${p.credential}. The value was not shown to you.`, { host: r.host });
     },
   };

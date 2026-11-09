@@ -3,6 +3,7 @@
 // card is stored and rendered; a refusal is journaled. Every outcome is one content-free journal row.
 // Cards are decided here too: only the principal, or an admin for a company resource, and never an
 // agent session; an approval becomes a grant first, then the action runs under it.
+import { hostRefusalWords } from "../connectors/egress.ts";
 import { fence } from "../context/fence.ts";
 import { needsFreshCard } from "../grants/engine.ts";
 import type { CreateResult } from "../grants/store.ts";
@@ -42,6 +43,8 @@ export interface ApprovalPorts {
   company?: CompanyApprovals;
   /** Appends a system message to the transcript, so the next turn sees what was decided. */
   note(id: string, text: string): void;
+  /** Words code wrote for the person about a performed action (F59), delivered under `id` live and in history. */
+  say(turnId: string, id: string, text: string): void;
   tally(turnId: string, add: Partial<Tally>): void;
   /** Tells a colleague who asked how their request ended. */
   reply?(card: CardRow, text: string): Promise<void>;
@@ -95,6 +98,8 @@ export class Approvals {
       const r = await p.session(contextOf(d)).perform(e.id, e.tool, e.args, decision.grantId);
       await p.journal(this.row(e.id, d, "auto", decision.grantId, r.ok ? "DONE" : (r.code ?? "ACTION_FAILED"), turnId, e.tokens));
       p.tally(turnId, r.ok ? { done: 1 } : { refused: 1 });
+      // A keyed action refused for its host is said by code, from the refusal's facts, as the gate says it for a read (F59).
+      if (r.hostRefusal) p.say(turnId, `${e.id}:announce`, hostRefusalWords(r.hostRefusal));
       // The queued call's answer reaches the model as data on its next step, so an id it made or a reply it
       // was given is something it can use; without it the agent could never act on what it just created.
       const said = r.ok ? r.text : r.reason;
@@ -229,6 +234,8 @@ export class Approvals {
     const r = await p.session(contextOf(d)).perform(id, card.tool, card.args, decision.grantId);
     const outcome = r.ok ? "DONE" : (r.code ?? "ACTION_FAILED");
     const result = done(r.ok ? "approved" : "failed", decision.grantId as string, outcome);
+    // Said by code as for a queued action (F59); the card's own `:announce` row is its waiting sentence, so the decision's has its own id.
+    if (r.hostRefusal) p.say(card.turnId, `${id}:decision:announce`, hostRefusalWords(r.hostRefusal));
     await p.journal(this.row(`${id}:decision`, now, "auto", decision.grantId, outcome, card.turnId));
     traceApproval({ conversation: p.chatId, tool: card.tool, actionKind: d.actionKind, state: "approved" });
     // As a queued action's note says it (`release`): what ran answered, or why it failed, as data the model can use.

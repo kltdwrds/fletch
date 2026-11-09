@@ -138,7 +138,8 @@ export class ChatStore {
       .toArray()
       .flatMap((r) => {
         const text = (JSON.parse(r.payload) as { text?: unknown }).text;
-        return typeof text === "string" && text ? [{ callId: r.id.slice(0, -":announce".length), turnId: r.turn_id, text }] : [];
+        // A card's decision says its words under `<call>:decision:announce` (F59, `chat/approvals.ts`): drawn at the call too.
+        return typeof text === "string" && text ? [{ callId: r.id.slice(0, -":announce".length).replace(/:decision$/, ""), turnId: r.turn_id, text }] : [];
       });
     return this.withActions(visibleHistory(rows, typed, delivered, this.notices(), this.failedTurns(), [...cards, ...links], announced, placed));
   }

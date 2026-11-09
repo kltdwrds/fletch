@@ -11,6 +11,7 @@
 import type { AgentTool, AgentToolResult } from "@earendil-works/pi-agent-core";
 import type { TSchema } from "@earendil-works/pi-ai";
 import { refuseMalformed } from "../chat/tools.ts";
+import { EgressRefusedError, type HostRefusal } from "../connectors/egress.ts";
 import { scrubSurrogates, scrubValue } from "../egress/surrogate.ts";
 import type { Descriptor } from "../grants/types.ts";
 import { DOCS_PREFIX, DOCS_READ_ONLY, reachesDocs, reachesPlatformSkills, SKILLS_PLATFORM_PREFIX, SKILLS_READ_ONLY } from "../skills/platform-docs.ts";
@@ -272,7 +273,8 @@ export class ToolSession {
    * Performs a queued action once, from the outbox, and only with the grant id the gate's commit
    * returned: an action without one is refused, so nothing automatic runs uncited.
    */
-  async perform(id: string, tool: string, args: Record<string, unknown>, grantId: string | undefined): Promise<{ ok: boolean; code?: string; text?: string; reason?: string }> {
+  /** `hostRefusal` is a keyed call's refusal for its host (F59): the approvals say its sentence to the person. */
+  async perform(id: string, tool: string, args: Record<string, unknown>, grantId: string | undefined): Promise<{ ok: boolean; code?: string; text?: string; reason?: string; hostRefusal?: HostRefusal }> {
     const found = this.registry.spec(tool);
     // Actions, and observations whose subject made them a grant decision (a company resource).
     if (!found || (found.spec.kind !== "action" && found.spec.subject === undefined) || found.spec.queues === "self") return { ok: false, code: "ACTION_UNKNOWN" };
@@ -287,7 +289,8 @@ export class ToolSession {
       const message = scrubSurrogates(String(err instanceof Error ? err.message : err));
       const code = message.split(": ")[0] || "ACTION_FAILED";
       const reason = message.slice(code.length + 2).trim();
-      return { ok: false, code, ...(reason ? { reason: reason.slice(0, 500) } : {}) };
+      const hostRefusal = err instanceof EgressRefusedError ? err.hostRefusal : null;
+      return { ok: false, code, ...(reason ? { reason: reason.slice(0, 500) } : {}), ...(hostRefusal ? { hostRefusal } : {}) };
     }
   }
 }

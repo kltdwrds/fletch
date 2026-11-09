@@ -22,10 +22,14 @@ export interface HostRefusal {
   label?: string;
 }
 
-/** The error a tool throws for an egress refusal: "CODE: reason", carrying a keyed host refusal's facts for the gate (F59). */
+/**
+ * The error a tool throws for an egress refusal: "CODE: reason", carrying a keyed host refusal's facts for the gate (F59) or,
+ * for an action performed after the barrier, for the approvals (`chat/approvals.ts`). A fill's refusal names its code as a
+ * string and carries no reference, so the tool that holds the reference adds it.
+ */
 export class EgressRefusedError extends Error {
   readonly hostRefusal: HostRefusal | null;
-  constructor(r: EgressFailure) {
+  constructor(r: Pick<EgressFailure, "ok" | "reason" | "host" | "ref" | "label"> & { code: string }) {
     super(`${r.code}: ${r.reason}`);
     this.hostRefusal = HOST_REFUSALS.has(r.code) && r.ref && r.host ? { code: r.code, host: r.host, ref: r.ref, ...(r.label ? { label: r.label } : {}) } : null;
   }
