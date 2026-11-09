@@ -372,8 +372,9 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   `packages/agent/src/files/journaled.ts`, one row each with an id that names no chat (`files.delete.<uuid>`), the
   delete's subject `personal;resource:file:<path>` as T-P11-12 names it and the revoke's `personal;connector:files;resource:file:<path>`
   as `share_document`'s own; a row the Ledger does not take is said in the tool's words, never assumed. The P11 harness's
-  collateral snapshot leaves out only the seeded R2 keys a run declares its turns remove (`Run.removes`: T-P11-11, 12
-  and 15, a path's bytes and its seeded share pointers; the task's end state grades them), stays exact for every other
+  collateral snapshot leaves out only the seeded R2 keys a run declares its turns remove (`Run.removes`, a
+  deleted path's bytes and seeded share pointers, for T-P11-12 and 15; `Run.revokes`, a revoked path's seeded pointers
+  alone, for T-P11-11; the task's end state grades them), stays exact for every other
   key (planted in `planted-f101.test.ts`), and names a chatless journal row by action and subject alone. Four task files' collateral and
   T-P11-02's format sentence were corrected to what the contract's features write (T-P11-07's deck bytes, T-P11-11's and
   T-P11-17's unshare row, T-P11-15's delete row; four formats with pptx), before any tier-2 run, and their hashes

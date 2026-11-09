@@ -42,7 +42,7 @@ async function write(journal: JournalSink | undefined, row: JournalRow): Promise
   if (!journal) return false;
   try {
     const r = (await journal(row)) as { ok?: boolean } | undefined;
-    return r?.ok !== false;
+    return r?.ok === true;
   } catch {
     return false;
   }

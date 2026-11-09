@@ -120,6 +120,12 @@ describe("[F101] P11 files: planted faults", () => {
     const before = await w.snapshot();
     w.w.r2.objects.delete(homeR2(MEMO_DOCX));
     expect(collateral(before, await w.snapshot(), exportBeside.collateral)).toEqual([{ area: "r2", added: [], removed: [homeR2(MEMO_DOCX)], expected: [] }]);
+    // T-P11-11 only revokes: it exempts the memo's one seeded pointer, and losing the memo's bytes is still collateral.
+    const r = await played(list, later["T-P11-11"]!());
+    expect([...r.exempt].map((k) => k.replace(/^shares\/[0-9a-f]{32}$/, "shares/<id>"))).toEqual(["shares/<id>"]);
+    const rBefore = await r.snapshot();
+    r.w.r2.objects.delete(homeR2(MEMO_DOCX));
+    expect(collateral(rBefore, await r.snapshot(), list.collateral).filter((d) => d.area === "r2")).toEqual([{ area: "r2", added: [], removed: [homeR2(MEMO_DOCX)], expected: [] }]);
     // T-P11-12 exempts the deck's bytes and its one seeded pointer, nothing else.
     const d = await played(del, later["T-P11-12"]!());
     expect([...d.exempt].map((k) => k.replace(/^shares\/[0-9a-f]{32}$/, "shares/<id>")).sort()).toEqual([homeR2("documents/p11-deck.pptx"), "shares/<id>"].sort());

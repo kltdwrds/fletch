@@ -236,8 +236,10 @@ export interface Run {
   spec: WorldSpec;
   seed?: (t: P11Tier1) => Promise<void>;
   turns: Array<(t: P11Tier1, turn: Turn) => Promise<void>>;
-  /** Seeded home paths whose bytes and share pointers the turns are meant to remove (F101: a delete, a revoke). */
+  /** Seeded home paths whose bytes and share pointers the turns are meant to remove (F101: a delete). */
   removes?: string[];
+  /** Seeded home paths whose share pointers alone the turns are meant to remove (F101: a revoke); their bytes stay checked. */
+  revokes?: string[];
   /** Runs after the turns: read-backs that are not turns (the listing, a second world). */
   after?: (t: P11Tier1) => Promise<void>;
 }
@@ -259,8 +261,9 @@ export function p11Harness(run: Run): TaskHarness<P11Tier1> {
       t.before = t.files();
       // Only the keys the run declares (its paths' bytes and their seeded share pointers), and only those the seed made.
       const removes = run.removes ?? [];
+      const ended = [...removes, ...(run.revokes ?? [])];
       const keys = new Set(t.w.r2.objects.keys());
-      for (const k of [...removes.map(homeR2), ...t.shares().filter((x) => removes.includes(x.path)).map((x) => `shares/${x.id}`)]) if (keys.has(k)) t.exempt.add(k);
+      for (const k of [...removes.map(homeR2), ...t.shares().filter((x) => ended.includes(x.path)).map((x) => `shares/${x.id}`)]) if (keys.has(k)) t.exempt.add(k);
       (t as unknown as { restore: () => void }).restore = () => {
         globalThis.fetch = real;
       };
