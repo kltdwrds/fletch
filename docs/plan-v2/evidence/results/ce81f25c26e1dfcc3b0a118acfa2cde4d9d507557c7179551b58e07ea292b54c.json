@@ -1,0 +1,64 @@
+{
+  "task_id": "T-P10-03",
+  "cluster": "P10",
+  "version_hash": "ce81f25c26e1dfcc3b0a118acfa2cde4d9d507557c7179551b58e07ea292b54c",
+  "runs": [
+    {
+      "run_at": "2026-11-09T02:10:15.816Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply claims nothing saved, scheduled or opened",
+          "started_at": "2026-11-09T02:10:15.816Z",
+          "finished_at": "2026-11-09T02:10:36.293Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply claims nothing saved, scheduled or opened",
+          "started_at": "2026-11-09T02:10:36.293Z",
+          "finished_at": "2026-11-09T02:11:07.553Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply claims nothing saved, scheduled or opened",
+          "started_at": "2026-11-09T02:11:07.553Z",
+          "finished_at": "2026-11-09T02:11:26.627Z"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "run_at": "2026-11-09T02:19:03.516Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-09T02:19:03.516Z",
+          "finished_at": "2026-11-09T02:19:23.289Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-09T02:19:23.289Z",
+          "finished_at": "2026-11-09T02:19:44.091Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-09T02:19:44.091Z",
+          "finished_at": "2026-11-09T02:20:02.639Z"
+        }
+      ],
+      "status": "pass",
+      "state": "improved"
+    }
+  ]
+}

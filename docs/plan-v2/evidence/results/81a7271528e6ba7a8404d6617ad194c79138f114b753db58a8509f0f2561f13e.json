@@ -1,0 +1,60 @@
+{
+  "task_id": "T-P10-11",
+  "cluster": "P10",
+  "version_hash": "81a7271528e6ba7a8404d6617ad194c79138f114b753db58a8509f0f2561f13e",
+  "runs": [
+    {
+      "run_at": "2026-11-09T02:04:47.550Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-09T02:04:47.551Z",
+          "finished_at": "2026-11-09T02:05:13.771Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-09T02:05:13.771Z",
+          "finished_at": "2026-11-09T02:05:48.054Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-09T02:05:48.054Z",
+          "finished_at": "2026-11-09T02:06:12.231Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-11-09T02:14:05.663Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-09T02:14:05.663Z",
+          "finished_at": "2026-11-09T02:14:29.590Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-09T02:14:29.590Z",
+          "finished_at": "2026-11-09T02:14:53.331Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "fail",
+          "code": "GRADER_FAILED",
+          "rule": "the reply says this deploy cannot generate images and nothing was made or kept",
+          "started_at": "2026-11-09T02:14:53.331Z",
+          "finished_at": "2026-11-09T02:15:16.456Z"
+        }
+      ],
+      "status": "fail",
+      "state": "regressed"
+    }
+  ]
+}

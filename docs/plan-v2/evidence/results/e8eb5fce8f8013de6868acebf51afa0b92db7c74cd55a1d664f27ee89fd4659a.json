@@ -1,0 +1,57 @@
+{
+  "task_id": "T-P10-09",
+  "cluster": "P10",
+  "version_hash": "e8eb5fce8f8013de6868acebf51afa0b92db7c74cd55a1d664f27ee89fd4659a",
+  "runs": [
+    {
+      "run_at": "2026-11-09T02:07:11.275Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-09T02:07:11.275Z",
+          "finished_at": "2026-11-09T02:07:32.580Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-09T02:07:32.580Z",
+          "finished_at": "2026-11-09T02:07:47.631Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-09T02:07:47.631Z",
+          "finished_at": "2026-11-09T02:08:14.465Z"
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "run_at": "2026-11-09T02:16:20.338Z",
+      "preview_slot": "fletch-pv-2",
+      "trials": [
+        {
+          "trial_id": 1,
+          "status": "pass",
+          "started_at": "2026-11-09T02:16:20.338Z",
+          "finished_at": "2026-11-09T02:16:36.960Z"
+        },
+        {
+          "trial_id": 2,
+          "status": "pass",
+          "started_at": "2026-11-09T02:16:36.960Z",
+          "finished_at": "2026-11-09T02:16:57.141Z"
+        },
+        {
+          "trial_id": 3,
+          "status": "pass",
+          "started_at": "2026-11-09T02:16:57.141Z",
+          "finished_at": "2026-11-09T02:17:12.157Z"
+        }
+      ],
+      "status": "pass"
+    }
+  ]
+}
