@@ -46,7 +46,10 @@ export function fakeVectorize({ lag = 0 } = {}) {
 
 /** One slot: its stores, its lease object, the agent's Durable Object state, and what its Worker is serving. */
 export function fakeSlot(host, opts = {}) {
-  const s = { host, AGENT_BUCKET: fakeR2(), MEMORY_INDEX: fakeVectorize(opts), lease: memoryLease(), objects: new Map(), vars: { PREVIEW_SERVING: 'placeholder', PREVIEW_DEPLOY: null, TENANT_ID: null } };
+  const s = { host, AGENT_BUCKET: fakeR2(), MEMORY_INDEX: fakeVectorize(opts), objects: new Map(), vars: { PREVIEW_SERVING: 'placeholder', PREVIEW_DEPLOY: null, TENANT_ID: null } };
+  // The lease object runs the deploy the Worker serves; a test replaces `leaseCode` to keep it on an older one.
+  s.leaseCode = () => s.vars.PREVIEW_DEPLOY;
+  s.lease = memoryLease({ deploy: () => s.leaseCode() });
   s.env = (secrets) => ({ ...s.vars, AGENT_BUCKET: s.AGENT_BUCKET, MEMORY_INDEX: s.MEMORY_INDEX, ...secrets });
   return s;
 }

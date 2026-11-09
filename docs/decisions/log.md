@@ -360,3 +360,10 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   `voice_call` tool that only refuses (a name that reads as capture), and the refusal in the instruction line alone
   (words with no code behind them). D-0026's "transcript kept, audio not" is the one-way door this column serves; the column
   itself is reversible (a later migration drops it) while no other reader exists.
+- 2026-11-08 F60 (D-0025 door 1): `roomReach()` refuses a tool whose name holds `room`, `group` or `participant` (and
+  their plurals), or whose description offers to make or join a chat with other people, add a person to one, invite to
+  one, or send from the person's own account or under their name. `invite` counts only in a description that invites to
+  a chat, group or room, because `onboarding_invite` invites a member to the company, which is not a room (the scope's
+  narrowing; the tool is not renamed). The nine held P8 tasks are skipped by name as vitest todos, since Biome refuses
+  `.skip`. The T-P8-10 control check reads the page as served (its markup is the same at both widths; no Chromium run).
+  Rejected: renaming `onboarding_invite`, and a Biome ignore comment per held test.
