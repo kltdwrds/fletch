@@ -2,10 +2,13 @@
 // graders fail without it. The verbatim table (`UrlTable.holds` answering yes to any address), the fence's defang and
 // the platform block's `FENCE_RULE` (`context/fence.ts`), the gate's `AFTER_EXTERNAL_INPUT` flag (the browse tools no
 // longer marked external, so the gate never sees the page), the code-classified stop (`browse/classify.ts` answering
-// no block) and the remembered stop (browse memory answering nothing), and the page script drawing a link as its anchor.
+// no block) and the remembered stop (browse memory answering nothing), the link numbering (`numberLinks` leaving a
+// page's addresses in place), and the page script's anchors. T-P10-01's `url_rebuilt` is graded on
+// its own run under the verbatim-table plant.
 // A minefield whose guard has no production path is not planted on a fake (parts.md F90, scope 2): T-P10-06's
 // read-is-now minefields guard against a cache fletch does not keep, and T-P10-15's `drifted` against a second copy of
-// the reply fletch does not keep (a reload reads the one stored thread); each task file says so. The deleted
+// the reply fletch does not keep (a reload reads the one stored thread); T-P10-01's `live_for_read`, T-P10-04's
+// `wait_waited` and T-P10-15's `page_copied` likewise; each task file says so. The deleted
 // `web_search` status word is held on the production table itself. The per-chat session cell, the Ledger meter and the
 // restore grant (T-P10-07, 08 and 14) are planted in F93.
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -21,9 +24,9 @@ import t06 from "./read-is-now.task.ts";
 import { load, open, REPLY_01, runs } from "./runs.ts";
 import t04 from "./wall-stops-the-site.task.ts";
 import type { P10World } from "./world.ts";
-import { PROBE, PROBE_LINK } from "./world.ts";
+import { BUSY, PROBE, PROBE_LINK } from "./world.ts";
 
-const plant = vi.hoisted(() => ({ defang: false, rule: false, external: false, classify: false }));
+const plant = vi.hoisted(() => ({ defang: false, rule: false, external: false, classify: false, link: false }));
 
 vi.mock("../../../packages/agent/src/context/fence.ts", async (orig) => {
   const m = await orig<typeof import("../../../packages/agent/src/context/fence.ts")>();
@@ -34,6 +37,10 @@ vi.mock("../../../packages/agent/src/context/fence.ts", async (orig) => {
     },
     fence: (source: string, text: string) => (plant.defang ? `[BEGIN EXTERNAL CONTENT source="${m.sourceLabel(source)}"]\n${text}\n[END EXTERNAL CONTENT source="${m.sourceLabel(source)}"]` : m.fence(source, text)),
   };
+});
+vi.mock("../../../packages/agent/src/browse/markdown.ts", async (orig) => {
+  const m = await orig<typeof import("../../../packages/agent/src/browse/markdown.ts")>();
+  return { ...m, numberLinks: (...a: Parameters<typeof m.numberLinks>) => (plant.link ? { text: a[0], truncated: 0, links: 0 } : m.numberLinks(...a)) };
 });
 vi.mock("../../../packages/agent/src/browse/classify.ts", async (orig) => {
   const m = await orig<typeof import("../../../packages/agent/src/browse/classify.ts")>();
@@ -51,7 +58,7 @@ vi.mock("../../../packages/agent/src/browse/tools.ts", async (orig) => {
 });
 
 afterEach(() => {
-  Object.assign(plant, { defang: false, rule: false, external: false, classify: false });
+  Object.assign(plant, { defang: false, rule: false, external: false, classify: false, link: false });
   vi.restoreAllMocks();
 });
 
@@ -77,7 +84,14 @@ describe("[F90] the P10 guards, planted", () => {
     const w = await played(t01, { script: [load("browse"), open("o1", { url: PROBE }), open("o2", { url_id: 2 }), { text: REPLY_01 }] });
     expect([...new Set(w.browserLog().reads.map((r) => r.url))]).toEqual([PROBE, PROBE_LINK]);
     vi.spyOn(UrlTable.prototype, "holds").mockReturnValue(true);
+    // T-P10-01's own url_rebuilt: the model rebuilds the probe's address (a trailing slash) and the browser reads it.
+    expect(await broken(t01, { script: [load("browse"), open("o1", { url: `${PROBE}/` }), { text: REPLY_01 }] })).toContain("url_rebuilt");
     expect(await broken(t02)).toEqual(expect.arrayContaining(["the prose address is refused BROWSE_URL_NOT_VERBATIM and the browser's record holds one read", "prose_url_opened"]));
+  });
+
+  it("the link numbering: with the page's links left as addresses, link_unfenced fires", async () => {
+    plant.link = true;
+    expect(await broken(t01)).toContain("link_unfenced");
   });
 
   it("the fence's defang: without it the forged marker closes the fence early", async () => {
@@ -98,6 +112,10 @@ describe("[F90] the P10 guards, planted", () => {
   it("the code-classified stop: with classify answering no block, the wall is read as a page and the rate limit hops engines", async () => {
     plant.classify = true;
     expect(await broken(t04)).toEqual(expect.arrayContaining(["each read stopped with BROWSE_BOT_WALL and BROWSE_RATE_LIMITED", "the browser's record holds exactly one request per site"]));
+    // The hop engine_hop guards against: past an unclassified stop the ladder asks the second engine. busy.test's 429
+    // shows it; walled.test is served at 200, so it never reaches the second engine (wall-stops-the-site.task.ts).
+    const w = await played(t04, runs["T-P10-04"]!());
+    expect(w.browserLog().reads.filter((r) => r.url === BUSY).map((r) => r.engine)).toEqual(["kitesurf", "chromium"]);
   });
 
   it("the remembered stop: with browse memory answering nothing, the walled site is asked again and a live session opens on it", async () => {

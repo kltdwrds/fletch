@@ -6,6 +6,9 @@
 // Not planted (parts.md F90, scope 2): `drifted` guards against a second copy of the reply fletch does not keep (a
 // reload reads the one stored transcript), so it has no guard on the production path to remove and `planted.test.ts`
 // has no test for it. `link_lost` is planted on the shipped page script.
+// Not planted either: `page_copied` reads the other chat, the files and the Ledger for the page's text; no code copies a
+// tool result into any of them (browse memory keeps the domain, engine, state and code only), so no guard on the
+// production path can be removed.
 import { defineTask, type Grader } from "../../support/task.ts";
 import { ASK } from "./page-read-names-source.task.ts";
 import type { P10World } from "./world.ts";

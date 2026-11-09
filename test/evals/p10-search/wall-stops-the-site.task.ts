@@ -2,6 +2,12 @@
 // (`browse/classify.ts`), never by the model. Each site gets one request; the second engine is never tried past a wall;
 // a second read and a live session on the walled site are answered from browse memory; the stop says the person can
 // open the page and the rate limit's wait in the site's own seconds.
+// Planted in `planted.test.ts`: `retried_wall` and `live_past_wall` (the remembered stop), and the code-classified
+// stop (`classify`), whose removal also shows the hop `engine_hop` guards against on busy.test's 429: walled.test is
+// served at 200, so with the guard gone it is read as a page at the first engine and `engine_hop` as graded on it does
+// not fire; the guard (a classified stop returns, it never continues the ladder) is the same line in `readPage`. Not
+// planted (scope 2): `wait_waited` has no guard on the production path: `blocked` says the site's wait and has no code
+// that waits it out, so there is nothing to remove.
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P10World } from "./world.ts";
 import { BUSY, RETRY_SECONDS, WALLED } from "./world.ts";

@@ -3,6 +3,10 @@
 // address and the engine, the link as its `url_id` number (fletch's table numbers Sam's own address first, so the page's
 // one link is `url_id:2` where the contract's block says `url_id:1`: Reconcile in the PR); the reply links the page
 // and the link character for character. Muse's link card is the reply's Markdown link here (scope 4).
+// Planted in `planted.test.ts`: `url_rebuilt` (the verbatim table, `UrlTable.holds`) and `link_unfenced` (the link
+// numbering, `numberLinks`). Not planted (parts.md F90, scope 2): `live_for_read` has no guard on the production path to
+// remove: the read lane (`readPage`) holds only the read port and has no way to open a session, so a live session for a
+// read can only be the model calling `browse_live`, which is the model's choice (tier 2), not a guard fletch keeps.
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P10World } from "./world.ts";
 import { addresses, PROBE, PROBE_LINK, replyOf, resultsOf } from "./world.ts";
