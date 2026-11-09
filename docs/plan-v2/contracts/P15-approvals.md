@@ -369,7 +369,7 @@ T-P15-07  must-have  tier 1
   reference: Muse step 8 (`answers/step-8.md`: the model never sees the value, the fill is the runtime's at the moment
   of use, a credential is bound to its site); fletch's `cred://` at egress is M13 and M25
   (`test/workers/m13-vault.test.ts`)
-  version_hash: 22bb8fb342b0
+  version_hash: 0fb6f3f3c219
   file: test/evals/p15-approvals/vault-at-egress.task.ts
 
 T-P15-08  must-have  tier 1
