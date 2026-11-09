@@ -66,7 +66,10 @@ export const BUILTIN_STEPS: Record<string, StepHandler> = {
     const gateObserved = Object.keys(ctx.observed).length > 0;
     const before = ctx.outputs.at(-1) ?? (gateObserved ? observationText(ctx) : "");
     const input = ctx.mark ? `${before}\n\nThe last run read up to: ${ctx.mark}` : before;
-    const r = await ctx.complete({ instructions: [ctx.def.instructions, s.prompt ?? ""].filter(Boolean).join("\n\n"), input, gateObserved, ...(s.maxTokens ? { maxTokens: s.maxTokens } : {}) });
+    // A scheduled run names its slot to the model (B-P10-16, F93): a catch-up run delivers an earlier slot's results, and
+    // its message says which slot it ran for, so they are not presented as today's.
+    const slot = ctx.manual ? "" : `This run is for the slot ${at(ctx.scheduledFor)}. When that slot is not today, say in the message which slot this run is for.`;
+    const r = await ctx.complete({ instructions: [ctx.def.instructions, s.prompt ?? "", slot].filter(Boolean).join("\n\n"), input, gateObserved, ...(s.maxTokens ? { maxTokens: s.maxTokens } : {}) });
     if (r.ok) return r.kind === "report" ? { kind: "done", output: r.text, calls: r.calls } : { kind: "silent", claim: r.claim, calls: r.calls };
     const code = r.code;
     return BUDGET_CODES.has(code) ? { kind: "failed", code, reason: r.reason, retry: false, budget: true, calls: r.calls } : { kind: "failed", code, reason: r.reason, retry: transient(code), calls: r.calls };

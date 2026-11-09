@@ -367,3 +367,11 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   narrowing; the tool is not renamed). The nine held P8 tasks are skipped by name as vitest todos, since Biome refuses
   `.skip`. The T-P8-10 control check read the page as served until 2026-11-09, when PR #158 (Q60) made it a Chromium run at 1280 and 390 over the rendered DOM, drawn and listed chat kinds both graded.
   Rejected: renaming `onboarding_invite`, and a Biome ignore comment per held test.
+- 2026-11-09 F93 (P10, under Kyle's ruling of 2026-11-08, "answer all of these with defaults and best effort to unblock
+  … we can always go back later and reconcile"): three two-way changes so T-P10-08 and T-P10-14 hold on the production
+  path. (1) `browse_keep_site` is `asksAfterExternal`: on the person's ask it runs at once, but after outside content in
+  the same turn it asks on a card flagged `AFTER_EXTERNAL_INPUT` (`chat/gate.ts`); the crossing it stops is a page's
+  say-so writing into the person's Vault (B-P10-09). (2) Its result names the cookie count beside the site, never a
+  value. (3) A scheduled job run names its slot to the model step (`jobs/steps.ts`), so a catch-up run's message can say
+  which slot it ran for (B-P10-16). Rejected: softening T-P10-08's flag grader (the clause asks for it), and stamping the
+  slot onto the delivered text in code (it would break B17's content dedupe).
