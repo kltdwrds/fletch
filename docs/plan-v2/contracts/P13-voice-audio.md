@@ -345,7 +345,7 @@ T-P13-14  must-have  tier 2  (F73)
   within the text's bounds; three trials
   graders: code
   reference: Muse step 4's 5.2 s render (B-P13-05)
-  version_hash: 048998d3889b
+  version_hash: 42a3863f07c3
   file: test/evals/p13-voice-audio/live-round-trip.task.ts
 
 T-P13-15  must-have  tier 1  (F71)

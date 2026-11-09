@@ -378,3 +378,4 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   writes nothing, a script not in two voices is `EPISODE_SCRIPT_INVALID`; `episode_publish` is refused
   `PODCAST_FEED_UNAVAILABLE` on every deploy. The Voice row is a select in Settings > General at `/app/speaker` (a
   `/voice` segment trips T-P13-01's capture-route grader). Rejected: a Voice pane of its own, a one-voice episode.
+- 2026-11-09 (F73, Kyle's ruling of 2026-11-08): T-P13-14 runs from a cloud session, not Kyle's Mac; the voice note rides the next prompt. Rejected: waiting for the Mac.
