@@ -38,6 +38,8 @@ export interface P12HarnessOptions {
   childTools?: P9HarnessOptions["childTools"];
   /** More addresses a child's brief may carry (P16's shop, F80). */
   childUrls?: P9HarnessOptions["childUrls"];
+  /** The Vault's saved logins in the chat's browse namespace (P16's kept login, F80). */
+  logins?: P9HarnessOptions["logins"];
 }
 
 /** What a child was offered for its gate to refuse: the same purchase as the chat's fixture. Records a run, which none may have. */
@@ -80,7 +82,7 @@ export class P12Tier1World extends P9Tier1World implements P12World {
 
   constructor(o: P12HarnessOptions) {
     const ran: string[] = [];
-    super({ script: o.script, ...(o.plant ? { plant: o.plant } : {}), sites: { "shop.example.com": { page: { title: "Checkout", text: `Your cart: one ${"p12 probe"} at 12.00 USD. Card number, expiry and security code below. Pay now.` } }, ...(o.sites ?? {}) }, ...(o.jobFetch ? { jobFetch: o.jobFetch } : {}), ...(o.childUrls ? { childUrls: o.childUrls } : {}), childTools: (p) => [childShop(ran), ...(o.childTools?.(p) ?? [])] });
+    super({ script: o.script, ...(o.plant ? { plant: o.plant } : {}), sites: { "shop.example.com": { page: { title: "Checkout", text: `Your cart: one ${"p12 probe"} at 12.00 USD. Card number, expiry and security code below. Pay now.` } }, ...(o.sites ?? {}) }, ...(o.jobFetch ? { jobFetch: o.jobFetch } : {}), ...(o.childUrls ? { childUrls: o.childUrls } : {}), ...(o.logins ? { logins: o.logins } : {}), childTools: (p) => [childShop(ran), ...(o.childTools?.(p) ?? [])] });
     this.childRan = ran;
     // Every descriptor the gate commits, so an effect can be committed again as it was (T-P12-03).
     this.w.hooks.beforeCommit = (d) => void this.descriptors.push(d);
