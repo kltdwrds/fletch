@@ -46,11 +46,15 @@ export function decideStage(current, { expectTag }, now) {
   return { next: { tag: STAGING_TAG, staging: true, branchHash: null, owner: 'staging: main, deployed on merge', leasedAt: now, expiresAt: STAGING_EXPIRES_AT } };
 }
 
-/** A lease store over a variable, applying these rules: the tests' stand-in for the Durable Object's RPC stub. */
-export function memoryLease() {
+/**
+ * A lease store over a variable, applying these rules: the tests' stand-in for the Durable Object's RPC stub. `deploy`
+ * answers its `deploy()`, the deploy the object's code came from (none: null).
+ */
+export function memoryLease({ deploy = () => null } = {}) {
   let row = null;
   return {
     read: async () => row,
+    deploy: async () => deploy(),
     claim: async (req, now) => {
       const d = decideClaim(row, req, now);
       if (d.next) row = d.next;
