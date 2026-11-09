@@ -25,6 +25,9 @@
 //   and the `p14` op resets a person's standing files to the seed, seeds a second passkey, and reads the standing
 //   files, memory, table counts, chat model calls, mail journal rows and a chat's requests with their tool lines (F41,
 //   ./test-host-p14.mjs).
+// - The browser serves P16's four hosts by address (fares, rooms and bottles, "too far in the future", a blocked ticket
+//   read), and the `p16` op resets a person's browse memory of them, memory, jobs and other chats before a trial, or
+//   reads a chat's stored messages (F81, ./test-host-p16.mjs).
 import { getAgentByName } from 'agents';
 import { egressFor } from '../../packages/agent/src/connectors/egress.ts';
 import { Chat as AgentChat, Job as AgentJob, Ledger as AgentLedger, Person as AgentPerson, SubAgent as AgentSubAgent, Vault as AgentVault } from '../../packages/agent/src/index.ts';
@@ -42,6 +45,7 @@ import { clockedStorage, p7Op, probeGet, skewToNext } from './test-host-p7.mjs';
 import { p9ChatRows, p9Network, p9Reset, p9VaultRows } from './test-host-p9.mjs';
 import { P12_DEAD, p12Cards, p12Grants, p12Journal, p12Reset } from './test-host-p12.mjs';
 import { counts, envelopeText, p14Memory, p14Read, p14ResetStanding, p14SeedPasskey, systemsText } from './test-host-p14.mjs';
+import { P16_DOMAINS, p16Reset } from './test-host-p16.mjs';
 import { SITES, testHostBinding } from './test-host-sites.mjs';
 
 const LOG = 'test-host:log';
@@ -328,7 +332,7 @@ export async function testHost(body, env) {
   if (typeof body.person !== 'string' || !EMAIL.test(body.person)) return { status: 400, body: { error: { code: 'invalid', message: 'name the person' } } };
   const person = await getAgentByName(env.PERSON, body.person);
   if (body.op === 'reset') {
-    for (const domain of [...Object.keys(SITES), ...P5_DOMAINS, ...P12_DOMAINS]) await person.browseRecord({ domain, engine: null, state: 'ok', code: null });
+    for (const domain of [...Object.keys(SITES), ...P5_DOMAINS, ...P12_DOMAINS, ...P16_DOMAINS]) await person.browseRecord({ domain, engine: null, state: 'ok', code: null });
     return { status: 200, body: { reset: Object.keys(SITES) } };
   }
   if (body.op === 'state') {
@@ -401,6 +405,12 @@ export async function testHost(body, env) {
     }
     const cards = await (await getAgentByName(env.CHAT, body.chat)).testHostP12();
     return { status: 200, body: { cards, grants: p12Grants(await person.listGrants(body.person)), journal: p12Journal(await ledger.journalRows({ principal: body.person })), jobs } };
+  }
+  if (body.op === 'p16') {
+    // F81: the P16 world (./test-host-p16.mjs): a trial's start, keeping its chat, or that chat's stored messages.
+    if (typeof body.chat !== 'string' || !CHAT_ID.test(body.chat)) return { status: 400, body: { error: { code: 'invalid', message: 'name the chat' } } };
+    if (body.call === 'reset') return { status: 200, body: await p16Reset(person, body.person, body.chat, (id) => env.JOB.get(env.JOB.idFromName(jobName(body.person, id)))) };
+    return { status: 200, body: { messages: (await (await getAgentByName(env.CHAT, body.chat)).testHostP9()).messages } };
   }
   if (body.op === 'p14') {
     // F41: the P14 world (./test-host-p14.mjs): the standing-file reset, the passkey seed, or a read with a chat's rows.
