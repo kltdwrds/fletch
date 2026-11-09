@@ -30,6 +30,7 @@ import { p8Slot } from "./p8-slot.ts";
 import { p9Page } from "./p9-page.ts";
 import { type P9State, p9Slot } from "./p9-slot.ts";
 import { p11Slot } from "./p11-slot.ts";
+import { type P13Op, p13Slot } from "./p13-slot.ts";
 import { p12Page } from "./p12-page.ts";
 import { type P12State, p12Slot } from "./p12-slot.ts";
 import { p14Page } from "./p14-page.ts";
@@ -200,7 +201,7 @@ export function history(base: string, chatId: string, cookie: string, timeoutMs 
 }
 
 /** One turn over the chat socket, as the live exit test does it: resolves with the reply on `turn_done`, rejects with a TurnError otherwise. */
-export function turn(base: string, chatId: string, cookie: string, text: string, timeoutMs = TURN_TIMEOUT_MS, timeZone = "UTC"): Promise<string> {
+export function turn(base: string, chatId: string, cookie: string, text: string, timeoutMs = TURN_TIMEOUT_MS, timeZone = "UTC", attachments: string[] = []): Promise<string> {
   const wsUrl = `${base.replace(/^http/, "ws")}/chats/${chatId}/ws`;
   // Node's WebSocket (undici) takes request headers in its init object; the session is the cookie.
   const Socket = WebSocket as unknown as new (url: string, init: { headers: Record<string, string> }) => WebSocket;
@@ -223,7 +224,8 @@ export function turn(base: string, chatId: string, cookie: string, text: string,
     };
     ws.addEventListener("error", () => fail(new InfraError("SLOT_UNREACHABLE", `the chat socket failed: ${wsUrl}`)));
     ws.addEventListener("close", () => fail(new TurnError("SOCKET_CLOSED", "the chat socket closed before the turn ended")));
-    ws.addEventListener("open", () => ws.send(JSON.stringify({ type: "send", text, id, timeZone })));
+    // A send with the composer's pending attachments carries their upload ids (F73: the voice note).
+    ws.addEventListener("open", () => ws.send(JSON.stringify({ type: "send", text, id, timeZone, ...(attachments.length ? { attachments } : {}) })));
     ws.addEventListener("message", (event) => {
       let frame: { type: string; text?: string; code?: string; messages?: { who: string; text: string }[] };
       try {
@@ -553,6 +555,33 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
               p16Page(base, cookie),
             )
           : null;
+      // A voice task (F73, scripts/evals/p13-slot.ts): the speech cap set to $1 and read back, the probe spoken by the slot's
+      // own speech and uploaded as Sam's voice note, carried by the next prompt; her rows, records and the Ledger's speech
+      // calls through the `p13` op, read again after each turn, holding only what the trial made.
+      const p13 =
+        task?.cluster === "P13"
+          ? p13Slot(
+              (async (call: "probe" | "read") => {
+                const r = await testHostOp(base, lease, { op: "p13", person: OWNER, call });
+                if (!r) throw new InfraError("SLOT_MISSING", "this slot serves no test host; `pnpm preview up` deploys one");
+                return r;
+              }) as unknown as P13Op,
+              {
+                async json(method, path, body) {
+                  const r = await http(base, method, path, { cookie, ...(body === undefined ? {} : { body }) });
+                  return { status: r.res.status, body: r.body };
+                },
+                async upload(name, type, bytes) {
+                  const form = new FormData();
+                  form.set("file", new File([bytes as Uint8Array<ArrayBuffer>], name, { type }));
+                  const res = await fetch(`${base}/app/attachments`, { method: "POST", headers: { cookie, origin: new URL(base).origin }, body: form, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }).catch((e: Error) => e);
+                  if (res instanceof Error) throw new InfraError("SLOT_UNREACHABLE", `POST /app/attachments: ${res.message}`);
+                  if (res.status >= 500) throw new InfraError("SLOT_5XX", `POST /app/attachments answered ${res.status}`);
+                  return { status: res.status, body: (await res.json().catch(() => ({}))) as Record<string, unknown> };
+                },
+              },
+            )
+          : null;
       // An identity task (F41): Sam's standing files reset and a second passkey seeded, then her memory, the objects'
       // table counts, the chat model calls, her mail rows and the chat's requests through the `p14` op, read again after
       // each turn; the drawn name, the reloads and `/settings` in Chromium.
@@ -645,6 +674,11 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
         await p16?.refresh();
         await p14?.refresh();
         await p10?.refresh();
+        if (p13) {
+          await p13.refresh();
+          const spent = p13.spend();
+          log(`evals: P13 speech this trial, from the Ledger: ${spent.calls} priced call(s), ${spent.micros} micros`);
+        }
         await p6?.refresh(`prompt:${label}`);
         await p7?.refresh(turn.startsWith("prompt") ? "prompt" : turn);
       };
@@ -668,7 +702,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
           }
           prompted = true;
           const sent = Date.now();
-          const reply = await turn(base, chats.get(chat) as string, cookie, p10 ? onSlot(text, base) : text, TURN_TIMEOUT_MS, p7 ? ZONE : "UTC");
+          const reply = await turn(base, chats.get(chat) as string, cookie, p10 ? onSlot(text, base) : text, TURN_TIMEOUT_MS, p7 ? ZONE : "UTC", chat === "c1" ? (p13?.take() ?? []) : []);
           replies.push(reply);
           // F91: a P10 trial's reply is logged with its chat, so a failed trial's words are read from the run's log.
           if (p10) log(`evals: ${task?.id ?? ""} reply in chat ${chats.get(chat)}: ${JSON.stringify(reply)}`);
@@ -690,6 +724,11 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
           }
           // A P14 event (F41, scripts/evals/p14-slot.ts): the chat looked at or reloaded at a width, a settings route opened.
           if (p14 && (await p14.event(name, payload))) {
+            await after("c1", `event:${name}`);
+            return;
+          }
+          // A P13 event (F73, scripts/evals/p13-slot.ts): the probe uploaded as Sam's voice note, carried by the next prompt.
+          if (p13 && (await p13.event(name, payload))) {
             await after("c1", `event:${name}`);
             return;
           }
@@ -790,6 +829,10 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
       if (p10) {
         Object.defineProperties(world, Object.getOwnPropertyDescriptors(p10.readers));
         await p10.begin();
+      }
+      if (p13) {
+        Object.defineProperties(world, Object.getOwnPropertyDescriptors(p13.readers));
+        await p13.begin();
       }
       return world;
     },
