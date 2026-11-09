@@ -7,6 +7,16 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## Open, not blocking
 
+### Q61 (harness), 2026-11-09: should the pre-commit hook refuse a staged file holding a git conflict marker?
+
+Twice in the one-hour run a merge resolved by script was committed and pushed with `<<<<<<< `/`>>>>>>> ` markers left in a
+ledger (SCORECARD.md in the F93 merge af9ea89, fixed in 8e14da0; `docs/decisions/log.md` in the F71 merge 3d038c9, fixed
+in e82e5d0). No gate catches one: `check-plan` and `check-decisions` read the files and passed, and Biome does not lint
+Markdown. AGENTS.md's rule for the same defect twice is one proposed change. Proposed: a check in `scripts/pre-commit.ts`
+(or a `scripts/check-conflict-markers.mjs` under `pnpm harness`) that fails on a line starting with `<<<<<<< `, `=======`
+followed by a `>>>>>>> ` later in the file, or `>>>>>>> ` in any staged text file, with a planted test. Default until you
+answer: the orchestrator greps for the markers before every merge commit (`git grep -l -E '^(<<<<<<< |>>>>>>> )'`).
+
 ### Q52 (F90), 2026-11-08 (Q51 on this branch until 2026-11-09, renumbered past F56's Q51): P10's tier-1 blocks for T-P10-01 and T-P10-02 differ from shipped behaviour, and F90 splits
 
 **Blocks:** nothing under the one-hour ruling (F90's PR carries the readings under Reconcile); F90 is DONE-ready
