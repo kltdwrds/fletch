@@ -53,6 +53,25 @@ describe("[F1] Log out", () => {
     expect(sent).toContainEqual({ path: "/logout", method: "POST" });
     expect([p.byId("logout-result").textContent, p.byId("logout-result").dataset.code]).toEqual([SETTINGS_TEXT.logoutFailed, "LOGIN_ORIGIN"]);
   });
+
+  // The flake behind this test (CI run 42548430932): Log out cleared the cookie and left for /login while a boot read was
+  // still in flight; its 401 started a second leave, which aborted the first (net::ERR_ABORTED under waitForURL).
+  it("a 401 that lands after Log out shares its one leave to /login", async () => {
+    const w = authorityWorld({ shape: "standalone" });
+    let out = false;
+    const { p, sent } = await pageOf(w, {
+      "/logout": () => { out = true; return new Response(null, { status: 204 }); },
+      "/app/library": () => (out ? Response.json({ ok: false, code: "SESSION_MISSING", reason: "gone" }, { status: 401 }) : Response.json({ ok: true, files: [], folders: [] })),
+    });
+    await click(p, "logout");
+    expect(sent).toContainEqual({ path: "/logout", method: "POST" });
+    expect(p.left).toEqual(["/login"]);
+    // A read through api() answered 401 once the session is gone: no second leave.
+    p.ui.show("library");
+    await settle();
+    expect(sent).toContainEqual({ path: "/app/library", method: "GET" });
+    expect(p.left).toEqual(["/login"]);
+  });
 });
 
 describe("[F1] members and invites are a company's (spec section 4)", () => {

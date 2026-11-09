@@ -154,11 +154,12 @@ for (const k of SET_PANES) $("set-nav-" + k).onclick = () => setGo(k);
 $("set-back").onclick = () => history.back();
 $("set-close").onclick = () => closeDialog($("set-dialog"));
 // Log out: the host's own /logout (a same-origin POST, so the browser sends this page's Origin) ends the session and
-// clears its cookie; then the page goes to sign-in. A logout that did not go through says so and stays.
+// clears its cookie; then the page goes to sign-in through the one leave every 401 shares (toLogin), so a boot read
+// answered 401 after the cookie went does not start a second navigation. A logout that did not go through says so and stays.
 async function logout(note) {
   let r = null;
   try { r = await fetch("/logout", { method: "POST" }); } catch (e) {}
-  if (r && r.ok) { location.assign("/login"); return; }
+  if (r && r.ok) { toLogin(); return; }
   const b = r ? await r.json().catch(() => ({})) : {};
   coded(note, SETTINGS.logoutFailed, b.code || (r ? "HTTP_" + r.status : "OFFLINE"));
 }
