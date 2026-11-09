@@ -16,6 +16,7 @@ import type { ApprovalAdapter, CapabilityAdapter, WorkspaceAdapter } from "../..
 import { companyView } from "../../../packages/agent/src/company/authority.ts";
 import { displayNames } from "../../../packages/agent/src/company/members.ts";
 import { PersonFiles } from "../../../packages/agent/src/files/store.ts";
+import { PersonAudio } from "../../../packages/agent/src/speech/audio.ts";
 import { documentCall, PersonLinks, routeShare } from "../../../packages/agent/src/files/links.ts";
 import { documentsApi } from "../../../packages/agent/src/render/tools.ts";
 import type { RenderResult } from "../../../packages/agent/src/render/render.ts";
@@ -119,6 +120,8 @@ export interface WorldOptions {
   ai?: { run: (model: string, inputs: unknown, options: unknown) => Promise<Response> };
   /** Each chat's sub-agents (F31), as `subagent-wiring.ts` wires them, with these tools for the sub-agents. */
   subagents?: { reads: (person: string) => Namespace[] };
+  /** Speech (F71): the chats' `speech` hook over this `AI` binding, and each person's audio record as `objects/person.ts` builds it. */
+  speech?: { ai: unknown };
   /** Each member's attachments as `objects/person.ts` and `objects/chat.ts` wire them (M24.3): the sender's store shares, the recipient's keeps. */
   attachments?: { share: NonNullable<import("../../../packages/agent/src/colleagues/tools.ts").ColleaguesApi["shareAttachments"]>; attach: (to: string) => NonNullable<import("../../../packages/agent/src/person/requests.ts").RequestDeps["attach"]> };
 }
@@ -146,7 +149,7 @@ export function authorityWorld(o: WorldOptions = {}) {
     get: (i, r) => company().memoryGet(i, r),
     append: (by, i) => company().memoryAppend(by, i),
   };
-  const persons = new Map<string, ObjectHarness<{ authority: PersonAuthority; chats: PersonChats; memory: MemoryService; files: PersonFiles; links: PersonLinks; tree: PersonTree; jobs: PersonJobIndex }>>();
+  const persons = new Map<string, ObjectHarness<{ authority: PersonAuthority; chats: PersonChats; memory: MemoryService; files: PersonFiles; links: PersonLinks; audio: PersonAudio; tree: PersonTree; jobs: PersonJobIndex }>>();
   const host = (email: string) => {
     let h = persons.get(email);
     if (!h) {
@@ -163,8 +166,8 @@ export function authorityWorld(o: WorldOptions = {}) {
           })(),
           ...(() => {
             const files = new PersonFiles(storage, asBucket(r2), email, () => clock.now);
-            // Signed links and shares (M24.3) over the same files and storage, as `objects/person.ts` builds them.
-            return { files, links: new PersonLinks(storage, files, asBucket(r2), () => clock.now) };
+            // Signed links and shares (M24.3) and the audio record (F71) over the same files and storage, as `objects/person.ts` builds them.
+            return { files, links: new PersonLinks(storage, files, asBucket(r2), () => clock.now), audio: new PersonAudio(storage, files, asBucket(r2) as never, email, () => clock.now) };
           })(),
           // The working tree (M24.3), as `objects/person.ts` builds it: the Workspace over this object's storage.
           tree: treeOf(storage, email),
@@ -357,6 +360,7 @@ export function authorityWorld(o: WorldOptions = {}) {
           ...(o.jobs ? { jobs: jobsApi } : {}),
           ...(o.stores ? { memory: (p: string) => host(p).memory, files: filesOf, tree: (p: string) => directTreeApi(host(p).tree) } : {}),
           ...(o.docs ? { skills: docsCatalog } : {}),
+          ...(o.speech ? { speech: { AI: o.speech.ai }, audio: (p: string) => host(p).audio } : {}),
           ...(o.render ? { documents: (p: string) => documentsApi(async (call, requester) => documentCall(host(p).files, host(p).links, requester, call), o.render as never) } : {}),
           authority: (p) => ({
             decide: (d) => host(p).authority.decide(d),

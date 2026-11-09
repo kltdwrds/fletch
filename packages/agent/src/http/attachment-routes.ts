@@ -79,7 +79,7 @@ async function upload(request: Request, person: string, dir: AttachmentDirectory
   // A file kept but not read is attached and said so: the agent is told the same in its line.
   // A voice note's audio is never kept (D-0026): untranscribed, it is said so with its code, never a silent drop.
   const words =
-    a.cls === "audio" ? (v.status === "read" ? `${name} is attached as its transcript; its audio was not kept.` : `${name} is attached, but this deploy cannot transcribe speech (${v.code}), so it was not transcribed, and its audio was not kept.`)
+    a.cls === "audio" ? (v.status === "read" ? `${name} is attached as its transcript; its audio was not kept.` : v.code === "SPEECH_UNAVAILABLE" ? `${name} is attached, but this deploy cannot transcribe speech (${v.code}), so it was not transcribed, and its audio was not kept.` : `${name} is attached, but it could not be transcribed (${v.code}), and its audio was not kept.`)
     : v.status === "read" ? `${name} is attached.` : `${name} is attached, but your agent could not read it (${v.code}).`;
   return json({ ok: true, attachment: v, words }, 201);
 }
