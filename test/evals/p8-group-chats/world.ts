@@ -3,7 +3,7 @@
 // `c2`, Pat Solo's colleague request, the mail intake with Pat as an outside sender, and the registry built with every
 // namespace) with what the five tasks of today read: the room guard and its planted specs, `POST /app/chats` with a room
 // body and an ordinary one, every model request's system block and text, the tool calls the model made, the page as
-// served at two widths, and `plan()` over the shipped hosts. `P8RoomWorld` is the world a held task (T-P8-01 to 09)
+// Chromium draws it at two widths, and `plan()` over the shipped hosts. `P8RoomWorld` is the world a held task (T-P8-01 to 09)
 // reads the day D-0025 door 1 opens: written, not built, and no harness plays it. Pure: no import of the agent's
 // sources, so a task module loads under plain Node (the version-hash script) and under the root tsconfig.
 import type { P14World, Planted, ToolLine } from "../p14-identity/world.ts";
@@ -26,11 +26,12 @@ export interface Opened {
   after: number;
 }
 
-/** The page as served to Sam at one width: its controls (tag, id and words) and the kinds the chat list holds. */
+/** Sam's app as Chromium draws it at one width: its controls (tag, id, words and labels, the menus' items among them), the kinds of the chat rows it drew (live and archived), and every kind in the chat list it was answered with. */
 export interface Page {
-  width: "desktop" | "phone";
+  width: 1280 | 390;
   controls: string[];
   kinds: string[];
+  listed: string[];
 }
 
 export interface P8World extends P14World {
@@ -47,7 +48,7 @@ export interface P8World extends P14World {
   toolCalls(): string[];
   /** A request Sam's agent relays to Pat (`colleagues_request`), as the colleague's turn shows it (`requestText`). */
   readonly relayed: string;
-  /** The page as served at each width (T-P8-10). */
+  /** The page as drawn at each width (T-P8-10). */
   readonly pages: Page[];
   /** `plan()` over the hosts as shipped for one URL and method: its code, or "ok" (T-P8-15). */
   egress(url: string, method: string, plantHost?: string): string;

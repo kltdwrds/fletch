@@ -365,5 +365,5 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   one, or send from the person's own account or under their name. `invite` counts only in a description that invites to
   a chat, group or room, because `onboarding_invite` invites a member to the company, which is not a room (the scope's
   narrowing; the tool is not renamed). The nine held P8 tasks are skipped by name as vitest todos, since Biome refuses
-  `.skip`. The T-P8-10 control check reads the page as served (its markup is the same at both widths; no Chromium run).
+  `.skip`. The T-P8-10 control check read the page as served until 2026-11-09, when PR #158 (Q60) made it a Chromium run at 1280 and 390 over the rendered DOM, drawn and listed chat kinds both graded.
   Rejected: renaming `onboarding_invite`, and a Biome ignore comment per held test.
