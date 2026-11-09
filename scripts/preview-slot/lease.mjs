@@ -22,6 +22,11 @@ export class PreviewLease extends DurableObject {
     return true;
   }
 
+  /** The deploy this object's code came from: after a deploy, an object can run the last one's code for a while. */
+  deploy() {
+    return this.env.PREVIEW_DEPLOY ?? null;
+  }
+
   stage(req, now) {
     const d = decideStage(this.read(), req, now);
     if (!d.next) return d;

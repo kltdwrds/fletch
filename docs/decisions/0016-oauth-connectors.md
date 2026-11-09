@@ -1,14 +1,16 @@
 ---
 id: D-0016
 title: Connectors that authenticate by OAuth authorization code get a redirect route, a state store and token refresh on the agent
-status: proposed
+status: accepted
 door: one-way
-decided: 2026-10-30
-decider: agent
-confirmation: review
+decided: 2026-11-08
+decider: Kyle
+confirmation: test/workers/f55-oauth-connectors.test.ts
 review-by: 2026-12-31
 revisit-when: the first owner asks for a provider that offers only OAuth, or a provider fletch already connects by token withdraws its tokens
 ---
+Accepted on Kyle's one-hour ruling of 2026-11-08 ("answer all of these with defaults and best effort to unblock, then continue work for the next hour in as much fan-out and parallel work as possible; no blockers, just move; we can always go back later and reconcile"); reconcile at his next check-in: a line under `## Steering` in `docs/plan-v2/WAITING-ON-KYLE.md` reverses it and the record goes back to `proposed`. Confirmation: F55's tests, which name this record.
+
 Ruling: a connector whose provider offers only OAuth authorization code is connected through a redirect
 route on the agent's own origin (`/connect/oauth/<provider>/callback`), a per-attempt `state` row the person's click
 mints and the callback spends once, and a refresh token held in the Vault as its own kind with the provider's scopes

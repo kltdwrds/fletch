@@ -5,17 +5,18 @@
 // cards only to its owner, a `Job` answers only its owner. Writes must come from the app's own page,
 // as the vault's and delivery's do. A part that could not be read is said with its code, never shown
 // as empty.
-import type { CardView } from "../chat/cards.ts";
-import type { ChatEntry, ChatsCall } from "../person/chats.ts";
-import { JOB_ID } from "../jobs/body.ts";
-import type { JobStatus } from "../jobs/store.ts";
-import { runWord, statusWords } from "../jobs/status-words.ts";
-import { nextSlotAfter } from "../jobs/schedule.ts";
+
 import type { TaskRecord, TaskResult, TasksResult } from "../chat/activity.ts";
-import { type ConnectorReads, connectorRoutes } from "./connector-routes.ts";
+import type { CardView } from "../chat/cards.ts";
 import type { LinkResult, ServedResult } from "../files/links.ts";
-import { servedResponse } from "./share-routes.ts";
+import { JOB_ID } from "../jobs/body.ts";
+import { nextSlotAfter } from "../jobs/schedule.ts";
+import { runWord, statusWords } from "../jobs/status-words.ts";
+import type { JobStatus } from "../jobs/store.ts";
+import type { ChatEntry, ChatsCall } from "../person/chats.ts";
 import { type AttachmentDirectory, attachmentRoutes } from "./attachment-routes.ts";
+import { type ConnectorReads, connectorRoutes } from "./connector-routes.ts";
+import { servedResponse } from "./share-routes.ts";
 
 type Refusal = { ok: false; code: string; reason?: string };
 
@@ -130,6 +131,19 @@ async function part<T>(read: () => Promise<T>): Promise<T | { ok: false; code: s
   }
 }
 
+/**
+ * D-0025 door 1 (F60, P8 delta 6): the app opens only the person's own side chat. A body that asks for another kind of
+ * chat, or names people, members or an invite, is refused by name and writes no row: until door 1 is ruled the agent
+ * creates no room, joins none and adds no person to a chat.
+ */
+export function roomBody(body: Record<string, unknown>): { ok: false; code: "CHAT_ROOM_REFUSED"; reason: string } | null {
+  const asked = (body.kind !== undefined && body.kind !== "side" ? ["kind"] : []).concat(["people", "members", "invite"].filter((k) => body[k] !== undefined));
+  return asked.length ? { ok: false, code: "CHAT_ROOM_REFUSED", reason: `this deploy opens only your own side chat; a chat with other people (${asked.join(", ")}) waits on D-0025 door 1` } : null;
+}
+
+/** The checks `POST /app/chats` runs on its body before it opens anything; tested by iterating it. */
+export const CHAT_OPEN_GUARDS: ReadonlyArray<(body: Record<string, unknown>) => { ok: false; code: string; reason: string } | null> = [roomBody];
+
 export async function appRoutes(request: Request, url: URL, person: string, dir: AppDirectory | undefined): Promise<Response | null> {
   if (!url.pathname.startsWith("/app/")) return null;
   if (!dir) return json({ code: "NOT_FOUND" }, 404);
@@ -152,7 +166,13 @@ export async function appRoutes(request: Request, url: URL, person: string, dir:
     }));
     return answer({ ...view, chats });
   }
-  if (url.pathname === "/app/chats" && request.method === "POST") return answer(await dir.chats(person, { op: "open", title: body.title }), 201);
+  if (url.pathname === "/app/chats" && request.method === "POST") {
+    for (const guard of CHAT_OPEN_GUARDS) {
+      const refused = guard(body);
+      if (refused) return json(refused, 400);
+    }
+    return answer(await dir.chats(person, { op: "open", title: body.title }), 201);
+  }
   const chat = /^\/app\/chats\/([^/]+)(?:\/(archive|rename))?$/.exec(url.pathname);
   if (chat) {
     const id = chat[1] as string;
