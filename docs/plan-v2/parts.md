@@ -1239,20 +1239,47 @@ clauses, fifteen tasks, each task's file under `test/evals/p10-search/`, every `
 `https://example.com/p10-orders` with a page instruction, a forged closing marker and an address written only in
 prose, `walled.test` and `busy.test`; the fake CDP browser for the live lane; Sam Solo's and Pat Solo's chats; a Job DO
 over the P7 world serving `https://example.com/p10-news` for T-P10-14) and a `harness.ts`; tier 1 (T-P10-01, 02, 04,
-06, 07, 08, 14, 15) runs under vitest with an `[F90]` describe, every minefield planted in a `planted.test.ts` (each
-guard removed or moved on the production path fails its test: the verbatim table, the fence's defang, the gate's
-`AFTER_EXTERNAL_INPUT` flag, the code-classified stop, the remembered stop, the per-chat session cell, the Ledger
-meter, the restore grant). (3) The `web_search` row of `STATUS_WORDS` deleted (delta 1: a word for a tool that does
+06, 15) runs under vitest with an `[F90]` describe, every minefield planted in a `planted.test.ts` (each guard removed
+or moved on the production path fails its test: the verbatim table, the fence's defang, the gate's
+`AFTER_EXTERNAL_INPUT` flag, the code-classified stop, the remembered stop); T-P10-07, 08 and 14 have their task files
+here and their tier-1 runs and plants in F93 (split by the orchestrator on 2026-11-09 under Kyle's one-hour ruling of
+2026-11-08: their runs need a per-chat browse hook the authority world lacks; until F93 the harness reads they need
+throw `P10_READ_NOT_IN_HARNESS` rather than answer empty). A minefield whose guard has no production path (a cache fletch
+does not keep) is not planted on a fake: the task file says so in a comment and the planted test for it is absent. (3) The `web_search` row of `STATUS_WORDS` deleted (delta 1: a word for a tool that does
 not exist), with the thread-work test that names it updated. (4) Where a task names a Muse observable fletch does not
 have (a link card, a browser card, a window list), the file grades the fletch form and says so in a comment.
 
-**Acceptance:** the eight tier-1 tasks pass under vitest and each planted minefield fails without its guard;
+**Acceptance:** the five tier-1 tasks pass under vitest and each planted minefield fails without its guard;
 `test/m0/f90-contract.test.ts` passes; `pnpm check` and the hermetic suite green; `ACCEPT F90: PASS`;
-`VERIFIER: no blocking findings`.
+`VERIFIER: no blocking findings` (a finding that T-P10-07, 08 and 14 have no run here is answered by the split to F93).
 
 **Not in scope:** a web search, places, image generation or social tool, a provider on the egress allowlist or a new
 `HostFeature` (D-0029, proposed); an instruction line (F91); a link, browser, map or image card in the thread (F92's
-specimens first); named browser profiles or a window list (delta 5); tier 2 (F91); a change to a clause.
+specimens first); named browser profiles or a window list (delta 5); tier 2 (F91); a change to a clause; the tier-1 runs and plants of
+T-P10-07, 08 and 14 (F93).
+
+## F93 Search and the browser as they are, part two: the per-chat session, the Ledger's browser time and the restore grant under tier 1
+
+**Read:** F90's section, world and harness under `test/evals/p10-search/` (`world.ts`, `harness.ts`, `planted.test.ts`,
+the task files `T-P10-07`, `T-P10-08` and `T-P10-14`), `docs/plan-v2/contracts/P10-search-browser-media.md` (B-P10-07,
+B-P10-08, B-P10-14 and the three tasks' blocks), `packages/agent/src/objects/chat.ts` (the per-chat `browser:chat:<name>`
+cell and meter), `packages/agent/src/browse/hook.ts`, `meter.ts`, `binding.ts`, `packages/agent/src/vault/browser-state.ts`
+(the restore grant), the P7 world under `test/evals/p7-scheduling/` for T-P10-14, PR #156's Reconcile list. No one-way
+door; D-0029 stays proposed and nothing here builds on it.
+
+**Scope:** (1) The authority world in `test/evals/p10-search/harness.ts` gives each chat its own browse hook, as
+`objects/chat.ts` does in production, so the per-chat session cell and the Ledger's per-chat browser time can be read.
+(2) Tier 1 for T-P10-07, T-P10-08 and T-P10-14 runs under vitest with an `[F93]` describe, and the harness reads that
+threw `P10_READ_NOT_IN_HARNESS` answer. (3) Each guard planted on the production path in `planted.test.ts`: the per-chat
+session cell, the Ledger meter, the restore grant; a guard that has no production path is named in a comment, not faked.
+(4) The three task files' `version_hash` lines move only if a grader changes, and `test/m0/f90-contract.test.ts` keeps
+every hash filled.
+
+**Acceptance:** the three tier-1 tasks pass under vitest and each planted minefield fails without its guard;
+`test/m0/f90-contract.test.ts` passes; `pnpm check` and the hermetic suite green; `ACCEPT F93: PASS`;
+`VERIFIER: no blocking findings`.
+
+**Not in scope:** everything F90's Not in scope names; a change to F90's five tasks or their graders; tier 2 (F91).
 
 ## F91 Search and media say what this deploy cannot reach: one instruction line, the slot's probe pages and P10's tier 2
 

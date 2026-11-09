@@ -7,7 +7,7 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ## Open, not blocking
 
-### Q51 (F90), 2026-11-08: P10's tier-1 blocks for T-P10-01 and T-P10-02 differ from shipped behaviour, and F90 splits
+### Q52 (F90), 2026-11-08 (Q51 on this branch until 2026-11-09, renumbered past F56's Q51): P10's tier-1 blocks for T-P10-01 and T-P10-02 differ from shipped behaviour, and F90 splits
 
 **Blocks:** nothing under the one-hour ruling (F90's PR carries the readings under Reconcile); F90 stays BLOCKED until
 its remaining tier-1 runs land.
@@ -19,7 +19,7 @@ put it ("a gated call after external input"). (2) T-P10-01's block says the page
 `url_id` number". (3) T-P10-07, T-P10-08 and T-P10-14 have task files but no tier-1 run in the hour: the Ledger's
 browser time is per chat only in `objects/chat.ts`, and the test world shares one browse hook across chats.
 **Recommended answer:** amend the two blocks to what the files grade (a contract edit by the orchestrator, no clause
-changes); split F90 into F90.1 (this PR) and F90.2 (T-P10-07, 08 and 14 with a per-chat browse hook in the authority
+changes); split F90 into F90 (this PR) and F93 (T-P10-07, 08 and 14 with a per-chat browse hook in the authority
 world, and their three planted guards: the session cell, the Ledger meter, the restore grant).
 
 ### Q47 (F42), 2026-11-01 (Q39 on the F42 branch until 2026-11-08, then Q45; renumbered past main's Q39, Q43, Q45 and Q46): may F42's must-haves count, when the lead-in bubble both models write fails T-P9-13 at origin/main too?
