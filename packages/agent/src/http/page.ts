@@ -17,6 +17,7 @@ import { ACTIVITY_CSS, ACTIVITY_MARKUP, ACTIVITY_SCRIPT } from "./app/activity.t
 import { CHAT_CSS, CHAT_MARKUP, CHAT_SCRIPT } from "./app/chat.ts";
 import { CONNECTOR_PANE, CONNECTORS_CSS, CONNECTORS_PANE, CONNECTORS_SCRIPT, PERMISSIONS_PANE } from "./app/connectors.ts";
 import { GOALS_FEED_CSS, GOALS_FEED_MARKUP, GOALS_FEED_SCRIPT } from "./app/goals-feed.ts";
+import { AUDIO_CSS, AUDIO_SCRIPT } from "./app/audio.ts";
 import { LIBRARY_CSS, LIBRARY_MARKUP, LIBRARY_SCRIPT } from "./app/library.ts";
 import { PANEL_CSS, PANEL_MARKUP, PANEL_SCRIPT } from "./app/panel.ts";
 import { CHATS_FILTER_CSS, CHATS_FILTER_SCRIPT } from "./app/chats-filter.ts";
@@ -37,7 +38,7 @@ export { APP_VIEWS };
  * the stack the tokens name; nothing is shipped or fetched (Q-M27-1). The shell and the Settings frame are on the
  * `qf-` classes since M27.2; until M27.3 to M27.7 move the surfaces inside, their old markup renders unstyled.
  */
-export const PAGE_CSS = `${TOKENS_CSS}${BUNDLE_CSS}\n${SHELL_CSS}${SETTINGS_CSS}${GOALS_FEED_CSS}${CONNECTORS_CSS}${SEARCH_CSS}${CHATS_FILTER_CSS}${CHAT_CSS}${PANEL_CSS}${ACTIVITY_CSS}${LIBRARY_CSS}`;
+export const PAGE_CSS = `${TOKENS_CSS}${BUNDLE_CSS}\n${SHELL_CSS}${SETTINGS_CSS}${GOALS_FEED_CSS}${CONNECTORS_CSS}${SEARCH_CSS}${CHATS_FILTER_CSS}${CHAT_CSS}${PANEL_CSS}${ACTIVITY_CSS}${LIBRARY_CSS}${AUDIO_CSS}`;
 
 export const APP_PAGE = `<!doctype html>
 <html lang="en">
@@ -58,6 +59,7 @@ ${COMMON_SCRIPT}
 ${CHAT_SCRIPT}
 ${SETTINGS_SCRIPT}
 ${LIBRARY_SCRIPT}
+${AUDIO_SCRIPT}
 ${GOALS_FEED_SCRIPT}
 ${CONNECTORS_SCRIPT}
 ${SEARCH_SCRIPT}

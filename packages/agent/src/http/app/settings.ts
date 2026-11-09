@@ -223,7 +223,7 @@ for (const k of MODES) $("mode-" + k).onclick = () => { modePick = k; try { loca
 const RUN_PHASE = { executing: "running", awaiting_approval: "waiting for you", retry_wait: "will try again", done: "done" };
 async function settings() {
   // Each part reads on its own, so one that could not be read does not blank the others.
-  modeDraw(); usage(); loopsRow(); devicesRow(); connectorsRow();
+  modeDraw(); usage(); loopsRow(); devicesRow(); connectorsRow(); voiceRow();
   const res = await api("/me");
   const me = await res.json();
   if (!res.ok) { couldNot($("me"), "your settings", me); return; }

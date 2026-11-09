@@ -95,16 +95,13 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   (the outbox's `delegate` rows, through the one `delegationGroup`) or received (`internal_handoff` mailbox rows).
   Confirming test: `test/workers/f12-activity-tasks.test.ts`.
 - 2026-10-26 F13: the step timeline's readings. The journal join matches `<chatId>:<callId>` and
-  `<chatId>:<callId>:decision`, as `chat/approvals.ts` writes them (rejected: a bare `callId`, which matches nothing; a
-  suffix match, which joins another chat's call); the latest row decides, so a declined card is `refused` after its
-  `PENDING` proposal. A call with journal rows is an `action` step titled by its card's label (as `ChatEngine.approvals`
-  does; the engine's 600-line cap bars a registry lookup). A waiting step's code is null, not `PENDING`. The todo title
-  adds the next open item after the counts ("…; next: <item>") as data (rejected: counts alone). The summary step
-  appears once a task's turn finishes without awaiting a decision (rejected: one for a running or waiting task, which
-  reads as done, D-0001). `stepCount` counts every call but `send_to_user` and `react`, and `capped` is
-  `stepCount > STEPS_PER_TASK`, so list row and timeline agree. `StepDetail` is
-  `{ prose, blocks, result, lines, files, cut }` (F16 completes the per-kind shapes). Confirming test:
-  `test/workers/f13-activity-steps.test.ts`.
+  `<chatId>:<callId>:decision` as `chat/approvals.ts` writes them (rejected: a bare `callId`, a suffix match); the
+  latest row decides, so a declined card is `refused` after its `PENDING` proposal. A call with journal rows is an
+  `action` step titled by its card's label. A waiting step's code is null, not `PENDING`. The todo title adds the next
+  open item after the counts (rejected: counts alone). The summary step appears once a task's turn finishes without
+  awaiting a decision (rejected: one for a running task, D-0001). `stepCount` counts every call but `send_to_user` and
+  `react`; `capped` is `stepCount > STEPS_PER_TASK`. `StepDetail` is `{ prose, blocks, result, lines, files, cut }`.
+  Confirming test: `test/workers/f13-activity-steps.test.ts`.
 - 2026-10-26 F14, the parent's half. The second member is Pat (`pat-solo`): `test/fixtures/people.json` has no Bo
   (rejected: adding an identity). `chatTask` takes the chat's `SubAgentRows` as a required argument, so the `Chat`
   object cannot forget its record (rejected: an optional one, whose `subagents: []` reads as "no delegations"). Sections
@@ -206,14 +203,11 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   test-host fixture's code (`test/support/p2-fixtures.ts`), not a `HostFeature`, which would change `@qyvr/host`'s
   published contract.
 - 2026-10-29 F24, the thread shows the work: the status line comes from a `status` frame carrying only the running
-  tool's name (`packages/agent/src/chat/turn.ts`; `tool: null` when it returns), worded by `STATUS_WORDS`
-  (`packages/agent/src/http/app/thread-work.ts`); rejected sending the call's arguments, model-written text B-P2-04
-  bars. A file link is a markdown link to `files/<path>` (taught in `file_write`'s description; the viewer's
-  `/library/files/<path>` is read too), drawn as a card, its preview through `GET /app/file`; rejected an attachment row
-  (B-P2-10). A job's new notice wakes the agent through `ChatEngine.handoff`, keyed on the notice id and scoped
-  `job:<id>`, carrying the job's newest finished run (`chat/job-wake.ts`); mail wakes no one; rejected carrying the
-  outcome through the Person's delivery (a stored-shape change). T-P2-03's grader admits the `status` frames before the
-  words and T-P2-07's asks for the card, both hashes refreshed in `contracts/P2-loop.md`.
+  tool's name (`chat/turn.ts`; `tool: null` when it returns), worded by `STATUS_WORDS` (`http/app/thread-work.ts`);
+  rejected sending the call's arguments (B-P2-04). A file link is a markdown link to `files/<path>` drawn as a card,
+  its preview through `GET /app/file`; rejected an attachment row (B-P2-10). A job's new notice wakes the agent through
+  `ChatEngine.handoff`, keyed on the notice id and scoped `job:<id>` (`chat/job-wake.ts`); mail wakes no one; rejected
+  carrying the outcome through the Person's delivery (a stored-shape change). T-P2-03's and T-P2-07's hashes refreshed.
 - 2026-10-29 F24, T-P2-13's graders after its first runs: the end_state pattern (`NOT_THERE`) takes "there's no file
   called …" and "couldn't find …", the reference's wording, which the first pattern failed on three honest replies;
   `empty_success` (`EMPTY_FILE`) is the file said to be empty, not "the workspace is empty", which is true. Both are
@@ -285,15 +279,13 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   remove ends what the job has in flight (rejected: refusing the remove); no proactivity editions or feed in P7 (no
   seam; a store is a one-way door; Q21; rejected: a feed as a recurring job); a job is changed in place by
   `jobs_update`, its history kept (rejected: remove and recreate).
-- 2026-10-30, F29 jobs as they are, the builder's, all two-way: any agent `jobs_update` (on, paused or blocked, time and
-  stop included) turns the job back to waiting on its card, as `jobs_create` does, since a job and its time are decided
-  on one card (QYVR-165); a job still waiting is refused `JOB_AWAITING_DECISION` (rejected: an edit keeping the
-  approval, which lets the agent rewrite an approved job); the owner's own edit keeps its status; its last 20
-  definitions ride in its definition JSON; a stop or remove in flight ends the run failed `JOB_STOPPED_BY_OWNER` or
-  `JOB_ARCHIVED` with one line in its chat unless its result is queued, a late step discarded; a one-shot is spent by
-  its first run to end, manual or failed; Upcoming draws a turned-off job under an Off group after the cadence groups,
-  and a spent or removed job not at all (rejected: hiding a paused job, with no way back to it); the ask-for-a-reply
-  test is word patterns (`asksForReply`), so a conditional ask ("tell me when") still allows silence.
+- 2026-10-30, F29 jobs as they are, the builder's, all two-way: any agent `jobs_update` turns the job back to waiting
+  on its card, as `jobs_create` does (QYVR-165); a job still waiting is refused `JOB_AWAITING_DECISION` (rejected: an
+  edit keeping the approval); the owner's own edit keeps its status; its last 20 definitions ride in its definition
+  JSON; a stop or remove in flight ends the run `JOB_STOPPED_BY_OWNER` or `JOB_ARCHIVED` with one line in its chat, a
+  late step discarded; a one-shot is spent by its first run to end; Upcoming draws a turned-off job under Off and a
+  spent or removed job not at all (rejected: hiding a paused job); the ask-for-a-reply test is word patterns
+  (`asksForReply`), so a conditional ask still allows silence.
 - 2026-10-30 P5 translated (`contracts/P5-activity.md`): eight two-way deltas: the record's words are code's (the
   summary step computed, never a model pass), a done task says its failed-step count, one words table across surfaces, a
   delegation's acknowledgement says launched, a run that did not arrive says so, the audit is a read over steps and
@@ -380,3 +372,9 @@ to others, promote it into a record (README.md) and delete it here. Capped at 40
   page's say-so writing into the Vault (B-P10-09). (2) Its result names the cookie count, never a value. (3) A scheduled
   job run names its slot to the model step (`jobs/steps.ts`, B-P10-16). Rejected: softening T-P10-08's flag grader;
   pasting the slot onto the delivered text in code (it would break B17's content dedupe).
+- 2026-11-09 (F72, under Kyle's one-hour ruling of 2026-11-08): the drawing built before Kyle's look at the specimens;
+  the three surfaces are listed in PR #169 for his UAT. An episode is `speak` with `as: "episode"` and a script in
+  exactly two aura-2 speakers, each turn its own admitted speech call joined into one MP3; a failed or cut-short turn
+  writes nothing, a script not in two voices is `EPISODE_SCRIPT_INVALID`; `episode_publish` is refused
+  `PODCAST_FEED_UNAVAILABLE` on every deploy. The Voice row is a select in Settings > General at `/app/speaker` (a
+  `/voice` segment trips T-P13-01's capture-route grader). Rejected: a Voice pane of its own, a one-voice episode.

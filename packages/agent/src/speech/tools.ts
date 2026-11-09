@@ -11,17 +11,22 @@
 // writes the MP3 through `writeBytes` under `audio/` with its `audio_items` row, and shows it in the chat as an `audio`
 // link card; it raises no approval card (B-P13-05). A transcript never changes the voice: `voice_set` runs only when
 // the person's own typed words name the speaker, and writes a journal row naming the change and its writer (B-P13-15).
+//
+// F72: an episode (B-P13-11) is a script of turns in two voices, rendered turn by turn, each turn its own admitted call,
+// into one MP3 and one `audio_items` row of kind `episode` holding the script and its topics; a turn that fails or is
+// cut short leaves nothing written. An ask to publish one is refused `PODCAST_FEED_UNAVAILABLE` (D-0026: no feed).
 import { Type } from "@earendil-works/pi-ai";
 import type { EffectBuffer } from "../chat/tools.ts";
 import type { JournalRow } from "../grants/journal.ts";
 import type { Namespace, ToolSpec } from "../tools/registry.ts";
 import type { AudioApi, AudioItem } from "./audio.ts";
-import { type Speech, type SpeechEnv, SPEAK_MAX_CHARS, SPEAKERS, SPEECH_UNAVAILABLE, speechRefusal, VOICE_CALL_REASON, VOICE_CALL_UNAVAILABLE, voiceCallRefusal } from "./speech.ts";
+import { EPISODE_MAX_CHARS, EPISODE_MAX_TURNS, PODCAST_FEED_REASON, PODCAST_FEED_UNAVAILABLE, type Speech, type SpeechEnv, SPEAK_MAX_CHARS, SPEAKERS, SPEECH_UNAVAILABLE, speechRefusal, VOICE_CALL_REASON, VOICE_CALL_UNAVAILABLE, voiceCallRefusal } from "./speech.ts";
 
 const SpeakParams = Type.Object({
   text: Type.String({ minLength: 1, description: "The text to read aloud, verbatim, or the episode's source text." }),
   as: Type.Optional(Type.Union([Type.Literal("read_aloud"), Type.Literal("episode")], { description: "read_aloud (the default) reads the text verbatim; episode makes a spoken episode from it." })),
   topics: Type.Optional(Type.Array(Type.String({ maxLength: 40 }), { maxItems: 8, description: "A few words naming what the text is about, for finding the piece later." })),
+  script: Type.Optional(Type.Array(Type.Object({ speaker: Type.String({ description: `One of ${SPEAKERS.join(", ")}.` }), text: Type.String({ minLength: 1 }) }), { maxItems: EPISODE_MAX_TURNS, description: "For an episode: its turns in order, in two voices, each naming its speaker and the words it says." })),
 });
 const StatusParams = Type.Object({});
 const ListParams = Type.Object({});
@@ -47,9 +52,40 @@ export interface SpeechToolDeps {
   now: () => number;
 }
 
+type On = { speech: Speech } & SpeechToolDeps;
+
+/** A two-voice episode rendered turn by turn into one MP3 and one `episode` record; any turn's failure writes nothing. */
+async function episode(on: On, id: string, p: { text: string; topics?: string[]; script?: Array<{ speaker: string; text: string }> }) {
+  const not = "the episode was not made and no file was saved.";
+  const turns = (p.script ?? []).map((t) => ({ speaker: String(t.speaker).trim().toLowerCase(), text: String(t.text) }));
+  const voices = [...new Set(turns.map((t) => t.speaker))];
+  const unknown = voices.find((v) => !(SPEAKERS as readonly string[]).includes(v));
+  if (turns.length < 2 || voices.length !== 2 || unknown) return fail("EPISODE_SCRIPT_INVALID", `${unknown ? `${unknown.slice(0, 40)} is not a speaker; ` : ""}an episode is a script of turns in exactly two voices (from ${SPEAKERS.join(", ")}), each turn naming its speaker and its words; ${not}`);
+  const chars = turns.reduce((n, t) => n + t.text.length, 0);
+  if (chars > EPISODE_MAX_CHARS) return fail("SPEECH_TEXT_TOO_LONG", `the script is ${chars} characters; one episode speaks at most ${EPISODE_MAX_CHARS}; ${not}`);
+  const parts: Uint8Array[] = [];
+  let ms = 0;
+  let model = "";
+  for (const [i, t] of turns.entries()) {
+    const spoken = await on.speech.speak({ text: t.text, speaker: t.speaker, person: on.person, ref: `${id}:${i + 1}` });
+    if (!spoken.ok) return fail(spoken.code, `turn ${i + 1} of ${turns.length}: ${spoken.reason}; ${not}`);
+    parts.push(spoken.bytes);
+    ms += spoken.ms;
+    model = spoken.model;
+  }
+  const bytes = new Uint8Array(parts.reduce((n, b) => n + b.byteLength, 0));
+  parts.reduce((at, b) => (bytes.set(b, at), at + b.byteLength), 0);
+  const source = turns.map((t) => `${t.speaker}: ${t.text}`).join("\n");
+  const r = await on.audio.call({ op: "save", kind: "episode", bytes, durationMs: ms, voice: voices.join(", "), model, source, chatId: on.chatId, ...(p.topics?.length ? { topics: p.topics } : {}) }, on.person);
+  if (!r.ok) return fail(r.code, r.reason);
+  const a = (r as { item: AudioItem }).item;
+  on.effects.push({ kind: "link", id: `${id}:audio`, card: { id: `audio:${a.id}`, kind: "audio", title: `Episode (${seconds(a.durationMs)})`, text: `${seconds(a.durationMs)} in the voices ${a.voice}, saved in your files.`, href: `files/${a.path}` } });
+  return text(`EPISODE: audio ${a.id}, ${turns.length} turns, ${seconds(a.durationMs)} in the voices ${a.voice}, saved at files/${a.path}. The chat shows it as an audio item and the Library's Audio section lists it; it is not published anywhere. Say it is ready.`, { audio: a.id, path: a.path, durationMs: a.durationMs, voice: a.voice });
+}
+
 /** The namespace for a chat, over this deploy's speech (`speechOf`; null is off) and, where it is on, the person's audio. */
 export function speechNamespace(speech: Speech | null, env: SpeechEnv, deps?: SpeechToolDeps): Namespace {
-  const on = speech && deps ? { speech, ...deps } : null;
+  const on: On | null = speech && deps ? { speech, ...deps } : null;
   const off = () => speechRefusal(env);
   const audioCall = async (c: Parameters<AudioApi["call"]>[0]) => {
     if (!on) return fail(SPEECH_UNAVAILABLE, off().reason);
@@ -61,7 +97,7 @@ export function speechNamespace(speech: Speech | null, env: SpeechEnv, deps?: Sp
     kind: "observation",
     mutates: true,
     label: "Read aloud",
-    description: "Read a text aloud, verbatim, in the person's voice, to one audio file in the person's files; only when the person asks. Pass the exact words to be spoken. Refused by code when this deploy cannot speak or the render fails; then say so with the code and answer the rest of the request in text.",
+    description: "Read a text aloud, verbatim, in the person's voice, to one audio file in the person's files; only when the person asks. Pass the exact words to be spoken. For a two-voice episode pass as episode, the source text, a script of turns in two voices and topics. Refused by code when this deploy cannot speak or the render fails; then say so with the code and answer the rest of the request in text.",
     parameters: SpeakParams,
     execute: async (id, p) => {
       const nothing = p.as === "episode" ? "the episode was not made" : "nothing was read aloud";
@@ -69,8 +105,7 @@ export function speechNamespace(speech: Speech | null, env: SpeechEnv, deps?: Sp
         const r = off();
         throw new Error(`${r.code}: ${r.reason}; ${nothing} and no file was saved.`);
       }
-      // A two-voice episode is F72's: until it lands an episode ask is refused by name, never read as one voice.
-      if (p.as === "episode") return fail(SPEECH_UNAVAILABLE, "this deploy does not make spoken episodes yet; the episode was not made and no file was saved.");
+      if (p.as === "episode") return episode(on, id, p);
       if (p.text.length > SPEAK_MAX_CHARS) return fail("SPEECH_TEXT_TOO_LONG", `the text is ${p.text.length} characters; one read-aloud speaks at most ${SPEAK_MAX_CHARS}; nothing was read aloud.`);
       const voice = (await audioCall({ op: "voice" })) as { speaker: string };
       const spoken = await on.speech.speak({ text: p.text, speaker: voice.speaker, person: on.person, ref: id });
@@ -158,6 +193,14 @@ export function speechNamespace(speech: Speech | null, env: SpeechEnv, deps?: Sp
       return text(`${speechLine}\ncalls: ${c.code}: ${VOICE_CALL_REASON}`, { speech: s, calls: { ...c, kept: "nothing" }, code: VOICE_CALL_UNAVAILABLE });
     },
   };
-  const tools = [speak, status, ...(on ? [list, read, remove, restore, voiceSet] : [])] as ToolSpec[];
-  return { name: "speech", description: "read a text aloud; the person's audio pieces and voice; what speech and calls do on this deploy", deferral: "names", tools };
+  const publish: ToolSpec<typeof IdParams> = {
+    name: "episode_publish",
+    kind: "observation",
+    label: "Publish an episode",
+    description: `Publish an episode to a podcast feed. Refused on every deploy (${PODCAST_FEED_UNAVAILABLE}): say so with the code, and that the episode stays in the person's files and Library.`,
+    parameters: IdParams,
+    execute: async () => fail(PODCAST_FEED_UNAVAILABLE, `${PODCAST_FEED_REASON}; nothing was published.`),
+  };
+  const tools = [speak, status, publish, ...(on ? [list, read, remove, restore, voiceSet] : [])] as ToolSpec[];
+  return { name: "speech", description: "read a text aloud or make a two-voice episode; the person's audio pieces and voice; what speech, feeds and calls do on this deploy", deferral: "names", tools };
 }
