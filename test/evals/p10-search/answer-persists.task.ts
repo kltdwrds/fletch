@@ -8,7 +8,8 @@
 // has no test for it. `link_lost` is planted on the shipped page script.
 // Not planted either: `page_copied` reads the other chat, the files and the Ledger for the page's text; no code copies a
 // tool result into any of them (browse memory keeps the domain, engine, state and code only), so no guard on the
-// production path can be removed.
+// production path can be removed. Its reach is the other chat, the files and the Ledger: a compaction summary
+// (`chat/compaction.ts`) can carry tool-result text within the same chat, which this task's one short turn never reaches.
 import { defineTask, type Grader } from "../../support/task.ts";
 import { ASK } from "./page-read-names-source.task.ts";
 import type { P10World } from "./world.ts";

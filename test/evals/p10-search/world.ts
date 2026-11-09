@@ -36,7 +36,7 @@ export interface P10World extends P5World {
   liveSession(chat: "c1" | "c2"): Promise<string | null>;
   /** The Ledger's browser-time rows, each with the run it was charged to and the chat that run belongs to. */
   browserTime(): Promise<Array<{ runId: string; chat: string }>>;
-  /** Every stored text outside `chat`'s own transcript: the other chats, memory, jobs' records and the Ledger. */
+  /** Stored text outside `chat`'s own transcript: the other chat's messages, Sam's files and the Ledger's rows. */
   elsewhere(chat: "c1" | "c2"): Promise<string>;
   /** The Vault's kept sign-ins for Sam (`vault/browser-state.ts`): the site, the cookie count, whether sealed. */
   kept(): Promise<Array<{ site: string; cookies: number; sealed: boolean }>>;

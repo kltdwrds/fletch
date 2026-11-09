@@ -309,7 +309,7 @@ T-P10-04  must-have  tier 1
   graders: code (the browser's record, browse memory, the tool results)
   reference: Muse's described solve, block and takeover flow (B-P10-10); fletch stops by code and never solves (P15
   delta 3)
-  version_hash: f403bc7c5198
+  version_hash: 435fe3ecf4e7
   file: test/evals/p10-search/wall-stops-the-site.task.ts
 
 T-P10-05  nice-to-have  tier 2

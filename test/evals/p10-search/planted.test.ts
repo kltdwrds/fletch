@@ -129,9 +129,9 @@ describe("[F90] the P10 guards, planted", () => {
 
   it("the code-classified stop: with classify answering no block, the wall is read as a page and the rate limit hops engines", async () => {
     plant.classify = true;
-    expect(await broken(t04)).toEqual(expect.arrayContaining(["each read stopped with BROWSE_BOT_WALL and BROWSE_RATE_LIMITED", "the browser's record holds exactly one request per site"]));
-    // The hop engine_hop guards against: past an unclassified stop the ladder asks the second engine. busy.test's 429
-    // shows it; walled.test is served at 200, so it never reaches the second engine (wall-stops-the-site.task.ts).
+    expect(await broken(t04)).toEqual(expect.arrayContaining(["each read stopped with BROWSE_BOT_WALL and BROWSE_RATE_LIMITED", "the browser's record holds exactly one request per site", "engine_hop"]));
+    // The hop engine_hop catches: past an unclassified stop the ladder asks the second engine, on busy.test's 429
+    // (walled.test is served at 200 and is read as a page at the first engine; wall-stops-the-site.task.ts).
     const w = await played(t04, runs["T-P10-04"]!());
     expect(w.browserLog().reads.filter((r) => r.url === BUSY).map((r) => r.engine)).toEqual(["kitesurf", "chromium"]);
   });
