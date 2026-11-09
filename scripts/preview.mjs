@@ -32,6 +32,7 @@ const USAGE = `usage: pnpm preview <command>
   staging convert         (Kyle's login, a clean main checkout) once: deploy main to the staging slot and mark its lease staging, its data kept
   staging deploy          (a clean main checkout; CI on merge) redeploy main to the staging slot, its secrets and data kept
   staging status          the staging slot's lease, what it serves and its /health
+  staging secrets         (Kyle's Mac: op and gh logins) mint or roll fletch-staging-deploy, store it in 1Password, set the workflow's secrets, dispatch it
   down --slot n --force   (Kyle's login) unstage the staging slot and release it: its data wiped, as \`down\` does`;
 
 // Leases: through the slot Worker's /__preview/ ops, authorised by this worktree's key, kept in a git-ignored lease
@@ -444,6 +445,10 @@ async function main(argv) {
     console.log(`preview: slot ${(await unstage(ctx, intFlag(flags.slot, 'slot'), { force: flags.force === true })).n} unstaged and released`);
   } else if (command === 'down') {
     console.log(`preview: slot ${(await down(ctx)).n} released`);
+  } else if (command === 'staging' && rest[0] === 'secrets') {
+    if (mode === 'token') throw new Error("preview: `staging secrets` runs on Kyle's Mac, on his 1Password and gh logins");
+    const { stagingSecrets } = await import('./preview-staging-secrets.mjs');
+    await stagingSecrets({ inv: needInventory(ctx), subdomain: knownSubdomain(ctx), log: console.log });
   } else if (command === 'staging') {
     const { stagingCommand } = await import('./preview-staging.mjs');
     await stagingCommand(ctx, rest[0], { paid: flags.paid === true, vars: varFlags(flags.var) });

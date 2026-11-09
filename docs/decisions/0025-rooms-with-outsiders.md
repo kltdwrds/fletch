@@ -1,14 +1,16 @@
 ---
 id: D-0025
 title: fletch's agent speaks in a room with outsiders only as the owner's agent, through a transport Kyle names, behind a fence on every outsider's words; until Kyle rules, no room exists
-status: proposed
+status: accepted
 door: one-way
 decided: 2026-11-08
-decider: agent
+decider: Kyle
 confirmation: review
 review-by: 2026-12-31
 revisit-when: Kyle rules on O4 (design §8), a messaging service is picked for rooms, or the first owner asks their agent to join a group
 ---
+Accepted on Kyle's one-hour ruling of 2026-11-08 ("answer all of these with defaults and best effort to unblock, then continue work for the next hour in as much fan-out and parallel work as possible; no blockers, just move; we can always go back later and reconcile"); reconcile at his next check-in: a line under `## Steering` in `docs/plan-v2/WAITING-ON-KYLE.md` reverses it and the record goes back to `proposed`. Confirmation to come: the contract check test the Translate part F60 adds names this record; until it exists the record is held by `review` with its review-by date.
+
 Ruling: fletch's agent reads and speaks in a room with outsiders (a group where people who are not the owner, or their
 agents, write) only after Kyle opens four doors in order, (1) whether it speaks there at all (design O4), (2) under whose
 name, only as the owner's agent and never as the owner through a connected account unless Kyle widens it (B-P8-01,
