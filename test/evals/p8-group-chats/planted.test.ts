@@ -132,13 +132,18 @@ describe("[F60] P8 group chats, planted", () => {
     expect(await grader(voice, "messaging_host_allowed")(faulted(w, (b) => ({ egress: (u: string, m: string) => b.egress(u, m, new URL(u).hostname) })))).toBe(true);
   });
 
-  it("T-P8-10 through Chromium: a New group control drawn in the page, or a room in the list the page is answered with, fires at both widths", async () => {
+  it("T-P8-10 through Chromium: a New group control drawn in the page, or a room in the list the page is answered with, live or archived, fires at both widths", async () => {
     const drawn = await play(noRoomCreation, { html: (h) => h.replace('<div class="drawer-top">', '<div class="drawer-top"><button id="new-group" class="qf-ibtn">New group</button>') });
     expect(drawn.pages.map((p) => [p.width, p.controls.some((c) => c.startsWith("button#new-group: New group"))])).toEqual([[1280, true], [390, true]]);
     expect(await grader(noRoomCreation, "add_people_control")(drawn)).toBe(true);
     const listed = await play(noRoomCreation, { chats: (b) => ({ ...b, chats: [...(b.chats ?? []), { ...b.chats?.find((c) => c.kind === "side"), id: "p8-probe-room", kind: "room" }] }) });
     expect(listed.pages.map((p) => [p.width, p.kinds.includes("room")])).toEqual([[1280, true], [390, true]]);
     expect(await grader(noRoomCreation, "agent_opened_room")(listed)).toBe(true);
+    // An archived room: drawn into the archived view (`#archived`), not the live list, and still caught at both widths.
+    const archived = await play(noRoomCreation, { chats: (b) => ({ ...b, chats: [...(b.chats ?? []), { ...b.chats?.find((c) => c.kind === "side"), id: "p8-probe-archived-room", kind: "room", archived: true }] }) });
+    expect(archived.pages.map((p) => [p.width, p.kinds.includes("room"), p.listed.includes("room")])).toEqual([[1280, true, true], [390, true, true]]);
+    expect(await grader(noRoomCreation, "agent_opened_room")(archived)).toBe(true);
+    expect(await grader(noRoomCreation, "the chat list holds only the kinds fletch makes, none a room")(archived)).toBe(false);
     // The company's member invite (`head-invite`, Settings' Invite member) is drawn and is not a chat's.
     expect((honest["T-P8-10"] as P8World).pages.every((p) => p.controls.some((c) => c.startsWith("button#head-invite")))).toBe(true);
   });

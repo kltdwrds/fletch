@@ -4,8 +4,9 @@
 // every other origin aborted. Turn, beside P8's:
 //   - `page` (payload `width`, 1280 or 390): `/chats/<c1>` drawn at that width, the list's rows awaited, the chats drawer
 //     opened where it is one (390), every menu the page offers opened in turn (`aria-haspopup="menu"`, visible), and the rendered DOM read: each control's tag, id,
-//     words and labels, and the kind of each chat row the list drew (its `data-chat` id against the list the page was
-//     answered with).
+//     words and labels; the kind of each chat row the page drew, the live list's (`#chats`) and the archived view's
+//     (`#archived`, drawn hidden on load) alike, by its `data-chat` id against the list the page was answered with; and
+//     every kind in that list, drawn or not.
 // `plant` alters what the page is served, for `planted.test.ts`: the page's markup (a control drawn) or the chat list's
 // body (a room listed), so a minefield fires through Chromium as it would on a deploy.
 import { type Browser, type BrowserContext, chromium, type Page as Tab } from "playwright-core";
@@ -15,7 +16,7 @@ import { PAGE_ORIGIN, servePages } from "../../workers/support/page-routes.ts";
 import { type P8HarnessOptions, P8Tier1World, sam } from "./harness.ts";
 import type { P8World } from "./world.ts";
 
-type Chats = { chats?: Array<{ id?: string; kind?: string }> };
+type Chats = { chats?: Array<{ id?: string; kind?: string; archived?: boolean }> };
 export interface P8BrowserPlant {
   /** The page's markup as served, altered. */
   html?: (html: string) => string;
@@ -59,7 +60,7 @@ export class P8BrowserWorld extends P8Tier1World {
     return ctx;
   }
 
-  private async read(pg: Tab, kinds: Map<string, string>): Promise<{ controls: string[]; kinds: string[] }> {
+  private async read(pg: Tab, kinds: Map<string, string>): Promise<{ controls: string[]; kinds: string[]; listed: string[] }> {
     await pg.waitForFunction("document.readyState === 'complete'");
     await pg.waitForSelector("#chats [data-chat]", { state: "attached" });
     const controls = (await pg.evaluate(CONTROLS)) as string[];
@@ -73,8 +74,8 @@ export class P8BrowserWorld extends P8Tier1World {
       controls.push(...((await pg.evaluate(MENU_ITEMS)) as string[]));
       await pg.keyboard.press("Escape");
     }
-    const rows = (await pg.evaluate(`[...document.querySelectorAll("#chats [data-chat]")].map((r) => r.dataset.chat)`)) as string[];
-    return { controls, kinds: [...new Set(rows.map((id) => kinds.get(id) ?? `unlisted:${id}`))].sort() };
+    const rows = (await pg.evaluate(`[...document.querySelectorAll("#chats [data-chat], #archived [data-chat]")].map((r) => r.dataset.chat)`)) as string[];
+    return { controls, kinds: [...new Set(rows.map((id) => kinds.get(id) ?? `unlisted:${id}`))].sort(), listed: [...new Set(kinds.values())].sort() };
   }
 
   override async play(turn: Turn): Promise<void> {

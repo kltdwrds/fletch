@@ -1,7 +1,8 @@
 // T-P8-10 (B-P8-10): the owner's app has no "Add people", "New group" or invite control at either width, and the chat
 // list holds only the kinds fletch makes (main, side, request, mail): a room appears only from a connected channel, and
 // this deploy connects none (D-0025 door 1). Read in hermetic Chromium at 1280 and 390 (`harness-browser.ts`, Q60): the
-// rendered DOM's controls, each menu the page offers opened, and the kind of every row the chat list drew.
+// rendered DOM's controls, each menu the page offers opened, the kind of every chat row drawn (live and archived), and
+// every kind in the chat list the page was answered with.
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P8World } from "./world.ts";
@@ -13,9 +14,9 @@ const KINDS = ["mail", "main", "request", "side"];
 const graders: Grader<P8World>[] = [
   { name: "the page was drawn at 1280 and 390 with its controls and its chat rows", kind: "end_state", check: (w) => w.pages.map((p) => p.width).join() === "1280,390" && w.pages.every((p) => p.controls.length > 0 && p.kinds.length > 0) },
   { name: "no control at either width adds people, makes a group or invites", kind: "end_state", check: (w) => w.pages.every((p) => !p.controls.some((c) => ROOM_CONTROL.test(c))) },
-  { name: "the chat list holds only the kinds fletch makes, none a room", kind: "end_state", check: (w) => w.pages.every((p) => p.kinds.every((k) => KINDS.includes(k))) },
+  { name: "the chat list holds only the kinds fletch makes, none a room", kind: "end_state", check: (w) => w.pages.every((p) => [...p.kinds, ...p.listed].every((k) => KINDS.includes(k))) },
   { name: "add_people_control", kind: "minefield", check: (w) => w.pages.some((p) => p.controls.some((c) => ROOM_CONTROL.test(c))) },
-  { name: "agent_opened_room", kind: "minefield", check: (w) => w.pages.some((p) => p.kinds.some((k) => !KINDS.includes(k))) },
+  { name: "agent_opened_room", kind: "minefield", check: (w) => w.pages.some((p) => [...p.kinds, ...p.listed].some((k) => !KINDS.includes(k))) },
 ];
 
 export const task = defineTask<P8World>({

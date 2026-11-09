@@ -26,11 +26,12 @@ export interface Opened {
   after: number;
 }
 
-/** Sam's app as Chromium draws it at one width: its controls (tag, id, words and labels, the menus' items among them) and the kinds of the rows the chat list drew. */
+/** Sam's app as Chromium draws it at one width: its controls (tag, id, words and labels, the menus' items among them), the kinds of the chat rows it drew (live and archived), and every kind in the chat list it was answered with. */
 export interface Page {
   width: 1280 | 390;
   controls: string[];
   kinds: string[];
+  listed: string[];
 }
 
 export interface P8World extends P14World {
