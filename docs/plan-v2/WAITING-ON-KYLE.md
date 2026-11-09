@@ -26,6 +26,7 @@ Rulings the orchestrator took for Kyle under Kyle's one-hour ruling of 2026-11-0
 - D-0028 (P11: Library versions and a trash), D-0029 (P10: search, places and images as owner-connected capabilities) and D-0030 (F56: the renderer's container on a paid deploy) are proposed, `decider: agent`, built on by nothing yet: `docs/decisions/`, PR #148, PR #150.
 - F56, F59, F70, F90 and F100 are built and BLOCKED at the run's stop, each a draft PR, each accept failed only on load timeouts (the machine ran seven suites at once) or, for F90, on three tier-1 runs not written; their accept runs were re-dispatched on the GitHub accept runner: `PROGRESS.md`, PRs #150, #147, #153, #156, #155.
 - Not taken, still yours: D-0011's own commit, the UAT looks, the Muse leftovers, the Muse sign-in, the tarball on your Mac.
+- Continuation after 00:30Z (the same ruling, the goal's bar not yet met: `ACCEPT F<n>: PASS` plus a clean verifier per part): F56 and F100 DONE on the runner's accept and a fresh verifier's `no blocking findings` (PRs #150, #155); F59's section amended in the open under Q48's precedent (scope line (5): T-P9-05's graders read by turn, the regression checks' variance reading, commit ebc3b24 on its branch); F90 split in the open into F90 (five tasks) and F93 (T-P10-07, 08, 14 with a per-chat browse hook), its Q51 renumbered Q52 (commit 48d5eca on its branch); fix-up builders dispatched for F70's two verifier findings (the three unplanted minefields, T-P13-04 as a browser test), F60's Q60 finding (a Chromium run at both widths) and F80's kept-login finding, each on its own branch and PR: `parts.md`, `PROGRESS.md`, `QUESTIONS.md`, the PRs' Reconcile lists.
 
 ## Open
 
@@ -40,8 +41,8 @@ Rulings the orchestrator took for Kyle under Kyle's one-hour ruling of 2026-11-0
 
 - [ ] 2026-11-09 question: **Q51 (F90) and Q51 (F56) collide, and Q60 (F60) sits far from its neighbours: the branches
   numbered their questions apart.** F90's Q51 (T-P10-01 and T-P10-02 differ from their contract blocks; three tier-1 runs
-  owed, a split F90.2 recommended) and F56's Q51 (D-0030) both exist on their branches; the next session renumbers one to
-  Q52 at merge. Nothing to decide; a read.
+  owed, a split F90.2 recommended) and F56's Q51 (D-0030) both exist on their branches. Done 2026-11-09 00:40Z: F90's is
+  Q52 and the split is F93 (commit 48d5eca on `claude/f90-search-as-it-is`); F56's keeps Q51. Nothing to decide; a read.
 
 - [ ] 2026-11-09 look: **the one-hour run's five blocked parts, for the next session to finish, not for you.** F56, F59,
   F70, F90 and F100 each have a draft PR with a Reconcile section; their accept runs on the GitHub accept runner were

@@ -138,6 +138,15 @@ Seven Opus suites on four cores pushed the load average past 40, so every local 
 files the part did not touch; the GitHub accept runner (`accept.yml`) is the way to score a part when builders run in
 parallel. Scorecard: P8, P13, P16, P10 and P11 at level 1.
 
+**Continuation from 00:30Z.** The goal's bar (`ACCEPT F<n>: PASS` plus `VERIFIER: no blocking findings` per part) was not met
+at 00:30Z, so the run went on under the same ruling: fresh Opus verifiers on the four runner-passing trees (F56 and F100
+clean, F70 two findings); F56 and F100 merged main and go DONE on green; the orchestrator amended F59's section in the open
+(T-P9-05 by turn, the regression checks' variance reading) and split F90 into F90 and F93, renumbering its Q51 to Q52;
+builders dispatched for F59 (declared run 2 on the merged tree, accept on the runner), F90 (the verifier's plant and
+T-P2-04 findings), F70 (the three plants, T-P13-04 as a browser test), F60 (Q60's Chromium run, `claude/f60-done`) and
+F80 (the kept login seeded, `claude/f80-done`), every accept on the GitHub runner, never locally. Lesson kept: with five
+builders on one 4-core box, local `pnpm accept` is noise; the runner is the score.
+
 ## What is not for tonight
 
 Level 3 (Locked) needs Kyle's UAT; D-0015 (tier-2 evals in CI) spends money; D-0011 needs Kyle's own commit; a Muse
