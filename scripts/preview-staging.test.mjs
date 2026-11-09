@@ -17,6 +17,7 @@ const REPO = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { experimental_readRawConfig } = createRequire(path.join(REPO, 'package.json'))('wrangler');
 const readRaw = () => experimental_readRawConfig({ config: path.join(REPO, 'packages', 'agent', 'wrangler.jsonc') }).rawConfig;
 const SUB = 'example-sub';
+const HEAD = 'c'.repeat(40);
 
 let repo;
 let acct;
@@ -37,6 +38,7 @@ function worktree(name, extra = {}) {
     dir: path.join(repo, 'git-common', 'fletch-previews'),
     branch: `claude/${name}`,
     owner: `test ${name}`,
+    headCommit: () => HEAD,
     treeClean: () => true,
     run: acct.run,
     drain: acct.drain,

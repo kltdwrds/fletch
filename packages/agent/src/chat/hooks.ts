@@ -62,6 +62,8 @@ export interface EngineHooks {
   browse?: BrowseHook;
   /** The deploy's speech settings, the `AI` binding and the `SPEECH` var (P13, F70): read by `speechOf`; absent is no binding, so speech is off. */
   speech?: import("../speech/speech.ts").SpeechEnv;
+  /** The owner's audio pieces and voice on their `Person` object (F71); with speech on, `speak` saves through it. */
+  audio?: (person: string) => import("../speech/audio.ts").AudioApi;
   /** Further namespaces: fixtures in tests; a function receives the chat's view (its pending simulated calls). */
   namespaces?: Namespace[] | ((view: ChatView) => Namespace[]);
   /** The principal's grants on their `Person` (M7.1); without it nothing gated runs. */

@@ -63,8 +63,9 @@ describe('preview plan: names', () => {
 
 describe('preview plan: the slot config', () => {
   const plan = slotPlan(1);
-  const app = slotConfig(BASE, plan, { accountId: ACCT, deploy: 'd1' });
-  const ph = slotConfig(BASE, plan, { accountId: ACCT, placeholder: true, deploy: 'd2' });
+  const HEAD = 'c'.repeat(40);
+  const app = slotConfig(BASE, plan, { accountId: ACCT, deploy: 'd1', commit: HEAD });
+  const ph = slotConfig(BASE, plan, { accountId: ACCT, placeholder: true, deploy: 'd2', commit: HEAD });
 
   it("runs the agent on the slot's own bucket, index and tenant, with the fixture owner, on workers.dev", () => {
     assert.equal(app.name, 'fletch-pv-1');
@@ -76,6 +77,9 @@ describe('preview plan: the slot config', () => {
     assert.equal(app.vars.TENANT_ID, 'fletch-pv-1');
     assert.equal(app.vars.OWNER_EMAIL, SLOT_OWNER);
     assert.deepEqual([app.vars.PREVIEW_SERVING, app.vars.PREVIEW_DEPLOY], ['app', 'd1']);
+    // The head commit the deploy is made from, which the agent's /health names, so a live check ties to a tree.
+    assert.equal(app.vars.DEPLOY_COMMIT, HEAD);
+    assert.equal(ph.vars.DEPLOY_COMMIT, HEAD);
     assert.deepEqual(app.ai, BASE.ai);
     assert.equal(app.routes, undefined);
     const text = JSON.stringify(app);
@@ -139,8 +143,8 @@ describe('preview plan: the slot config', () => {
   it("sets the model vars --var names, over the base config and under the slot's own, and refuses any other var", () => {
     const vars = { AI_GATEWAY_ID: 'fletch', CHAT_PROVIDER: 'meta' };
     assert.deepEqual(Object.keys(vars), SLOT_VAR_KEYS);
-    const c = slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', vars });
-    assert.deepEqual(c.vars, { ...BASE.vars, ...vars, TENANT_ID: plan.name, OWNER_EMAIL: SLOT_OWNER, PREVIEW_SERVING: 'app', PREVIEW_DEPLOY: 'x' });
+    const c = slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', commit: HEAD, vars });
+    assert.deepEqual(c.vars, { ...BASE.vars, ...vars, TENANT_ID: plan.name, OWNER_EMAIL: SLOT_OWNER, PREVIEW_SERVING: 'app', PREVIEW_DEPLOY: 'x', DEPLOY_COMMIT: HEAD });
     assert.throws(() => slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', vars: { TENANT_ID: 'other' } }), /--var takes only .*; not TENANT_ID/);
     assert.throws(() => slotConfig(BASE, plan, { accountId: ACCT, deploy: 'x', vars: { MASTER_KEY: 'k' } }), /not MASTER_KEY/);
     // The chat route's hedge is gone (D-0020), so its var is refused by name like any other.

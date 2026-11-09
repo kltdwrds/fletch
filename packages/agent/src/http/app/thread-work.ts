@@ -46,16 +46,27 @@ export const STATUS_WORDS: Record<string, string> = {
   page_read: "Reading a web page",
   browse_open: "Reading a web page",
   browse_live: "Using the live browser",
-  web_search: "Searching the web",
 };
 
 /** The line for a tool the table does not name. */
 export const STATUS_OTHER = "Working";
 
+/**
+ * What a card says when the store answers that its thing is gone (F101, B-P11-17, delta 8; specimen
+ * `ds/specimens/files.html`). The page asks the owner's Person at draw time: a file card whose file is not found says
+ * deleted, a share card whose share is no longer in the person's list says revoked (or expired, past its time). The
+ * stored message and the stored card are never rewritten; only the drawing says what is true now.
+ */
+export const CARD_STATE_TEXT = {
+  deleted: "Deleted: this file is no longer in your Library.",
+  revoked: { title: "Link revoked", text: "This share link was revoked; it opens nothing now." },
+  expired: { title: "Link expired", text: "This share link has expired; it opens nothing now." },
+};
+
 /** How many of a file's first lines its card previews (the bundle's `.qf-fcard--chat .pv` is four lines high). */
 export const CARD_PREVIEW_LINES = 4;
 
-export const THREAD_WORK_SCRIPT = `const STATUS = ${JSON.stringify(STATUS_WORDS)}, STATUS_OTHER = ${JSON.stringify(STATUS_OTHER)}, QUIET = ${JSON.stringify([...NOT_STEPS])};
+export const THREAD_WORK_SCRIPT = `const STATUS = ${JSON.stringify(STATUS_WORDS)}, STATUS_OTHER = ${JSON.stringify(STATUS_OTHER)}, QUIET = ${JSON.stringify([...NOT_STEPS])}, CARD_STATE = ${JSON.stringify(CARD_STATE_TEXT)};
 // The status line (F24): the tool now running, worded by the table; null (the tool returned) draws nothing. It stands in
 // the thinking slot, so whatever ends the thinking dots ends it too.
 function statusLine(tool) {
@@ -91,9 +102,29 @@ function fileCard(path) {
   const pv = el("pre"); pv.className = "pv"; pv.hidden = true; a.append(pv);
   const shown = (text) => { pv.textContent = text.split("\\n").slice(0, ${CARD_PREVIEW_LINES}).join("\\n"); pv.hidden = false; };
   if (previews.has(path)) shown(previews.get(path));
-  // A file that cannot be read keeps its glyph and no preview; the code stays on the card for programs.
-  else getJson("/app/file?path=" + encodeURIComponent(path)).then((f) => { if (typeof f.text !== "string") return; previews.set(path, f.text); shown(f.text); }, (e) => { a.dataset.code = (e && e.code) || ""; });
+  // A file that cannot be read keeps its glyph and no preview; the code stays on the card for programs. A file the
+  // store no longer has (F101) is drawn deleted: the same head, the table's words, and no link to open.
+  else getJson("/app/file?path=" + encodeURIComponent(path)).then((f) => { if (typeof f.text !== "string") return; previews.set(path, f.text); shown(f.text); }, (e) => { a.dataset.code = (e && e.code) || ""; if (a.dataset.code === "FILES_NOT_FOUND") deletedCard(a, head); });
   return a;
+}
+function deletedCard(a, head) {
+  const d = el("span"); d.className = "qf-fcard qf-fcard--chat"; d.dataset.file = a.dataset.file; d.dataset.code = a.dataset.code; d.dataset.state = "deleted";
+  const note = el("span", CARD_STATE.deleted); note.className = "t-foot t-2";
+  d.append(head, note);
+  a.replaceWith(d);
+}
+// A share card (F101) asks the person's shares at draw time: one no longer listed is revoked, one past its time
+// expired; either way its link is taken off, so the card opens nothing.
+function shareState(c, d, act, t, p) {
+  const id = typeof c.id === "string" && c.id.startsWith("share:") ? c.id.slice(6) : null;
+  if (!id) return;
+  getJson("/app/shares").then((r) => {
+    if (!r || !Array.isArray(r.shares)) return;
+    const s = r.shares.find((x) => x.id === id);
+    const state = !s ? "revoked" : s.expired ? "expired" : null;
+    if (!state) return;
+    d.dataset.state = state; t.textContent = CARD_STATE[state].title; p.textContent = CARD_STATE[state].text; act.remove();
+  }, () => {});
 }
 // The agent's words with their links drawn (F24): an http(s) link an anchor, a stored file's a card where the link
 // stood, anything else left as written. A message with no link is left as it was drawn.

@@ -92,5 +92,6 @@ export const runs: Record<string, () => P16HarnessOptions> = {
     ],
   }),
   "T-P16-10": () => ({ seed: remember(OWNER_LINE), script: [load("browse"), open(SHOP, "o1"), { text: FOR_PAT }] }),
-  "T-P16-11": () => ({ script: routed([...research(), { text: LEFT }], { children: [["p16 child", child]], spare: 10 }) }),
+  // T-P16-01's world after its turn (its contract setup line): the same kept login, then the residue question.
+  "T-P16-11": () => ({ seed: keptLogin, script: routed([...research(), { text: LEFT }], { children: [["p16 child", child]], spare: 10 }) }),
 };

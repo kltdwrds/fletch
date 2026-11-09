@@ -12,7 +12,8 @@ import { jobsNamespace } from "../jobs/tools.ts";
 import { memorySpecs } from "../memory/tools.ts";
 import { documentsNamespace } from "../render/tools.ts";
 import { skillsNamespace } from "../skills/tools.ts";
-import { speechOf } from "../speech/speech.ts";
+import { type SpeechWire, speechOf } from "../speech/speech.ts";
+import type { JournalRow } from "../grants/journal.ts";
 import { speechNamespace } from "../speech/tools.ts";
 import { subagentsNamespace } from "../subagents/tools.ts";
 import type { Namespace } from "../tools/registry.ts";
@@ -43,6 +44,10 @@ export interface SessionDeps {
   card: (id: string) => CardRow | null;
   /** The deploy's model configuration (`modelConfig(env)`): whether the chat route's model takes images. */
   models: ModelConfig;
+  /** The Ledger that admits and records each speech call (F71); without it there is no speech. */
+  speechWire?: SpeechWire;
+  /** The tenant's journal, for a change the person asked for outside a card (`voice_set`, F71). */
+  journal?: (row: JournalRow) => Promise<unknown>;
 }
 
 export function chatNamespaces(d: SessionDeps, person: string, effects: EffectBuffer, context: TurnContext, gateState: GateState): Namespace[] {
@@ -75,9 +80,12 @@ export function chatNamespaces(d: SessionDeps, person: string, effects: EffectBu
   if (hooks.workspace) namespaces.push(workspaceNamespace(hooks.workspace.api, { tenant: hooks.workspace.tenant, principal: person, effects }));
   if (hooks.subagents) namespaces.push(subagentsNamespace(hooks.subagents, { effects, context, latched: () => gateState.latched(), person }));
   if (context.counterpart.kind === "own-agent") namespaces.push(todoNamespace(store), dbQueryNamespace({ query: d.queryView }, d.schedule));
-  // Speech (P13): `speak` refused SPEECH_UNAVAILABLE until F71, and calls refused VOICE_CALL_UNAVAILABLE on every deploy.
+  // Speech (P13, F71): on where `AI` is bound, `SPEECH` is not off and the Ledger admits each call; the audio record is the
+  // owner's, so a colleague's turn gets the refusals alone. Calls are refused VOICE_CALL_UNAVAILABLE on every deploy.
   const speechEnv = hooks.speech ?? {};
-  namespaces.push(speechNamespace(speechOf(speechEnv), speechEnv));
+  const audio = context.counterpart.kind === "own-agent" ? hooks.audio?.(person) : undefined;
+  const speechDeps = audio ? { person, chatId: d.chatId, audio, effects, said: () => store.latestTypedText(), now: d.now, ...(d.journal ? { journal: d.journal } : {}) } : undefined;
+  namespaces.push(speechNamespace(speechOf(speechEnv, d.speechWire), speechEnv, speechDeps));
   const extra = hooks.namespaces;
   namespaces.push(...(typeof extra === "function" ? extra({ owner: d.owner, pending: d.pending }) : (extra ?? [])));
   return namespaces;

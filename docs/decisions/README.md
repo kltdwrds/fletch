@@ -1,7 +1,7 @@
 # Decisions
 
 A decision others must obey is one record here, `NNNN-slug.md`. Reversible choices nobody else depends on are one
-line in [log.md](log.md). `scripts/check-decisions.mjs` runs in `pnpm check` and fails when a record goes stale.
+line in [log.md](log.md); lines from before November 2026 sit in [log-2026-10.md](log-2026-10.md), moved whole when the live log reached its cap. `scripts/check-decisions.mjs` runs in `pnpm check` and fails when a record goes stale.
 Why it is shaped this way: D-0007 and `docs/research/2026-10-22-decision-records.md`.
 
 ## How a decision becomes binding

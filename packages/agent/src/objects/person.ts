@@ -15,7 +15,9 @@ import { PersonFiles } from "../files/store.ts";
 import { type AttachmentCall, PersonAttachments } from "../attachments/store.ts";
 import { type AttachmentLinkCall, runAttachmentCall } from "../attachments/links.ts";
 import { attachmentDeps } from "../attachments/wiring.ts";
+import { type AudioCall, PersonAudio, settingsVoiceSet } from "../speech/audio.ts";
 import { type DocumentCall, documentCall, PersonLinks } from "../files/links.ts";
+import { type Actor as FileActor, type HistoryCall, historyCall, type JournalSink, journaledDelete } from "../files/journaled.ts";
 import { forgetConfirmed } from "../vault/browser-state.ts";
 import { runTreeCall, type TreeCall, treeOf } from "../tree/rpc.ts";
 import type { EntityInput } from "../memory/entities.ts";
@@ -53,6 +55,7 @@ export class Person extends Agent<Env> {
   private chatsInstance?: PersonChats;
   private memoryInstance?: MemoryService;
   private filesInstance?: PersonFiles;
+  private audioInstance?: PersonAudio;
   private mailInstance?: PersonMail;
   private authorityInstance?: PersonAuthority;
   private browseInstance?: PersonBrowse;
@@ -195,7 +198,7 @@ export class Person extends Agent<Env> {
   }
 
   private get files(): PersonFiles {
-    this.filesInstance ??= new PersonFiles(this.ctx.storage, this.env.AGENT_BUCKET, this.name);
+    this.filesInstance ??= new PersonFiles(this.ctx.storage, this.env.AGENT_BUCKET, this.name, () => Date.now(), this.ledgerJournal);
     return this.filesInstance;
   }
 
@@ -400,16 +403,30 @@ export class Person extends Agent<Env> {
   /** The person's attachments (M24.3, `attachments/store.ts`): uploads, mail's files and colleagues' requests' files, decided here. */
   private get attachments(): PersonAttachments { this.attachmentsInstance ??= new PersonAttachments(this.ctx.storage, attachmentDeps(this.env, this.ctx.storage, this.name)); return this.attachmentsInstance; }
   async attachmentCall(by: string, call: AttachmentCall | AttachmentLinkCall) { return runAttachmentCall(this.attachments, this.links, by, call); }
+  /** The person's audio pieces and voice (F71), beside their files: the chat's `speech` namespace reaches them here. */
+  async audioCall(requester: string, call: AudioCall) { this.audioInstance ??= new PersonAudio(this.ctx.storage, this.files, this.env.AGENT_BUCKET as never, this.name); return this.audioInstance.call(call, requester); }
+  /** Settings > Voice (F72): the person's pick, writer `settings`, journaled in the tenant's Ledger. */
+  async voiceFromSettings(requester: string, speaker: string) {
+    const ledger = this.env.LEDGER.get(this.env.LEDGER.idFromName(this.env.TENANT_ID)) as unknown as { journal(row: JournalRow): Promise<unknown> };
+    return settingsVoiceSet({ call: (c, r) => this.audioCall(r, c) }, requester, speaker, (row) => ledger.journal(row), Date.now());
+  }
 
   // The person's files, each decided in the store for the owner alone; rename and pin are the Library's item menu (M23.4).
   async fileList(input: { prefix?: string; preview?: boolean }, requester: string) { return this.files.list(input, requester); }
   async fileRead(input: { path: string; from?: number; limit?: number }, requester: string) { return this.files.read(input, requester); }
   async fileWrite(input: { path: string; text: string }, ctx: { requester: string; writer: string }) { return this.files.write(input, ctx); }
-  async fileDelete(input: { path: string }, requester: string) { return this.files.remove(input, requester); }
+  /** A delete ends every share of the file and writes one `files.delete` journal row (F101, P11 delta 7); `by` says who acted. */
+  async fileDelete(input: { path: string }, requester: string, by: FileActor = "agent") { return journaledDelete({ files: this.files, links: this.links, journal: this.ledgerJournal }, input, requester, by); }
   async fileRename(input: { path: string; to: string }, requester: string) { return this.files.rename(input, requester); }
   async filePin(input: { path: string; pinned: boolean }, requester: string) { return this.files.pin(input, requester); }
   /** Rendered documents and signed links (M24.3, `files/links.ts`); `sharedFile` answers a public share link with no session. */
-  async documentCall(requester: string, call: DocumentCall) { return documentCall(this.files, this.links, requester, call); }
+  async documentCall(requester: string, call: DocumentCall) { return documentCall(this.files, this.links, requester, call, this.ledgerJournal); }
+  /** The owner's shares for the app (F101, B-P11-13): what the chat's share card and the Library read. */
+  async shareList(requester: string) { return this.links.list(requester); }
+  /** The owner's versions and trash (F103, D-0028 proposed): list, open and restore a version; list, restore and empty the trash. */
+  async fileHistory(requester: string, call: HistoryCall, by: FileActor = "person") { return historyCall({ files: this.files, links: this.links, journal: this.ledgerJournal }, requester, call, by); }
+  /** The tenant Ledger's journal, which a file's delete and a share's revoke write to (F101). */
+  private readonly ledgerJournal: JournalSink = async (row) => (this.env.LEDGER.get(this.env.LEDGER.idFromName(this.env.TENANT_ID)) as unknown as { journal(r: JournalRow): Promise<unknown> }).journal(row);
   async sharedFile(token: string) { return this.links.shared(token); }
   /** The working tree, `work/` (M24.3): the Agents SDK `Workspace` in this object's SQLite, decided in `PersonTree` for the owner alone. */
   async treeCall(call: TreeCall, requester: string) { return runTreeCall(treeOf(this.ctx.storage, this.name), call, requester); }

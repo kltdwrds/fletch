@@ -3,7 +3,7 @@
 // list and delete and has no edit, grep or find. Ada and Bo of Solo Sam throughout: Bo's agent never
 // reads, lists, greps or finds Ada's tree, and a compromised Bo model cannot reach it either.
 import { describe, expect, it } from "vitest";
-import { filesNamespace } from "../../packages/agent/src/files/tools.ts";
+import { filesNamespace, TRASH_WORDS } from "../../packages/agent/src/files/tools.ts";
 import { directTreeApi, treeOf } from "../../packages/agent/src/tree/rpc.ts";
 import { type PersonTree, TREE_PAGE_BYTES } from "../../packages/agent/src/tree/tree.ts";
 import { ObjectHarness } from "../support/object-harness.ts";
@@ -67,7 +67,7 @@ describe("[M24.3] one vocabulary", () => {
     }
     expect(await run(ns, "file_list", {})).toContain("notes/todo.md");
     expect(await w.host(ada.email).files.read({ path: "notes/todo.md" }, ada.email)).toMatchObject({ ok: true, lines: [{ n: 1, text: "venue" }, { n: 2, text: "" }] });
-    expect(await run(ns, "file_delete", { path: "notes/todo.md" })).toBe("deleted notes/todo.md");
+    expect(await run(ns, "file_delete", { path: "notes/todo.md" })).toBe(`deleted notes/todo.md; ${TRASH_WORDS}`);
   });
 
   it("the tree refuses every call from anyone but its owner: Bo can never read, list, grep, find, write, edit or delete Ada's tree", async () => {

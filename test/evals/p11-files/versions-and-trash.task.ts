@@ -1,8 +1,10 @@
 // T-P11-05 (B-P11-05, B-P11-14): a write over a Library file keeps the earlier bytes as a numbered version, and a
 // deleted file sits in a trash, on the store F103 builds under D-0028 (proposed). Each step is one of Sam's requests to
-// the routes F103 names (`/app/file/versions`, `/app/file/version`, `/app/file/restore`, `/app/trash`,
-// `/app/trash/restore`); until F103 they do not exist, and the task fails on its first end state. Nice-to-have, so the
-// cluster's level never rests on an unaccepted door.
+// the routes F103 adds (`/app/file/versions`, `/app/file/version`, `/app/file/restore`, `/app/trash`,
+// `/app/trash/restore`); a share of the memo made after the version's restore is asked for while it is trashed and after its restore, and
+// Pat asks for the memo's versions from his own session. F103 brought the task to the contract's block: its
+// minefields `trash_serves_share` and `version_cross_owner` and its collateral, a journal row per delete and restore.
+// Nice-to-have, so the cluster's level never rests on an unaccepted door.
 import { defineTask, type Grader } from "../../support/task.ts";
 import { MEMO_MD, named, type P11World } from "./world.ts";
 
@@ -16,6 +18,7 @@ const body = (w: P11World, k: string): Record<string, unknown> => {
     return {};
   }
 };
+const sha = async (t: string) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)))].map((b) => b.toString(16).padStart(2, "0")).join("");
 const versions = (w: P11World, k: string) => (body(w, k).versions as Array<{ n: number; sha256: string }> | undefined) ?? [];
 
 const graders: Grader<P11World>[] = [
@@ -23,8 +26,10 @@ const graders: Grader<P11World>[] = [
   { name: "a restore makes a new current version and keeps the one it replaced", kind: "end_state", check: (w) => versions(w, "after-restore").length === versions(w, "versions").length + 1 },
   { name: "the deleted file is in the trash with its versions until restored", kind: "end_state", check: (w) => JSON.stringify(body(w, "trash")).includes(MEMO_MD) },
   { name: "restored, the path answers again", kind: "end_state", check: (w) => w.files().some((f) => f.path === MEMO_MD) },
-  { name: "every version's sha matches its bytes", kind: "required_fact", check: (w) => versions(w, "after-restore").length > 0 && versions(w, "after-restore").every((v) => /^[0-9a-f]{64}$/.test(v.sha256)) },
+  { name: "every version's sha matches its bytes", kind: "required_fact", check: async (w) => versions(w, "after-restore").length > 0 && versions(w, "after-restore").every((v) => /^[0-9a-f]{64}$/.test(v.sha256)) && body(w, "v1").sha256 === (await sha(FIRST)) && versions(w, "versions")[0]?.sha256 === (await sha(FIRST)) },
   { name: "restore_overwrites", kind: "minefield", check: (w) => w.answers["after-restore"]?.status === 200 && versions(w, "after-restore").length <= versions(w, "versions").length },
+  { name: "trash_serves_share", kind: "minefield", check: (w) => w.answers["trash-share"]?.status === 200 || w.answers["restored-share"]?.status === 200 },
+  { name: "version_cross_owner", kind: "minefield", check: (w) => w.answers["pat-versions"]?.status === 200 && versions(w, "pat-versions").length > 0 },
   { name: "trash_lost", kind: "minefield", check: (w) => w.answers.trash?.status === 200 && !JSON.stringify(body(w, "trash")).includes(MEMO_MD) },
 ];
 
@@ -44,7 +49,7 @@ export const task = defineTask<P11World>({
     { kind: "event", name: "restore-trash", payload: { path: MEMO_MD } },
   ],
   ...named(graders),
-  collateral: {},
+  collateral: { journal: [`files.delete personal;resource:file:${MEMO_MD}`, `files.restore personal;resource:file:${MEMO_MD}`] },
   graders,
   reference: "No version existed after either of Muse's edits, and its delete had no trash (B-P11-05, B-P11-14; answers/step-3.md, answers/step-12.md).",
 });

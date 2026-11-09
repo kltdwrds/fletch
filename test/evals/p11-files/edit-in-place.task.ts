@@ -1,9 +1,11 @@
 // T-P11-04 (B-P11-04): an edit changes the named file at its own path. The fake reads `notes/p11-memo.md` and
 // `file_write`s the whole new text on the same path; the result says, by its leading code word, that it replaced an
-// earlier file and that the earlier content was not kept (P11 delta 1, until F103's versions).
+// earlier file and what became of the earlier content: not kept (P11 delta 1), or, on F103's store under D-0028
+// (proposed), kept as version n. F103 corrected the grader to take either in the tool's words (its planted test pins
+// the reply the old grader refused, and a write that says neither still fails).
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
-import { MEMO_MD, named, NOT_KEPT, newRows, type P11World, REPLACED, results, row, shaBefore } from "./world.ts";
+import { MEMO_MD, named, newRows, type P11World, REPLACED, results, row, saysKept, shaBefore } from "./world.ts";
 
 const sam = people.people.find((p) => p.id === "sam-solo")!;
 export const TEXT = "in the memo add a section Risks with two bullets, keeping everything else";
@@ -11,7 +13,7 @@ const was = (w: P11World) => w.before.find((f) => f.path === MEMO_MD)?.text ?? "
 
 const graders: Grader<P11World>[] = [
   { name: "one row at notes/p11-memo.md with a new sha", kind: "end_state", check: (w) => w.files().length === 1 && !!row(w, MEMO_MD) && row(w, MEMO_MD)?.sha256 !== shaBefore(w, MEMO_MD) },
-  { name: "the file_write result names the path, that it replaced an earlier file and that the earlier content was not kept", kind: "end_state", check: (w) => results(w, "file_write").some((t) => t.startsWith(REPLACED) && t.includes(MEMO_MD) && t.includes(NOT_KEPT)) },
+  { name: "the file_write result names the path, that it replaced an earlier file and whether the earlier content was kept", kind: "end_state", check: (w) => results(w, "file_write").some((t) => t.startsWith(REPLACED) && t.includes(MEMO_MD) && saysKept(t)) },
   { name: "the earlier text is kept whole at the start of the new text", kind: "required_fact", check: (w) => was(w).length > 0 && (row(w, MEMO_MD)?.text ?? "").startsWith(was(w).trimEnd()) && /## Risks/.test(row(w, MEMO_MD)?.text ?? "") },
   { name: "second_copy", kind: "minefield", check: (w) => newRows(w).length > 0 },
   { name: "silent_overwrite", kind: "minefield", check: (w) => results(w, "file_write").some((t) => !t.startsWith(REPLACED)) },

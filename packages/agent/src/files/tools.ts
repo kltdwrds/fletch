@@ -10,6 +10,7 @@
 import { Type } from "@earendil-works/pi-ai";
 import type { Namespace, ToolSpec } from "../tools/registry.ts";
 import { inTree, type TreeDeleteResult, type TreeEditResult, type TreeFindResult, type TreeGrepResult, type TreeListResult, type TreeReadResult, type TreeWriteResult } from "../tree/tree.ts";
+import type { JournaledDelete } from "./journaled.ts";
 import type { DeleteResult, ListResult, ReadResult, WriteResult } from "./store.ts";
 
 /** What the chat reaches on the owner's `Person` object for the home tree, over RPC in production. */
@@ -17,7 +18,8 @@ export interface FilesApi {
   fileList(input: { prefix?: string }, requester: string): Promise<ListResult>;
   fileRead(input: { path: string; from?: number; limit?: number }, requester: string): Promise<ReadResult>;
   fileWrite(input: { path: string; text: string }, ctx: { requester: string; writer: string }): Promise<WriteResult>;
-  fileDelete(input: { path: string }, requester: string): Promise<DeleteResult>;
+  /** On the Person, a delete also ends the file's shares and journals `files.delete` (F101); it answers how many shares ended. */
+  fileDelete(input: { path: string }, requester: string): Promise<DeleteResult | JournaledDelete>;
 }
 
 /** What the chat reaches on the owner's `Person` object for the working tree, over RPC in production. */
@@ -48,8 +50,20 @@ function unwrap<T extends { ok: boolean }>(r: T): Exclude<T, { ok: false }> {
 }
 /** What `file_write` says when it took an earlier file's place (F100, P11 delta 1): the earlier content is not kept until F103's versions (D-0028). */
 export const REPLACED_WORDS = "an earlier file at this path was replaced; its earlier content was not kept";
+/** What a write says when the store kept the replaced bytes as version `n` (F103, D-0028 proposed); from the store's `kept` alone. */
+export const keptWords = (n: number) => `an earlier file at this path was replaced; its earlier content was kept as version ${n}`;
+/** A write's replacement words from the store's answer: kept as a version, or not kept. */
+export const replacedWords = (r: { kept?: number }) => (typeof r.kept === "number" ? keptWords(r.kept) : REPLACED_WORDS);
+/** What a delete adds when the store moved the file to the trash (F103): how long it stays there. */
+export const TRASH_WORDS = "it is in the trash for 30 days, its versions with it, until restored or emptied";
 /** A home file's last change, as `file_list` gives it beside the size (F100, B-P11-16). */
 export const changedAt = (ms: number) => new Date(ms).toISOString().slice(0, 16).replace("T", " ");
+/** What `file_delete` says (F101, B-P11-14): the path, and from the store's answer how many share links ended with it. */
+export function deletedWords(r: { path: string; sharesEnded?: number; journaled?: boolean; trashed?: boolean }): string {
+  const n = r.sharesEnded ?? 0;
+  const shares = n > 0 ? `; ${n === 1 ? "its share link" : `its ${n} share links`} ended with it and now open${n === 1 ? "s" : ""} nothing` : "";
+  return `deleted ${r.path}${shares}${r.trashed ? `; ${TRASH_WORDS}` : ""}${r.journaled === false ? "; no journal row was written for the delete" : ""}`;
+}
 const treeOnly = (tool: string, path: string) =>
   new Error(`FILES_TREE_ONLY: ${tool} works on the working tree, work/ (work, uploads and spills); ${path} is a home file: file_read it and file_write the whole text`);
 
@@ -79,7 +93,7 @@ export function filesNamespace(api: FilesApi, requester: string, writer: string,
       let truncated = false;
       if (!inTree(p.prefix)) {
         const r = unwrap(await api.fileList(p, requester));
-        lines.push(...r.files.map((f) => `${f.path} (${f.size} bytes, changed ${changedAt(f.updated_at)} UTC, sha256 ${f.sha256.slice(0, 12)}${f.spilled ? ", in R2" : ""})`));
+        lines.push(...r.files.map((f) => `${f.path} (${f.size} bytes, changed ${changedAt(f.updated_at)} UTC, sha256 ${f.sha256.slice(0, 12)}${f.spilled ? ", in R2" : ""}${f.versions ? `, ${f.versions} earlier version${f.versions === 1 ? "" : "s"} kept` : ""})`));
       }
       if (options.tree && (p.prefix === undefined || p.prefix === "" || inTree(p.prefix))) {
         const r = unwrap(await options.tree.treeList({ prefix: p.prefix || undefined }, requester));
@@ -125,7 +139,7 @@ export function filesNamespace(api: FilesApi, requester: string, writer: string,
       }
       const r = unwrap(await api.fileWrite(p, { requester, writer }));
       const saved = `${r.path}, ${r.size} bytes, sha256 ${r.sha256}${r.spilled ? " (stored in R2)" : ""}`;
-      return text(r.replaced ? `REPLACED: saved ${saved}; ${REPLACED_WORDS}` : `saved ${saved}`, r);
+      return text(r.replaced ? `REPLACED: saved ${saved}; ${replacedWords(r)}` : `saved ${saved}`, r);
     },
   };
   const edit: ToolSpec<typeof EditParams> = {
@@ -172,9 +186,9 @@ export function filesNamespace(api: FilesApi, requester: string, writer: string,
     kind: "observation",
     mutates: true,
     label: "Delete a file",
-    description: "Delete one of your files.",
+    description: "Delete one of your files. A home file's share links end with it.",
     parameters: DeleteParams,
-    execute: async (_id, p) => text(`deleted ${unwrap(inTree(p.path) ? await tree().treeDelete(p, requester) : await api.fileDelete(p, requester)).path}`),
+    execute: async (_id, p) => text(deletedWords(unwrap(inTree(p.path) ? await tree().treeDelete(p, requester) : await api.fileDelete(p, requester)))),
   };
   return { name: "files", description: "your files: the working tree work/ (work, uploads, spills) and your home notes and drafts", deferral: "names", tools: [list, read, write, edit, grep, find, remove] as ToolSpec[] };
 }

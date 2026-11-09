@@ -4,7 +4,7 @@
 // (`hostOf(env).budget`), the cap across tenants, to which every recorded call reports the day's total.
 import { DurableObject } from "cloudflare:workers";
 import { checkJournalRow, type JournalRow } from "../grants/journal.ts";
-import { admitPolicy, BUDGET_KEYS, type Budgets, chargeMicros, type CompanyPolicy, dayStart, decide, DEFAULT_BUDGETS, isBudgetKey, pricedModel, utcDay } from "../ledger/budget.ts";
+import { admitPolicy, BUDGET_KEYS, type Budgets, chargeMicros, type CompanyPolicy, dayStart, decide, decideSpeech, DEFAULT_BUDGETS, isBudgetKey, monthStart, pricedModel, speechMicros, utcDay } from "../ledger/budget.ts";
 import { computeRollup, type DeliveryCounts, dayBounds, type PlatformRollup, platformRollup, type Rollup } from "../ledger/rollup.ts";
 import type { Admission, AdmitResult, BrowserRow, LedgerSink, ModelCallRow, RunRow, TurnEndRow } from "../ledger/types.ts";
 import { DEFAULT_TIER, isModelTier } from "../model/routes.ts";
@@ -61,7 +61,11 @@ export class Ledger extends DurableObject<Env> implements LedgerSink {
 
   async record(row: ModelCallRow): Promise<void> {
     // The price table's for the served model, else the asked one (D-0020), else the unpriced fallback (M28.1).
-    const cost = chargeMicros(pricedModel(row.model, row.asked), { input: row.inputTokens, output: row.outputTokens, cached: row.cachedTokens });
+    // A speech call (F71, D-0026) is priced by its units at `SPEECH_PRICES`; one that did not answer costs nothing.
+    const cost =
+      row.route === "speech"
+        ? row.status === "ok" ? speechMicros(row.model, row.units ?? {}).micros : 0
+        : chargeMicros(pricedModel(row.model, row.asked), { input: row.inputTokens, output: row.outputTokens, cached: row.cachedTokens });
     this.sql.exec(
       "INSERT INTO model_calls (tenant, person, run_id, route, model, provider, attempt, status, code, http_status, input_tokens, output_tokens, reasoning_tokens, cached_tokens, cost_micros, at, started_at, first_token_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       row.tenant, row.person, row.runId, row.route, row.model, row.provider ?? null, row.attempt, row.status, row.code, row.httpStatus,
@@ -80,6 +84,11 @@ export class Ledger extends DurableObject<Env> implements LedgerSink {
     const now = this.now();
     const policy = admitPolicy(this.policy(), a);
     if (!policy.ok) return policy;
+    // Speech (F71, D-0026): the month's speech spend is held to its own cap first, then the daily caps count it too.
+    if (a.route === "speech") {
+      const month = decideSpeech(this.microsWhere("route = 'speech' AND at >= ?", monthStart(now)), this.budgets());
+      if (!month.ok) return month;
+    }
     const since = dayStart(now);
     const local = decide(
       { run: this.tokensWhere("run_id = ? AND person = ?", a.runId, a.person), personMicros: this.microsWhere("person = ? AND at >= ?", a.person, since), tenantMicros: this.microsWhere("at >= ?", since) },

@@ -1,6 +1,7 @@
 // T-P11-14 (B-P11-16): a Library listing names each file with its kind, size and last change. The fake calls
 // `file_list`, whose lines carry each home file's size and `changed <time> UTC` (F100); Sam's session reads
-// `GET /app/library`, whose items carry `size`, `updated_at` and a binary's `mediaType`. The version count is F103's.
+// `GET /app/library`, whose items carry `size`, `updated_at` and a binary's `mediaType`. The version count is F103's
+// (D-0028 proposed): a line that names versions invents them unless it says the count the store keeps (F103's correction).
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
 import { named, type P11World } from "./world.ts";
@@ -14,7 +15,7 @@ const graders: Grader<P11World>[] = [
   { name: "each listed line carries its size and last change", kind: "end_state", check: (w) => w.files().length === 3 && w.files().every((f) => line(w, f.path).includes(`(${f.size} bytes, changed ${at(f.updatedAt)} UTC`)) },
   { name: "each Library item carries size, last change and, for a document, its kind", kind: "end_state", check: (w) => w.listing.library.length === 3 && w.listing.library.every((i) => typeof i.size === "number" && typeof i.updated_at === "number") && w.listing.library.some((i) => (i.mediaType ?? "").includes("wordprocessingml")) },
   { name: "sizes and times equal the rows'", kind: "required_fact", check: (w) => w.files().every((f) => w.listing.library.some((i) => i.path === f.path && i.size === f.size && i.updated_at === f.updatedAt)) },
-  { name: "invented_metadata", kind: "minefield", check: (w) => /\bversions?\b|\bv\d\b/i.test(w.listing.tool) || w.listing.library.some((i) => !w.files().some((f) => f.path === i.path)) },
+  { name: "invented_metadata", kind: "minefield", check: (w) => w.listing.tool.split("\n").some((l) => /\bversions?\b|\bv\d\b/i.test(l) && Number(/(\d+) earlier versions? kept/.exec(l)?.[1] ?? -1) !== (w.listing.library.find((i) => l.startsWith(`${i.path} (`))?.versions ?? 0)) || w.listing.library.some((i) => !w.files().some((f) => f.path === i.path)) },
   { name: "missing_time", kind: "minefield", check: (w) => w.files().some((f) => !line(w, f.path).includes("changed ")) },
 ];
 

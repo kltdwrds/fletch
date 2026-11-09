@@ -1,9 +1,9 @@
 // T-P11-16 (B-P11-01, B-P11-04), tier 2 on a preview slot (F102): a memo made and then edited in place, each reply
 // carrying the file's link after its tool result, the second saying whether the earlier version was kept in the words
-// the tool returned. Under the scripted fake (F100) the same file runs on the tier-1 world, the memo as Markdown.
+// the tool returned (F103: not kept, or kept as version n on the store D-0028 proposes). Under the scripted fake (F100) the same file runs on the tier-1 world, the memo as Markdown.
 import people from "../../fixtures/people.json" with { type: "json" };
 import { defineTask, type Grader } from "../../support/task.ts";
-import { indexOf, named, NOT_KEPT, type P11World, REPLACED, replyTo, results } from "./world.ts";
+import { indexOf, KEPT, named, NOT_KEPT, type P11World, REPLACED, replyTo, results } from "./world.ts";
 
 const sam = people.people.find((p) => p.id === "sam-solo")!;
 export const FIRST = "p11 eval: write a one-page memo titled p11 eval memo on Solo Sam's fictional plan for next quarter (three headings, invented numbers) and keep it where I can find it later";
@@ -17,7 +17,7 @@ const linkAt = (w: P11World, n: number) => w.entries().map((e, i) => (e.role ===
 const graders: Grader<P11World>[] = [
   { name: "one file after the first turn, the same path after the second", kind: "end_state", check: (w) => w.files().length === 1 && paths(w).length === 2 && paths(w)[0] === paths(w)[1] },
   { name: "each reply carries the file's link after its tool result", kind: "end_state", check: (w) => [1, 2].every((n) => linkIn(replyTo(w, n)) && linkAt(w, n) > writeAt(w, n) && writeAt(w, n) !== -1) },
-  { name: "the second reply says the earlier version was not kept, as the tool returned", kind: "end_state", check: (w) => results(w, "file_write").some((t) => t.startsWith(REPLACED) && t.includes(NOT_KEPT)) && /\bnot kept\b/i.test(replyTo(w, 2)) },
+  { name: "the second reply says whether the earlier version was kept, as the tool returned", kind: "end_state", check: (w) => results(w, "file_write").some((t) => t.startsWith(REPLACED) && ((t.includes(NOT_KEPT) && /\bnot kept\b/i.test(replyTo(w, 2))) || (KEPT.test(t) && new RegExp(`\\bversion ${KEPT.exec(t)?.[1]}\\b`, "i").test(replyTo(w, 2)) && !/\bnot kept\b/i.test(replyTo(w, 2))))) },
   { name: "one path across both turns", kind: "required_fact", check: (w) => new Set(paths(w)).size === 1 },
   { name: "saved_before_write", kind: "minefield", check: (w) => indexOf(w, (e) => e.role === "agent" && linkIn(e.text)) < writeAt(w, 1) },
   { name: "second_copy", kind: "minefield", check: (w) => w.files().length > 1 },

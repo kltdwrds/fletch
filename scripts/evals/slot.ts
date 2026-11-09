@@ -26,12 +26,18 @@ import { p5Slot } from "./p5-slot.ts";
 import { type P6Call, p6Slot } from "./p6-slot.ts";
 import { p7Page } from "./p7-page.ts";
 import { type P7Slot, p7Slot, ZONE } from "./p7-slot.ts";
+import { p8Slot } from "./p8-slot.ts";
 import { p9Page } from "./p9-page.ts";
+import { type P9State, p9Slot } from "./p9-slot.ts";
+import { p11Slot } from "./p11-slot.ts";
+import { type P13Op, p13Slot } from "./p13-slot.ts";
 import { p12Page } from "./p12-page.ts";
 import { type P12State, p12Slot } from "./p12-slot.ts";
 import { p14Page } from "./p14-page.ts";
+import { onSlot, p10Slot } from "./p10-slot.ts";
 import { type P14State, p14Slot } from "./p14-slot.ts";
-import { type P9State, p9Slot } from "./p9-slot.ts";
+import { p16Page } from "./p16-page.ts";
+import { type P16Op, p16Slot } from "./p16-slot.ts";
 import type { Slot } from "./runner.ts";
 import { type TestHostState, testHostReaders } from "./test-host.ts";
 
@@ -195,7 +201,7 @@ export function history(base: string, chatId: string, cookie: string, timeoutMs 
 }
 
 /** One turn over the chat socket, as the live exit test does it: resolves with the reply on `turn_done`, rejects with a TurnError otherwise. */
-export function turn(base: string, chatId: string, cookie: string, text: string, timeoutMs = TURN_TIMEOUT_MS, timeZone = "UTC"): Promise<string> {
+export function turn(base: string, chatId: string, cookie: string, text: string, timeoutMs = TURN_TIMEOUT_MS, timeZone = "UTC", attachments: string[] = []): Promise<string> {
   const wsUrl = `${base.replace(/^http/, "ws")}/chats/${chatId}/ws`;
   // Node's WebSocket (undici) takes request headers in its init object; the session is the cookie.
   const Socket = WebSocket as unknown as new (url: string, init: { headers: Record<string, string> }) => WebSocket;
@@ -218,7 +224,8 @@ export function turn(base: string, chatId: string, cookie: string, text: string,
     };
     ws.addEventListener("error", () => fail(new InfraError("SLOT_UNREACHABLE", `the chat socket failed: ${wsUrl}`)));
     ws.addEventListener("close", () => fail(new TurnError("SOCKET_CLOSED", "the chat socket closed before the turn ended")));
-    ws.addEventListener("open", () => ws.send(JSON.stringify({ type: "send", text, id, timeZone })));
+    // A send with the composer's pending attachments carries their upload ids (F73: the voice note).
+    ws.addEventListener("open", () => ws.send(JSON.stringify({ type: "send", text, id, timeZone, ...(attachments.length ? { attachments } : {}) })));
     ws.addEventListener("message", (event) => {
       let frame: { type: string; text?: string; code?: string; messages?: { who: string; text: string }[] };
       try {
@@ -464,7 +471,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
       // An activity task (F32), or a delegation task beside it (F34): chat c1's tasks over the app's routes, read once
       // each turn's task settled; the page in Chromium.
       const p5 =
-        task?.cluster === "P5" || task?.cluster === "P3" || task?.cluster === "P9" || task?.cluster === "P12"
+        task?.cluster === "P5" || task?.cluster === "P3" || task?.cluster === "P9" || task?.cluster === "P12" || task?.cluster === "P16"
           ? p5Slot(
               () => chatId,
               () => entriesOf(),
@@ -502,7 +509,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
       // A credentials task (F37): Sam's credential rows reset and the task's set up, chat c1's cards, messages and
       // requests and her Vault's rows through the `p9` op, read again after each turn; the tabs and reloads in Chromium.
       const p9 =
-        (task?.cluster === "P9" || task?.cluster === "P12") && p5
+        (task?.cluster === "P9" || task?.cluster === "P12" || task?.cluster === "P16") && p5
           ? p9Slot(
               () => chatId,
               async (call) => {
@@ -520,7 +527,7 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
       // A payments task (F39), over P9's: Sam's grant rows reset, chat c1's cards with their words, her grants, journal
       // rows and jobs through the `p12` op, read again after each turn; the reloads and `/settings` in Chromium.
       const p12 =
-        task?.cluster === "P12" && p5
+        (task?.cluster === "P12" || task?.cluster === "P16") && p5
           ? p12Slot(
               () => chatId,
               async (call) => {
@@ -532,6 +539,47 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
               p5.readers,
               new URL(base).origin,
               p12Page(base, cookie),
+            )
+          : null;
+      // A shopping task (F81), over P12's: Sam's browse memory of the four hosts reopened, her memory, jobs and other
+      // chats deleted, chat c1's stored messages through the `p16` op, read again after each turn; the reloads in Chromium.
+      const p16 =
+        task?.cluster === "P16" && p12
+          ? p16Slot(
+              () => chatId,
+              async (call) => {
+                const r = await testHostOp(base, lease, { op: "p16", person: OWNER, chat: chatId, call });
+                if (!r) throw new InfraError("SLOT_MISSING", "this slot serves no test host; `pnpm preview up` deploys one");
+                return call === "read" ? (r as unknown as Awaited<ReturnType<P16Op>>) : null;
+              },
+              p16Page(base, cookie),
+            )
+          : null;
+      // A voice task (F73, scripts/evals/p13-slot.ts): the speech cap set to $1 and read back, the probe spoken by the slot's
+      // own speech and uploaded as Sam's voice note, carried by the next prompt; her rows, records and the Ledger's speech
+      // calls through the `p13` op, read again after each turn, holding only what the trial made.
+      const p13 =
+        task?.cluster === "P13"
+          ? p13Slot(
+              (async (call: "probe" | "read") => {
+                const r = await testHostOp(base, lease, { op: "p13", person: OWNER, call });
+                if (!r) throw new InfraError("SLOT_MISSING", "this slot serves no test host; `pnpm preview up` deploys one");
+                return r;
+              }) as unknown as P13Op,
+              {
+                async json(method, path, body) {
+                  const r = await http(base, method, path, { cookie, ...(body === undefined ? {} : { body }) });
+                  return { status: r.res.status, body: r.body };
+                },
+                async upload(name, type, bytes) {
+                  const form = new FormData();
+                  form.set("file", new File([bytes as Uint8Array<ArrayBuffer>], name, { type }));
+                  const res = await fetch(`${base}/app/attachments`, { method: "POST", headers: { cookie, origin: new URL(base).origin }, body: form, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }).catch((e: Error) => e);
+                  if (res instanceof Error) throw new InfraError("SLOT_UNREACHABLE", `POST /app/attachments: ${res.message}`);
+                  if (res.status >= 500) throw new InfraError("SLOT_5XX", `POST /app/attachments answered ${res.status}`);
+                  return { status: res.status, body: (await res.json().catch(() => ({}))) as Record<string, unknown> };
+                },
+              },
             )
           : null;
       // An identity task (F41): Sam's standing files reset and a second passkey seeded, then her memory, the objects'
@@ -553,6 +601,65 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
               OWNER,
             )
           : null;
+      // A search, browser or media task (F91): chat c1's tool calls and results and Sam's files through the `p9` op's read,
+      // the browser's reads by address from the `state` op's log; Sam's files counted from the trial's start.
+      const p10 =
+        task?.cluster === "P10"
+          ? p10Slot(
+              () => replies,
+              async () => {
+                const r = (await testHostOp(base, lease, { op: "p9", person: OWNER, chat: chatId, call: "read" })) as { chat?: { messages?: string[] }; files?: string[] } | null;
+                if (!r) throw new InfraError("SLOT_MISSING", "this slot serves no test host; `pnpm preview up` deploys one");
+                return { messages: r.chat?.messages ?? [], files: r.files ?? [], reads: (state as TestHostState | null)?.log.reads ?? [] };
+              },
+            )
+          : null;
+      // A room-ask task (F61, scripts/evals/p8-slot.ts): the trial's chats by label, their tasks' tool calls and the chats
+      // the list holds that the trial did not open, through the app's routes as Sam; the list read once before any turn.
+      const p8 =
+        task?.cluster === "P8"
+          ? p8Slot(
+              () => chats,
+              (label) => entriesOf(label as ChatLabel),
+              async (path) => {
+                const r = await http(base, "GET", path, { cookie });
+                return { status: r.res.status, body: r.body };
+              },
+            )
+          : null;
+      if (p8) await p8.begin();
+      // A files task (F102, scripts/evals/p11-slot.ts): Sam's Library emptied and the task's setup made, then her files,
+      // shares and chat c1's entries read after each turn through the app's routes and the `p11` op; `approve` allows the
+      // pending card once through the page's route.
+      const p11 =
+        task?.cluster === "P11"
+          ? p11Slot({
+              read: async (path) => {
+                const r = await http(base, "GET", path, { cookie });
+                return { status: r.res.status, body: r.body };
+              },
+              post: async (path, body) => {
+                const r = await http(base, "POST", path, { cookie, body });
+                return { status: r.res.status, body: r.body };
+              },
+              publicGet: async (path) => {
+                const res = await fetch(base + path, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS), redirect: "manual" }).catch((e: Error) => e);
+                if (res instanceof Error) throw new InfraError("SLOT_UNREACHABLE", `GET ${path}: ${res.message}`);
+                return { status: res.status, text: await res.text() };
+              },
+              history: () => entriesOf(),
+              op: async (call, args = {}) => {
+                const r = await testHostOp(base, lease, { op: "p11", person: OWNER, call, chat: chatId, ...args });
+                if (!r) throw new InfraError("SLOT_MISSING", "this slot serves no test host; `pnpm preview up` deploys one");
+                return r;
+              },
+              decide: async (card, choice) => {
+                await decide(base, chatId, cookie, card, choice);
+                histories.set("c1", await history(base, chatId, cookie));
+              },
+            })
+          : null;
+      if (p11 && task) await p11.begin(task.id);
       const settled = (deadline: number) => async () => {
         await p3?.settle(deadline);
         await p5?.settle(deadline);
@@ -564,7 +671,14 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
         await p3?.refresh();
         await p9?.refresh();
         await p12?.refresh();
+        await p16?.refresh();
         await p14?.refresh();
+        await p10?.refresh();
+        if (p13) {
+          await p13.refresh();
+          const spent = p13.spend();
+          log(`evals: P13 speech this trial, from the Ledger: ${spent.calls} priced call(s), ${spent.micros} micros`);
+        }
         await p6?.refresh(`prompt:${label}`);
         await p7?.refresh(turn.startsWith("prompt") ? "prompt" : turn);
       };
@@ -588,8 +702,10 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
           }
           prompted = true;
           const sent = Date.now();
-          const reply = await turn(base, chats.get(chat) as string, cookie, text, TURN_TIMEOUT_MS, p7 ? ZONE : "UTC");
+          const reply = await turn(base, chats.get(chat) as string, cookie, p10 ? onSlot(text, base) : text, TURN_TIMEOUT_MS, p7 ? ZONE : "UTC", chat === "c1" ? (p13?.take() ?? []) : []);
           replies.push(reply);
+          // F91: a P10 trial's reply is logged with its chat, so a failed trial's words are read from the run's log.
+          if (p10) log(`evals: ${task?.id ?? ""} reply in chat ${chats.get(chat)}: ${JSON.stringify(reply)}`);
           // A P5 request is over when its task is: the sub-agents it launched handed off and the turn they woke ended; a P3
           // one when nothing it started is out (F34). A `prompt` event with `wait` leaves its sub-agents running.
           if (!wait)
@@ -597,11 +713,27 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
               throw e instanceof InfraError ? e : new TurnError("TURN_TIMEOUT", e.message);
             });
           await after(chat);
+          await p11?.refresh("prompt");
           return reply;
         },
         async event(name, payload) {
+          // A P11 event (F102, scripts/evals/p11-slot.ts): the pending card approved once, the counts either side of it.
+          if (p11 && (await p11.event(name))) {
+            await after("c1", `event:${name}`);
+            return;
+          }
           // A P14 event (F41, scripts/evals/p14-slot.ts): the chat looked at or reloaded at a width, a settings route opened.
           if (p14 && (await p14.event(name, payload))) {
+            await after("c1", `event:${name}`);
+            return;
+          }
+          // A P13 event (F73, scripts/evals/p13-slot.ts): the probe uploaded as Sam's voice note, carried by the next prompt.
+          if (p13 && (await p13.event(name, payload))) {
+            await after("c1", `event:${name}`);
+            return;
+          }
+          // A P16 event (F81, scripts/evals/p16-slot.ts): the chat's rows reloaded at a width; before P12's own reload.
+          if (p16 && (await p16.event(name, payload))) {
             await after("c1", `event:${name}`);
             return;
           }
@@ -684,9 +816,23 @@ export function previewSlot(cwd: string, env: NodeJS.ProcessEnv, log: (line: str
         Object.defineProperties(world, Object.getOwnPropertyDescriptors(p12.readers));
         if (task) await p12.begin(task.id, (text) => world.send(text));
       }
+      if (p8) Object.defineProperties(world, Object.getOwnPropertyDescriptors(p8.readers));
+      if (p11) Object.defineProperties(world, Object.getOwnPropertyDescriptors(p11.readers));
+      if (p16) {
+        Object.defineProperties(world, Object.getOwnPropertyDescriptors(p16.readers));
+        await p16.begin();
+      }
       if (p14) {
         Object.defineProperties(world, Object.getOwnPropertyDescriptors(p14.readers));
         await p14.begin();
+      }
+      if (p10) {
+        Object.defineProperties(world, Object.getOwnPropertyDescriptors(p10.readers));
+        await p10.begin();
+      }
+      if (p13) {
+        Object.defineProperties(world, Object.getOwnPropertyDescriptors(p13.readers));
+        await p13.begin();
       }
       return world;
     },

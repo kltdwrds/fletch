@@ -107,7 +107,7 @@ export class PersonAttachments {
 
   /** The model's line for one row: its id, so the agent can name it, and the reader's words for it. */
   line(r: Row): string {
-    if (r.cls === "audio") return r.transcript != null ? `[attachment ${r.id}] ${r.name} is a voice note; you read its transcript, you did not hear it: <transcript>${r.transcript}</transcript>` : `[attachment ${r.id}] ${r.name} is a voice note, kept untranscribed (${r.code ?? SPEECH_UNAVAILABLE}): ${SPEECH_UNAVAILABLE_LINE}.`;
+    if (r.cls === "audio") return r.transcript != null ? `[attachment ${r.id}] ${r.name} is a voice note; you read its transcript, you did not hear it: <transcript>${r.transcript}</transcript>` : `[attachment ${r.id}] ${r.name} is a voice note, kept untranscribed (${r.code ?? SPEECH_UNAVAILABLE}): ${(r.code ?? SPEECH_UNAVAILABLE) === SPEECH_UNAVAILABLE ? SPEECH_UNAVAILABLE_LINE : "it could not be transcribed, and its audio was not kept"}.`;
     const result: IngestResult =
       r.status === "read" ? { ok: true, kind: r.kind as "image", treePath: r.tree_path ?? "", pages: r.pages ?? 0, ...(r.caption ? { captionText: r.caption } : {}) } : { ok: false, code: r.code ?? "ATTACHMENT_UNREAD", reason: r.cls === "video" ? "a video is kept for the person; its content is not read" : "it could not be read" };
     return `[attachment ${r.id}] ${this.deps.describe(r.name, result)}`;
@@ -181,7 +181,7 @@ export class PersonAttachments {
     if (speech) {
       const bytes = a.bytes ?? (await this.read(key));
       try {
-        heard = bytes ? await speech.transcribe({ bytes, mime: a.mime }) : { ok: false, code: "ATTACHMENT_NOT_STORED", reason: "the stored file is gone" };
+        heard = bytes ? await speech.transcribe({ bytes, mime: a.mime, person: this.deps.person, ref: id }) : { ok: false, code: "ATTACHMENT_NOT_STORED", reason: "the stored file is gone" };
       } catch (e) {
         heard = { ok: false, code: "SPEECH_FAILED", reason: String((e as Error)?.message ?? e).slice(0, 200) };
       }

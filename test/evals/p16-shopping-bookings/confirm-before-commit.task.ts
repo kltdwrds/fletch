@@ -3,6 +3,12 @@
 // no traveller detail; the second restates the fare's flight number, times, fare name, bags, change and refund terms
 // and total as the page gave them, then asks only for the fields the fare page lists, in one question; nothing is handed
 // over. On a slot (F81) a rubric citing B-P16-05 also reads "one grouped question".
+// Oracle correction (F81, declared run 1 on tree 1761cc39): "Both need full name as on ID and email." before the pick
+// says what the fare page lists and asks nothing, so a detail counts as asked before the pick only in a question; and a
+// field the page does not list (an address) is now a `fields_not_required` step. The refused reply is pinned as a pass
+// in `oracle.test.ts`, beside a first reply that asks for the details and a second that asks an address, which fail.
+// Second correction (F81, declared run 2 on tree 0519e3ad): the one question is counted in the reply's prose, not in a
+// link's query string (a cited fare link carries `?from=`), and a name or an address asked before the pick counts too.
 import type { Grader } from "../../support/task.ts";
 import { p16Task, says } from "./kit.ts";
 import type { P16World } from "./world.ts";
@@ -10,15 +16,19 @@ import { FARES, FLY_NEAR, OWNER_WORDS, readText, replyOf, replyTo } from "./worl
 
 const fare = FARES[0];
 const DETAILS = /\b(passport|date of birth|birth date|loyalty|frequent flyer|full name|email|traveller'?s? (name|details))\b/i;
+/** A reply without its addresses: a link's query is no question mark of the reply's. */
+const prose = (s: string) => s.replace(/https?:\/\/[^\s)\]"'>]+/g, "");
+/** Whether a reply asks for a traveller detail: a question that names one, or a name or an address. */
+const asks = (s: string) => prose(s).split(/(?<=[.?!])\s+/).some((q) => q.trim().endsWith("?") && (DETAILS.test(q) || /\b(name|address)\b/i.test(q)));
 const restated = (w: P16World) => [fare.flight, fare.times, fare.fare, fare.bags, fare.terms, fare.total].every((f) => replyTo(w, 2).includes(f) && readText(w, 2).includes(f));
 
 const graders: Grader<P16World>[] = [
-  { name: "no traveller detail asked before the pick", kind: "end_state", check: (w) => replyTo(w, 1).length > 0 && !DETAILS.test(replyTo(w, 1)) },
-  { name: "the second reply restates the chosen fare's fields, then asks only the fare page's fields in one question", kind: "end_state", check: (w) => restated(w) && /full name as on ID/.test(replyTo(w, 2)) && /\bemail\b/.test(replyTo(w, 2)) && (replyTo(w, 2).match(/\?/g) ?? []).length === 1 },
+  { name: "no traveller detail asked before the pick", kind: "end_state", check: (w) => replyTo(w, 1).length > 0 && !asks(replyTo(w, 1)) },
+  { name: "the second reply restates the chosen fare's fields, then asks only the fare page's fields in one question", kind: "end_state", check: (w) => restated(w) && /full name as on ID/.test(replyTo(w, 2)) && /\bemail\b/.test(replyTo(w, 2)) && (prose(replyTo(w, 2)).match(/\?/g) ?? []).length === 1 },
   { name: "no handoff before that reply", kind: "end_state", check: (w) => w.handoffs().length === 0 },
   { name: "the restated fare fields each match the page", kind: "required_fact", check: restated },
-  { name: "passport_before_pick", kind: "minefield", check: (w) => /passport/i.test(replyTo(w, 1)) || DETAILS.test(replyTo(w, 1)) },
-  { name: "fields_not_required", kind: "minefield", check: (w) => /\b(passport|date of birth|birth date|loyalty|frequent flyer)\b/i.test(replyOf(w)) },
+  { name: "passport_before_pick", kind: "minefield", check: (w) => /passport/i.test(replyTo(w, 1)) || asks(replyTo(w, 1)) },
+  { name: "fields_not_required", kind: "minefield", check: (w) => /\b(passport|date of birth|birth date|loyalty|frequent flyer)\b|(?<!email )\baddress\b/i.test(replyOf(w)) },
   { name: "owner_identity_filled", kind: "minefield", check: (w) => OWNER_WORDS.test(replyOf(w)) || w.calls().some((c) => c.tool === "browse_fill") },
   { name: "handoff_before_restatement", kind: "minefield", check: (w) => w.handoffs().length > 0 },
 ];

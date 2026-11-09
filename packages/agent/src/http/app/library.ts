@@ -15,7 +15,7 @@ export const LIBRARY_TEXT = {
   reading: "Reading…",
   recent: "Recent",
   all: "All",
-  empty: { all: "No artifacts yet", docs: "No documents yet", images: "No images yet", files: "No files yet" } as Record<string, string>,
+  empty: { all: "No artifacts yet", docs: "No documents yet", images: "No images yet", audio: "No audio yet", files: "No files yet" } as Record<string, string>,
   create: "Create an artifact",
   createLine: "Make me an artifact: ",
   search: "Search",
@@ -34,7 +34,8 @@ export const LIBRARY_TEXT = {
   unpin: "Unpin",
   delete: "Delete",
   deleteTitle: "Delete this file?",
-  deleteBody: "It will be removed from your library and can’t be recovered.",
+  // F103 (D-0028 proposed): a deleted file goes to the trash for 30 days, its versions with it.
+  deleteBody: "It moves to the trash for 30 days, with its earlier versions, and can be restored from there until then.",
   save: "Save",
   nameLabel: "File name",
   copyLink: "Copy link",
@@ -70,10 +71,10 @@ export const LIBRARY_TEXT = {
  * A file's kind, from the name `/app/library` reports for it: what the picker's sections are made of. A document is
  * written to be read, a web artifact is a page, an image is a picture; anything else is one of the system's files.
  */
-export const LIB_KINDS: Record<string, "document" | "web" | "image"> = {
+export const LIB_KINDS: Record<string, "document" | "web" | "image" | "audio"> = {
   md: "document", markdown: "document", txt: "document", pdf: "document", docx: "document", odt: "document", rtf: "document",
   html: "web", htm: "web",
-  png: "image", jpg: "image", jpeg: "image", gif: "image", webp: "image", svg: "image", heic: "image",
+  png: "image", jpg: "image", jpeg: "image", gif: "image", webp: "image", svg: "image", heic: "image", mp3: "audio",
 };
 /**
  * The title picker's sections (the canvas's `libSections` and System files) and the kinds each shows; System files
@@ -83,6 +84,8 @@ export const LIB_SECTIONS = {
   all: { label: "All artifacts", glyph: "grid", group: "artifacts", kinds: ["document", "web"] },
   docs: { label: "Documents", glyph: "file", group: "artifacts", kinds: ["document"] },
   images: { label: "Images", glyph: "image", group: "media", kinds: ["image"] },
+  // The person's audio pieces (F72): their `audio_items` records, each with its player (`audio.ts`).
+  audio: { label: "Audio", glyph: "volume", group: "media", kinds: ["audio"] },
   files: { label: "System files", glyph: "folder", group: "", kinds: null },
 } as const satisfies Record<string, { label: string; glyph: IconName; group: string; kinds: readonly string[] | null }>;
 const GROUPS = { artifacts: "Artifacts", media: "Media" };
@@ -213,7 +216,7 @@ export const LIBRARY_MARKUP = `<main id="library" hidden>
     <div id="viewer-body" class="lib-art"></div>
   </div>
   <div id="lib-homes" hidden>
-    <div id="lib-picks"><div id="lib-group-artifacts">${GROUPS.artifacts}</div>${pickNode("all")}${pickNode("docs")}<div id="lib-group-media">${GROUPS.media}</div>${pickNode("images")}<div id="lib-pick-sep"></div>${pickNode("files")}</div>
+    <div id="lib-picks"><div id="lib-group-artifacts">${GROUPS.artifacts}</div>${pickNode("all")}${pickNode("docs")}<div id="lib-group-media">${GROUPS.media}</div>${pickNode("images")}${pickNode("audio")}<div id="lib-pick-sep"></div>${pickNode("files")}</div>
     <button id="lib-search" class="qf-search" style="cursor:pointer">${ic("search", "sm")}<span class="t-sub-m t-2">${LIBRARY_TEXT.search}</span></button>
     ${menuItem("lib-rename", "pencil", LIBRARY_TEXT.rename)}
     <form id="lib-rename-form" class="qf-search" hidden><input id="lib-rename-to" aria-label="${LIBRARY_TEXT.nameLabel}" required><button class="qf-btn qf-btn--primary">${LIBRARY_TEXT.save}</button></form>
@@ -251,7 +254,7 @@ const libSay = async (node, r) => { const b = await r.json().catch(() => ({})); 
 const libLink = async (p, download) => (await getJson("/app/file/link?path=" + encodeURIComponent(p) + (download ? "&download=1" : ""))).url;
 // A link that could not be made leaves the node without one and answers its code, for the page to say.
 const libLinkInto = (node, attr, p, download) => libLink(p, download).then((u) => { node[attr] = u; return ""; }, (e) => { node.dataset.code = (e && e.code) || "LINK_UNAVAILABLE"; return node.dataset.code; });
-let libFiles = [], libRead = false, libSection = "all", libSort = "date", libView = "grid", libPicked = null, libPop = null;
+let libFiles = [], libAudio = [], libAudioCode = "", libRead = false, libSection = "all", libSort = "date", libView = "grid", libPicked = null, libPop = null;
 let libOpened = null, libText = "", libSrc = false;
 function libAgo(at) {
   const s = (Date.now() - at) / 1000, d = new Date(at);
@@ -418,7 +421,7 @@ function libFill(host, list) {
   for (const f of list) host.append(grid ? libCard(f) : libRow(f));
 }
 function drawLib() {
-  closeMenu(); placeSections();
+  closeMenu(); placeSections(); if (libAudio === null && libSection !== "audio") coded($("lib-note"), "", "");
   const sect = LIB_SECT[libSection], d = device();
   $("lib-title").textContent = sect.label; $("lib-pick-label").textContent = sect.label;
   for (const [id, on] of [["lib-sort-date", libSort === "date"], ["lib-sort-name", libSort === "name"], ["lib-view-grid", libView === "grid"], ["lib-view-list", libView === "list"]]) $(id).setAttribute("aria-checked", String(on));
@@ -428,7 +431,7 @@ function drawLib() {
   $("lib-options-wrap").hidden = $("lib-create").hidden = !arts;
   $("lib-create").className = d === "desktop" ? "qf-btn qf-btn--primary qf-btn--icon-start" : "qf-ibtn lib-create-circle";
   $("lib-create-label").hidden = d !== "desktop";
-  const want = libFiles.filter((f) => !sect.kinds || sect.kinds.includes(libKind(f)));
+  const want = libSection === "audio" ? libAudio || [] : libFiles.filter((f) => !sect.kinds || sect.kinds.includes(libKind(f)));
   for (const id of ["lib-list", "lib-all", "lib-files"]) $(id).replaceChildren();
   $("lib-empty").hidden = want.length > 0; $("lib-empty").textContent = LIB.empty[libSection];
   $("lib-recent-h").hidden = !arts; $("lib-list").hidden = files; $("lib-files").hidden = !files;
@@ -439,7 +442,8 @@ function drawLib() {
     for (const t of [LIB.head.name, LIB.head.type, LIB.head.modified, LIB.head.size]) h.append(el("span", t));
     $("lib-files").append(h);
     for (const f of want.slice().sort((a, b) => a.path.localeCompare(b.path))) $("lib-files").append(libFileRow(f));
-  } else if (images) {
+  } else if (libSection === "audio") libAudioDraw($("lib-list"), want);
+  else if (images) {
     $("lib-list").className = "lib-imgs";
     for (const f of libSorted(want)) $("lib-list").append(libCell(f));
   } else {
@@ -458,7 +462,7 @@ async function library() {
   try {
     const l = await getJson("/app/library");
     if (!l.files || l.files.ok === false) throw Object.assign(new Error("not read"), { code: l.files && l.files.code });
-    libFiles = l.files.files; libRead = true; $("lib-note").textContent = ""; drawLib();
+    libFiles = l.files.files; libAudio = l.audio && l.audio.ok !== false ? l.audio.items : null; libAudioCode = (l.audio && l.audio.code) || "AUDIO_UNREAD"; libRead = true; $("lib-note").textContent = ""; drawLib();
   } catch (e) {
     libFiles = []; libRead = false; closeMenu();
     for (const id of ["lib-list", "lib-all", "lib-files"]) $(id).replaceChildren();
@@ -535,10 +539,11 @@ async function libShow(path) {
   $("viewer-pin-label").textContent = known && known.pinned ? LIB.unpin : LIB.pin;
   $("viewer-download").href = "#";
   const body = $("viewer-body"); body.className = "lib-art"; body.replaceChildren();
-  if (x === "pdf" || libKind({ path, mediaType: known && known.mediaType }) === "image") {
+  if (x === "pdf" || x === "mp3" || libKind({ path, mediaType: known && known.mediaType }) === "image") {
     // A PDF and an image are the browser's to show: the file is served with its type, never sniffed, in a sandbox.
     let shown;
     if (x === "pdf") { shown = el("a", LIB.pdfOpen); shown.setAttribute("target", "_blank"); shown.setAttribute("rel", "noopener noreferrer"); }
+    else if (x === "mp3") { shown = el("audio"); shown.controls = true; shown.setAttribute("controls", ""); }
     else { shown = el("img"); shown.alt = baseOf(path); }
     const code = await libLinkInto(shown, x === "pdf" ? "href" : "src", path);
     if (libOpened !== path) return;
