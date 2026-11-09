@@ -6,13 +6,13 @@
 //   shares     Sam's live shares through `/app/shares`; cards and links from the chat's history as the page draws it;
 //   answers    the share link's public answer, asked with no session at all (`/hooks/share/<id>.<sig>`).
 // A trial begins with Sam's Library emptied through `/app/file/delete` (which ends every share of a file), then the task's
-// setup: T-P11-17's memo seeded by the `p11` op, the slot having no Renderer (D-0030, proposed). The `approve` event
+// setup: T-P11-17's memo seeded by the `p11` op at the path its grader reads, the slot having no Renderer (D-0030, proposed). The `approve` event
 // (P11 only) decides the chat's pending card `once` through the page's route, with the counts taken either side of it.
 // A reading the tier-2 tasks never make (the R2 pointers, the journal, the renders, the egress) throws by name: the
 // slot answers it nowhere, so it is never given as empty.
 import { strToU8, zipSync } from "fflate";
 import type { SlotEntry } from "../../test/support/evals.ts";
-import type { Answer, CardSeen, Entry, FileRow, LinkSeen, P11World } from "../../test/evals/p11-files/world.ts";
+import { type Answer, type CardSeen, type Entry, type FileRow, type LinkSeen, MEMO_DOCX, type P11World } from "../../test/evals/p11-files/world.ts";
 
 type Read = (path: string) => Promise<{ status: number; body: unknown }>;
 type Post = (path: string, body: unknown) => Promise<{ status: number; body: unknown }>;
@@ -31,8 +31,12 @@ export interface P11SlotDeps {
   decide: (cardId: string, choice: string) => Promise<void>;
 }
 
-/** The memo T-P11-17's setup names: in Sam's Library before the turns. */
-export const P11_SLOT_MEMO = "documents/p11-eval-memo.docx";
+/**
+ * T-P11-17's memo, in Sam's Library before the turns: at the path its "memo is unchanged" grader reads (`MEMO_DOCX`,
+ * `documents/p11-memo.docx`), so that grader measures the seeded bytes; the contract's setup line names
+ * `documents/p11-eval-memo.docx`, a name the grader never reads (F102, the verifier's finding; Reconcile in PR #171).
+ */
+export const P11_SLOT_MEMO = MEMO_DOCX;
 /** The choice the runner approves a card with: allow once (a share's card offers no lasting one). */
 export const APPROVE_CHOICE = "once";
 

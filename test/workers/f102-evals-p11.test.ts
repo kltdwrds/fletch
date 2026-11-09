@@ -19,7 +19,7 @@ import memoEdit from "../evals/p11-files/memo-and-edit.task.ts";
 import { MEMO_MARKDOWN, MEMO_WITH_RISKS, revokeFrom } from "../evals/p11-files/runs.ts";
 import shareRevoke from "../evals/p11-files/share-and-revoke.task.ts";
 import sheetLive from "../evals/p11-files/sheet-total-live.task.ts";
-import type { P11World } from "../evals/p11-files/world.ts";
+import { MEMO_DOCX, type P11World } from "../evals/p11-files/world.ts";
 import { EMPTY_SNAPSHOT, type SlotEntry, type SlotWorld } from "../support/evals.ts";
 import type { FakeStep } from "../support/fake-model.ts";
 import type { DefinedTask } from "../support/task.ts";
@@ -178,6 +178,10 @@ describe("[F102] P11 on a slot: the reply's words, the readers, the resets and t
     // A public read that still serves the file after the revoke: the readers keep what the path answered.
     const serving = (_t: P11Tier1): Partial<P11SlotDeps> => ({ publicGet: async () => ({ status: 200, text: "PK p11 memo bytes" }) });
     expect(await verdict(shareRevoke, { plant: serving })).toBe("GRADER_FAILED: after the revoke the path answers as unknown and the reply says revoked after the tool returned");
+    // The memo changed on the slot's own path (a render over it after the revoke): the collateral grader now measures it.
+    expect(P11_SLOT_MEMO).toBe(MEMO_DOCX);
+    const changed = [...SCRIPTS["T-P11-17"]!.slice(0, 5), call("render_document", { markdown: MEMO_WITH_RISKS, to: "docx", name: "p11-memo" }, "r9"), { text: "Revoked the link to the memo; it opens nothing now." }];
+    expect(await verdict(shareRevoke, { script: changed })).toBe("GRADER_FAILED: the memo is unchanged");
   });
 
   it("the op's entries: the transcript in order, a send_to_user call as the agent's words and its result left out", () => {
@@ -196,6 +200,19 @@ describe("[F102] P11 on a slot: the reply's words, the readers, the resets and t
       { role: "tool", text: "saved documents/p11-x.md", tool: "file_write" },
       { role: "agent", text: "Saved [x](files/documents/p11-x.md)." },
     ]);
+  });
+
+  it("a mail or post call stays a call through the op's entries, so T-P11-17's link_sent still fires; send_to_user does not", async () => {
+    const rows = [
+      { role: "user", content: "p11 probe" },
+      { role: "assistant", content: [{ type: "toolCall", id: "m1", name: "mail_send", arguments: { to: "pat@solo-sam.example" } }] },
+    ];
+    const sql = { exec: () => ({ toArray: () => rows.map((m, seq) => ({ seq, body: JSON.stringify(m) })) }) } as unknown as Sql;
+    const linkSent = shareRevoke.graders.find((g) => g.name === "link_sent")!;
+    expect(await linkSent.check({ entries: () => p11Entries(sql) } as unknown as P11World)).toBe(true);
+    const own = [{ role: "assistant", content: [{ type: "toolCall", id: "u1", name: "send_to_user", arguments: { text: "Here is the link; I sent it to no one." } }] }];
+    const ownSql = { exec: () => ({ toArray: () => own.map((m, seq) => ({ seq, body: JSON.stringify(m) })) }) } as unknown as Sql;
+    expect(await linkSent.check({ entries: () => p11Entries(ownSql) } as unknown as P11World)).toBe(false);
   });
 
   it("the seed writes one P11 probe docx and nothing else; the seeded memo is a document the Worker reads", () => {
