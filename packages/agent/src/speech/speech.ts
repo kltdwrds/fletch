@@ -138,3 +138,10 @@ export const speechRefusal = (env: SpeechEnv) => ({ ok: false as const, code: SP
 export const VOICE_CALL_REASON = "this deploy has no voice calls: none can be started, taken or joined, and nothing from one is kept, because none happens";
 
 export const voiceCallRefusal = () => ({ ok: false as const, code: VOICE_CALL_UNAVAILABLE, reason: VOICE_CALL_REASON });
+
+/** A podcast feed exists on no deploy (D-0026, P13 delta 8): an episode stays in the person's files and Library. */
+export const PODCAST_FEED_UNAVAILABLE = "PODCAST_FEED_UNAVAILABLE";
+export const PODCAST_FEED_REASON = "this deploy has no podcast feed: an episode stays in your files and your Library and is never published to a feed or a public address";
+/** The most turns and characters one two-voice episode renders (each turn is one admitted speech call). */
+export const EPISODE_MAX_TURNS = 24;
+export const EPISODE_MAX_CHARS = 6_000;

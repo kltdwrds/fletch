@@ -85,6 +85,7 @@ describe("[M27.5] the title picker", () => {
       ["all", "All artifacts", ["document", "web"]],
       ["docs", "Documents", ["document"]],
       ["images", "Images", ["image"]],
+      ["audio", "Audio", ["audio"]],
       ["files", "System files", null],
     ]);
     expect([LIB_KINDS.md, LIB_KINDS.pdf, LIB_KINDS.docx, LIB_KINDS.html, LIB_KINDS.svg, LIB_KINDS.json]).toEqual(["document", "document", "document", "web", "image", undefined]);
@@ -107,6 +108,7 @@ describe("[M27.5] the title picker", () => {
       ["lib-pick-docs", "qf-menu-item"],
       ["lib-group-media", "qf-menu-group"],
       ["lib-pick-images", "qf-menu-item"],
+      ["lib-pick-audio", "qf-menu-item"],
       ["lib-pick-sep", "qf-menu-sep"],
       ["lib-pick-files", "qf-menu-item"],
     ]);
@@ -131,7 +133,7 @@ describe("[M27.5] the title picker", () => {
     await p.library();
     expect(p.byId("lib-col").hidden).toBe(false);
     expect(p.byId("lib-sections").children.map((c) => c.id)).toEqual(["lib-search", "lib-picks"]);
-    expect(p.byId("lib-picks").children.map((c) => c.className)).toEqual(["qf-listhead", "qf-listrow", "qf-listrow", "qf-listhead", "qf-listrow", "lib-spacer", "qf-listrow"]);
+    expect(p.byId("lib-picks").children.map((c) => c.className)).toEqual(["qf-listhead", "qf-listrow", "qf-listrow", "qf-listhead", "qf-listrow", "qf-listrow", "lib-spacer", "qf-listrow"]);
     expect([p.byId("lib-pick-all").attrs["aria-current"], p.byId("lib-pick-files").attrs["aria-current"]]).toEqual(["page", undefined]);
     await p.click("lib-pick-files");
     expect([p.byId("lib-pick-files").attrs["aria-current"], p.byId("lib-pick-all").attrs["aria-current"], p.byId("lib-title").textContent]).toEqual(["page", undefined, "System files"]);
