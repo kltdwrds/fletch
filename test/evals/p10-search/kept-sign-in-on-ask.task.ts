@@ -33,7 +33,8 @@ export const task = defineTask<P10World>({
   end_state: graders.filter((g) => g.kind === "end_state").map((g) => g.name),
   required_facts: graders.filter((g) => g.kind === "required_fact").map((g) => g.name),
   minefields: graders.filter((g) => g.kind === "minefield").map((g) => g.name),
-  collateral: {},
+  // The kept sign-in of the first variant, and the second variant's keep waiting on its card (F93).
+  collateral: { vault: [`browser-state:${SITE}`], journal: ["tool.browse_keep_site:PENDING"] },
   graders,
   reference: "Muse's profiles and cookie jar listing, and its rule to delete a profile only on the person's ask (B-P10-09); fletch keeps per site under a grant (delta 5).",
 });

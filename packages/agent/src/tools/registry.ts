@@ -46,6 +46,12 @@ export interface ToolSpec<P extends TSchema = TSchema> {
   mutates?: true;
   /** Results carry content from outside the person's own stores (a page, a connector, a sandbox). */
   external?: true;
+  /**
+   * An observation that writes the person's own store and runs at once on their ask, but asks on a card, flagged
+   * `AFTER_EXTERNAL_INPUT`, when outside content came before it in the turn: what a page asked for waits for the person
+   * (B-P10-09, F93). The crossing it stops: a page's say-so writing into the person's Vault.
+   */
+  asksAfterExternal?: true;
   /** A decision the agent never makes: every call is journaled as refused with this code (M16.3), and `execute` only shows where the person decides. */
   refuses?: string;
 }
