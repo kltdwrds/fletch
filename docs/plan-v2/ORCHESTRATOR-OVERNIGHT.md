@@ -157,6 +157,31 @@ then the translations' remaining parts (F61, F71 to F73, F81 onward, F91, F92, F
 pass per fix is cheap on the runner and catches what the builder's own reading misses; landing six PRs in sequence costs a
 main merge and a runner accept each, so land in the order the ledgers conflict least (code-only parts first).
 
+**Second wave, 01:35Z to 03:40Z** (the same ruling; the goal's step (4), every part the translations produced). Landed
+on main at the bar, each on a runner accept of its merged head and a fresh Opus verifier: F61 (#161, P8 tier 2, T-P8-13
+3 of 3 on slot 2), F71 (#166, speech behind the AI binding under a monthly cap), F92 (#163, the search and media
+specimen), F93 (#164, P10's per-chat session, meter and restore grant), F101 (#165, share list and revoke, the journaled
+delete, pptx, cards from the store; three verifier passes), F81 (#162, P16 tier 2 on slot 3: T-P16-03, T-P16-05 and
+T-P16-12 each 3 of 3 on declared run 4, two oracle corrections kept with their failed runs), F72 (#169, the chat audio
+item, the Library Audio section, Settings > Voice and the two-voice episode; UAT on staging), F91 (#167, P10 tier 2:
+one `WORK_WORDS` line plus a second for T-P10-03, the slot's probe pages, declared run 3 on the merged tree with all seven
+tasks 3 of 3 after main's instruction lines changed), F74 (#170, audio shares behind a card each and F101's revoke;
+two verifier passes, the second after Q62), F102 (#171, `FILE_WORDS` and P11 tier 2: T-P11-16, 17 and 18 each 3 of 3 on
+declared run 3; two verifier passes, the second after a vacuous memo grader was made real) and F73 (#174, P13 tier 2:
+T-P13-14 3 of 3 under a $1 speech cap, 12,171 micros spent). Held: F103 (#168, `ACCEPT F103: PASS`, the verifier's one
+finding D-0028 itself) stays a draft BLOCKED on the D-0028 decide item, as F55 was. Plain PR #172 moved October's 68
+decision-log lines to `docs/decisions/log-2026-10.md`: the live log had reached its 40 KB cap and four landings in a row
+had to condense older entries first. Every part the translations produced is now DONE on main but F103. Scorecard: P8,
+P10, P11, P13 and P16 rows name their parts; P10, P11, P13 and P16 meet level 2's tier-2 reading on their must-haves
+and wait on the orchestrator's re-level, P8 on the rooms door. Verifier passes it took: F61, F71, F92, F93, F81, F72, F91
+and F73 one each, F74 and F102 two, F101 three; every finding fixed by a builder, none argued away. Lessons kept: land
+tier-2 parts before the parts that change the same instruction lines, or rerun the declared run on the merged tree (F91
+did; F81 landed on its declared tree with main's new `WORK_WORDS` lines unexercised, a Reconcile item); a merge resolved
+by script must be grepped for conflict markers before the commit (it bit twice, Q61 proposes the check), and a code
+file in that merge (`scripts/evals/slot.ts`, three clusters' wiring) is resolved by hand and its tests run before the
+push; three parts landing within minutes cost each a merge of main and a runner accept, so land them in the order their
+ledger rows conflict least.
+
 ## What is not for tonight
 
 Level 3 (Locked) needs Kyle's UAT; D-0015 (tier-2 evals in CI) spends money; D-0011 needs Kyle's own commit; a Muse
