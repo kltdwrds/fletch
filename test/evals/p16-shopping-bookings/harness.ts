@@ -7,10 +7,15 @@
 // It counts what the turns left: the journal, memory, jobs and grants. Turns, beside P12's:
 //   - `reprice`: the shop's option 1 is re-priced (`REPRICED`), as a merchant would between two turns (G5);
 //   - `drop`: the watched seats and rate drop in price before the jobs run (T-P16-08).
+// The chat's browse namespace has the Vault's saved logins wired as `objects/chat.ts` wires them, and `keptLogin` seeds
+// the kept login for `shop.example.com` through the Vault's own save and Sam's RESTORE grant (delta 5, G2), so a live
+// page opened on the shop restores it on the production path and `signedIn()` reads the Vault's `restored` event.
 import { browseNamespace } from "../../../packages/agent/src/browse/tools.ts";
 import type { Namespace } from "../../../packages/agent/src/tools/registry.ts";
+import { RESTORE } from "../../../packages/agent/src/vault/browser-state.ts";
 import { Seeded } from "../../support/seeded.ts";
 import type { DefinedTask, TaskHarness, Turn } from "../../support/task.ts";
+import { asSam } from "../p9-connectors/harness.ts";
 import { type P12HarnessOptions, P12Tier1World, sam } from "../p12-wallet/harness.ts";
 import type { OrderView, P16World, ReadView } from "./world.ts";
 import { BOTTLES, FARES, FARE_FIELDS, REPRICED, SHOP, SHOP_HOST, STAY_WATCH, TIX_WATCH, TOO_FAR, WINDOW_END } from "./world.ts";
@@ -29,6 +34,20 @@ export const shopPage = (first: string = BOTTLES[0].price) =>
     ...BOTTLES.map((b, i) => `- ${b.label}, stainless steel, 1 L: ${i === 0 ? first : b.price}, in stock. [${b.label}](${b.url})`),
     "[ ] I agree to the terms of sale. [Create account](https://shop.example.com/account/new)",
   ].join("\n");
+
+/**
+ * The kept login for the shop (delta 5, G2), as Sam would have left it: she signed in on a live page, the Vault kept the
+ * page's site login through its own save (sealed, a `browser-state` credential), and her RESTORE grant from settings
+ * covers it. A fresh live session opened on the shop is then signed in before it navigates (`browse_live`).
+ */
+export async function keptLogin(w: P16Tier1World): Promise<void> {
+  const session = "p16-signed-in";
+  w.browser.signIn(session, { cookies: [{ name: "session", value: "fixture-shop-session-p16", domain: SHOP_HOST, path: "/", expires: -1, httpOnly: true, secure: true, sameSite: "Lax" }], origins: [] });
+  const saved = await w.vault().saveBrowserState({ session, url: SHOP }, { person: sam.email });
+  if (!saved.ok) throw new Error(`P16_SEED_LOGIN: ${saved.code}`);
+  const grant = await w.vault().issueGrant({ ref: saved.ref, hosts: [SHOP_HOST], methods: [RESTORE] }, asSam("settings"));
+  if (!grant.ok) throw new Error(`P16_SEED_LOGIN_GRANT: ${grant.code}`);
+}
 
 const farePage = (date: string) =>
   date > WINDOW_END
@@ -56,6 +75,8 @@ export class P16Tier1World extends P12Tier1World implements P16World {
       // A child is offered the live lane's tools too, so its gate, not their absence, refuses them (G1).
       childTools: () => [liveLane()],
       childUrls: [SHOP],
+      // The Vault's saved logins reach the chat's live lane, as `objects/chat.ts` wires them (G2).
+      logins: true,
       sites: { [SHOP_HOST]: { page: { title: "Bottles", text: shopPage() } }, "tix.example.com": { wall: "forbidden" } },
       jobFetch: async (url) => {
         const w = box.w as P16Tier1World;
@@ -157,8 +178,9 @@ export class P16Tier1World extends P12Tier1World implements P16World {
     return this.notices("c1");
   }
 
+  /** Whether the Vault restored Sam's kept shop login into a live session: its own `restored` event, the store it writes. */
   signedIn(): boolean {
-    return this.results("c1").some((r) => /Signed in with the login kept for/.test(r.text));
+    return this.vaultH.rows("SELECT detail FROM vault_events WHERE owner = ? AND event = 'restored'", sam.email).some((r) => String(r.detail).startsWith(`${SHOP_HOST};`));
   }
 
   async childCalls() {
