@@ -117,7 +117,7 @@ export class ChatGate implements Gate {
         throw err;
       }
     };
-    const gated = spec.kind === "action" || spec.subject?.(args).scope === "company";
+    const gated = spec.kind === "action" || spec.subject?.(args).scope === "company" || (spec.asksAfterExternal === true && state.sawExternal && own);
     if (!gated) {
       if (spec.mutates && !own) return text(`REQUEST_CANNOT_WRITE: ${spec.name} changes ${this.o.nameOf(this.o.principal)}'s own records, which a colleague's request never does`, { code: "REQUEST_CANNOT_WRITE" });
       const result = await said();
