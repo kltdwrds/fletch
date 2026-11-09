@@ -9,8 +9,8 @@ Each question: `### Q<n> (F<n>), <date>: <title>`, then **Blocks:**, **Recommend
 
 ### Q52 (F90), 2026-11-08 (Q51 on this branch until 2026-11-09, renumbered past F56's Q51): P10's tier-1 blocks for T-P10-01 and T-P10-02 differ from shipped behaviour, and F90 splits
 
-**Blocks:** nothing under the one-hour ruling (F90's PR carries the readings under Reconcile); F90 stays BLOCKED until
-its remaining tier-1 runs land.
+**Blocks:** nothing under the one-hour ruling (F90's PR carries the readings under Reconcile); F90 is DONE-ready
+pending the verifier, its remaining tier-1 runs split to F93.
 Three findings from F90's tier 1. (1) T-P10-02's block names `memory_write` as the write that carries
 `AFTER_EXTERNAL_INPUT`; shipped, a save to the person's own memory runs with no card (the boundary rule of 2026-10-30),
 so no flag can ride on it, and the file grades the flag on a gated send (`mail_send`), where the contract's Properties

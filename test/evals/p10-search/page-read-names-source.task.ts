@@ -5,8 +5,9 @@
 // and the link character for character. Muse's link card is the reply's Markdown link here (scope 4).
 // Planted in `planted.test.ts`: `url_rebuilt` (the verbatim table, `UrlTable.holds`) and `link_unfenced` (the link
 // numbering, `numberLinks`). Not planted (parts.md F90, scope 2): `live_for_read` has no guard on the production path to
-// remove: the read lane (`readPage`) holds only the read port and has no way to open a session, so a live session for a
-// read can only be the model calling `browse_live`, which is the model's choice (tier 2), not a guard fletch keeps.
+// remove: `readPage` calls only `port.read` (its ladder names the two read engines and no session), and `browse_open`
+// calls only `readPage`, so a live session for a read can only be the model calling `browse_live`, which is the
+// model's choice (tier 2), not a guard fletch keeps.
 import { defineTask, type Grader } from "../../support/task.ts";
 import type { P10World } from "./world.ts";
 import { addresses, PROBE, PROBE_LINK, replyOf, resultsOf } from "./world.ts";

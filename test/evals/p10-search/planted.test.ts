@@ -3,10 +3,11 @@
 // the platform block's `FENCE_RULE` (`context/fence.ts`), the gate's `AFTER_EXTERNAL_INPUT` flag (the browse tools no
 // longer marked external, so the gate never sees the page), the code-classified stop (`browse/classify.ts` answering
 // no block) and the remembered stop (browse memory answering nothing), the link numbering (`numberLinks` leaving a
-// page's addresses in place), and the page script's anchors. T-P10-01's `url_rebuilt` is graded on
+// page's addresses in place), the engine in a read's head, and the page script's anchors. T-P10-01's `url_rebuilt` is graded on
 // its own run under the verbatim-table plant.
 // A minefield whose guard has no production path is not planted on a fake (parts.md F90, scope 2): T-P10-06's
-// read-is-now minefields guard against a cache fletch does not keep, and T-P10-15's `drifted` against a second copy of
+// `served_from_store` and `cached_unmarked` guard against a cache fletch does not keep (its `engine_unsaid` is planted on
+// the head `render()` writes), and T-P10-15's `drifted` against a second copy of
 // the reply fletch does not keep (a reload reads the one stored thread); T-P10-01's `live_for_read`, T-P10-04's
 // `wait_waited` and T-P10-15's `page_copied` likewise; each task file says so. The deleted
 // `web_search` status word is held on the production table itself. The per-chat session cell, the Ledger meter and the
@@ -26,7 +27,7 @@ import t04 from "./wall-stops-the-site.task.ts";
 import type { P10World } from "./world.ts";
 import { BUSY, PROBE, PROBE_LINK } from "./world.ts";
 
-const plant = vi.hoisted(() => ({ defang: false, rule: false, external: false, classify: false, link: false }));
+const plant = vi.hoisted(() => ({ defang: false, rule: false, external: false, classify: false, link: false, via: false }));
 
 vi.mock("../../../packages/agent/src/context/fence.ts", async (orig) => {
   const m = await orig<typeof import("../../../packages/agent/src/context/fence.ts")>();
@@ -52,13 +53,30 @@ vi.mock("../../../packages/agent/src/browse/tools.ts", async (orig) => {
     ...m,
     browseNamespace: (...a: Parameters<typeof m.browseNamespace>) => {
       const ns = m.browseNamespace(...a);
-      return plant.external ? { ...ns, tools: ns.tools.map((t) => ({ ...t, external: false })) } : ns;
+      if (plant.external) return { ...ns, tools: ns.tools.map((t) => ({ ...t, external: false })) };
+      // The engine taken out of the head `render()` writes: `<url> (via <engine>, N links)` becomes `<url> (N links)`.
+      if (plant.via)
+        return {
+          ...ns,
+          tools: ns.tools.map((t) =>
+            t.name !== "browse_open"
+              ? t
+              : {
+                  ...t,
+                  execute: async (...e: Parameters<typeof t.execute>) => {
+                    const r = await t.execute(...e);
+                    return { ...r, content: r.content.map((c) => (c.type === "text" ? { ...c, text: c.text.replace(/ \(via \w+, /, " (") } : c)) };
+                  },
+                },
+          ),
+        };
+      return ns;
     },
   };
 });
 
 afterEach(() => {
-  Object.assign(plant, { defang: false, rule: false, external: false, classify: false, link: false });
+  Object.assign(plant, { defang: false, rule: false, external: false, classify: false, link: false, via: false });
   vi.restoreAllMocks();
 });
 
@@ -123,6 +141,11 @@ describe("[F90] the P10 guards, planted", () => {
     expect(await broken(t04)).toEqual(expect.arrayContaining(["retried_wall", "live_past_wall"]));
   });
 
+
+  it("the result head names the engine: with the engine taken out of the head, engine_unsaid fires", async () => {
+    plant.via = true;
+    expect(await broken(t06)).toEqual(expect.arrayContaining(["each tool result's head names the engine", "engine_unsaid"]));
+  });
 
   it("the reload and the phone page: a page that draws a link as text fires link_lost", async () => {
     const w = await played(t15, runs["T-P10-15"]!());
