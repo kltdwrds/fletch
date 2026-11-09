@@ -57,6 +57,10 @@ export interface P9HarnessOptions {
   sites?: Record<string, FakeSite>;
   /** Tools offered to a child for its gate to refuse (P12's `shop_buy`, F38). */
   childTools?: (person: string) => Namespace[];
+  /** What a job's `page_read` reaches (P16's watched pages, F80); a job has no egress when unset. */
+  jobFetch?: (url: string, init: RequestInit) => Promise<Response>;
+  /** More addresses a child's brief may carry (P16's shop, F80). */
+  childUrls?: string[];
 }
 
 /** The writer the capture form and settings pass for a signed-in person. */
@@ -120,6 +124,7 @@ export class P9Tier1World extends P3Tier1World implements P9World {
       sites: { [LOGIN_HOST]: { page: { title: "Sign in", text: "Enter the code we mailed you." } }, ...(o.sites ?? {}) },
       fill,
       ...(o.childTools ? { childTools: o.childTools } : {}),
+      ...(o.childUrls ? { childUrls: o.childUrls } : {}),
       world: () => ({
         vault: {
           egress: (p) => egressFor(vault(), p),
@@ -135,6 +140,7 @@ export class P9Tier1World extends P3Tier1World implements P9World {
         credentials: async (p) => vault().list(p),
         connections: { lastUses: async (p) => vault().lastUses(p), audit: async (p, r) => vault().auditOf(p, r), credentialGrants: async (p) => vault().grants(p) },
         namespaces: (owner) => [fixtureNamespace(() => egressFor(vault(), owner()))],
+        ...(o.jobFetch ? { jobFetch: o.jobFetch } : {}),
       }),
     });
     box.w = this;

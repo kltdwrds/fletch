@@ -43,6 +43,18 @@ async function bodyOf(request) {
   }
 }
 
+/**
+ * The deploy the lease object's code came from, or null when it cannot say: an object still running code from before
+ * `deploy()` existed throws on the call. `pnpm preview staging convert` waits on it before its first new op.
+ */
+async function leaseDeploy(store) {
+  try {
+    return (await store.deploy()) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /** The tag a request's key proves, or null: the key must equal this Worker's secret PREVIEW_KEY_<tag>. */
 function caller(request, env) {
   const tag = request.headers.get('x-preview-tag') ?? '';
@@ -88,7 +100,7 @@ export async function ops(request, env, { lease: store, now = Math.floor(Date.no
   const holds = Boolean(tag && lease && !lease.staging && lease.expiresAt > now && lease.tag === tag);
   const serving = { serving: env.PREVIEW_SERVING ?? null, deploy: env.PREVIEW_DEPLOY ?? null };
 
-  if (request.method === 'GET' && url.pathname === '/__preview/lease') return json(200, { ...(tag ? fullLease(lease, now) : publicLease(lease, now)), ...serving });
+  if (request.method === 'GET' && url.pathname === '/__preview/lease') return json(200, { ...(tag ? fullLease(lease, now) : publicLease(lease, now)), ...serving, leaseDeploy: await leaseDeploy(store) });
   if (!tag) return refuse(401, 'unauthorized', 'no key this slot holds');
   if (request.method !== 'POST') return refuse(404, 'not_found', 'no such preview op');
   const body = await bodyOf(request);
